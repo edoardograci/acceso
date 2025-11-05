@@ -3,7 +3,9 @@ import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
   output: 'server',
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    mode: 'directory'   // <— required for Pages
+  }),
   site: 'https://acceso.pages.dev',
   image: {
     service: {
