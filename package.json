@@ -10,8 +10,9 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^12.6.10",
     "@libsql/client": "^0.6.0",
-    "astro": "^4.5.0"
+    "astro": "^5.15.3"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
