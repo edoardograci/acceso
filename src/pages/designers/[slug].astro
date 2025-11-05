@@ -1,0 +1,117 @@
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Tabs from '../../components/Tabs.astro';
+import DesignerInfo from '../../components/DesignerInfo.astro';
+import ActionButtons from '../../components/ActionButtons.astro';
+import { getStudioBySlug, getAllStudios } from '../../lib/db';
+
+export async function getStaticPaths() {
+  const studios = await getAllStudios();
+  
+  return studios.map(studio => ({
+    params: { slug: studio.slug },
+    props: { studio }
+  }));
+}
+
+const { studio } = Astro.props;
+
+if (!studio) {
+  return Astro.redirect('/404');
+}
+
+const pageTitle = `${studio.name} - Acceso`;
+const pageDescription = `Discover ${studio.name}, an independent design studio in ${studio.city}`;
+const pageImage = studio.cover || '/og-default.jpg';
+---
+
+<Layout 
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  type="article"
+>
+  <Navbar />
+  
+  <main class="designer-page">
+    <div class="designer-header">
+      <h1 class="designer-page-title">Designers</h1>
+      <p class="designer-breadcrumb">/ {studio.name}</p>
+    </div>
+
+    <div class="designer-image-container">
+      {studio.cover ? (
+        <img 
+          src={studio.cover} 
+          alt={studio.name}
+          class="designer-image"
+          loading="eager"
+        />
+      ) : (
+        <div class="designer-image-placeholder">
+          <span>No image available</span>
+        </div>
+      )}
+    </div>
+
+    <div class="designer-content">
+      <Tabs active="info" />
+      <DesignerInfo studio={studio} />
+      <ActionButtons />
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .designer-page {
+    padding-top: var(--navbar-height);
+    min-height: 100vh;
+  }
+
+  .designer-header {
+    padding: 32px var(--spacing-page);
+  }
+
+  .designer-page-title {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 200;
+    letter-spacing: 0.64px;
+    margin-bottom: 8px;
+  }
+
+  .designer-breadcrumb {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 200;
+    letter-spacing: 0.56px;
+    color: var(--text-primary);
+  }
+
+  .designer-image-container {
+    padding: 0 var(--spacing-page);
+    margin-bottom: 16px;
+  }
+
+  .designer-image {
+    width: 100%;
+    height: auto;
+    max-height: 379px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .designer-image-placeholder {
+    width: 100%;
+    height: 379px;
+    background-color: var(--gray-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+  }
+
+  .designer-content {
+    padding: 16px var(--spacing-page);
+  }
+</style>

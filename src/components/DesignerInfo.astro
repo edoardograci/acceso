@@ -1,0 +1,104 @@
+import type { Studio } from '../lib/types';
+
+interface Props {
+  studio: Studio;
+}
+
+const { studio } = Astro.props;
+---
+
+<div class="designer-info">
+  <div class="info-section">
+    <div class="info-label">Name</div>
+    <div class="info-value">{studio.name}</div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-label">Location</div>
+    <a href={`/designers?city=${studio.city}`} class="info-value">
+      {studio.city}
+    </a>
+  </div>
+
+  {studio.address && (
+    <div class="info-section">
+      <div class="info-label">Address</div>
+      <a href={`/?address=${encodeURIComponent(studio.address)}`} class="info-value">
+        {studio.address}
+      </a>
+    </div>
+  )}
+
+  <div class="info-section">
+    <div class="info-label">Email</div>
+    <div class="info-value">
+      {studio.email && (
+        <a href={`mailto:${studio.email}`}>{studio.email}</a>
+      )}
+      {studio.email2 && (
+        <>
+          <br />
+          <a href={`mailto:${studio.email2}`}>{studio.email2}</a>
+        </>
+      )}
+    </div>
+  </div>
+
+  <div class="info-links">
+    {studio.website && (
+      <a href={studio.website} target="_blank" rel="noopener noreferrer" class="info-link">
+        Website
+      </a>
+    )}
+    {studio.instagram && (
+      <a href={studio.instagram} target="_blank" rel="noopener noreferrer" class="info-link">
+        Instagram
+      </a>
+    )}
+  </div>
+</div>
+
+<style>
+  .designer-info {
+    padding: 0 var(--spacing-page);
+    padding-top: 24px;
+  }
+
+  .info-section {
+    margin-bottom: 24px;
+  }
+
+  .info-label {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 200;
+    letter-spacing: 0.56px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .info-value {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 450;
+    text-decoration: underline;
+    line-height: 1.4;
+  }
+
+  .info-value a {
+    display: inline;
+  }
+
+  .info-links {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .info-link {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 450;
+    text-decoration: underline;
+  }
+</style>

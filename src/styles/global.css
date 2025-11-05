@@ -1,0 +1,68 @@
+@font-face {
+  font-family: 'PP Supply Mono';
+  src: url('/fonts/PPSupplySans-Variable.ttf') format('woff2');
+  font-weight: 200 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/fonts/PPFraktionSans-Variable.ttf') format('woff2');
+  font-weight: 390 450;
+  font-display: swap;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #171717;
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.5);
+  --accent-yellow: #EDFE44;
+  --gray-dark: #3E3E3E;
+  --gray-border: #575757;
+  --gray-icon: #A6A6A6;
+  
+  --font-mono: 'PP Supply Mono', monospace;
+  --font-sans: 'PP Fraktion Sans', sans-serif;
+  
+  --spacing-page: 16px;
+  --navbar-height: 112px;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-mono);
+  font-weight: 200;
+}
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  transition: opacity 0.2s ease;
+}
+
+a:hover {
+  opacity: 0.7;
+}
+
+.container {
+  padding-left: var(--spacing-page);
+  padding-right: var(--spacing-page);
+}
+
+html {
+  scroll-behavior: smooth;
+}

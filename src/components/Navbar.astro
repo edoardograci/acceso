@@ -1,0 +1,90 @@
+import type { NavLink } from '../lib/types';
+
+const links: NavLink[] = [
+  { label: 'Map', href: '/' },
+  { label: 'Designers', href: '/designers' },
+  { label: 'Moodboard', href: '/moodboard' },
+  { label: 'Contacts', href: '/contact' }
+];
+
+const currentPath = Astro.url.pathname;
+
+function isActive(href: string): boolean {
+  if (href === '/') {
+    return currentPath === '/';
+  }
+  return currentPath.startsWith(href);
+}
+---
+
+<nav class="navbar">
+  <div class="navbar-container">
+    <a href="/" class="navbar-logo">ACCESO</a>
+    
+    <div class="navbar-links">
+      {links.map(link => (
+        <a 
+          href={link.href} 
+          class:list={['navbar-link', { active: isActive(link.href) }]}
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+  </div>
+</nav>
+
+<style>
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--navbar-height);
+    background-color: var(--bg-primary);
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .navbar-container {
+    height: 100%;
+    padding: 0 var(--spacing-page);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 26px;
+  }
+
+  .navbar-logo {
+    font-family: var(--font-mono);
+    font-size: 32px;
+    font-weight: 400;
+    text-decoration: none;
+    letter-spacing: 0;
+    margin-bottom: 12px;
+  }
+
+  .navbar-links {
+    display: flex;
+    gap: 20px;
+    padding-bottom: 16px;
+  }
+
+  .navbar-link {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 390;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+  }
+
+  .navbar-link.active {
+    color: var(--text-primary);
+  }
+
+  .navbar-link:hover {
+    color: var(--text-primary);
+  }
+</style>

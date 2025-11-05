@@ -1,0 +1,68 @@
+interface Props {
+  active: 'info' | 'moodboard';
+}
+
+const { active } = Astro.props;
+---
+
+<div class="tabs">
+  <button 
+    class:list={['tab', { active: active === 'info' }]}
+    disabled={active === 'info'}
+  >
+    Info
+  </button>
+  
+  <button 
+    class:list={['tab', { active: active === 'moodboard' }]}
+    disabled={active === 'moodboard'}
+  >
+    Moodboard
+  </button>
+</div>
+
+<style>
+  .tabs {
+    display: flex;
+    gap: 48px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 200;
+    letter-spacing: 0.64px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0 0 12px 0;
+    transition: color 0.2s ease;
+    position: relative;
+  }
+
+  .tab.active {
+    color: var(--text-primary);
+    cursor: default;
+  }
+
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--accent-yellow);
+  }
+
+  .tab:not(.active):hover {
+    color: var(--text-primary);
+  }
+
+  .tab:disabled {
+    cursor: default;
+  }
+</style>
