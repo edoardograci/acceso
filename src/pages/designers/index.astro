@@ -1,0 +1,114 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import { getAllStudios } from '../../lib/db';
+
+const studios = await getAllStudios();
+---
+
+<Layout title="Designers - Acceso">
+  <Navbar />
+  
+  <main class="designers-page">
+    <div class="designers-header">
+      <h1>Designers</h1>
+      <p>{studios.length} studios in Milan</p>
+    </div>
+
+    <div class="designers-grid">
+      {studios.map(studio => (
+        <a href={`/designers/${studio.slug}`} class="studio-card">
+          {studio.cover ? (
+            <img src={studio.cover} alt={studio.name} class="studio-image" />
+          ) : (
+            <div class="studio-image-placeholder">No image</div>
+          )}
+          <div class="studio-info">
+            <h3>{studio.name}</h3>
+            <p>{studio.city}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    {studios.length === 0 && (
+      <div class="empty-state">
+        <p>No studios found. Check your database connection.</p>
+        <p style="margin-top: 16px; color: var(--text-secondary);">
+          Make sure your .env file has correct TURSO_DATABASE_URL and TURSO_AUTH_TOKEN
+        </p>
+      </div>
+    )}
+  </main>
+</Layout>
+
+<style>
+  .designers-page {
+    padding-top: var(--navbar-height);
+    min-height: 100vh;
+  }
+
+  .designers-header {
+    padding: 48px var(--spacing-page);
+    text-align: center;
+  }
+
+  .designers-header h1 {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .designers-header p {
+    color: var(--text-secondary);
+  }
+
+  .designers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 2fr));
+    gap: 24px;
+    padding: 0 var(--spacing-page) 48px;
+  }
+
+  .studio-card {
+    text-decoration: none;
+    transition: transform 0.2s ease;
+  }
+
+  .studio-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .studio-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    margin-bottom: 12px;
+  }
+
+  .studio-image-placeholder {
+    width: 100%;
+    height: 200px;
+    background: var(--gray-dark);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+  }
+
+  .studio-info h3 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .studio-info p {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .empty-state {
+    padding: 48px var(--spacing-page);
+    text-align: center;
+  }
+</style>

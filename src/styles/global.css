@@ -1,13 +1,13 @@
 @font-face {
   font-family: 'PP Supply Mono';
-  src: url('/fonts/PPSupplySans-Variable.ttf') format('woff2');
+  src: url('/fonts/PPSupplySans-Variable.ttf') format('truetype');
   font-weight: 200 400;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Variable.ttf') format('woff2');
+  src: url('/fonts/PPFraktionSans-Variable.ttf') format('truetype');
   font-weight: 390 450;
   font-display: swap;
 }

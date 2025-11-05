@@ -1,3 +1,4 @@
+---
 interface Props {
   active: 'info' | 'moodboard';
 }
@@ -27,6 +28,10 @@ const { active } = Astro.props;
     gap: 48px;
     margin-bottom: 16px;
     position: relative;
+  }
+
+  .tabs button{
+    flex: 1;
   }
 
   .tab {

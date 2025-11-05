@@ -1,9 +1,10 @@
+---
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Tabs from '../../components/Tabs.astro';
 import DesignerInfo from '../../components/DesignerInfo.astro';
 import ActionButtons from '../../components/ActionButtons.astro';
-import { getStudioBySlug, getAllStudios } from '../../lib/db';
+import { getAllStudios } from '../../lib/db';
 
 export async function getStaticPaths() {
   const studios = await getAllStudios();
@@ -97,7 +98,7 @@ const pageImage = studio.cover || '/og-default.jpg';
     width: 100%;
     height: auto;
     max-height: 379px;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
   }
 
