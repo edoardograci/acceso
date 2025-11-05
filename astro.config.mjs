@@ -6,7 +6,7 @@ export default defineConfig({
   adapter: cloudflare({
     mode: 'directory'
   }),
-  site: 'https://acceso.design',
+  site: 'https://acceso.edoardograci.workers.dev/',
   vite: {
     ssr: {
       external: ['@libsql/client']
