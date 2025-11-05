@@ -3,7 +3,15 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import { getAllStudios } from '../../lib/db';
 
-const studios = await getAllStudios();
+let studios = [];
+let error = null;
+
+try {
+  studios = await getAllStudios();
+} catch (e) {
+  error = e;
+  console.error('Failed to fetch studios:', e);
+}
 ---
 
 <Layout title="Designers - Acceso">
@@ -12,30 +20,51 @@ const studios = await getAllStudios();
   <main class="designers-page">
     <div class="designers-header">
       <h1>Designers</h1>
-      <p>{studios.length} studios in Milan</p>
+      {!error && <p>{studios.length} studios in Milan</p>}
     </div>
 
-    <div class="designers-grid">
-      {studios.map(studio => (
-        <a href={`/designers/${studio.slug}`} class="studio-card">
-          {studio.cover ? (
-            <img src={studio.cover} alt={studio.name} class="studio-image" />
-          ) : (
-            <div class="studio-image-placeholder">No image</div>
-          )}
-          <div class="studio-info">
-            <h3>{studio.name}</h3>
-            <p>{studio.city}</p>
-          </div>
-        </a>
-      ))}
-    </div>
+    {error && (
+      <div class="error-state">
+        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Database Connection Error</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">
+          Unable to connect to the database. Please check:
+        </p>
+        <ul style="color: var(--text-secondary); text-align: left; max-width: 600px; margin: 0 auto;">
+          <li>Environment variables are set in Cloudflare Pages settings</li>
+          <li>TURSO_DATABASE_URL is correct</li>
+          <li>TURSO_AUTH_TOKEN is valid</li>
+          <li>Database is accessible from Cloudflare</li>
+        </ul>
+        <details style="margin-top: 24px; padding: 16px; background: var(--gray-dark); border-radius: 8px; text-align: left; max-width: 800px; margin: 24px auto;">
+          <summary style="cursor: pointer; color: var(--accent-yellow);">View Error Details</summary>
+          <pre style="margin-top: 16px; overflow: auto; font-size: 12px; color: #ff6b6b;">{JSON.stringify(error, null, 2)}</pre>
+        </details>
+      </div>
+    )}
 
-    {studios.length === 0 && (
+    {!error && studios.length > 0 && (
+      <div class="designers-grid">
+        {studios.map(studio => (
+          <a href={`/designers/${studio.slug}`} class="studio-card">
+            {studio.cover ? (
+              <img src={studio.cover} alt={studio.name} class="studio-image" />
+            ) : (
+              <div class="studio-image-placeholder">No image</div>
+            )}
+            <div class="studio-info">
+              <h3>{studio.name}</h3>
+              <p>{studio.city}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+
+    {!error && studios.length === 0 && (
       <div class="empty-state">
-        <p>No studios found. Check your database connection.</p>
+        <p>No studios found in the database.</p>
         <p style="margin-top: 16px; color: var(--text-secondary);">
-          Make sure your .env file has correct TURSO_DATABASE_URL and TURSO_AUTH_TOKEN
+          The database connection works, but no published studios were found.
         </p>
       </div>
     )}
@@ -107,7 +136,8 @@ const studios = await getAllStudios();
     font-size: 14px;
   }
 
-  .empty-state {
+  .empty-state,
+  .error-state {
     padding: 48px var(--spacing-page);
     text-align: center;
   }
