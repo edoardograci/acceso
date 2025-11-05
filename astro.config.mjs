@@ -5,9 +5,14 @@ export default defineConfig({
   output: 'server',
   adapter: cloudflare({
     mode: 'directory',
-    kvNamespaces: [], // prevents auto session setup
+    kvNamespaces: [], // disable KV sessions
   }),
   site: 'https://acceso.edoardograci.workers.dev/',
+  image: {
+    service: {
+      entrypoint: "astro/assets/services/noop" // disables sharp at runtime
+    }
+  },
   vite: {
     ssr: {
       external: ['@libsql/client']
