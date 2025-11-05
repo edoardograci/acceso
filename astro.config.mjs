@@ -2,9 +2,10 @@ import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
-  output: 'server', // Changed from 'hybrid' to 'server'
+  output: 'server',
   adapter: cloudflare({
-    mode: 'directory'
+    mode: 'directory',
+    kvNamespaces: [], // prevents auto session setup
   }),
   site: 'https://acceso.edoardograci.workers.dev/',
   vite: {
