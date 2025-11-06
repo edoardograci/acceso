@@ -4,7 +4,10 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   output: 'server',
   adapter: cloudflare({
-    mode: 'directory'   // <— required for Pages
+    mode: 'directory',
+    platformProxy: {
+      enabled: true,  // Enables local emulation of Cloudflare env
+    },
   }),
   site: 'https://acceso.pages.dev',
   image: {

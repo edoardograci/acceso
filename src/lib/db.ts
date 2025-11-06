@@ -1,20 +1,19 @@
+// src/lib/db.ts (entire file)
 import type { Studio } from './types';
-
-function getEnvVar(name: string): string {
-  if (typeof import.meta.env !== 'undefined' && import.meta.env[name]) {
-    return import.meta.env[name];
-  }
-  if (typeof process !== 'undefined' && process.env[name]) {
-    return process.env[name]!;
-  }
-  console.warn(`[Turso] Missing environment variable: ${name}`);
-  return '';
-}
 
 interface TursoHttpResponse {
   results: {
-    columns: string[];
-    rows: any[][];
+    type: string;
+    response: {
+      type: string;
+      result: {
+        cols: { name: string; decltype?: string }[];
+        rows: any[][];
+        affected_row_count: number;
+        last_insert_rowid: string | null;
+        replication_index: string;
+      };
+    };
   }[];
 }
 
@@ -37,6 +36,21 @@ class TursoHttpClient {
       console.log('[Turso] Endpoint:', endpoint);
       console.log('[Turso] SQL:', query.sql);
 
+      // Wrap args in typed format for Turso HTTP API
+      const typedArgs = (query.args || []).map(arg => {
+        if (typeof arg === 'string') {
+          return { type: 'text', value: arg };
+        } else if (typeof arg === 'number') {
+          return Number.isInteger(arg) ? { type: 'integer', value: arg } : { type: 'float', value: arg };
+        } else if (arg === null) {
+          return { type: 'null' };
+        } else if (typeof arg === 'boolean') {
+          return { type: 'integer', value: arg ? 1 : 0 };
+        } else {
+          throw new Error(`Unsupported arg type: ${typeof arg}`);
+        }
+      });
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -49,7 +63,7 @@ class TursoHttpClient {
               type: 'execute',
               stmt: {
                 sql: query.sql,
-                args: query.args || [],
+                args: typedArgs,
               },
             },
           ],
@@ -65,14 +79,32 @@ class TursoHttpClient {
       }
 
       const data: TursoHttpResponse = await response.json();
-      const result = data.results?.[0];
-      if (!result) throw new Error('No results in Turso API response');
+      const pipelineResult = data.results?.[0];
+      if (!pipelineResult || pipelineResult.type !== 'ok') {
+        throw new Error('No valid pipeline result in Turso API response');
+      }
 
-      // Convert rows array to objects
+      const result = pipelineResult.response.result;
+      if (!result) throw new Error('No execute result in Turso API response');
+
+      // Convert rows array to objects, extracting values if typed
       const rows = result.rows.map((row) => {
         const obj: any = {};
-        result.columns.forEach((col, idx) => {
-          obj[col] = row[idx];
+        result.cols.forEach((col, idx) => {
+          let val = row[idx];
+          if (val && typeof val === 'object' && 'type' in val) {
+            if (val.type === 'null') {
+              val = null;
+            } else if (val.type === 'blob') {
+              val = atob(val.base64 || '');
+            } else {
+              val = val.value;
+              if (val.type === 'integer' || val.type === 'float') {
+                val = Number(val);
+              }
+            }
+          }
+          obj[col.name] = val;
         });
         return obj;
       });
@@ -86,17 +118,9 @@ class TursoHttpClient {
   }
 }
 
-const dbUrl = getEnvVar('TURSO_DATABASE_URL');
-const dbToken = getEnvVar('TURSO_AUTH_TOKEN');
-
-if (!dbUrl || !dbToken) {
-  console.error('[Turso] Missing database credentials! Execution may fail.');
-}
-
-export const turso = new TursoHttpClient(dbUrl, dbToken);
-
-export async function getStudioBySlug(slug: string): Promise<Studio | null> {
+export async function getStudioBySlug(slug: string, env: Env): Promise<Studio | null> {
   try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
     console.log('\n[DB] Fetching studio by slug:', slug);
     const result = await turso.execute({
       sql: 'SELECT * FROM studios WHERE slug = ? AND status = ? LIMIT 1',
@@ -109,8 +133,9 @@ export async function getStudioBySlug(slug: string): Promise<Studio | null> {
   }
 }
 
-export async function getAllStudios(): Promise<Studio[]> {
+export async function getAllStudios(env: Env): Promise<Studio[]> {
   try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
     console.log('\n[DB] Fetching all studios...');
     const result = await turso.execute({
       sql: 'SELECT * FROM studios WHERE status = ? ORDER BY name ASC',
@@ -123,8 +148,9 @@ export async function getAllStudios(): Promise<Studio[]> {
   }
 }
 
-export async function getStudiosByCity(city: string): Promise<Studio[]> {
+export async function getStudiosByCity(city: string, env: Env): Promise<Studio[]> {
   try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
     console.log('\n[DB] Fetching studios by city:', city);
     const result = await turso.execute({
       sql: 'SELECT * FROM studios WHERE city = ? AND status = ? ORDER BY name ASC',

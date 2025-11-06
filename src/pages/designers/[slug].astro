@@ -4,26 +4,28 @@ import Navbar from '../../components/Navbar.astro';
 import Tabs from '../../components/Tabs.astro';
 import DesignerInfo from '../../components/DesignerInfo.astro';
 import ActionButtons from '../../components/ActionButtons.astro';
-import { getAllStudios } from '../../lib/db';
+import { getStudioBySlug } from '../../lib/db';
 
-export async function getStaticPaths() {
-  const studios = await getAllStudios();
-  
-  return studios.map(studio => ({
-    params: { slug: studio.slug },
-    props: { studio }
-  }));
+const { slug } = Astro.params;
+
+let studio = null;
+let error = null;
+
+try {
+  const env = Astro.locals.runtime.env;  // Access runtime env
+  studio = await getStudioBySlug(slug, env);
+} catch (e) {
+  error = e;
+  console.error('Failed to fetch studio:', e);
 }
 
-const { studio } = Astro.props;
-
-if (!studio) {
+if (!studio && !error) {
   return Astro.redirect('/404');
 }
 
-const pageTitle = `${studio.name} - Acceso`;
-const pageDescription = `Discover ${studio.name}, an independent design studio in ${studio.city}`;
-const pageImage = studio.cover || '/og-default.jpg';
+const pageTitle = studio ? `${studio.name} - Acceso` : 'Studio Not Found';
+const pageDescription = studio ? `Discover ${studio.name}, an independent design studio in ${studio.city}` : '';
+const pageImage = studio?.cover || '/og-default.jpg';
 ---
 
 <Layout 
@@ -37,29 +39,44 @@ const pageImage = studio.cover || '/og-default.jpg';
   <main class="designer-page">
     <div class="designer-header">
       <h1 class="designer-page-title">Designers</h1>
-      <p class="designer-breadcrumb">/ {studio.name}</p>
+      <p class="designer-breadcrumb">/ {studio?.name || 'Not Found'}</p>
     </div>
 
-    <div class="designer-image-container">
-      {studio.cover ? (
-        <img 
-          src={studio.cover} 
-          alt={studio.name}
-          class="designer-image"
-          loading="eager"
-        />
-      ) : (
-        <div class="designer-image-placeholder">
-          <span>No image available</span>
+    {error ? (
+      <div class="error-state">
+        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Database Connection Error</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">
+          Unable to connect to the database or fetch studio.
+        </p>
+        <details style="margin-top: 24px; padding: 16px; background: var(--gray-dark); border-radius: 8px; text-align: left; max-width: 800px; margin: 24px auto;">
+          <summary style="cursor: pointer; color: var(--accent-yellow);">View Error Details</summary>
+          <pre style="margin-top: 16px; overflow: auto; font-size: 12px; color: #ff6b6b;">{JSON.stringify(error, null, 2)}</pre>
+        </details>
+      </div>
+    ) : (
+      <>
+        <div class="designer-image-container">
+          {studio.cover ? (
+            <img 
+              src={studio.cover} 
+              alt={studio.name}
+              class="designer-image"
+              loading="eager"
+            />
+          ) : (
+            <div class="designer-image-placeholder">
+              <span>No image available</span>
+            </div>
+          )}
         </div>
-      )}
-    </div>
 
-    <div class="designer-content">
-      <Tabs active="info" />
-      <DesignerInfo studio={studio} />
-      <ActionButtons />
-    </div>
+        <div class="designer-content">
+          <Tabs active="info" />
+          <DesignerInfo studio={studio} />
+          <ActionButtons />
+        </div>
+      </>
+    )}
   </main>
 </Layout>
 

@@ -7,7 +7,8 @@ let studios = [];
 let error = null;
 
 try {
-  studios = await getAllStudios();
+  const env = Astro.locals.runtime.env;  // Access runtime env
+  studios = await getAllStudios(env);
 } catch (e) {
   error = e;
   console.error('Failed to fetch studios:', e);
