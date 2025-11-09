@@ -7,11 +7,11 @@ let studios = [];
 let error = null;
 
 try {
-  const env = Astro.locals.runtime.env;  // Access runtime env
-  studios = await getAllStudios(env);
+  const response = await fetch(new URL('/studios.json', Astro.site));
+  if (!response.ok) throw new Error('Failed to load studios data');
+  studios = await response.json();
 } catch (e) {
   error = e;
-  console.error('Failed to fetch studios:', e);
 }
 ---
 

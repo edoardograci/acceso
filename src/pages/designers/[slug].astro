@@ -1,19 +1,24 @@
 ---
+// src/pages/designers/[slug].astro
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Tabs from '../../components/Tabs.astro';
 import DesignerInfo from '../../components/DesignerInfo.astro';
 import ActionButtons from '../../components/ActionButtons.astro';
-import { getStudioBySlug } from '../../lib/db';
+import type { Studio } from '../../lib/types';
 
 const { slug } = Astro.params;
 
-let studio = null;
+let studio: Studio | null = null;
 let error = null;
 
 try {
-  const env = Astro.locals.runtime.env;  // Access runtime env
-  studio = await getStudioBySlug(slug, env);
+  // Fetch from static JSON - cached at edge
+  const response = await fetch(new URL('/studios.json', Astro.site));
+  if (!response.ok) throw new Error('Failed to load studios data');
+  
+  const studios: Studio[] = await response.json();
+  studio = studios.find(s => s.slug === slug) || null;
 } catch (e) {
   error = e;
   console.error('Failed to fetch studio:', e);
@@ -44,14 +49,10 @@ const pageImage = studio?.cover || '/og-default.jpg';
 
     {error ? (
       <div class="error-state">
-        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Database Connection Error</h2>
+        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Studio</h2>
         <p style="color: var(--text-secondary); margin-bottom: 16px;">
-          Unable to connect to the database or fetch studio.
+          Unable to load studio data. Please try again later.
         </p>
-        <details style="margin-top: 24px; padding: 16px; background: var(--gray-dark); border-radius: 8px; text-align: left; max-width: 800px; margin: 24px auto;">
-          <summary style="cursor: pointer; color: var(--accent-yellow);">View Error Details</summary>
-          <pre style="margin-top: 16px; overflow: auto; font-size: 12px; color: #ff6b6b;">{JSON.stringify(error, null, 2)}</pre>
-        </details>
       </div>
     ) : (
       <>
@@ -131,5 +132,10 @@ const pageImage = studio?.cover || '/og-default.jpg';
 
   .designer-content {
     padding: 16px var(--spacing-page);
+  }
+
+  .error-state {
+    padding: 48px var(--spacing-page);
+    text-align: center;
   }
 </style>
