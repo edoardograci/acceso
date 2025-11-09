@@ -28,7 +28,7 @@ const cities = [...new Set(studios.map(s => s.city))].sort();
   <main class="designers-page">
     <div class="designers-header">
       <h1>Designers</h1>
-      {!error && <p id="studio-count">{studios.length} studios in Milan</p>}
+      {!error && <p id="studio-count">{studios.length} Design Studios</p>}
     </div>
 
     {error && (
@@ -53,7 +53,7 @@ const cities = [...new Set(studios.map(s => s.city))].sort();
           </div>
           
           <div class="filter-buttons">
-            <button class="filter-btn active" data-city="all">All Cities</button>
+            <button class="filter-btn active" data-city="all">All</button>
             {cities.map(city => (
               <button class="filter-btn" data-city={city}>{city}</button>
             ))}
@@ -121,7 +121,7 @@ const cities = [...new Set(studios.map(s => s.city))].sort();
 
     // Update count and show/hide empty state
     if (studioCount) {
-      studioCount.textContent = `${visibleCount} studio${visibleCount !== 1 ? 's' : ''} ${currentCity === 'all' ? 'in Milan' : `in ${currentCity}`}`;
+      studioCount.textContent = `${visibleCount} Design Studio${visibleCount !== 1 ? 's' : ''} ${currentCity === 'all' ? '' : `in ${currentCity}`}`;
     }
 
     if (emptyResult && studiosGrid) {
@@ -191,7 +191,6 @@ const cities = [...new Set(studios.map(s => s.city))].sort();
     font-size: 16px;
     background: var(--gray-dark);
     border: 1px solid var(--gray-border);
-    border-radius: 24px;
     color: var(--text-primary);
     font-family: var(--font-sans);
   }
@@ -213,10 +212,10 @@ const cities = [...new Set(studios.map(s => s.city))].sort();
   }
 
   .filter-btn {
+    text-transform: uppercase;
     padding: 8px 20px;
     background: var(--gray-dark);
     border: 1px solid var(--gray-border);
-    border-radius: 20px;
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 14px;
@@ -256,7 +255,6 @@ const cities = [...new Set(studios.map(s => s.city))].sort();
     width: 100%;
     height: 200px;
     object-fit: cover;
-    border-radius: 8px;
     margin-bottom: 12px;
   }
 
@@ -264,7 +262,6 @@ const cities = [...new Set(studios.map(s => s.city))].sort();
     width: 100%;
     height: 200px;
     background: var(--gray-dark);
-    border-radius: 8px;
     margin-bottom: 12px;
     display: flex;
     align-items: center;
