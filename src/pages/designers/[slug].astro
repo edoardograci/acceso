@@ -1,5 +1,4 @@
 ---
-// src/pages/designers/[slug].astro
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Tabs from '../../components/Tabs.astro';
@@ -14,7 +13,8 @@ let error = null;
 
 try {
   // Fetch from static JSON - cached at edge
-  const response = await fetch(new URL('/studios.json', Astro.site));
+  const studiosUrl = new URL('/studios.json', Astro.url.origin);
+  const response = await fetch(studiosUrl.toString());
   if (!response.ok) throw new Error('Failed to load studios data');
   
   const studios: Studio[] = await response.json();

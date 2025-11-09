@@ -1,18 +1,25 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
-import { getAllStudios } from '../../lib/db';
+import type { Studio } from '../../lib/types';
 
-let studios = [];
+// Fetch from static JSON file - this is served from Cloudflare's edge
+let studios: Studio[] = [];
 let error = null;
 
 try {
-  const response = await fetch(new URL('/studios.json', Astro.site));
+  // Fetch from static JSON file - served from Cloudflare's edge
+  const studiosUrl = new URL('/studios.json', Astro.url.origin);
+  const response = await fetch(studiosUrl.toString());
   if (!response.ok) throw new Error('Failed to load studios data');
   studios = await response.json();
 } catch (e) {
   error = e;
+  console.error('Failed to fetch studios:', e);
 }
+
+// Get unique cities for filter
+const cities = [...new Set(studios.map(s => s.city))].sort();
 ---
 
 <Layout title="Designers - Acceso">
@@ -21,56 +28,131 @@ try {
   <main class="designers-page">
     <div class="designers-header">
       <h1>Designers</h1>
-      {!error && <p>{studios.length} studios in Milan</p>}
+      {!error && <p id="studio-count">{studios.length} studios in Milan</p>}
     </div>
 
     {error && (
       <div class="error-state">
-        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Database Connection Error</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 16px;">
-          Unable to connect to the database. Please check:
+        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Studios</h2>
+        <p style="color: var(--text-secondary);">
+          Unable to load studio data. Please try again later.
         </p>
-        <ul style="color: var(--text-secondary); text-align: left; max-width: 600px; margin: 0 auto;">
-          <li>Environment variables are set in Cloudflare Pages settings</li>
-          <li>TURSO_DATABASE_URL is correct</li>
-          <li>TURSO_AUTH_TOKEN is valid</li>
-          <li>Database is accessible from Cloudflare</li>
-        </ul>
-        <details style="margin-top: 24px; padding: 16px; background: var(--gray-dark); border-radius: 8px; text-align: left; max-width: 800px; margin: 24px auto;">
-          <summary style="cursor: pointer; color: var(--accent-yellow);">View Error Details</summary>
-          <pre style="margin-top: 16px; overflow: auto; font-size: 12px; color: #ff6b6b;">{JSON.stringify(error, null, 2)}</pre>
-        </details>
       </div>
     )}
 
-    {!error && studios.length > 0 && (
-      <div class="designers-grid">
-        {studios.map(studio => (
-          <a href={`/designers/${studio.slug}`} class="studio-card">
-            {studio.cover ? (
-              <img src={studio.cover} alt={studio.name} class="studio-image" />
-            ) : (
-              <div class="studio-image-placeholder">No image</div>
-            )}
-            <div class="studio-info">
-              <h3>{studio.name}</h3>
-              <p>{studio.city}</p>
-            </div>
-          </a>
-        ))}
-      </div>
-    )}
+    {!error && (
+      <>
+        <div class="filters-container">
+          <div class="search-bar">
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Search by name..."
+              aria-label="Search studios"
+            />
+          </div>
+          
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-city="all">All Cities</button>
+            {cities.map(city => (
+              <button class="filter-btn" data-city={city}>{city}</button>
+            ))}
+          </div>
+        </div>
 
-    {!error && studios.length === 0 && (
-      <div class="empty-state">
-        <p>No studios found in the database.</p>
-        <p style="margin-top: 16px; color: var(--text-secondary);">
-          The database connection works, but no published studios were found.
-        </p>
-      </div>
+        <div class="designers-grid" id="studios-grid">
+          {studios.map(studio => (
+            <a 
+              href={`/designers/${studio.slug}`} 
+              class="studio-card"
+              data-name={studio.name.toLowerCase()}
+              data-city={studio.city}
+            >
+              {studio.cover ? (
+                <img src={studio.cover} alt={studio.name} class="studio-image" loading="lazy" />
+              ) : (
+                <div class="studio-image-placeholder">No image</div>
+              )}
+              <div class="studio-info">
+                <h3>{studio.name}</h3>
+                <p>{studio.city}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <div class="empty-result" id="empty-result" style="display: none;">
+          <p>No studios found matching your criteria.</p>
+        </div>
+      </>
     )}
   </main>
 </Layout>
+
+<script>
+  // Client-side filtering - no database calls needed!
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const studioCards = document.querySelectorAll('.studio-card') as NodeListOf<HTMLElement>;
+  const studiosGrid = document.getElementById('studios-grid');
+  const emptyResult = document.getElementById('empty-result');
+  const studioCount = document.getElementById('studio-count');
+
+  let currentCity = 'all';
+  let currentSearch = '';
+
+  function filterStudios() {
+    let visibleCount = 0;
+
+    studioCards.forEach(card => {
+      const name = card.dataset.name || '';
+      const city = card.dataset.city || '';
+
+      const matchesSearch = name.includes(currentSearch.toLowerCase());
+      const matchesCity = currentCity === 'all' || city === currentCity;
+
+      if (matchesSearch && matchesCity) {
+        card.style.display = '';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    // Update count and show/hide empty state
+    if (studioCount) {
+      studioCount.textContent = `${visibleCount} studio${visibleCount !== 1 ? 's' : ''} ${currentCity === 'all' ? 'in Milan' : `in ${currentCity}`}`;
+    }
+
+    if (emptyResult && studiosGrid) {
+      if (visibleCount === 0) {
+        studiosGrid.style.display = 'none';
+        emptyResult.style.display = 'block';
+      } else {
+        studiosGrid.style.display = 'grid';
+        emptyResult.style.display = 'none';
+      }
+    }
+  }
+
+  // Search input handler
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = (e.target as HTMLInputElement).value;
+      filterStudios();
+    });
+  }
+
+  // City filter handlers
+  filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      filterButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      currentCity = button.dataset.city || 'all';
+      filterStudios();
+    });
+  });
+</script>
 
 <style>
   .designers-page {
@@ -92,11 +174,73 @@ try {
     color: var(--text-secondary);
   }
 
+  .filters-container {
+    padding: 0 var(--spacing-page) 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .search-bar {
+    margin-bottom: 24px;
+  }
+
+  .search-bar input {
+    width: 100%;
+    max-width: 500px;
+    padding: 12px 20px;
+    font-size: 16px;
+    background: var(--gray-dark);
+    border: 1px solid var(--gray-border);
+    border-radius: 24px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+  }
+
+  .search-bar input::placeholder {
+    color: var(--text-secondary);
+  }
+
+  .search-bar input:focus {
+    outline: none;
+    border-color: var(--accent-yellow);
+  }
+
+  .filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .filter-btn {
+    padding: 8px 20px;
+    background: var(--gray-dark);
+    border: 1px solid var(--gray-border);
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--accent-yellow);
+  }
+
+  .filter-btn.active {
+    background: var(--accent-yellow);
+    color: #000;
+    border-color: var(--accent-yellow);
+  }
+
   .designers-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 2fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 24px;
     padding: 0 var(--spacing-page) 48px;
+    max-width: 1400px;
+    margin: 0 auto;
   }
 
   .studio-card {
@@ -112,6 +256,7 @@ try {
     width: 100%;
     height: 200px;
     object-fit: cover;
+    border-radius: 8px;
     margin-bottom: 12px;
   }
 
@@ -138,8 +283,9 @@ try {
   }
 
   .empty-state,
-  .error-state {
+  .empty-result {
     padding: 48px var(--spacing-page);
     text-align: center;
+    color: var(--text-secondary);
   }
 </style>
