@@ -2,7 +2,6 @@ globalThis.process ??= {}; globalThis.process.env ??= {};
 import { e as createAstro, f as createComponent, m as maybeRenderHead, h as addAttribute, r as renderTemplate, k as renderComponent, l as Fragment, n as renderScript } from '../../chunks/astro/server_4boqM8s1.mjs';
 import { $ as $$Layout, a as $$Navbar } from '../../chunks/Navbar_B5DkdIwi.mjs';
 /* empty css                                     */
-import { g as getAllStudios } from '../../chunks/db_Bu8hGfrn.mjs';
 export { renderers } from '../../renderers.mjs';
 
 const $$Astro$2 = createAstro("https://acceso.pages.dev");
@@ -34,24 +33,31 @@ const $$ActionButtons = createComponent(async ($$result, $$props, $$slots) => {
 }, "C:/Users/edoar/OneDrive/Desktop/Acceso-1/src/components/ActionButtons.astro", void 0);
 
 const $$Astro = createAstro("https://acceso.pages.dev");
-async function getStaticPaths() {
-  const studios = await getAllStudios();
-  return studios.map((studio) => ({
-    params: { slug: studio.slug },
-    props: { studio }
-  }));
-}
 const $$slug = createComponent(async ($$result, $$props, $$slots) => {
   const Astro2 = $$result.createAstro($$Astro, $$props, $$slots);
   Astro2.self = $$slug;
-  const { studio } = Astro2.props;
-  if (!studio) {
+  const { slug } = Astro2.params;
+  let studio = null;
+  let error = null;
+  try {
+    const studiosUrl = new URL("/studios.json", Astro2.url.origin);
+    const response = await fetch(studiosUrl.toString());
+    if (!response.ok) throw new Error("Failed to load studios data");
+    const studios = await response.json();
+    studio = studios.find((s) => s.slug === slug) || null;
+  } catch (e) {
+    error = e;
+    console.error("Failed to fetch studio:", e);
+  }
+  if (!studio && !error) {
     return Astro2.redirect("/404");
   }
-  const pageTitle = `${studio.name} - Acceso`;
-  const pageDescription = `Discover ${studio.name}, an independent design studio in ${studio.city}`;
-  const pageImage = studio.cover || "/og-default.jpg";
-  return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": pageTitle, "description": pageDescription, "image": pageImage, "type": "article", "data-astro-cid-6kwzvfqb": true }, { "default": async ($$result2) => renderTemplate` ${renderComponent($$result2, "Navbar", $$Navbar, { "data-astro-cid-6kwzvfqb": true })} ${maybeRenderHead()}<main class="designer-page" data-astro-cid-6kwzvfqb> <div class="designer-header" data-astro-cid-6kwzvfqb> <h1 class="designer-page-title" data-astro-cid-6kwzvfqb>Designers</h1> <p class="designer-breadcrumb" data-astro-cid-6kwzvfqb>/ ${studio.name}</p> </div> <div class="designer-image-container" data-astro-cid-6kwzvfqb> ${studio.cover ? renderTemplate`<img${addAttribute(studio.cover, "src")}${addAttribute(studio.name, "alt")} class="designer-image" loading="eager" data-astro-cid-6kwzvfqb>` : renderTemplate`<div class="designer-image-placeholder" data-astro-cid-6kwzvfqb> <span data-astro-cid-6kwzvfqb>No image available</span> </div>`} </div> <div class="designer-content" data-astro-cid-6kwzvfqb> ${renderComponent($$result2, "Tabs", $$Tabs, { "active": "info", "data-astro-cid-6kwzvfqb": true })} ${renderComponent($$result2, "DesignerInfo", $$DesignerInfo, { "studio": studio, "data-astro-cid-6kwzvfqb": true })} ${renderComponent($$result2, "ActionButtons", $$ActionButtons, { "data-astro-cid-6kwzvfqb": true })} </div> </main> ` })} `;
+  const pageTitle = studio ? `${studio.name} - Acceso` : "Studio Not Found";
+  const pageDescription = studio ? `Discover ${studio.name}, an independent design studio in ${studio.city}` : "";
+  const pageImage = studio?.cover || "/og-default.jpg";
+  return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": pageTitle, "description": pageDescription, "image": pageImage, "type": "article", "data-astro-cid-6kwzvfqb": true }, { "default": async ($$result2) => renderTemplate` ${renderComponent($$result2, "Navbar", $$Navbar, { "data-astro-cid-6kwzvfqb": true })} ${maybeRenderHead()}<main class="designer-page" data-astro-cid-6kwzvfqb> <div class="designer-header" data-astro-cid-6kwzvfqb> <h1 class="designer-page-title" data-astro-cid-6kwzvfqb>Designers</h1> <p class="designer-breadcrumb" data-astro-cid-6kwzvfqb>/ ${studio?.name || "Not Found"}</p> </div> ${error ? renderTemplate`<div class="error-state" data-astro-cid-6kwzvfqb> <h2 style="color: #ff6b6b; margin-bottom: 16px;" data-astro-cid-6kwzvfqb>Error Loading Studio</h2> <p style="color: var(--text-secondary); margin-bottom: 16px;" data-astro-cid-6kwzvfqb>
+Unable to load studio data. Please try again later.
+</p> </div>` : renderTemplate`${renderComponent($$result2, "Fragment", Fragment, { "data-astro-cid-6kwzvfqb": true }, { "default": async ($$result3) => renderTemplate` <div class="designer-image-container" data-astro-cid-6kwzvfqb> ${studio.cover ? renderTemplate`<img${addAttribute(studio.cover, "src")}${addAttribute(studio.name, "alt")} class="designer-image" loading="eager" data-astro-cid-6kwzvfqb>` : renderTemplate`<div class="designer-image-placeholder" data-astro-cid-6kwzvfqb> <span data-astro-cid-6kwzvfqb>No image available</span> </div>`} </div> <div class="designer-content" data-astro-cid-6kwzvfqb> ${renderComponent($$result3, "Tabs", $$Tabs, { "active": "info", "data-astro-cid-6kwzvfqb": true })} ${renderComponent($$result3, "DesignerInfo", $$DesignerInfo, { "studio": studio, "data-astro-cid-6kwzvfqb": true })} ${renderComponent($$result3, "ActionButtons", $$ActionButtons, { "data-astro-cid-6kwzvfqb": true })} </div> ` })}`} </main> ` })} `;
 }, "C:/Users/edoar/OneDrive/Desktop/Acceso-1/src/pages/designers/[slug].astro", void 0);
 
 const $$file = "C:/Users/edoar/OneDrive/Desktop/Acceso-1/src/pages/designers/[slug].astro";
@@ -61,7 +67,6 @@ const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: $$slug,
   file: $$file,
-  getStaticPaths,
   url: $$url
 }, Symbol.toStringTag, { value: 'Module' }));
 

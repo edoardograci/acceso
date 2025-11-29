@@ -5,6 +5,8 @@
   ],
   "exclude": [
     "/_astro/*",
+    "/studios-metadata.json",
+    "/studios.json",
     "/fonts/PPFraktionSans-Variable.ttf",
     "/fonts/PPSupplySans-Variable.ttf"
   ]
