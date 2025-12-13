@@ -63,6 +63,8 @@ const pageImage = studio?.cover || '/og-default.jpg';
               alt={studio.name}
               class="designer-image"
               loading="eager"
+              fetchpriority="high"
+              decoding="async"
             />
           ) : (
             <div class="designer-image-placeholder">
@@ -118,6 +120,7 @@ const pageImage = studio?.cover || '/og-default.jpg';
     max-height: 379px;
     object-fit: contain;
     display: block;
+    content-visibility: auto;
   }
 
   .designer-image-placeholder {
