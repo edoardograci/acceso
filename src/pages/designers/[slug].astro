@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Tabs from '../../components/Tabs.astro';
 import DesignerInfo from '../../components/DesignerInfo.astro';
+import DesignerMoodboard from '../../components/DesignerMoodboard.astro';
 import ActionButtons from '../../components/ActionButtons.astro';
 import type { Studio } from '../../lib/types';
 
@@ -43,7 +44,7 @@ const pageImage = studio?.cover || '/og-default.jpg';
   
   <main class="designer-page">
     <div class="designer-header">
-      <h1 class="designer-page-title">Designers</h1>
+      <h1 class="designer-page-title"><a href="/designers">Designers</a></h1>
       <p class="designer-breadcrumb">/ {studio?.name || 'Not Found'}</p>
     </div>
 
@@ -75,7 +76,15 @@ const pageImage = studio?.cover || '/og-default.jpg';
 
         <div class="designer-content">
           <Tabs active="info" />
-          <DesignerInfo studio={studio} />
+          
+          <div id="tab-info" class="tab-content tab-content-active">
+            <DesignerInfo studio={studio} />
+          </div>
+          
+          <div id="tab-moodboard" class="tab-content">
+            <DesignerMoodboard studio={studio} />
+          </div>
+          
           <ActionButtons />
         </div>
       </>
@@ -87,6 +96,9 @@ const pageImage = studio?.cover || '/og-default.jpg';
   .designer-page {
     padding-top: var(--navbar-height);
     min-height: 100vh;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .designer-header {
@@ -99,6 +111,15 @@ const pageImage = studio?.cover || '/og-default.jpg';
     font-weight: 200;
     letter-spacing: 0.64px;
     margin-bottom: 8px;
+  }
+
+  .designer-page-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .designer-page-title a:hover {
+    opacity: 1;
   }
 
   .designer-breadcrumb {
@@ -141,4 +162,53 @@ const pageImage = studio?.cover || '/og-default.jpg';
     padding: 48px var(--spacing-page);
     text-align: center;
   }
+
+  .tab-content {
+    opacity: 0;
+    visibility: hidden;
+    display: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none;
+  }
+
+  .tab-content-active {
+    opacity: 1;
+    visibility: visible;
+    display: block;
+    pointer-events: auto;
+  }
 </style>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-button') as NodeListOf<HTMLElement>;
+  const tabContents = document.querySelectorAll('.tab-content') as NodeListOf<HTMLElement>;
+  const tabIndicator = document.querySelector('.tab-indicator') as HTMLElement;
+
+  function updateIndicator() {
+    const activeTab = document.querySelector('.tab-button.active') as HTMLElement;
+    if (activeTab && tabIndicator) {
+      tabIndicator.style.left = activeTab.offsetLeft + 'px';
+      tabIndicator.style.width = activeTab.offsetWidth + 'px';
+    }
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      
+      // Remove active class from all tabs and contents
+      tabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('tab-content-active'));
+      
+      // Add active class to clicked tab and corresponding content
+      tab.classList.add('active');
+      const activeContent = document.getElementById(`tab-${tabName}`);
+      if (activeContent) {
+        activeContent.classList.add('tab-content-active');
+      }
+      
+      // Update indicator position
+      updateIndicator();
+    });
+  });
+</script>

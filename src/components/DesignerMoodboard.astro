@@ -1,0 +1,30 @@
+---
+import type { Studio } from '../lib/types';
+
+interface Props {
+  studio: Studio;
+}
+
+const { studio } = Astro.props;
+---
+
+<div class="designer-moodboard">
+  <div class="moodboard-placeholder">
+    <p>Moodboard content for {studio.name} coming soon.</p>
+    <p style="color: var(--text-secondary); font-size: 14px; margin-top: 12px;">
+      This section will showcase visual inspiration and design direction.
+    </p>
+  </div>
+</div>
+
+<style>
+  .designer-moodboard {
+    padding-top: 24px;
+  }
+
+  .moodboard-placeholder {
+    padding: 48px 0;
+    text-align: center;
+    color: var(--text-secondary);
+  }
+</style>

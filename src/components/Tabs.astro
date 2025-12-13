@@ -8,18 +8,20 @@ const { active } = Astro.props;
 
 <div class="tabs">
   <button 
-    class:list={['tab', { active: active === 'info' }]}
-    disabled={active === 'info'}
+    class:list={['tab', 'tab-button', { active: active === 'info' }]}
+    data-tab="info"
   >
     Info
   </button>
   
   <button 
-    class:list={['tab', { active: active === 'moodboard' }]}
-    disabled={active === 'moodboard'}
+    class:list={['tab', 'tab-button', { active: active === 'moodboard' }]}
+    data-tab="moodboard"
   >
     Moodboard
   </button>
+  
+  <div class="tab-indicator"></div>
 </div>
 
 <style>
@@ -28,10 +30,7 @@ const { active } = Astro.props;
     gap: 48px;
     margin-bottom: 16px;
     position: relative;
-  }
-
-  .tabs button{
-    flex: 1;
+    justify-content: center;
   }
 
   .tab {
@@ -50,24 +49,36 @@ const { active } = Astro.props;
 
   .tab.active {
     color: var(--text-primary);
-    cursor: default;
-  }
-
-  .tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: var(--accent-yellow);
   }
 
   .tab:not(.active):hover {
     color: var(--text-primary);
   }
 
-  .tab:disabled {
-    cursor: default;
+  .tab-indicator {
+    position: absolute;
+    bottom: 0;
+    height: 2px;
+    background-color: var(--accent-yellow);
+    transition: left 0.3s ease, width 0.3s ease;
   }
 </style>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-button') as NodeListOf<HTMLElement>;
+  const tabIndicator = document.querySelector('.tab-indicator') as HTMLElement;
+
+  function updateIndicator() {
+    const activeTab = document.querySelector('.tab-button.active') as HTMLElement;
+    if (activeTab && tabIndicator) {
+      tabIndicator.style.left = activeTab.offsetLeft + 'px';
+      tabIndicator.style.width = activeTab.offsetWidth + 'px';
+    }
+  }
+
+  // Initialize on page load
+  updateIndicator();
+
+  // Update on window resize
+  window.addEventListener('resize', updateIndicator);
+</script>
