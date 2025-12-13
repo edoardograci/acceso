@@ -26,8 +26,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     
-    <!-- DNS Prefetch and Preconnect for R2 images -->
-    <link rel="dns-prefetch" href="https://img.acceso.edoardograci.com" />
+    <!-- Preconnect for R2 images -->
     <link rel="preconnect" href="https://img.acceso.edoardograci.com" crossorigin />
     
     <title>{title}</title>

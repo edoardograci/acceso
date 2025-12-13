@@ -1,0 +1,138 @@
+/* Map page styles */
+.map-page {
+  position: relative;
+  padding-top: var(--navbar-height);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: calc(100vh - var(--navbar-height));
+  background-color: #000;
+}
+
+.city-selector {
+  position: absolute;
+  top: calc(var(--navbar-height) + 16px);
+  right: 16px;
+  z-index: 1000;
+}
+
+#city-select {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 10px 16px;
+  background: var(--gray-dark);
+  border: 1px solid var(--gray-border);
+  color: var(--text-primary);
+  cursor: pointer;
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+#city-select:focus {
+  outline: none;
+  border-color: var(--accent-yellow);
+}
+
+/* Custom Leaflet icon styling */
+:global(.custom-div-icon) {
+  background: none !important;
+  border: none !important;
+}
+
+/* Custom popup styling */
+.custom-popup .leaflet-popup-content-wrapper {
+  background: var(--gray-dark) !important;
+  border: 1px solid var(--gray-border) !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 0 !important;
+  min-width: 200px;
+  max-width: 280px;
+}
+
+.custom-popup .leaflet-popup-tip {
+  background: var(--gray-dark) !important;
+  border: 1px solid var(--gray-border) !important;
+  border-top: none !important;
+  border-right: none !important;
+}
+
+.studio-popup {
+  padding: 12px;
+  color: var(--text-primary) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.studio-popup .popup-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.studio-popup .popup-title {
+  font-family: var(--font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.05em !important;
+  display: block !important;
+  flex: 1;
+}
+
+.studio-popup .popup-body {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+}
+
+.studio-popup .popup-address {
+  font-family: var(--font-sans) !important;
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  line-height: 1.4 !important;
+  flex: 1 !important;
+  margin: 0 !important;
+}
+
+.studio-popup .popup-link {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: var(--accent-yellow) !important;
+  color: var(--text-primary) !important;
+  text-decoration: none !important;
+  flex-shrink: 0 !important;
+  transition: opacity 0.2s ease !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+.studio-popup .popup-link:hover {
+  opacity: 0.8 !important;
+}
+
+.studio-popup .arrow-icon {
+  font-family: var(--font-mono) !important;
+  font-size: 32px !important;
+  font-weight: 200 !important;
+  color: #000 !important;
+  display: block !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+}

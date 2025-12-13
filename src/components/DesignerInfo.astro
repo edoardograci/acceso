@@ -24,7 +24,7 @@ const { studio } = Astro.props;
   {studio.address && (
     <div class="info-section">
       <div class="info-label">Address</div>
-      <a href={`/?address=${encodeURIComponent(studio.address)}`} class="info-value">
+      <a href={`/map?studio=${studio.slug}`} class="info-value">
         {studio.address}
       </a>
     </div>

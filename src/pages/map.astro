@@ -1,14 +1,58 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
+import '../styles/map.css';
+import { initializeMap } from '../lib/map-init.ts';
+import type { Studio } from '../lib/types';
+
+// Fetch studios from static JSON
+let studios: Studio[] = [];
+try {
+  const studiosUrl = new URL('/studios.json', Astro.url.origin);
+  const response = await fetch(studiosUrl.toString());
+  if (response.ok) {
+    studios = await response.json();
+  }
+} catch (e) {
+  console.error('Failed to fetch studios:', e);
+}
+
+// Filter studios with valid coordinates
+const studiosWithCoords = studios.filter(s => s.latitude && s.longitude);
+
+// Get studio slug from URL query parameter
+const studioSlug = Astro.url.searchParams.get('studio') || null;
 ---
 
 <Layout title="Map - Acceso">
   <Navbar />
-  <main style="padding-top: var(--navbar-height); min-height: 100vh;">
-    <div style="padding: 48px var(--spacing-page); text-align: center;">
-      <h1 style="font-size: 48px; margin-bottom: 24px;">Map</h1>
-      <p style="color: var(--text-secondary);">Coming soon...</p>
+  
+  <main class="map-page">
+    <div class="city-selector">
+      <select id="city-select" aria-label="Select city">
+        <option value="Milan">Milan</option>
+        <option value="Seoul">Seoul</option>
+      </select>
     </div>
+
+    <div id="map"></div>
   </main>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Icon map (defines window.iconMap) -->
+  <script src="/js/map-icons.js" is:inline></script>
+
+  <!-- Pass studio data to client script -->
+  <script define:vars={{ studios: studiosWithCoords, studioSlug }}>
+    window.studiosData = studios;
+    window.studioSlug = studioSlug;
+  </script>
+
+  <!-- Initialize map (properly bundled by Astro) -->
+  <script src="../scripts/map-init-client.ts"></script>
 </Layout>
