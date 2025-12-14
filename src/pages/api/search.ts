@@ -50,7 +50,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Step 1: Generate embeddings for query using Cloudflare AI
     const embeddingsResponse = await env.AI.run(
-      '@cf/baai/bge-m3',  // Updated to match your index's embedding model (1024 dims)
+      '@cf/baai/bge-m3',  // Matches your index's embedding model (1024 dims)
       { text: query }
     ) as any;
 
@@ -62,7 +62,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Step 2: Query Vectorize index
     const vectorizeResult = (await env.VECTORIZE.query(queryEmbedding, {
-      topK: 100, // Get many results to group by product
+      topK: 50, // Reduced to comply with limits when returnMetadata: true
       returnMetadata: true,
     })) as VectorizeResult;
 
