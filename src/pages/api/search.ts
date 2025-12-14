@@ -50,7 +50,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Step 1: Generate embeddings for query using Cloudflare AI
     const embeddingsResponse = await env.AI.run(
-      '@cf/baai/bge-base-en-v1.5',
+      '@cf/baai/bge-m3',  // Updated to match your index's embedding model (1024 dims)
       { text: query }
     ) as any;
 
