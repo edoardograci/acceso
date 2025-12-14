@@ -165,47 +165,58 @@ try {
     }
   }
 
-  async function handleSearch(e) {
-    const query = e.target.value.trim()
+async function handleSearch(e) {
+  const query = e.target.value.trim()
 
-    if (!query) {
-      showGrid()
+  if (!query) {
+    showGrid()
+    return
+  }
+
+  if (isSearching) return
+  isSearching = true
+
+  try {
+    if (searchStatus) {
+      searchStatus.textContent = 'Searching...'
+      searchStatus.style.display = 'block'
+    }
+
+    const response = await fetch('/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Server returned error:', errorData.error);  // This will log the specific message, e.g., "Failed to generate embeddings" or TypeError details
+      if (searchStatus) {
+        searchStatus.textContent = 'Search failed: ' + (errorData.error || 'Unknown error');
+        searchStatus.style.color = 'red';  // Optional: Make it visible to user
+      }
+      isSearching = false;
+      return;
+    }
+
+    const data = await response.json()
+
+    if (!data.success || !data.results?.length) {
+      moodboardGrid.style.display = 'none'
+      vectorResults.style.display = 'none'
+      emptyResult.style.display = 'block'
+      searchStatus.style.display = 'none'
+      isSearching = false
       return
     }
 
-    if (isSearching) return
-    isSearching = true
-
-    try {
-      if (searchStatus) {
-        searchStatus.textContent = 'Searching...'
-        searchStatus.style.display = 'block'
-      }
-
-      const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
-      })
-
-      const data = await response.json()
-
-      if (!data.success || !data.results?.length) {
-        moodboardGrid.style.display = 'none'
-        vectorResults.style.display = 'none'
-        emptyResult.style.display = 'block'
-        searchStatus.style.display = 'none'
-        isSearching = false
-        return
-      }
-
-      displayVectorResults(data.results)
-    } catch (err) {
-      console.error(err)
-      showGrid()
-      isSearching = false
-    }
+    displayVectorResults(data.results)
+  } catch (err) {
+    console.error('Client-side error:', err)
+    showGrid()
+    isSearching = false
   }
+}
 
   function displayVectorResults(results) {
     vectorResultsGrid.innerHTML = ''
