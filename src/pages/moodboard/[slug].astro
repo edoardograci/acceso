@@ -22,7 +22,6 @@ interface MoodboardItem {
   client: string | null;
   link: string | null;
   city: string | null;
-  keywords: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -175,13 +174,6 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
             <div class="info-section">
               <div class="info-label">Location</div>
               <div class="info-value">{item.city}</div>
-            </div>
-          )}
-
-          {item.keywords && (
-            <div class="info-section">
-              <div class="info-label">Keywords</div>
-              <div class="info-value">{item.keywords}</div>
             </div>
           )}
 
