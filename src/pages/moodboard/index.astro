@@ -29,6 +29,7 @@ interface MoodboardItem {
 }
 
 let moodboardItems: MoodboardItem[] = [];
+let moodboardMap: Map<string, MoodboardItem> = new Map();
 let error = null;
 
 try {
@@ -36,6 +37,11 @@ try {
   const response = await fetch(moodboardUrl.toString());
   if (!response.ok) throw new Error('Failed to load moodboard data');
   moodboardItems = await response.json();
+  
+  // Create product_id -> item mapping for search results
+  for (const item of moodboardItems) {
+    moodboardMap.set(item.id, item);
+  }
 } catch (e) {
   error = e;
   console.error('Failed to fetch moodboard:', e);
@@ -67,9 +73,10 @@ try {
             <input 
               type="text" 
               id="search-input" 
-              placeholder="Search by name or designer..."
+              placeholder="Search by name, designer, or concept..."
               aria-label="Search moodboard"
             />
+            <div id="search-status" class="search-status" style="display: none;"></div>
           </div>
         </div>
 
@@ -79,6 +86,7 @@ try {
               <a 
                 href={`/moodboard/${item.slug}`} 
                 class="moodboard-item"
+                data-product-id={item.id}
                 data-name={item.name.toLowerCase()}
                 data-designer={item.designer ? item.designer.toLowerCase() : ''}
               >
@@ -97,6 +105,14 @@ try {
           ))}
         </div>
 
+        <div id="vector-results" class="vector-results" style="display: none;">
+          <div class="vector-results-header">
+            <h2>Search Results</h2>
+            <button id="clear-search" class="clear-search-btn">Clear Search</button>
+          </div>
+          <div class="moodboard-grid" id="vector-results-grid"></div>
+        </div>
+
         <div class="empty-result" id="empty-result" style="display: none;">
           <p>No projects found matching your search.</p>
         </div>
@@ -105,55 +121,124 @@ try {
   </main>
 </Layout>
 
-<script>
-  const searchInput = document.getElementById('search-input') as HTMLInputElement;
-  const moodboardItems = document.querySelectorAll('.moodboard-item') as NodeListOf<HTMLElement>;
-  const moodboardGrid = document.getElementById('moodboard-grid');
-  const emptyResult = document.getElementById('empty-result');
-  const itemCount = document.getElementById('item-count');
+<script define:vars={{ moodboardItems }}>
+  const moodboardItemsForSearch = moodboardItems
+  const itemsMap = new Map()
 
-  let currentSearch = '';
+  moodboardItemsForSearch.forEach((item) => {
+    itemsMap.set(item.id, item)
+  })
 
-  function filterMoodboard() {
-    let visibleCount = 0;
+  const searchInput = document.getElementById('search-input')
+  const moodboardGrid = document.getElementById('moodboard-grid')
+  const vectorResults = document.getElementById('vector-results')
+  const vectorResultsGrid = document.getElementById('vector-results-grid')
+  const emptyResult = document.getElementById('empty-result')
+  const clearSearchBtn = document.getElementById('clear-search')
+  const searchStatus = document.getElementById('search-status')
 
-    moodboardItems.forEach(item => {
-      const name = item.dataset.name || '';
-      const designer = item.dataset.designer || '';
+  let isSearching = false
 
-      const matchesSearch = name.includes(currentSearch.toLowerCase()) || 
-                           designer.includes(currentSearch.toLowerCase());
+  function showGrid() {
+    if (moodboardGrid) moodboardGrid.style.display = ''
+    if (vectorResults) vectorResults.style.display = 'none'
+    if (emptyResult) emptyResult.style.display = 'none'
+    if (searchStatus) searchStatus.style.display = 'none'
+  }
 
-      if (matchesSearch) {
-        item.style.display = '';
-        visibleCount++;
-      } else {
-        item.style.display = 'none';
-      }
-    });
+  function clearSearch() {
+    if (searchInput) searchInput.value = ''
+    showGrid()
+  }
 
-    // Update count
-    if (itemCount) {
-      itemCount.textContent = `${visibleCount} Project${visibleCount !== 1 ? 's' : ''}`;
-    }
+  clearSearchBtn?.addEventListener('click', clearSearch)
 
-    // Show/hide empty state
-    if (emptyResult && moodboardGrid) {
-      if (visibleCount === 0) {
-        moodboardGrid.style.display = 'none';
-        emptyResult.style.display = 'block';
-      } else {
-        moodboardGrid.style.display = 'grid';
-        emptyResult.style.display = 'none';
-      }
+  if (searchInput) {
+    searchInput.addEventListener('input', debounce(handleSearch, 300))
+  }
+
+  function debounce(fn, delay) {
+    let timeoutId
+    return (...args) => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => fn(...args), delay)
     }
   }
 
-  // Search input handler
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      currentSearch = (e.target as HTMLInputElement).value;
-      filterMoodboard();
-    });
+  async function handleSearch(e) {
+    const query = e.target.value.trim()
+
+    if (!query) {
+      showGrid()
+      return
+    }
+
+    if (isSearching) return
+    isSearching = true
+
+    try {
+      if (searchStatus) {
+        searchStatus.textContent = 'Searching...'
+        searchStatus.style.display = 'block'
+      }
+
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      })
+
+      const data = await response.json()
+
+      if (!data.success || !data.results?.length) {
+        moodboardGrid.style.display = 'none'
+        vectorResults.style.display = 'none'
+        emptyResult.style.display = 'block'
+        searchStatus.style.display = 'none'
+        isSearching = false
+        return
+      }
+
+      displayVectorResults(data.results)
+    } catch (err) {
+      console.error(err)
+      showGrid()
+      isSearching = false
+    }
+  }
+
+  function displayVectorResults(results) {
+    vectorResultsGrid.innerHTML = ''
+
+    results.forEach((result) => {
+      const item = itemsMap.get(result.product_id)
+      if (!item) return
+
+      const card = document.createElement('a')
+      card.href = `/moodboard/${item.slug}`
+      card.className = 'moodboard-item vector-result-item'
+
+      const percentage = Math.round(result.score * 100)
+      const imageUrl = item.cover || result.image_url
+
+      card.innerHTML = `
+        <div style="position: relative;">
+          <img src="${imageUrl}" alt="${item.name}" loading="lazy" />
+          <div class="relevance-badge">${percentage}%</div>
+        </div>
+        <div class="item-overlay">
+          <h3>${item.name}</h3>
+          ${item.designer ? `<p>${item.designer}</p>` : ''}
+        </div>
+      `
+
+      vectorResultsGrid.appendChild(card)
+    })
+
+    moodboardGrid.style.display = 'none'
+    vectorResults.style.display = 'block'
+    emptyResult.style.display = 'none'
+    searchStatus.style.display = 'none'
+    isSearching = false
   }
 </script>
