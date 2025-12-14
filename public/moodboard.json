@@ -1,0 +1,901 @@
+[
+  {
+    "id": "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009",
+    "slug": "thumb",
+    "name": "Thumb",
+    "designer": "Giacomo Moor",
+    "year": "2024",
+    "client": "QuadroDesign",
+    "link": "https://www.giacomoor.com/collaborations/thumb/",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-29T12:56:00.000Z",
+    "updated_at": "2025-11-05T13:47:00.000Z",
+    "images": [
+      {
+        "id": "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009-img-0",
+        "product_id": "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-804c-9d8d-eb3b7e2a3009/0-d92dec1e.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-804c-9d8d-eb3b7e2a3009/0-d92dec1e.webp",
+        "position": "0",
+        "created_at": "2025-12-14T20:00:11.346Z"
+      },
+      {
+        "id": "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009-img-1",
+        "product_id": "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-804c-9d8d-eb3b7e2a3009/1-ef566463.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-804c-9d8d-eb3b7e2a3009/1-ef566463.webp",
+        "position": "1",
+        "created_at": "2025-12-14T20:00:12.649Z"
+      },
+      {
+        "id": "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009-img-2",
+        "product_id": "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-804c-9d8d-eb3b7e2a3009/2-c40b42c5.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-804c-9d8d-eb3b7e2a3009/2-c40b42c5.webp",
+        "position": "2",
+        "created_at": "2025-12-14T20:00:14.745Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2210d7da-2e8c-804c-9d8d-eb3b7e2a3009/0-d92dec1e.webp"
+  },
+  {
+    "id": "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f",
+    "slug": "nena-lounge",
+    "name": "Nena Lounge",
+    "designer": "Lanzavecchia + Wai",
+    "year": "2023",
+    "client": "Zanotta",
+    "link": "https://www.lanzavecchia-wai.com/work/nena-lounge/",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-29T12:51:00.000Z",
+    "updated_at": "2025-11-05T13:47:00.000Z",
+    "images": [
+      {
+        "id": "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f-img-0",
+        "product_id": "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-80f9-a76d-fc9e40a59f2f/0-33b56ec1.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-80f9-a76d-fc9e40a59f2f/0-33b56ec1.webp",
+        "position": "0",
+        "created_at": "2025-12-14T20:00:21.103Z"
+      },
+      {
+        "id": "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f-img-1",
+        "product_id": "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-80f9-a76d-fc9e40a59f2f/1-64ed4d7f.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-80f9-a76d-fc9e40a59f2f/1-64ed4d7f.webp",
+        "position": "1",
+        "created_at": "2025-12-14T20:00:22.674Z"
+      },
+      {
+        "id": "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f-img-2",
+        "product_id": "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-80f9-a76d-fc9e40a59f2f/2-cad76929.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-80f9-a76d-fc9e40a59f2f/2-cad76929.webp",
+        "position": "2",
+        "created_at": "2025-12-14T20:00:23.698Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2210d7da-2e8c-80f9-a76d-fc9e40a59f2f/0-33b56ec1.webp"
+  },
+  {
+    "id": "2210d7da-2e8c-80bb-bd05-d0724b60fdc3",
+    "slug": "ipno",
+    "name": "IPNO",
+    "designer": "Studio Finemateria",
+    "year": "2023",
+    "client": "Campeggi",
+    "link": "https://www.finemateria.com/archive/ipno/",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-29T11:02:00.000Z",
+    "updated_at": "2025-11-05T13:47:00.000Z",
+    "images": [
+      {
+        "id": "2210d7da-2e8c-80bb-bd05-d0724b60fdc3-img-0",
+        "product_id": "2210d7da-2e8c-80bb-bd05-d0724b60fdc3",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/0-3867736a.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/0-3867736a.webp",
+        "position": "0",
+        "created_at": "2025-12-14T20:00:16.039Z"
+      },
+      {
+        "id": "2210d7da-2e8c-80bb-bd05-d0724b60fdc3-img-1",
+        "product_id": "2210d7da-2e8c-80bb-bd05-d0724b60fdc3",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/1-a20a0570.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/1-a20a0570.webp",
+        "position": "1",
+        "created_at": "2025-12-14T20:00:17.309Z"
+      },
+      {
+        "id": "2210d7da-2e8c-80bb-bd05-d0724b60fdc3-img-2",
+        "product_id": "2210d7da-2e8c-80bb-bd05-d0724b60fdc3",
+        "image_url": "https://mood.acceso.design/moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/2-cd73e78b.webp",
+        "r2_key": "moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/2-cd73e78b.webp",
+        "position": "2",
+        "created_at": "2025-12-14T20:00:18.323Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/0-3867736a.webp"
+  },
+  {
+    "id": "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e",
+    "slug": "unfold",
+    "name": "Unfold",
+    "designer": "Andrea Mancuso Studio",
+    "year": "2023",
+    "client": null,
+    "link": "https://andreamancuso.com/selected-works/unfold-andrea-mancuso",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-08T12:26:00.000Z",
+    "updated_at": "2025-12-13T19:16:00.000Z",
+    "images": [
+      {
+        "id": "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e-img-0",
+        "product_id": "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e/0-5e46a51c.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e/0-5e46a51c.webp",
+        "position": "0",
+        "created_at": "2025-12-14T20:00:02.144Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e-img-1",
+        "product_id": "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e/1-425c4810.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e/1-425c4810.webp",
+        "position": "1",
+        "created_at": "2025-12-14T20:00:05.584Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e-img-2",
+        "product_id": "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e/2-f94384ea.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e/2-f94384ea.webp",
+        "position": "2",
+        "created_at": "2025-12-14T20:00:08.249Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e/0-5e46a51c.webp"
+  },
+  {
+    "id": "20c0d7da-2e8c-804b-a39e-defbab402039",
+    "slug": "tovaglia",
+    "name": "Tovaglia",
+    "designer": "Andrea Mancuso Studio",
+    "year": "2021",
+    "client": "Marimar Stone",
+    "link": "https://andreamancuso.com/selected-works/tovaglia-andrea-mancuso",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-08T12:22:00.000Z",
+    "updated_at": "2025-11-05T13:54:00.000Z",
+    "images": [
+      {
+        "id": "20c0d7da-2e8c-804b-a39e-defbab402039-img-0",
+        "product_id": "20c0d7da-2e8c-804b-a39e-defbab402039",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/0-a9bf4697.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/0-a9bf4697.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:52.354Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-804b-a39e-defbab402039-img-1",
+        "product_id": "20c0d7da-2e8c-804b-a39e-defbab402039",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/1-dd2de1db.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/1-dd2de1db.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:56.577Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-804b-a39e-defbab402039-img-2",
+        "product_id": "20c0d7da-2e8c-804b-a39e-defbab402039",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/2-e0954127.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/2-e0954127.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:58.595Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-804b-a39e-defbab402039-img-3",
+        "product_id": "20c0d7da-2e8c-804b-a39e-defbab402039",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/3-12d49430.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/3-12d49430.webp",
+        "position": "3",
+        "created_at": "2025-12-14T20:00:00.584Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-804b-a39e-defbab402039/0-a9bf4697.webp"
+  },
+  {
+    "id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc",
+    "slug": "medameda",
+    "name": "Medameda",
+    "designer": "Francesco Meda",
+    "year": "2020",
+    "client": "Zucchetti Design",
+    "link": "https://www.francescomeda.com/medameda-per-zucchetti",
+    "city": "Milan",
+    "keywords": "faucet,tap,bathroom,metal,graphite,orange,monochrome,minimalist,industrial,threehole,spout,lever,gunmetal,satin,matte,burntorange,shadow,cleanlines,powdercoat,contrast",
+    "status": "Published",
+    "created_at": "2025-06-08T12:01:00.000Z",
+    "updated_at": "2025-11-05T13:54:00.000Z",
+    "images": [
+      {
+        "id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-0",
+        "product_id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/0-abb27cab.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/0-abb27cab.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:45.925Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-1",
+        "product_id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/1-b416be36.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/1-b416be36.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:46.663Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-2",
+        "product_id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/2-edaf6ded.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/2-edaf6ded.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:47.426Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-3",
+        "product_id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/3-b35aa380.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/3-b35aa380.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:48.002Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-4",
+        "product_id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/4-fafa370c.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/4-fafa370c.webp",
+        "position": "4",
+        "created_at": "2025-12-14T19:59:48.667Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-8032-8692-d6fdbabcf2dc/0-abb27cab.webp"
+  },
+  {
+    "id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26",
+    "slug": "gift",
+    "name": "Gift",
+    "designer": "Brian Sironi",
+    "year": "2022",
+    "client": "Ichendorf Milano",
+    "link": "https://www.briansironi.it/work/gift/",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-08T11:22:00.000Z",
+    "updated_at": "2025-11-05T13:54:00.000Z",
+    "images": [
+      {
+        "id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-0",
+        "product_id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/0-6d2ce2b1.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/0-6d2ce2b1.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:39.939Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-1",
+        "product_id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/1-c6806e72.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/1-c6806e72.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:40.989Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-2",
+        "product_id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/2-a1b0f45c.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/2-a1b0f45c.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:42.155Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-3",
+        "product_id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/3-a06384b6.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/3-a06384b6.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:43.180Z"
+      },
+      {
+        "id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-4",
+        "product_id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26",
+        "image_url": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/4-56cc085a.webp",
+        "r2_key": "moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/4-56cc085a.webp",
+        "position": "4",
+        "created_at": "2025-12-14T19:59:44.174Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/20c0d7da-2e8c-800b-a0fe-c7a8072e0f26/0-6d2ce2b1.webp"
+  },
+  {
+    "id": "2090d7da-2e8c-80c7-bef7-e171f97c7446",
+    "slug": "hug",
+    "name": "Hug",
+    "designer": "Giulio Iacchetti Studio",
+    "year": "2022",
+    "client": "Fantin",
+    "link": "https://www.giulioiacchetti.com/?p=6870&lang=it",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-05T22:09:00.000Z",
+    "updated_at": "2025-11-05T13:47:00.000Z",
+    "images": [
+      {
+        "id": "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-0",
+        "product_id": "2090d7da-2e8c-80c7-bef7-e171f97c7446",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/0-389a86ea.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/0-389a86ea.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:33.619Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-1",
+        "product_id": "2090d7da-2e8c-80c7-bef7-e171f97c7446",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/1-b406ebfd.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/1-b406ebfd.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:34.208Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-2",
+        "product_id": "2090d7da-2e8c-80c7-bef7-e171f97c7446",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/2-1ff116ac.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/2-1ff116ac.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:34.864Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-3",
+        "product_id": "2090d7da-2e8c-80c7-bef7-e171f97c7446",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/3-e7bb0a25.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/3-e7bb0a25.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:35.438Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80c7-bef7-e171f97c7446/0-389a86ea.webp"
+  },
+  {
+    "id": "2090d7da-2e8c-8023-bb46-d53fa805ae17",
+    "slug": "h387",
+    "name": "H387",
+    "designer": "Studio Klass",
+    "year": "2024",
+    "client": "Valli, Fusital",
+    "link": "https://www.studioklass.com/project/studio-klass-h387",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-05T22:01:00.000Z",
+    "updated_at": "2025-11-05T13:47:00.000Z",
+    "images": [
+      {
+        "id": "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-0",
+        "product_id": "2090d7da-2e8c-8023-bb46-d53fa805ae17",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/0-2c7d82ce.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/0-2c7d82ce.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:17.664Z"
+      },
+      {
+        "id": "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-1",
+        "product_id": "2090d7da-2e8c-8023-bb46-d53fa805ae17",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/1-7181fc09.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/1-7181fc09.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:18.626Z"
+      },
+      {
+        "id": "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-2",
+        "product_id": "2090d7da-2e8c-8023-bb46-d53fa805ae17",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/2-85992b6f.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/2-85992b6f.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:19.483Z"
+      },
+      {
+        "id": "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-3",
+        "product_id": "2090d7da-2e8c-8023-bb46-d53fa805ae17",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/3-09421b02.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/3-09421b02.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:20.117Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/0-2c7d82ce.webp"
+  },
+  {
+    "id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1",
+    "slug": "001-ert-chair",
+    "name": "001 ert chair",
+    "designer": "studioutte",
+    "year": "2021",
+    "client": null,
+    "link": "https://www.studioutte.com/001-ert-chair/",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-05T21:59:00.000Z",
+    "updated_at": "2025-11-05T13:47:00.000Z",
+    "images": [
+      {
+        "id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-0",
+        "product_id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/0-814bceb7.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/0-814bceb7.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:30.502Z"
+      },
+      {
+        "id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-1",
+        "product_id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/1-8d73ece3.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/1-8d73ece3.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:31.274Z"
+      },
+      {
+        "id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-2",
+        "product_id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/2-c611da8e.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/2-c611da8e.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:31.846Z"
+      },
+      {
+        "id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-3",
+        "product_id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/3-0324f3b0.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/3-0324f3b0.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:32.412Z"
+      },
+      {
+        "id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-4",
+        "product_id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/4-d7569f43.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/4-d7569f43.webp",
+        "position": "4",
+        "created_at": "2025-12-14T19:59:32.973Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-809c-8b1e-f4b066c030e1/0-814bceb7.webp"
+  },
+  {
+    "id": "2090d7da-2e8c-8035-a363-e667fb06b0e4",
+    "slug": "portofino",
+    "name": "Portofino",
+    "designer": "Valerio Sommella Design Studio",
+    "year": "2023",
+    "client": "Nemo",
+    "link": "https://www.sommella.com/portofino/",
+    "city": "Milan",
+    "keywords": "floorlamp,ambient,minimalist,metal,green,cone,disc,marble,base,uplight,modern,sculptural,gradient,deepgreen,veined,stone,powdercoated,satin,softglow,matte",
+    "status": "Published",
+    "created_at": "2025-06-05T21:34:00.000Z",
+    "updated_at": "2025-11-05T13:47:00.000Z",
+    "images": [
+      {
+        "id": "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-0",
+        "product_id": "2090d7da-2e8c-8035-a363-e667fb06b0e4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/0-059459eb.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/0-059459eb.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:20.885Z"
+      },
+      {
+        "id": "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-1",
+        "product_id": "2090d7da-2e8c-8035-a363-e667fb06b0e4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/1-45779bc0.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/1-45779bc0.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:22.403Z"
+      },
+      {
+        "id": "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-2",
+        "product_id": "2090d7da-2e8c-8035-a363-e667fb06b0e4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/2-9c2673f7.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/2-9c2673f7.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:23.677Z"
+      },
+      {
+        "id": "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-3",
+        "product_id": "2090d7da-2e8c-8035-a363-e667fb06b0e4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/3-27ddb84c.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/3-27ddb84c.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:25.264Z"
+      },
+      {
+        "id": "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-4",
+        "product_id": "2090d7da-2e8c-8035-a363-e667fb06b0e4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/4-edbce534.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/4-edbce534.webp",
+        "position": "4",
+        "created_at": "2025-12-14T19:59:26.597Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/0-059459eb.webp"
+  },
+  {
+    "id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090",
+    "slug": "thula",
+    "name": "THULA",
+    "designer": "Federica Biasi Studio",
+    "year": "2021",
+    "client": "Tooy",
+    "link": "https://www.federicabiasi.com/works/thula/",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-05T21:24:00.000Z",
+    "updated_at": "2025-12-13T19:14:00.000Z",
+    "images": [
+      {
+        "id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-0",
+        "product_id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/0-fdd97724.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/0-fdd97724.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:36.131Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-1",
+        "product_id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/1-2ede5ab5.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/1-2ede5ab5.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:36.717Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-2",
+        "product_id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/2-4f8714cb.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/2-4f8714cb.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:37.322Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-3",
+        "product_id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/3-74a564b7.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/3-74a564b7.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:38.367Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80e1-aab1-eb8e27d1a090/0-fdd97724.webp"
+  },
+  {
+    "id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b",
+    "slug": "rue",
+    "name": "Rue",
+    "designer": "Federica Biasi Studio",
+    "year": "2021",
+    "client": "Mingardo",
+    "link": "https://www.federicabiasi.com/works/rue/",
+    "city": "Milan",
+    "keywords": "candleholder,suspension,arched,metal,brushed,minimalist,ritual,sconce,linear,balanced,polished,contemporary,silver,nickel,matte,wax,warmwhite,smooth,softsheen,refined",
+    "status": "Published",
+    "created_at": "2025-06-05T21:07:00.000Z",
+    "updated_at": "2025-11-05T13:46:00.000Z",
+    "images": [
+      {
+        "id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-0",
+        "product_id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/0-e5a16f31.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/0-e5a16f31.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:27.701Z"
+      },
+      {
+        "id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-1",
+        "product_id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/1-896e9a00.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/1-896e9a00.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:28.330Z"
+      },
+      {
+        "id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-2",
+        "product_id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/2-f9bcf346.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/2-f9bcf346.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:28.999Z"
+      },
+      {
+        "id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-3",
+        "product_id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/3-8ccd4cb6.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/3-8ccd4cb6.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:29.782Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-805c-a7dd-f9191a805f3b/0-e5a16f31.webp"
+  },
+  {
+    "id": "2070d7da-2e8c-8074-baa6-db0d2938f978",
+    "slug": "taco",
+    "name": "Taco",
+    "designer": "Alessandro Stabile Design Studio",
+    "year": "2023",
+    "client": "LaCividina",
+    "link": "https://www.alessandrostabile.com/projects/taco/",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-03T20:18:00.000Z",
+    "updated_at": "2025-12-13T19:14:00.000Z",
+    "images": [
+      {
+        "id": "2070d7da-2e8c-8074-baa6-db0d2938f978-img-0",
+        "product_id": "2070d7da-2e8c-8074-baa6-db0d2938f978",
+        "image_url": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/0-31b2b09c.webp",
+        "r2_key": "moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/0-31b2b09c.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:10.077Z"
+      },
+      {
+        "id": "2070d7da-2e8c-8074-baa6-db0d2938f978-img-1",
+        "product_id": "2070d7da-2e8c-8074-baa6-db0d2938f978",
+        "image_url": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/1-0447def5.webp",
+        "r2_key": "moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/1-0447def5.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:12.649Z"
+      },
+      {
+        "id": "2070d7da-2e8c-8074-baa6-db0d2938f978-img-2",
+        "product_id": "2070d7da-2e8c-8074-baa6-db0d2938f978",
+        "image_url": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/2-4ad96d8d.webp",
+        "r2_key": "moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/2-4ad96d8d.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:14.156Z"
+      },
+      {
+        "id": "2070d7da-2e8c-8074-baa6-db0d2938f978-img-3",
+        "product_id": "2070d7da-2e8c-8074-baa6-db0d2938f978",
+        "image_url": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/3-ca1e0ae8.webp",
+        "r2_key": "moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/3-ca1e0ae8.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:59:15.783Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/0-31b2b09c.webp"
+  },
+  {
+    "id": "2070d7da-2e8c-8063-be37-de7de2f512d8",
+    "slug": "acquavite",
+    "name": "Acquavite",
+    "designer": "Alessandro Stabile Design Studio",
+    "year": "2024",
+    "client": "Venedia",
+    "link": "https://www.alessandrostabile.com/projects/acquavite/",
+    "city": "Milan",
+    "keywords": "bench,outdoor,minimalist,curved,green,wood,stained,black,metal,slender,water,reflective,woodgrain,matte,algae,wet,shoreline,natural,softcurves,tranquil",
+    "status": "Published",
+    "created_at": "2025-06-03T20:14:00.000Z",
+    "updated_at": "2025-11-05T13:47:00.000Z",
+    "images": [
+      {
+        "id": "2070d7da-2e8c-8063-be37-de7de2f512d8-img-0",
+        "product_id": "2070d7da-2e8c-8063-be37-de7de2f512d8",
+        "image_url": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8063-be37-de7de2f512d8/0-5b68dabf.webp",
+        "r2_key": "moodboard/2070d7da-2e8c-8063-be37-de7de2f512d8/0-5b68dabf.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:05.331Z"
+      },
+      {
+        "id": "2070d7da-2e8c-8063-be37-de7de2f512d8-img-1",
+        "product_id": "2070d7da-2e8c-8063-be37-de7de2f512d8",
+        "image_url": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8063-be37-de7de2f512d8/1-781c5f98.webp",
+        "r2_key": "moodboard/2070d7da-2e8c-8063-be37-de7de2f512d8/1-781c5f98.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:07.029Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8063-be37-de7de2f512d8/0-5b68dabf.webp"
+  },
+  {
+    "id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7",
+    "slug": "kyoto",
+    "name": "Kyoto",
+    "designer": "Simone Bonanni Studio",
+    "year": "2021",
+    "client": "Pianca & Partners",
+    "link": "https://simonebonanni.com/works/kyoto-pianca-2021",
+    "city": "Milan",
+    "keywords": "sideboard,storage,cabinet,minimalist,rectilinear,red,lacquered,wood,metal,contrast,shadowgap,flush,black,twotone,glossy,smooth,matte,grainless,satin,varnished",
+    "status": "Published",
+    "created_at": "2025-06-01T19:08:00.000Z",
+    "updated_at": "2025-11-05T13:46:00.000Z",
+    "images": [
+      {
+        "id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-0",
+        "product_id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/0-27cc9e7b.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/0-27cc9e7b.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:58:48.343Z"
+      },
+      {
+        "id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-1",
+        "product_id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/1-10a888e8.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/1-10a888e8.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:58:49.431Z"
+      },
+      {
+        "id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-2",
+        "product_id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/2-c369180c.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/2-c369180c.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:58:50.291Z"
+      },
+      {
+        "id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-3",
+        "product_id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/3-3cc8f7d5.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/3-3cc8f7d5.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:58:53.461Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2050d7da-2e8c-804b-b19b-f2f6ccaba5b7/0-27cc9e7b.webp"
+  },
+  {
+    "id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592",
+    "slug": "rotonda-tan-brown",
+    "name": "Rotonda Tan Brown",
+    "designer": "CARA \\ DAVIDE",
+    "year": "2019",
+    "client": "Uniqka",
+    "link": "https://www.caradavide.com/rotonda-tan-brown-1",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-01T18:53:00.000Z",
+    "updated_at": "2025-11-05T13:46:00.000Z",
+    "images": [
+      {
+        "id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-0",
+        "product_id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/0-75f3b9ea.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/0-75f3b9ea.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:58:54.880Z"
+      },
+      {
+        "id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-1",
+        "product_id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/1-ea6082dc.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/1-ea6082dc.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:58:56.449Z"
+      },
+      {
+        "id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-2",
+        "product_id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/2-869d2033.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/2-869d2033.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:58:57.769Z"
+      },
+      {
+        "id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-3",
+        "product_id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/3-36122962.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/3-36122962.webp",
+        "position": "3",
+        "created_at": "2025-12-14T19:58:58.555Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2050d7da-2e8c-805f-9df4-e7b4ef7f3592/0-75f3b9ea.webp"
+  },
+  {
+    "id": "2050d7da-2e8c-806e-bc17-eb46adb81d15",
+    "slug": "marmo-bolli",
+    "name": "Marmo Bolli",
+    "designer": "CARA \\ DAVIDE",
+    "year": "2024",
+    "client": "Sfrido Estate",
+    "link": "https://www.caradavide.com/marmobolli",
+    "city": "Milan",
+    "keywords": null,
+    "status": "Published",
+    "created_at": "2025-06-01T18:48:00.000Z",
+    "updated_at": "2025-12-13T19:15:00.000Z",
+    "images": [
+      {
+        "id": "2050d7da-2e8c-806e-bc17-eb46adb81d15-img-0",
+        "product_id": "2050d7da-2e8c-806e-bc17-eb46adb81d15",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-806e-bc17-eb46adb81d15/0-97067e89.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-806e-bc17-eb46adb81d15/0-97067e89.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:59:00.111Z"
+      },
+      {
+        "id": "2050d7da-2e8c-806e-bc17-eb46adb81d15-img-1",
+        "product_id": "2050d7da-2e8c-806e-bc17-eb46adb81d15",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-806e-bc17-eb46adb81d15/1-9140a26c.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-806e-bc17-eb46adb81d15/1-9140a26c.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:59:00.968Z"
+      },
+      {
+        "id": "2050d7da-2e8c-806e-bc17-eb46adb81d15-img-2",
+        "product_id": "2050d7da-2e8c-806e-bc17-eb46adb81d15",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-806e-bc17-eb46adb81d15/2-32279d2a.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-806e-bc17-eb46adb81d15/2-32279d2a.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:59:02.155Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2050d7da-2e8c-806e-bc17-eb46adb81d15/0-97067e89.webp"
+  },
+  {
+    "id": "2050d7da-2e8c-800e-9c17-c7fbe4211dd0",
+    "slug": "wave-tray",
+    "name": "WAVE TRAY",
+    "designer": "CARA \\ DAVIDE",
+    "year": "2021",
+    "client": "Muuto",
+    "link": "https://www.caradavide.com/wave-tray",
+    "city": "Milan",
+    "keywords": "tray,centerpiece,stainlesssteel,rippled,wavy,reflective,sculptural,tabletop,wood,balls,minimalist,decor,polished,silver,mirror,highgloss,corrugated,undulating,shiny,metallic",
+    "status": "Published",
+    "created_at": "2025-06-01T18:23:00.000Z",
+    "updated_at": "2025-11-05T13:46:00.000Z",
+    "images": [
+      {
+        "id": "2050d7da-2e8c-800e-9c17-c7fbe4211dd0-img-0",
+        "product_id": "2050d7da-2e8c-800e-9c17-c7fbe4211dd0",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-800e-9c17-c7fbe4211dd0/0-4763837b.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-800e-9c17-c7fbe4211dd0/0-4763837b.webp",
+        "position": "0",
+        "created_at": "2025-12-14T19:58:11.961Z"
+      },
+      {
+        "id": "2050d7da-2e8c-800e-9c17-c7fbe4211dd0-img-1",
+        "product_id": "2050d7da-2e8c-800e-9c17-c7fbe4211dd0",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-800e-9c17-c7fbe4211dd0/1-20b19ac4.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-800e-9c17-c7fbe4211dd0/1-20b19ac4.webp",
+        "position": "1",
+        "created_at": "2025-12-14T19:58:25.307Z"
+      },
+      {
+        "id": "2050d7da-2e8c-800e-9c17-c7fbe4211dd0-img-2",
+        "product_id": "2050d7da-2e8c-800e-9c17-c7fbe4211dd0",
+        "image_url": "https://mood.acceso.design/moodboard/2050d7da-2e8c-800e-9c17-c7fbe4211dd0/2-cdcdc974.webp",
+        "r2_key": "moodboard/2050d7da-2e8c-800e-9c17-c7fbe4211dd0/2-cdcdc974.webp",
+        "position": "2",
+        "created_at": "2025-12-14T19:58:45.988Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2050d7da-2e8c-800e-9c17-c7fbe4211dd0/0-4763837b.webp"
+  }
+]

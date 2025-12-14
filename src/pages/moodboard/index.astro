@@ -1,0 +1,160 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import '../../styles/moodboard.css';
+
+interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  r2_key: string;
+  position: number;
+  created_at: string;
+}
+
+interface MoodboardItem {
+  id: string;
+  slug: string;
+  name: string;
+  designer: string | null;
+  year: string | null;
+  client: string | null;
+  link: string | null;
+  city: string | null;
+  keywords: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  images: ProductImage[];
+  cover: string | null;
+}
+
+let moodboardItems: MoodboardItem[] = [];
+let error = null;
+
+try {
+  const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
+  const response = await fetch(moodboardUrl.toString());
+  if (!response.ok) throw new Error('Failed to load moodboard data');
+  moodboardItems = await response.json();
+} catch (e) {
+  error = e;
+  console.error('Failed to fetch moodboard:', e);
+}
+---
+
+<Layout title="Moodboard - Acceso">
+  <Navbar />
+  
+  <main class="moodboard-page">
+    <div class="moodboard-header">
+      <h1>Moodboard</h1>
+      {!error && <p id="item-count">{moodboardItems.length} Projects</p>}
+    </div>
+
+    {error && (
+      <div class="error-state">
+        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Moodboard</h2>
+        <p style="color: var(--text-secondary);">
+          Unable to load moodboard data. Please try again later.
+        </p>
+      </div>
+    )}
+
+    {!error && (
+      <>
+        <div class="filters-container">
+          <div class="search-bar">
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Search by name or designer..."
+              aria-label="Search moodboard"
+            />
+          </div>
+        </div>
+
+        <div class="moodboard-grid" id="moodboard-grid">
+          {moodboardItems.map(item => (
+            item.cover && (
+              <a 
+                href={`/moodboard/${item.slug}`} 
+                class="moodboard-item"
+                data-name={item.name.toLowerCase()}
+                data-designer={item.designer ? item.designer.toLowerCase() : ''}
+              >
+                <img 
+                  src={item.cover} 
+                  alt={item.name}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div class="item-overlay">
+                  <h3>{item.name}</h3>
+                  {item.designer && <p>{item.designer}</p>}
+                </div>
+              </a>
+            )
+          ))}
+        </div>
+
+        <div class="empty-result" id="empty-result" style="display: none;">
+          <p>No projects found matching your search.</p>
+        </div>
+      </>
+    )}
+  </main>
+</Layout>
+
+<script>
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const moodboardItems = document.querySelectorAll('.moodboard-item') as NodeListOf<HTMLElement>;
+  const moodboardGrid = document.getElementById('moodboard-grid');
+  const emptyResult = document.getElementById('empty-result');
+  const itemCount = document.getElementById('item-count');
+
+  let currentSearch = '';
+
+  function filterMoodboard() {
+    let visibleCount = 0;
+
+    moodboardItems.forEach(item => {
+      const name = item.dataset.name || '';
+      const designer = item.dataset.designer || '';
+
+      const matchesSearch = name.includes(currentSearch.toLowerCase()) || 
+                           designer.includes(currentSearch.toLowerCase());
+
+      if (matchesSearch) {
+        item.style.display = '';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    // Update count
+    if (itemCount) {
+      itemCount.textContent = `${visibleCount} Project${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    // Show/hide empty state
+    if (emptyResult && moodboardGrid) {
+      if (visibleCount === 0) {
+        moodboardGrid.style.display = 'none';
+        emptyResult.style.display = 'block';
+      } else {
+        moodboardGrid.style.display = 'grid';
+        emptyResult.style.display = 'none';
+      }
+    }
+  }
+
+  // Search input handler
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = (e.target as HTMLInputElement).value;
+      filterMoodboard();
+    });
+  }
+</script>

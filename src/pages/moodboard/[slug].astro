@@ -1,0 +1,311 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import ActionButtons from '../../components/ActionButtons.astro';
+import '../../styles/moodboard.css';
+
+interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  r2_key: string;
+  position: number;
+  created_at: string;
+}
+
+interface MoodboardItem {
+  id: string;
+  slug: string;
+  name: string;
+  designer: string | null;
+  year: string | null;
+  client: string | null;
+  link: string | null;
+  city: string | null;
+  keywords: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  images: ProductImage[];
+  cover: string | null;
+}
+
+const { slug } = Astro.params;
+
+let item: MoodboardItem | null = null;
+let error = null;
+
+try {
+  const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
+  const response = await fetch(moodboardUrl.toString());
+  if (!response.ok) throw new Error('Failed to load moodboard data');
+  
+  const items: MoodboardItem[] = await response.json();
+  item = items.find(i => i.slug === slug) || null;
+} catch (e) {
+  error = e;
+  console.error('Failed to fetch moodboard item:', e);
+}
+
+if (!item && !error) {
+  return Astro.redirect('/404');
+}
+
+const pageTitle = item ? `${item.name} - Moodboard` : 'Not Found';
+const pageDescription = item ? `${item.name}${item.designer ? ` by ${item.designer}` : ''}` : '';
+const pageImage = item?.cover || '/og-default.jpg';
+
+// Function to get designer slug from studios.json
+async function getDesignerSlug(designerName: string | null): Promise<string | null> {
+  if (!designerName) return null;
+  try {
+    const studiosUrl = new URL('/studios.json', Astro.url.origin);
+    const response = await fetch(studiosUrl.toString());
+    if (!response.ok) return null;
+    const studios = await response.json();
+    const studio = studios.find((s: any) => s.name === designerName);
+    return studio?.slug || null;
+  } catch {
+    return null;
+  }
+}
+
+const designerSlug = item ? await getDesignerSlug(item.designer) : null;
+---
+
+<Layout 
+  title={pageTitle}
+  description={pageDescription}
+  image={pageImage}
+  type="article"
+>
+  <Navbar />
+  
+  <main class="moodboard-detail-page">
+    <div class="detail-header">
+      <h1 class="detail-page-title"><a href="/moodboard">Moodboard</a></h1>
+      <p class="detail-breadcrumb">/ {item?.name || 'Not Found'}</p>
+    </div>
+
+    {error ? (
+      <div class="error-state">
+        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Project</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">
+          Unable to load project data. Please try again later.
+        </p>
+      </div>
+    ) : (
+      <>
+        {/* Carousel */}
+        <div class="carousel-container">
+          <div class="carousel-wrapper">
+            <div class="carousel-track" id="carousel-track">
+              {item.images.map((image, index) => (
+                <div class="carousel-slide" data-index={index}>
+                  <img 
+                    src={image.image_url} 
+                    alt={`${item.name} - Image ${index + 1}`}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {item.images.length > 1 && (
+            <div class="carousel-controls">
+              <button class="carousel-btn carousel-prev" id="carousel-prev" aria-label="Previous image">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="carousel-indicators" id="carousel-indicators">
+                {item.images.map((_, index) => (
+                  <button 
+                    class={`indicator ${index === 0 ? 'active' : ''}`}
+                    data-index={index}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+              <button class="carousel-btn carousel-next" id="carousel-next" aria-label="Next image">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Info Section */}
+        <div class="detail-content">
+          <div class="info-section">
+            <div class="info-label">Name</div>
+            <div class="info-value">{item.name}</div>
+          </div>
+
+          {item.designer && (
+            <div class="info-section">
+              <div class="info-label">Designer</div>
+              <div class="info-value">
+                {designerSlug ? (
+                  <a href={`/designers/${designerSlug}`}>{item.designer}</a>
+                ) : (
+                  <span>{item.designer}</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {item.year && (
+            <div class="info-section">
+              <div class="info-label">Year</div>
+              <div class="info-value">{item.year}</div>
+            </div>
+          )}
+
+          {item.client && (
+            <div class="info-section">
+              <div class="info-label">Client</div>
+              <div class="info-value">{item.client}</div>
+            </div>
+          )}
+
+          {item.city && (
+            <div class="info-section">
+              <div class="info-label">Location</div>
+              <div class="info-value">{item.city}</div>
+            </div>
+          )}
+
+          {item.keywords && (
+            <div class="info-section">
+              <div class="info-label">Keywords</div>
+              <div class="info-value">{item.keywords}</div>
+            </div>
+          )}
+
+          {item.link && (
+            <div class="info-links">
+              <a href={item.link} target="_blank" rel="noopener noreferrer" class="info-link">
+                External Link
+              </a>
+            </div>
+          )}
+          
+          <ActionButtons />
+        </div>
+      </>
+    )}
+  </main>
+</Layout>
+
+<script is:inline>
+  const track = document.getElementById('carousel-track');
+  const prevBtn = document.getElementById('carousel-prev');
+  const nextBtn = document.getElementById('carousel-next');
+  const indicators = document.querySelectorAll('.indicator');
+  const slides = document.querySelectorAll('.carousel-slide');
+  
+  let currentIndex = 0;
+  let startX = 0;
+  let isDragging = false;
+  let currentTranslate = 0;
+  let prevTranslate = 0;
+
+  function updateCarousel() {
+    if (!track) return;
+    const offset = -currentIndex * 100;
+    track.style.transform = `translateX(${offset}%)`;
+    
+    // Update indicators
+    indicators.forEach((ind, idx) => {
+      ind.classList.toggle('active', idx === currentIndex);
+    });
+  }
+
+  function goToSlide(index) {
+    currentIndex = Math.max(0, Math.min(index, slides.length - 1));
+    updateCarousel();
+  }
+
+  // Button controls
+  prevBtn?.addEventListener('click', () => goToSlide(currentIndex - 1));
+  nextBtn?.addEventListener('click', () => goToSlide(currentIndex + 1));
+  
+  // Indicator controls
+  indicators.forEach((indicator, index) => {
+    indicator.addEventListener('click', () => goToSlide(index));
+  });
+
+  // Touch/drag controls
+  track?.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+  });
+
+  track?.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+    currentTranslate = prevTranslate + diff;
+  });
+
+  track?.addEventListener('touchend', () => {
+    isDragging = false;
+    const movedBy = currentTranslate - prevTranslate;
+    
+    if (movedBy < -50 && currentIndex < slides.length - 1) {
+      currentIndex++;
+    } else if (movedBy > 50 && currentIndex > 0) {
+      currentIndex--;
+    }
+    
+    updateCarousel();
+    prevTranslate = currentTranslate;
+  });
+
+  // Mouse drag controls
+  track?.addEventListener('mousedown', (e) => {
+    startX = e.clientX;
+    isDragging = true;
+    track.style.cursor = 'grabbing';
+  });
+
+  track?.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const currentX = e.clientX;
+    const diff = currentX - startX;
+    currentTranslate = prevTranslate + diff;
+  });
+
+  track?.addEventListener('mouseup', () => {
+    isDragging = false;
+    if (track) track.style.cursor = 'grab';
+    
+    const movedBy = currentTranslate - prevTranslate;
+    
+    if (movedBy < -50 && currentIndex < slides.length - 1) {
+      currentIndex++;
+    } else if (movedBy > 50 && currentIndex > 0) {
+      currentIndex--;
+    }
+    
+    updateCarousel();
+    prevTranslate = currentTranslate;
+  });
+
+  track?.addEventListener('mouseleave', () => {
+    if (isDragging) {
+      isDragging = false;
+      if (track) track.style.cursor = 'grab';
+      updateCarousel();
+    }
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') goToSlide(currentIndex - 1);
+    if (e.key === 'ArrowRight') goToSlide(currentIndex + 1);
+  });
+</script>

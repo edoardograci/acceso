@@ -3,12 +3,14 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "prebuild": "tsx scripts/generate-studios.ts",
+    "prebuild": "tsx scripts/generate-studios.ts && tsx scripts/generate-moodboard.ts",
+
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "generate:studios": "tsx scripts/generate-studios.ts",
+    "generate:moodboard": "tsx scripts/generate-moodboard.ts",
     "astro": "astro"
   },
   "dependencies": {
