@@ -168,8 +168,11 @@ try {
 async function handleSearch(e) {
   const query = e.target.value.trim()
 
-  if (!query) {
+  if (query.length < 2) {
     showGrid()
+    emptyResult.style.display = 'none'
+    if (searchStatus) searchStatus.style.display = 'none'
+    isSearching = false
     return
   }
 

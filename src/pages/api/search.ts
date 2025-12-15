@@ -33,23 +33,22 @@ interface SearchResponse {
 
 export const POST: APIRoute = async ({ request, locals }) => {
   console.log('=== Search API Called ===');
-
+  
   try {
     const body = await request.json() as { query: string };
-    const rawQuery = body?.query;
-    const normalizedQuery = rawQuery?.trim() ?? '';
+    const { query } = body;
+    
+    console.log('Search query:', query);
 
-    console.log('Search query:', normalizedQuery);
-
-    // Guard: ignore queries shorter than 2 characters
-    if (normalizedQuery.length < 2) {
+    if (!query || query.trim().length === 0) {
       return new Response(
         JSON.stringify({
-          success: true,
+          success: false,
           results: [],
-          query: normalizedQuery,
+          query: '',
+          error: 'Query is required',
         } as SearchResponse),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
@@ -63,7 +62,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     console.log('Generating embeddings...');
     const embeddingsResponse = await env.AI.run(
       '@cf/baai/bge-m3',
-      { text: [normalizedQuery] }
+      { text: [query] }
     ) as any;
 
     if (!embeddingsResponse?.data?.[0]) {
@@ -71,11 +70,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const queryEmbedding = embeddingsResponse.data[0];
-
+    
     if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== 1024) {
-      throw new Error(
-        `Invalid embedding: expected array of 1024, got ${typeof queryEmbedding} with length ${queryEmbedding?.length}`
-      );
+      throw new Error(`Invalid embedding: expected array of 1024, got ${typeof queryEmbedding} with length ${queryEmbedding?.length}`);
     }
 
     console.log('✓ Embedding generated');
@@ -94,13 +91,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         JSON.stringify({
           success: true,
           results: [],
-          query: normalizedQuery,
+          query,
         } as SearchResponse),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Process matches
+    // Process matches with correct metadata extraction
     const grouped = new Map<string, { score: number; image_url: string }>();
 
     for (const match of vectorizeResult.matches) {
@@ -110,28 +107,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
 
       // Extract product_id from folder path
-      // format: "moodboard/<product_id>/"
+      // folder format: "moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/"
       const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
       if (!folderMatch) {
-        console.log(
-          'Could not extract product_id from folder:',
-          match.metadata.folder
-        );
+        console.log('Could not extract product_id from folder:', match.metadata.folder);
         continue;
       }
-
       const productId = folderMatch[1];
 
       // Construct image URL from key
+      // key format: "moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/1-a20a0570.webp"
       const imageUrl = `https://mood.acceso.design/${match.metadata.key}`;
 
-      console.log('Extracted:', {
-        productId,
-        imageUrl,
-        score: match.score,
-      });
+      console.log('Extracted:', { productId, imageUrl, score: match.score });
 
-      // Keep highest scoring image per product
+      // Keep the highest scoring image for each product
       const existing = grouped.get(productId);
       if (!existing || match.score > existing.score) {
         grouped.set(productId, {
@@ -143,6 +133,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     console.log(`Grouped into ${grouped.size} products`);
 
+    // Convert to results array
     const results: SearchResult[] = Array.from(grouped.entries())
       .map(([product_id, data]) => ({
         product_id,
@@ -158,13 +149,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       JSON.stringify({
         success: true,
         results,
-        query: normalizedQuery,
+        query,
       } as SearchResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     console.error('Search error:', error);
-
+    
     return new Response(
       JSON.stringify({
         success: false,
