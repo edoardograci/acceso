@@ -218,38 +218,40 @@ async function handleSearch(e) {
   }
 }
 
-  function displayVectorResults(results) {
-    vectorResultsGrid.innerHTML = ''
+function displayVectorResults(results) {
+  vectorResultsGrid.innerHTML = ''
 
-    results.forEach((result) => {
-      const item = itemsMap.get(result.product_id)
-      if (!item) return
+  results.forEach((result) => {
+    const item = itemsMap.get(result.product_id)
+    if (!item) return
 
-      const card = document.createElement('a')
-      card.href = `/moodboard/${item.slug}`
-      card.className = 'moodboard-item vector-result-item'
+    const card = document.createElement('a')
+    card.href = `/moodboard/${item.slug}`
+    card.className = 'moodboard-item vector-result-item'
 
-      const percentage = Math.round(result.score * 100)
-      const imageUrl = item.cover || result.image_url
+    const percentage = Math.round(result.score * 100)
+    
+    // USE THE SEARCH RESULT IMAGE, NOT THE DEFAULT COVER
+    const imageUrl = result.image_url  // ← Changed from: item.cover || result.image_url
 
-      card.innerHTML = `
-        <div style="position: relative;">
-          <img src="${imageUrl}" alt="${item.name}" loading="lazy" />
-          <div class="relevance-badge">${percentage}%</div>
-        </div>
-        <div class="item-overlay">
-          <h3>${item.name}</h3>
-          ${item.designer ? `<p>${item.designer}</p>` : ''}
-        </div>
-      `
+    card.innerHTML = `
+      <div style="position: relative;">
+        <img src="${imageUrl}" alt="${item.name}" loading="lazy" />
+        <div class="relevance-badge">${percentage}%</div>
+      </div>
+      <div class="item-overlay">
+        <h3>${item.name}</h3>
+        ${item.designer ? `<p>${item.designer}</p>` : ''}
+      </div>
+    `
 
-      vectorResultsGrid.appendChild(card)
-    })
+    vectorResultsGrid.appendChild(card)
+  })
 
-    moodboardGrid.style.display = 'none'
-    vectorResults.style.display = 'block'
-    emptyResult.style.display = 'none'
-    searchStatus.style.display = 'none'
-    isSearching = false
-  }
+  moodboardGrid.style.display = 'none'
+  vectorResults.style.display = 'block'
+  emptyResult.style.display = 'none'
+  searchStatus.style.display = 'none'
+  isSearching = false
+}
 </script>
