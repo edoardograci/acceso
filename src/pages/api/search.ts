@@ -3,7 +3,14 @@ import type { APIRoute } from 'astro';
 interface VectorizeMatch {
   id: string;
   score: number;
-  metadata?: Record<string, any>; // Changed to accept any metadata structure
+  metadata?: {
+    filename?: string;
+    folder?: string;
+    key?: string;
+    item_id?: number;
+    timestamp?: number;
+    info?: string;
+  };
 }
 
 interface VectorizeResult {
@@ -46,127 +53,75 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const env = locals.runtime.env as any;
-    
-    console.log('Environment check:', {
-      hasAI: !!env.AI,
-      hasVectorize: !!env.VECTORIZE,
-      envKeys: Object.keys(env)
-    });
 
-    if (!env.AI) {
-      throw new Error('AI binding not available');
-    }
-    
-    if (!env.VECTORIZE) {
-      throw new Error('VECTORIZE binding not available');
+    if (!env.AI || !env.VECTORIZE) {
+      throw new Error('AI or VECTORIZE binding not available');
     }
 
     // Generate embeddings
-    console.log('Generating embeddings with @cf/baai/bge-m3...');
-    
+    console.log('Generating embeddings...');
     const embeddingsResponse = await env.AI.run(
       '@cf/baai/bge-m3',
       { text: [query] }
     ) as any;
 
-    console.log('Embeddings response structure:', {
-      hasData: !!embeddingsResponse?.data,
-      dataType: Array.isArray(embeddingsResponse?.data),
-      firstElementType: embeddingsResponse?.data?.[0] ? typeof embeddingsResponse.data[0] : 'undefined',
-      firstElementLength: Array.isArray(embeddingsResponse?.data?.[0]) ? embeddingsResponse.data[0].length : 'N/A'
-    });
-
     if (!embeddingsResponse?.data?.[0]) {
-      throw new Error('Failed to generate embeddings - invalid response structure');
+      throw new Error('Failed to generate embeddings');
     }
 
     const queryEmbedding = embeddingsResponse.data[0];
     
-    if (!Array.isArray(queryEmbedding)) {
-      throw new Error(`Embedding is not an array, got: ${typeof queryEmbedding}`);
-    }
-    
-    if (queryEmbedding.length !== 1024) {
-      throw new Error(`Embedding dimension mismatch: got ${queryEmbedding.length}, expected 1024`);
+    if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== 1024) {
+      throw new Error(`Invalid embedding: expected array of 1024, got ${typeof queryEmbedding} with length ${queryEmbedding?.length}`);
     }
 
-    console.log('✓ Embedding generated:', queryEmbedding.length, 'dimensions');
+    console.log('✓ Embedding generated');
 
     // Query Vectorize
-    console.log('Querying Vectorize index...');
-    
+    console.log('Querying Vectorize...');
     const vectorizeResult = (await env.VECTORIZE.query(queryEmbedding, {
-      topK: 10, // Reduced for debugging
+      topK: 50,
       returnMetadata: 'all',
     })) as VectorizeResult;
 
-    console.log('Vectorize raw result:', {
-      matchCount: vectorizeResult.matches?.length || 0,
-      firstMatchStructure: vectorizeResult.matches?.[0] ? {
-        id: vectorizeResult.matches[0].id,
-        score: vectorizeResult.matches[0].score,
-        hasMetadata: !!vectorizeResult.matches[0].metadata,
-        metadataKeys: vectorizeResult.matches[0].metadata ? Object.keys(vectorizeResult.matches[0].metadata) : [],
-        fullMetadata: vectorizeResult.matches[0].metadata
-      } : null
-    });
+    console.log(`Found ${vectorizeResult.matches?.length || 0} matches`);
 
     if (!vectorizeResult.matches || vectorizeResult.matches.length === 0) {
-      console.log('No matches found');
       return new Response(
         JSON.stringify({
           success: true,
           results: [],
           query,
-          debug: {
-            embeddingGenerated: true,
-            embeddingDimensions: queryEmbedding.length,
-            vectorizeQueried: true,
-            matchesFound: 0,
-            note: 'Index might be empty or threshold too high'
-          }
         } as SearchResponse),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Log all matches with their metadata
-    console.log('All matches metadata:');
-    vectorizeResult.matches.forEach((match, idx) => {
-      console.log(`Match ${idx}:`, {
-        id: match.id,
-        score: match.score,
-        metadata: match.metadata
-      });
-    });
-
-    // Process matches - be flexible with metadata keys
-    const grouped = new Map<string, { score: number; image_url?: string }>();
+    // Process matches with correct metadata extraction
+    const grouped = new Map<string, { score: number; image_url: string }>();
 
     for (const match of vectorizeResult.matches) {
-      // Try different possible metadata key names
-      const productId = match.metadata?.product_id || 
-                       match.metadata?.productId || 
-                       match.metadata?.id ||
-                       match.id; // Fallback to vector ID
-
-      const imageUrl = match.metadata?.image_url || 
-                      match.metadata?.imageUrl || 
-                      match.metadata?.url ||
-                      match.metadata?.cover;
-
-      console.log('Processing match:', {
-        originalId: match.id,
-        extractedProductId: productId,
-        extractedImageUrl: imageUrl,
-        score: match.score
-      });
-
-      if (!productId) {
-        console.log('⚠️ Skipping match - no product ID found');
+      if (!match.metadata?.folder || !match.metadata?.key) {
+        console.log('Skipping match without required metadata');
         continue;
       }
 
+      // Extract product_id from folder path
+      // folder format: "moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/"
+      const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
+      if (!folderMatch) {
+        console.log('Could not extract product_id from folder:', match.metadata.folder);
+        continue;
+      }
+      const productId = folderMatch[1];
+
+      // Construct image URL from key
+      // key format: "moodboard/2210d7da-2e8c-80bb-bd05-d0724b60fdc3/1-a20a0570.webp"
+      const imageUrl = `https://mood.acceso.design/${match.metadata.key}`;
+
+      console.log('Extracted:', { productId, imageUrl, score: match.score });
+
+      // Keep the highest scoring image for each product
       const existing = grouped.get(productId);
       if (!existing || match.score > existing.score) {
         grouped.set(productId, {
@@ -176,49 +131,31 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
     }
 
-    console.log('Grouped results:', grouped.size);
+    console.log(`Grouped into ${grouped.size} products`);
 
+    // Convert to results array
     const results: SearchResult[] = Array.from(grouped.entries())
       .map(([product_id, data]) => ({
         product_id,
-        image_url: data.image_url || '',
+        image_url: data.image_url,
         score: data.score,
       }))
-      .filter((r) => {
-        const hasImage = !!r.image_url;
-        if (!hasImage) {
-          console.log('⚠️ Filtered out result without image:', r.product_id);
-        }
-        return hasImage;
-      })
       .sort((a, b) => b.score - a.score)
       .slice(0, 20);
 
-    console.log('Final results:', results.length);
+    console.log(`Returning ${results.length} results`);
 
     return new Response(
       JSON.stringify({
         success: true,
         results,
         query,
-        debug: {
-          totalMatches: vectorizeResult.matches.length,
-          groupedProducts: grouped.size,
-          finalResults: results.length,
-          sampleMatch: vectorizeResult.matches[0] ? {
-            id: vectorizeResult.matches[0].id,
-            score: vectorizeResult.matches[0].score,
-            metadata: vectorizeResult.matches[0].metadata
-          } : null
-        }
       } as SearchResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('=== Search Error ===');
-    console.error('Error:', error);
-    console.error('Stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('Search error:', error);
     
     return new Response(
       JSON.stringify({
@@ -226,11 +163,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         results: [],
         query: '',
         error: error instanceof Error ? error.message : 'Search failed',
-        debug: {
-          errorType: error?.constructor?.name,
-          errorMessage: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        }
       } as SearchResponse),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
