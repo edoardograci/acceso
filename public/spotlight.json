@@ -1,0 +1,40 @@
+[
+  {
+    "id": "2cb0d7da-2e8c-8012-8afe-ee7fe43acbe8",
+    "product_id": "2090d7da-2e8c-8023-bb46-d53fa805ae17",
+    "start_date": "2025-12-19",
+    "end_date": "2025-12-24",
+    "created_at": "2025-12-16 16:50:09",
+    "updated_at": "2025-12-16 20:22:44",
+    "product": {
+      "id": "2090d7da-2e8c-8023-bb46-d53fa805ae17",
+      "slug": "h387",
+      "name": "H387",
+      "designer": "Studio Klass",
+      "year": "2024",
+      "client": "Valli, Fusital",
+      "link": "https://www.studioklass.com/project/studio-klass-h387",
+      "city": "Milan",
+      "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8023-bb46-d53fa805ae17/0-2c7d82ce.webp"
+    }
+  },
+  {
+    "id": "2cb0d7da-2e8c-8055-94da-d8da629b116b",
+    "product_id": "2070d7da-2e8c-8074-baa6-db0d2938f978",
+    "start_date": "2025-12-15",
+    "end_date": "2025-12-18",
+    "created_at": "2025-12-16 20:22:44",
+    "updated_at": "2025-12-16 20:22:44",
+    "product": {
+      "id": "2070d7da-2e8c-8074-baa6-db0d2938f978",
+      "slug": "taco",
+      "name": "Taco",
+      "designer": "Alessandro Stabile Design Studio",
+      "year": "2023",
+      "client": "LaCividina",
+      "link": "https://www.alessandrostabile.com/projects/taco/",
+      "city": "Milan",
+      "cover": "https://mood.acceso.design/moodboard/2070d7da-2e8c-8074-baa6-db0d2938f978/0-31b2b09c.webp"
+    }
+  }
+]

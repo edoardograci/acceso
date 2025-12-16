@@ -1,24 +1,616 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
+
+interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  r2_key: string;
+  position: number;
+  created_at: string;
+}
+
+interface SpotlightItem {
+  id: string;
+  product_id: string;
+  start_date: string;
+  end_date: string | null;
+  created_at: string;
+  updated_at: string;
+  product: {
+    id: string;
+    slug: string;
+    name: string;
+    designer: string | null;
+    year: string | null;
+    client: string | null;
+    link: string | null;
+    city: string | null;
+    cover: string | null;
+  } | null;
+}
+
+interface MoodboardItem {
+  id: string;
+  slug: string;
+  name: string;
+  designer: string | null;
+  year: string | null;
+  client: string | null;
+  link: string | null;
+  city: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  images: ProductImage[];
+  cover: string | null;
+}
+
+interface Studio {
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  cover: string | null;
+}
+
+// Fetch spotlight data
+let activeSpotlight: SpotlightItem | null = null;
+let spotlightImages: ProductImage[] = [];
+let designerStudio: Studio | null = null;
+
+try {
+  // Fetch spotlight.json
+  const spotlightUrl = new URL('/spotlight.json', Astro.url.origin);
+  const spotlightResponse = await fetch(spotlightUrl.toString());
+  
+  if (spotlightResponse.ok) {
+    const spotlights: SpotlightItem[] = await spotlightResponse.json();
+    
+    // Find active spotlight (current date within date range)
+    const now = new Date();
+    const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    activeSpotlight = spotlights.find(s => {
+      // Parse start date (handle both YYYY-MM-DD and YYYY-MM-DD HH:mm:ss formats)
+      const startDateStr = s.start_date.split(' ')[0]; // Get just the date part
+      const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
+      const start = new Date(startYear, startMonth - 1, startDay);
+      
+      // Parse end date if it exists
+      if (s.end_date) {
+        const endDateStr = s.end_date.split(' ')[0]; // Get just the date part
+        const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
+        const end = new Date(endYear, endMonth - 1, endDay);
+        // Include the end date (>= comparison)
+        return nowDateOnly >= start && nowDateOnly <= end;
+      } else {
+        // No end date means it's active from start date onwards
+        return nowDateOnly >= start;
+      }
+    }) || null;
+
+    // Fallback: if no active spotlight, use the most recent one (for development)
+    if (!activeSpotlight && spotlights.length > 0) {
+      // Sort by start_date descending and take the first one
+      const sorted = [...spotlights].sort((a, b) => {
+        const dateA = new Date(a.start_date);
+        const dateB = new Date(b.start_date);
+        return dateB.getTime() - dateA.getTime();
+      });
+      activeSpotlight = sorted[0];
+    }
+
+    // If we have an active spotlight, fetch its images from moodboard.json
+    if (activeSpotlight?.product) {
+      const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
+      const moodboardResponse = await fetch(moodboardUrl.toString());
+      
+      if (moodboardResponse.ok) {
+        const moodboardItems: MoodboardItem[] = await moodboardResponse.json();
+        const productItem = moodboardItems.find(item => item.id === activeSpotlight.product_id);
+        
+        if (productItem) {
+          spotlightImages = productItem.images || [];
+        }
+      }
+
+      // Fetch designer studio info
+      if (activeSpotlight.product.designer) {
+        const studiosUrl = new URL('/studios.json', Astro.url.origin);
+        const studiosResponse = await fetch(studiosUrl.toString());
+        
+        if (studiosResponse.ok) {
+          const studios: Studio[] = await studiosResponse.json();
+          designerStudio = studios.find(s => s.name === activeSpotlight.product.designer) || null;
+        }
+      }
+    }
+  }
+} catch (e) {
+  console.error('Failed to fetch spotlight:', e);
+}
 ---
 
 <Layout title="Acceso Design">
   <Navbar />
   
-  <main style="padding-top: var(--navbar-height); min-height: 100vh;">
-    <div style="padding: 48px var(--spacing-page); text-align: center;">
-      <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 32px;">
-        Discover Milan's independent design studios
-      </p>
-      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-        <a href="/designers" style="background: var(--accent-yellow); color: #000; padding: 16px 32px; text-decoration: none; font-weight: 600;">
-          Browse Designers
-        </a>
-        <a href="/moodboard" style="background: var(--gray-dark); color: #fff; padding: 16px 32px; text-decoration: none; font-weight: 600;">
-          View Moodboard
-        </a>
+  <main class="home-page">
+  {activeSpotlight?.product && spotlightImages.length > 0 ? (
+    <div class="spotlight-section">
+      <div class="spotlight-wrapper">
+        <div class="spotlight-tag">SPOTLIGHT</div>
       </div>
-    </div>
+      
+      <div class="spotlight-info">
+        <h1 class="spotlight-title">{activeSpotlight.product.name}</h1>
+        <div class="spotlight-meta">
+          {activeSpotlight.product.year && <span>{activeSpotlight.product.year}</span>}
+          {activeSpotlight.product.city && <span>{activeSpotlight.product.city}</span>}
+        </div>
+      </div>
+
+        {/* Carousel */}
+        <div class="spotlight-carousel">
+          <div class="carousel-wrapper">
+            <div class="carousel-track" id="carousel-track">
+              {spotlightImages.map((image, index) => (
+                <div class="carousel-slide" data-index={index}>
+                  <img 
+                    src={image.image_url} 
+                    alt={`${activeSpotlight.product.name} - Image ${index + 1}`}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    fetchpriority={index === 0 ? 'high' : 'auto'}
+                    decoding="async"
+                    data-skeleton
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {spotlightImages.length > 1 && (
+            <div class="carousel-controls">
+              <button class="carousel-btn carousel-prev" id="carousel-prev" aria-label="Previous image">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="carousel-indicators" id="carousel-indicators">
+                {spotlightImages.map((_, index) => (
+                  <button 
+                    class={`indicator ${index === 0 ? 'active' : ''}`}
+                    data-index={index}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+              <button class="carousel-btn carousel-next" id="carousel-next" aria-label="Next image">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Moodboard Button */}
+        <a href={`/moodboard/${activeSpotlight.product.slug}`} class="moodboard-button">
+          {activeSpotlight.product.name} Moodboard
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+
+        {/* Designer Section */}
+        {activeSpotlight.product.designer && (
+          <div class="designer-section">
+            <div class="designer-label">Designer</div>
+            
+            {designerStudio ? (
+              <a href={`/designers/${designerStudio.slug}`} class="designer-card">
+                {designerStudio.cover && (
+                  <img 
+                    src={designerStudio.cover} 
+                    alt={designerStudio.name}
+                    class="designer-image"
+                    loading="lazy"
+                    decoding="async"
+                    data-skeleton
+                  />
+                )}
+                <span class="designer-name">{designerStudio.name}</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="designer-chevron">
+                  <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            ) : (
+              <div class="designer-name-only">{activeSpotlight.product.designer}</div>
+            )}
+          </div>
+        )}
+      </div>
+    ) : (
+      <div class="no-spotlight">
+        <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 32px;">
+          Discover Milan's independent design studios
+        </p>
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+          <a href="/designers" style="background: var(--accent-yellow); color: #000; padding: 16px 32px; text-decoration: none; font-weight: 600;">
+            Browse Designers
+          </a>
+          <a href="/moodboard" style="background: var(--gray-dark); color: #fff; padding: 16px 32px; text-decoration: none; font-weight: 600;">
+            View Moodboard
+          </a>
+        </div>
+      </div>
+    )}
   </main>
 </Layout>
+
+<script>
+  const track = document.getElementById('carousel-track');
+  const prevBtn = document.getElementById('carousel-prev');
+  const nextBtn = document.getElementById('carousel-next');
+  const indicators = document.querySelectorAll('.indicator');
+  const slides = document.querySelectorAll('.carousel-slide');
+  
+  if (track && slides.length > 0) {
+    let currentIndex = 0;
+    let startX = 0;
+    let isDragging = false;
+    let currentTranslate = 0;
+    let prevTranslate = 0;
+
+    function updateCarousel() {
+      const offset = -currentIndex * 100;
+      track.style.transform = 'translateX(' + offset + '%)';
+      
+      indicators.forEach(function(ind, idx) {
+        ind.classList.toggle('active', idx === currentIndex);
+      });
+    }
+
+    function goToSlide(index) {
+      currentIndex = Math.max(0, Math.min(index, slides.length - 1));
+      updateCarousel();
+    }
+
+    if (prevBtn) prevBtn.addEventListener('click', function() { goToSlide(currentIndex - 1); });
+    if (nextBtn) nextBtn.addEventListener('click', function() { goToSlide(currentIndex + 1); });
+    
+    indicators.forEach(function(indicator, index) {
+      indicator.addEventListener('click', function() { goToSlide(index); });
+    });
+
+    // Touch controls
+    track.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+    });
+
+    track.addEventListener('touchmove', function(e) {
+      if (!isDragging) return;
+      const currentX = e.touches[0].clientX;
+      const diff = currentX - startX;
+      currentTranslate = prevTranslate + diff;
+    });
+
+    track.addEventListener('touchend', function() {
+      isDragging = false;
+      const movedBy = currentTranslate - prevTranslate;
+      
+      if (movedBy < -50 && currentIndex < slides.length - 1) {
+        currentIndex++;
+      } else if (movedBy > 50 && currentIndex > 0) {
+        currentIndex--;
+      }
+      
+      updateCarousel();
+      prevTranslate = currentTranslate;
+    });
+
+    // Mouse drag controls
+    track.addEventListener('mousedown', function(e) {
+      startX = e.clientX;
+      isDragging = true;
+      track.style.cursor = 'grabbing';
+    });
+
+    track.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      const currentX = e.clientX;
+      const diff = currentX - startX;
+      currentTranslate = prevTranslate + diff;
+    });
+
+    track.addEventListener('mouseup', function() {
+      isDragging = false;
+      track.style.cursor = 'grab';
+      
+      const movedBy = currentTranslate - prevTranslate;
+      
+      if (movedBy < -50 && currentIndex < slides.length - 1) {
+        currentIndex++;
+      } else if (movedBy > 50 && currentIndex > 0) {
+        currentIndex--;
+      }
+      
+      updateCarousel();
+      prevTranslate = currentTranslate;
+    });
+
+    track.addEventListener('mouseleave', function() {
+      if (isDragging) {
+        isDragging = false;
+        track.style.cursor = 'grab';
+        updateCarousel();
+      }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft') goToSlide(currentIndex - 1);
+      if (e.key === 'ArrowRight') goToSlide(currentIndex + 1);
+    });
+  }
+</script>
+
+<style>
+  .home-page {
+    padding-top: var(--navbar-height);
+    min-height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .spotlight-section {
+    padding: 48px var(--spacing-page);
+  }
+
+.spotlight-wrapper {
+  text-align: center;
+}
+
+.spotlight-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 24px;
+  background: var(--accent-yellow);
+  color: #000;
+
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.56px;
+  line-height: 1;
+
+  padding: 7px 12px 2px;
+  white-space: nowrap;
+}
+
+  .spotlight-info {
+    margin-bottom: 32px;
+  }
+
+  .spotlight-title {
+    font-family: var(--font-mono);
+    font-size: 48px;
+    font-weight: 200;
+    margin-bottom: 12px;
+    letter-spacing: 0;
+    text-align: center;
+  }
+
+  .spotlight-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    color: var(--text-secondary);
+  }
+
+  /* Carousel Styles */
+  .spotlight-carousel {
+    margin-bottom: 36px;
+    margin-top: 0;
+  }
+
+  .carousel-wrapper {
+    position: relative;
+    overflow: hidden;
+    max-height: 600px;
+    margin-bottom: 16px;
+  }
+
+  .carousel-track {
+    display: flex;
+    transition: transform 0.3s ease;
+    cursor: grab;
+  }
+
+  .carousel-track:active {
+    cursor: grabbing;
+  }
+
+  .carousel-slide {
+    min-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .carousel-slide img {
+    width: 100%;
+    height: auto;
+    max-height: 600px;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .carousel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .carousel-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gray-dark);
+    border: 1px solid var(--gray-border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .carousel-btn:hover {
+    background: var(--accent-yellow);
+    color: #000;
+    border-color: var(--accent-yellow);
+  }
+
+  .carousel-indicators {
+    display: flex;
+    gap: 8px;
+  }
+
+  .indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gray-border);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .indicator.active {
+    background: var(--accent-yellow);
+    transform: scale(1.3);
+  }
+
+  .indicator:hover {
+    background: var(--text-secondary);
+  }
+
+  /* Moodboard Button */
+  .moodboard-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 24px;
+    background: var(--bg-primary);
+    border: 1px solid var(--gray-border);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 450;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin: 0 auto 0px;
+    white-space: nowrap;
+  }
+
+  .moodboard-button:hover {
+    transform: translateY(-2px);
+  }
+
+  .moodboard-button svg {
+    flex-shrink: 0;
+  }
+
+  /* Designer Section */
+  .designer-section {
+    padding-top: 32px;
+    margin-top: 0;
+  }
+
+  .designer-label {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 200;
+    letter-spacing: 0.56px;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+  }
+
+  .designer-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-primary);
+    border: 1px solid var(--gray-border);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+
+  .designer-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .designer-image {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .designer-name {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 450;
+    flex: 1;
+  }
+
+  .designer-chevron {
+    flex-shrink: 0;
+  }
+
+  .designer-name-only {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 450;
+    color: var(--text-primary);
+  }
+
+  /* No Spotlight State */
+  .no-spotlight {
+    padding: 48px var(--spacing-page);
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .spotlight-title {
+      font-size: 32px;
+    }
+
+    .spotlight-meta {
+      gap: 8px;
+    }
+
+    .moodboard-button {
+      width: 100%;
+    }
+
+    .carousel-wrapper {
+      max-height: 400px;
+    }
+
+    .carousel-slide img {
+      max-height: 400px;
+    }
+  }
+</style>

@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "prebuild": "tsx scripts/generate-studios.ts && tsx scripts/generate-moodboard.ts",
+    "prebuild": "tsx scripts/generate-studios.ts && tsx scripts/generate-moodboard.ts && tsx scripts/generate-spotlight.ts",
 
     "dev": "astro dev",
     "start": "astro dev",
@@ -11,6 +11,7 @@
     "preview": "astro preview",
     "generate:studios": "tsx scripts/generate-studios.ts",
     "generate:moodboard": "tsx scripts/generate-moodboard.ts",
+    "generate:spotlight": "tsx scripts/generate-spotlight.ts",
     "astro": "astro"
   },
   "dependencies": {
