@@ -72,7 +72,14 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
               data-city={studio.city}
             >
               {studio.cover ? (
-                <img src={studio.cover} alt={studio.name} class="studio-image" loading="lazy" />
+                <img 
+                  src={studio.cover} 
+                  alt={studio.name} 
+                  class="studio-image" 
+                  loading="lazy" 
+                  decoding="async"
+                  data-skeleton
+                />
               ) : (
                 <div class="studio-image-placeholder">No image</div>
               )}

@@ -95,6 +95,7 @@ try {
                   alt={item.name}
                   loading="lazy"
                   decoding="async"
+                  data-skeleton
                 />
                 <div class="item-overlay">
                   <h3>{item.name}</h3>
@@ -164,6 +165,57 @@ try {
       timeoutId = setTimeout(() => fn(...args), delay)
     }
   }
+
+  function layoutVectorMasonry() {
+    if (!vectorResultsGrid) return
+
+    const cards = Array.from(
+      vectorResultsGrid.querySelectorAll('.moodboard-item')
+    )
+
+    if (!cards.length) {
+      vectorResultsGrid.style.height = '0px'
+      return
+    }
+
+    const gap = 16 // matches .moodboard-grid column-gap
+    const containerWidth = vectorResultsGrid.clientWidth || 0
+    if (!containerWidth) return
+
+    let columns = 4
+    const viewportWidth = window.innerWidth
+    if (viewportWidth <= 768) {
+      columns = 2
+    } else if (viewportWidth <= 1024) {
+      columns = 3
+    }
+
+    const columnWidth = (containerWidth - gap * (columns - 1)) / columns
+    const columnHeights = new Array(columns).fill(0)
+
+    cards.forEach((card) => {
+      card.style.width = `${columnWidth}px`
+      card.style.position = 'absolute'
+      card.style.opacity = '1'
+
+      const minHeight = Math.min(...columnHeights)
+      const columnIndex = columnHeights.indexOf(minHeight)
+
+      const x = (columnWidth + gap) * columnIndex
+      const y = minHeight
+
+      card.style.transform = `translate(${x}px, ${y}px)`
+
+      const cardHeight = card.offsetHeight
+      columnHeights[columnIndex] = y + cardHeight + gap
+    })
+
+    const maxHeight = Math.max(...columnHeights)
+    vectorResultsGrid.style.height = `${maxHeight}px`
+  }
+
+  const layoutVectorMasonryDebounced = debounce(layoutVectorMasonry, 150)
+  window.addEventListener('resize', layoutVectorMasonryDebounced)
 
 async function handleSearch(e) {
   const query = e.target.value.trim()
@@ -235,7 +287,7 @@ function displayVectorResults(results) {
 
     card.innerHTML = `
       <div style="position: relative;">
-        <img src="${imageUrl}" alt="${item.name}" loading="lazy" />
+        <img src="${imageUrl}" alt="${item.name}" loading="lazy" decoding="async" data-skeleton />
         <div class="relevance-badge">${percentage}%</div>
       </div>
       <div class="item-overlay">
@@ -245,7 +297,20 @@ function displayVectorResults(results) {
     `
 
     vectorResultsGrid.appendChild(card)
+
+    const img = card.querySelector('img')
+    if (img) {
+      img.addEventListener('load', () => {
+        layoutVectorMasonry()
+      })
+      img.addEventListener('error', () => {
+        layoutVectorMasonry()
+      })
+    }
   })
+
+  // Initial layout in case some images are already cached
+  layoutVectorMasonry()
 
   moodboardGrid.style.display = 'none'
   vectorResults.style.display = 'block'

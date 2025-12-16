@@ -48,5 +48,64 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body>
     <slot />
+    <script is:inline>
+      if (typeof window !== 'undefined') {
+        const attachSkeleton = (img: HTMLImageElement) => {
+          if (!img || img.dataset.skeletonInitialized === 'true') return;
+          img.dataset.skeletonInitialized = 'true';
+          img.classList.add('image-skeleton');
+
+          const markLoaded = () => {
+            img.classList.add('image-loaded');
+            img.classList.remove('image-skeleton');
+          };
+
+          if (img.complete && img.naturalWidth !== 0) {
+            markLoaded();
+            return;
+          }
+
+          img.addEventListener('load', markLoaded, { once: true });
+          img.addEventListener('error', () => {
+            img.classList.remove('image-skeleton');
+          }, { once: true });
+        };
+
+        const initSkeletons = () => {
+          document
+            .querySelectorAll<HTMLImageElement>('img[data-skeleton]')
+            .forEach(attachSkeleton);
+        };
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initSkeletons);
+        } else {
+          initSkeletons();
+        }
+
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node instanceof HTMLElement) {
+                if (
+                  node.tagName === 'IMG' &&
+                  node.hasAttribute('data-skeleton')
+                ) {
+                  attachSkeleton(node as HTMLImageElement);
+                }
+                node
+                  .querySelectorAll?.<HTMLImageElement>('img[data-skeleton]')
+                  .forEach(attachSkeleton);
+              }
+            });
+          });
+        });
+
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+      }
+    </script>
   </body>
 </html>

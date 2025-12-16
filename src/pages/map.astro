@@ -49,7 +49,15 @@ const studioSlug = Astro.url.searchParams.get('studio') || null;
     <!-- Studio Card - Bottom Center -->
     <div class="studio-card" id="studio-card">
       <a href="#" class="studio-card-inner" id="studio-card-link">
-        <img src="" alt="" class="studio-card-image" id="studio-card-image" />
+        <img 
+          src="" 
+          alt="" 
+          class="studio-card-image" 
+          id="studio-card-image" 
+          loading="lazy" 
+          decoding="async"
+          data-skeleton
+        />
         <div class="studio-card-content">
           <h3 class="studio-card-title" id="studio-card-title"></h3>
           <p class="studio-card-address" id="studio-card-address"></p>

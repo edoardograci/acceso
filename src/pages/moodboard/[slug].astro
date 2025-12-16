@@ -105,6 +105,9 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
                     src={image.image_url} 
                     alt={`${item.name} - Image ${index + 1}`}
                     loading={index === 0 ? 'eager' : 'lazy'}
+                    fetchpriority={index === 0 ? 'high' : 'auto'}
+                    decoding="async"
+                    data-skeleton
                   />
                 </div>
               ))}

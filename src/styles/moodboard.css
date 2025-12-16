@@ -342,6 +342,19 @@
   position: relative;
 }
 
+/* JS-based masonry layout for vector search results */
+#vector-results-grid {
+  position: relative;
+  /* Disable CSS column masonry: we compute layout in JS to preserve result order */
+  column-count: initial;
+  column-gap: 0;
+}
+
+#vector-results-grid .moodboard-item {
+  position: absolute;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
 .relevance-badge {
   position: absolute;
   top: 8px;
