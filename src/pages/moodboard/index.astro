@@ -180,10 +180,6 @@ async function handleSearch(e) {
   isSearching = true
 
   try {
-    if (searchStatus) {
-      searchStatus.textContent = 'Searching...'
-      searchStatus.style.display = 'block'
-    }
 
     const response = await fetch('/api/search', {
       method: 'POST',
