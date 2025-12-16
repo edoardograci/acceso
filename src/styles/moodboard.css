@@ -303,7 +303,9 @@
 
 /* Vector Search Results */
 .vector-results {
-  padding: 0 var(--spacing-page) 48px;
+  /* Let the inner .moodboard-grid (#vector-results-grid) control layout,
+     so it matches the main moodboard grid exactly */
+  padding: 0;
 }
 
 .vector-results-header {
@@ -348,12 +350,6 @@
   /* Disable CSS column masonry: we compute layout in JS to preserve result order */
   column-count: initial;
   column-gap: 0;
-  /* Let the outer .vector-results control horizontal padding/centering */
-  padding-left: 0;
-  padding-right: 0;
-  max-width: 100%;
-  margin-left: 0;
-  margin-right: 0;
 }
 
 #vector-results-grid .moodboard-item {
