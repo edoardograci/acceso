@@ -122,7 +122,7 @@
   z-index: 1000;
   width: calc(100% - 32px);
   max-width: 400px;
-  background: var(--gray-dark);
+  background: var(--bg-primary);
   border: 1px solid var(--gray-border);
   opacity: 0;
   visibility: hidden;
@@ -177,13 +177,17 @@
 }
 
 .studio-card-arrow {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 200;
-  color: var(--text-primary);
   flex-shrink: 0;
-  line-height: 1;
   padding-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+.studio-card-arrow svg {
+  width: 24px;
+  height: 24px;
 }
 
 @media (min-width: 768px) {

@@ -1,25 +1,75 @@
 ---
 import type { Studio } from '../lib/types';
+import '../styles/moodboard.css';
 
 interface Props {
   studio: Studio;
 }
 
+interface MoodboardItem {
+  id: string;
+  slug: string;
+  name: string;
+  designer: string | null;
+  cover: string | null;
+}
+
 const { studio } = Astro.props;
+
+let moodboardItems: MoodboardItem[] = [];
+let designerProducts: MoodboardItem[] = [];
+
+try {
+  const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
+  const response = await fetch(moodboardUrl.toString());
+  if (response.ok) {
+    moodboardItems = await response.json();
+    // Filter products by designer name matching studio name
+    designerProducts = moodboardItems.filter(
+      item => item.designer && item.designer === studio.name && item.cover
+    );
+  }
+} catch (e) {
+  console.error('Failed to fetch moodboard:', e);
+}
 ---
 
 <div class="designer-moodboard">
-  <div class="moodboard-placeholder">
-    <p>Moodboard content for {studio.name} coming soon.</p>
-    <p style="color: var(--text-secondary); font-size: 14px; margin-top: 12px;">
-      This section will showcase visual inspiration and design direction.
-    </p>
-  </div>
+  {designerProducts.length > 0 ? (
+    <div class="moodboard-grid designer-moodboard-grid">
+      {designerProducts.map(item => (
+        <a 
+          href={`/moodboard/${item.slug}`} 
+          class="moodboard-item"
+        >
+          <img 
+            src={item.cover} 
+            alt={item.name}
+            loading="lazy"
+            decoding="async"
+            data-skeleton
+          />
+          <div class="item-overlay">
+            <h3>{item.name}</h3>
+            {item.designer && <p>{item.designer}</p>}
+          </div>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <div class="moodboard-placeholder">
+      <p>No products present in the Moodboard</p>
+    </div>
+  )}
 </div>
 
 <style>
   .designer-moodboard {
     padding-top: 24px;
+  }
+
+  .designer-moodboard-grid {
+    margin-top: 0;
   }
 
   .moodboard-placeholder {

@@ -44,8 +44,13 @@ const pageImage = studio?.cover || '/og-default.jpg';
   
   <main class="designer-page">
     <div class="designer-header">
-      <h1 class="designer-page-title"><a href="/designers">Designers</a></h1>
-      <p class="designer-breadcrumb">/ {studio?.name || 'Not Found'}</p>
+      <div class="designer-header-left">
+        <h1 class="designer-page-title"><a href="/designers">Designers</a></h1>
+        <p class="designer-breadcrumb">/ {studio?.name || 'Not Found'}</p>
+      </div>
+      <div class="designer-header-right">
+        <ActionButtons />
+      </div>
     </div>
 
     {error ? (
@@ -85,8 +90,6 @@ const pageImage = studio?.cover || '/og-default.jpg';
           <div id="tab-moodboard" class="tab-content">
             <DesignerMoodboard studio={studio} />
           </div>
-          
-          <ActionButtons />
         </div>
       </>
     )}
@@ -104,6 +107,20 @@ const pageImage = studio?.cover || '/og-default.jpg';
 
   .designer-header {
     padding: 32px var(--spacing-page);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .designer-header-left {
+    flex: 1;
+  }
+
+  .designer-header-right {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
   }
 
   .designer-page-title {

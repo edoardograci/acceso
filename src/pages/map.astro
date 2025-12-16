@@ -62,7 +62,11 @@ const studioSlug = Astro.url.searchParams.get('studio') || null;
           <h3 class="studio-card-title" id="studio-card-title"></h3>
           <p class="studio-card-address" id="studio-card-address"></p>
         </div>
-        <span class="studio-card-arrow">→</span>
+        <span class="studio-card-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
       </a>
     </div>
 

@@ -82,8 +82,13 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
   
   <main class="moodboard-detail-page">
     <div class="detail-header">
-      <h1 class="detail-page-title"><a href="/moodboard">Moodboard</a></h1>
-      <p class="detail-breadcrumb">/ {item?.name || 'Not Found'}</p>
+      <div class="detail-header-left">
+        <h1 class="detail-page-title"><a href="/moodboard">Moodboard</a></h1>
+        <p class="detail-breadcrumb">/ {item?.name || 'Not Found'}</p>
+      </div>
+      <div class="detail-header-right">
+        <ActionButtons />
+      </div>
     </div>
 
     {error ? (
@@ -187,8 +192,6 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
               </a>
             </div>
           )}
-          
-          <ActionButtons />
         </div>
       </>
     )}
