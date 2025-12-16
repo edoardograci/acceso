@@ -12,31 +12,208 @@
   background-color: #000;
 }
 
+/* City Selector - Top Center */
 .city-selector {
   position: absolute;
   top: calc(var(--navbar-height) + 16px);
-  right: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
+  width: calc(100% - 32px);
+  max-width: 280px;
 }
 
-#city-select {
+.city-select-wrapper {
+  position: relative;
+}
+
+#city-select-button {
   font-family: var(--font-sans);
   font-size: 14px;
-  padding: 10px 16px;
+  font-weight: 400;
+  padding: 12px 40px 12px 16px;
   background: var(--gray-dark);
   border: 1px solid var(--gray-border);
   color: var(--text-primary);
   cursor: pointer;
   appearance: none;
-  padding-right: 36px;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
+  width: 100%;
+  border-radius: 0;
+  transition: border-color 0.2s ease;
+  text-align: left;
 }
 
-#city-select:focus {
+#city-select-button:focus {
   outline: none;
   border-color: var(--accent-yellow);
+}
+
+.city-select-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: transform 0.3s ease;
+  width: 12px;
+  height: 12px;
+}
+
+.city-select-arrow svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.city-select-wrapper.open .city-select-arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+/* Custom Dropdown */
+.city-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--gray-dark);
+  border: 1px solid var(--gray-border);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  z-index: 1001;
+}
+
+.city-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.city-option {
+  padding: 14px 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.city-option:hover,
+.city-option.selected {
+  background-color: var(--accent-yellow);
+  color: #000;
+}
+
+.city-option + .city-option {
+  border-top: 1px solid var(--gray-border);
+}
+
+/* Studio Card - Bottom Center */
+.studio-card {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120%);
+  z-index: 1000;
+  width: calc(100% - 32px);
+  max-width: 400px;
+  background: var(--gray-dark);
+  border: 1px solid var(--gray-border);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+  cursor: pointer;
+}
+
+.studio-card.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.studio-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.studio-card-image {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background-color: var(--bg-primary);
+}
+
+.studio-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.studio-card-title {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 450;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
+.studio-card-address {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.studio-card-arrow {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 200;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  line-height: 1;
+  padding-left: 8px;
+}
+
+@media (min-width: 768px) {
+  .city-selector {
+    top: calc(var(--navbar-height) + 24px);
+    max-width: 320px;
+  }
+
+  .studio-card {
+    bottom: 32px;
+    max-width: 440px;
+  }
+
+  .studio-card-inner {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .studio-card-image {
+    width: 120px;
+    height: 120px;
+  }
+
+  .studio-card-title {
+    font-size: 18px;
+  }
+
+  .studio-card-address {
+    font-size: 14px;
+  }
 }
 
 /* Custom Leaflet icon styling */
@@ -45,94 +222,7 @@
   border: none !important;
 }
 
-/* Custom popup styling */
-.custom-popup .leaflet-popup-content-wrapper {
-  background: var(--gray-dark) !important;
-  border: 1px solid var(--gray-border) !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-}
-
-.custom-popup .leaflet-popup-content {
-  margin: 0 !important;
-  min-width: 200px;
-  max-width: 280px;
-}
-
-.custom-popup .leaflet-popup-tip {
-  background: var(--gray-dark) !important;
-  border: 1px solid var(--gray-border) !important;
-  border-top: none !important;
-  border-right: none !important;
-}
-
-.studio-popup {
-  padding: 12px;
-  color: var(--text-primary) !important;
-  font-family: var(--font-sans) !important;
-}
-
-.studio-popup .popup-header {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: flex-start !important;
-  gap: 8px !important;
-  margin-bottom: 8px !important;
-}
-
-.studio-popup .popup-title {
-  font-family: var(--font-sans) !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  color: var(--text-primary) !important;
-  line-height: 1.3 !important;
-  letter-spacing: 0.05em !important;
-  display: block !important;
-  flex: 1;
-}
-
-.studio-popup .popup-body {
-  display: flex !important;
-  justify-content: space-between !important;
-  gap: 8px !important;
-}
-
-.studio-popup .popup-address {
-  font-family: var(--font-sans) !important;
-  font-size: 13px !important;
-  color: var(--text-secondary) !important;
-  line-height: 1.4 !important;
-  flex: 1 !important;
-  margin: 0 !important;
-}
-
-.studio-popup .popup-link {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 32px !important;
-  height: 32px !important;
-  background: var(--accent-yellow) !important;
-  color: var(--text-primary) !important;
-  text-decoration: none !important;
-  flex-shrink: 0 !important;
-  transition: opacity 0.2s ease !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-}
-
-.studio-popup .popup-link:hover {
-  opacity: 0.8 !important;
-}
-
-.studio-popup .arrow-icon {
-  font-family: var(--font-mono) !important;
-  font-size: 32px !important;
-  font-weight: 200 !important;
-  color: #000 !important;
-  display: block !important;
-  line-height: 1 !important;
-  margin: 0 !important;
+/* Hide default Leaflet popups */
+.leaflet-popup {
+  display: none !important;
 }

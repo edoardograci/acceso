@@ -28,11 +28,34 @@ const studioSlug = Astro.url.searchParams.get('studio') || null;
   <Navbar />
   
   <main class="map-page">
+    <!-- City Selector - Top Center -->
     <div class="city-selector">
-      <select id="city-select" aria-label="Select city">
-        <option value="Milan">Milan</option>
-        <option value="Seoul">Seoul</option>
-      </select>
+      <div class="city-select-wrapper">
+        <button type="button" id="city-select-button" class="city-select-button" aria-label="Select city" aria-expanded="false">
+          <span id="selected-city">Milan</span>
+        </button>
+        <div class="city-select-arrow">
+          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 1L6 6L11 1" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="city-dropdown" id="city-dropdown">
+          <button type="button" class="city-option" data-city="Milan">Milan</button>
+          <button type="button" class="city-option" data-city="Seoul">Seoul</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Studio Card - Bottom Center -->
+    <div class="studio-card" id="studio-card">
+      <a href="#" class="studio-card-inner" id="studio-card-link">
+        <img src="" alt="" class="studio-card-image" id="studio-card-image" />
+        <div class="studio-card-content">
+          <h3 class="studio-card-title" id="studio-card-title"></h3>
+          <p class="studio-card-address" id="studio-card-address"></p>
+        </div>
+        <span class="studio-card-arrow">→</span>
+      </a>
     </div>
 
     <div id="map"></div>

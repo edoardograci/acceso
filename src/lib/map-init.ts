@@ -30,6 +30,7 @@ interface MapInstance {
   markers: L.Marker[];
   currentCity: CityKey;
   studiosData: Studio[];
+  currentStudio: Studio | null;
 }
 
 export function initializeMap(studiosData: Studio[], targetStudioSlug?: string | null): MapInstance | null {
@@ -62,7 +63,8 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
     map: null as any,
     markers: [],
     currentCity: initialCityKey,
-    studiosData
+    studiosData,
+    currentStudio: null
   };
 
   const initialCity = CITY_CONFIG[state.currentCity];
@@ -102,48 +104,24 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
     state.map.panInsideBounds(initialCity.bounds, { animate: false });
   });
 
-  // Setup city selector
-  const citySelect = document.getElementById('city-select') as HTMLSelectElement;
-  if (citySelect) {
-    citySelect.value = state.currentCity;
-    citySelect.addEventListener('change', function(e) {
-      const newCity = (e.target as HTMLSelectElement).value as CityKey;
-      if (newCity in CITY_CONFIG) {
-        state.currentCity = newCity;
-        const cityInfo = CITY_CONFIG[newCity];
-        
-        // Update map bounds
-        state.map.setMaxBounds(cityInfo.bounds);
-        
-        // Pan and zoom to new city
-        state.map.flyTo(cityInfo.center, cityInfo.zoom, { duration: 1 });
-        
-        // Re-render studios
-        renderStudios(state);
-      }
-    });
-  }
+  // Setup custom city selector
+  setupCitySelector(state);
+
+  // Setup studio card interactions
+  setupStudioCard(state);
 
   // Initial render
   renderStudios(state);
 
-  // If target studio provided, center on it and open popup
+  // If target studio provided, center on it and show card
   if (targetStudio && targetStudio.latitude && targetStudio.longitude) {
     const lat = typeof targetStudio.latitude === 'string' ? parseFloat(targetStudio.latitude) : targetStudio.latitude;
     const lng = typeof targetStudio.longitude === 'string' ? parseFloat(targetStudio.longitude) : targetStudio.longitude;
     
     if (!isNaN(lat) && !isNaN(lng)) {
-      // Delay to ensure markers are rendered
       setTimeout(() => {
         state.map.flyTo([lat, lng], 16, { duration: 0.6 });
-        
-        // Find and open the popup for this studio
-        state.markers.forEach(marker => {
-          const markerLatLng = marker.getLatLng();
-          if (markerLatLng.lat === lat && markerLatLng.lng === lng) {
-            marker.openPopup();
-          }
-        });
+        showStudioCard(targetStudio, state);
         
         // Clean up URL by removing query parameter
         window.history.replaceState({}, '', '/map');
@@ -152,6 +130,135 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
   }
 
   return state;
+}
+
+function setupCitySelector(state: MapInstance): void {
+  const button = document.getElementById('city-select-button');
+  const dropdown = document.getElementById('city-dropdown');
+  const wrapper = button?.closest('.city-select-wrapper');
+  const selectedCitySpan = document.getElementById('selected-city');
+  const options = dropdown?.querySelectorAll('.city-option');
+
+  if (!button || !dropdown || !wrapper || !selectedCitySpan || !options) return;
+
+  // Set initial selected state
+  options.forEach(option => {
+    const cityValue = (option as HTMLElement).dataset.city as CityKey;
+    if (cityValue === state.currentCity) {
+      option.classList.add('selected');
+    }
+  });
+
+  // Toggle dropdown
+  button.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = wrapper.classList.contains('open');
+    
+    if (isOpen) {
+      wrapper.classList.remove('open');
+      dropdown.classList.remove('open');
+      button.setAttribute('aria-expanded', 'false');
+    } else {
+      wrapper.classList.add('open');
+      dropdown.classList.add('open');
+      button.setAttribute('aria-expanded', 'true');
+    }
+  });
+
+  // Handle city selection
+  options.forEach(option => {
+    option.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const newCity = (option as HTMLElement).dataset.city as CityKey;
+      
+      if (newCity && newCity in CITY_CONFIG && newCity !== state.currentCity) {
+        state.currentCity = newCity;
+        const cityInfo = CITY_CONFIG[newCity];
+        
+        // Update UI
+        selectedCitySpan.textContent = newCity;
+        options.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        
+        // Update map bounds
+        state.map.setMaxBounds(cityInfo.bounds);
+        
+        // Pan and zoom to new city
+        state.map.flyTo(cityInfo.center, cityInfo.zoom, { duration: 1 });
+        
+        // Hide studio card when switching cities
+        hideStudioCard();
+        
+        // Re-render studios
+        renderStudios(state);
+      }
+      
+      // Close dropdown
+      wrapper.classList.remove('open');
+      dropdown.classList.remove('open');
+      button.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!wrapper.contains(e.target as Node)) {
+      wrapper.classList.remove('open');
+      dropdown.classList.remove('open');
+      button.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+function setupStudioCard(state: MapInstance): void {
+  const card = document.getElementById('studio-card');
+  const mapContainer = document.getElementById('map');
+  
+  if (!card || !mapContainer) return;
+
+  // Close card when clicking on map
+  mapContainer.addEventListener('click', (e) => {
+    // Only close if clicking directly on the map, not on markers
+    if (e.target === mapContainer || (e.target as HTMLElement).closest('.leaflet-container')) {
+      hideStudioCard();
+    }
+  });
+
+  // Prevent card clicks from closing the card
+  card.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+
+function showStudioCard(studio: Studio, state: MapInstance): void {
+  const card = document.getElementById('studio-card');
+  const title = document.getElementById('studio-card-title');
+  const address = document.getElementById('studio-card-address');
+  const image = document.getElementById('studio-card-image') as HTMLImageElement;
+  const link = document.getElementById('studio-card-link') as HTMLAnchorElement;
+
+  if (!card || !title || !address || !image || !link) return;
+
+  state.currentStudio = studio;
+
+  // Update card content
+  title.textContent = studio.name;
+  address.textContent = studio.address || 'No address available';
+  image.src = studio.cover || '/images/placeholder-studio.jpg';
+  image.alt = studio.name;
+  link.href = `/designers/${studio.slug}`;
+
+  // Show card
+  requestAnimationFrame(() => {
+    card.classList.add('visible');
+  });
+}
+
+function hideStudioCard(): void {
+  const card = document.getElementById('studio-card');
+  if (card) {
+    card.classList.remove('visible');
+  }
 }
 
 function getIconForPlace(name: string): L.DivIcon {
@@ -168,20 +275,6 @@ function getIconForPlace(name: string): L.DivIcon {
     iconAnchor: [15, 15],
     popupAnchor: [0, -15]
   });
-}
-
-function createPopupContent(studio: Studio): string {
-  return `
-    <div class="studio-popup">
-      <div class="popup-header">
-        <div class="popup-title">${studio.name}</div>
-        <a href="/designers/${studio.slug}" class="popup-link" aria-label="View ${studio.name}">
-          <span class="arrow-icon">→</span>
-        </a>
-      </div>
-      <div class="popup-address">${studio.address || 'No address available'}</div>
-    </div>
-  `;
 }
 
 function renderStudios(state: MapInstance): void {
@@ -206,21 +299,21 @@ function renderStudios(state: MapInstance): void {
       { icon: getIconForPlace(studio.name) }
     ).addTo(state.map);
 
-    // Bind popup with custom content
-    marker.bindPopup(createPopupContent(studio), {
-      closeButton: false,
-      className: 'custom-popup'
-    });
-
-    // Zoom in and center on marker when clicked
-    marker.on('click', function() {
+    // Handle marker click
+    marker.on('click', function(e) {
+      L.DomEvent.stopPropagation(e);
+      
+      // Zoom to marker and show card
       state.map.flyTo([lat, lng], 16, { duration: 0.4 });
+      showStudioCard(studio, state);
     });
 
     state.markers.push(marker);
   });
 
   // Fit bounds to show all markers
-  const group = L.featureGroup(state.markers);
-  state.map.fitBounds(group.getBounds(), { padding: [50, 50] });
+  if (state.markers.length > 0) {
+    const group = L.featureGroup(state.markers);
+    state.map.fitBounds(group.getBounds(), { padding: [50, 50] });
+  }
 }
