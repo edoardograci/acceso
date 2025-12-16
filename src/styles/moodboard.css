@@ -348,25 +348,17 @@
   /* Disable CSS column masonry: we compute layout in JS to preserve result order */
   column-count: initial;
   column-gap: 0;
+  /* Let the outer .vector-results control horizontal padding/centering */
+  padding-left: 0;
+  padding-right: 0;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 #vector-results-grid .moodboard-item {
   position: absolute;
   transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.relevance-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--accent-yellow);
-  color: #000;
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 450;
-  border-radius: 4px;
-  font-family: var(--font-mono);
-  z-index: 10;
 }
 
 .search-status {

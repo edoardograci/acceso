@@ -107,10 +107,6 @@ try {
         </div>
 
         <div id="vector-results" class="vector-results" style="display: none;">
-          <div class="vector-results-header">
-            <h2>Search Results</h2>
-            <button id="clear-search" class="clear-search-btn">Clear Search</button>
-          </div>
           <div class="moodboard-grid" id="vector-results-grid"></div>
         </div>
 
@@ -135,7 +131,6 @@ try {
   const vectorResults = document.getElementById('vector-results')
   const vectorResultsGrid = document.getElementById('vector-results-grid')
   const emptyResult = document.getElementById('empty-result')
-  const clearSearchBtn = document.getElementById('clear-search')
   const searchStatus = document.getElementById('search-status')
 
   let isSearching = false
@@ -146,13 +141,6 @@ try {
     if (emptyResult) emptyResult.style.display = 'none'
     if (searchStatus) searchStatus.style.display = 'none'
   }
-
-  function clearSearch() {
-    if (searchInput) searchInput.value = ''
-    showGrid()
-  }
-
-  clearSearchBtn?.addEventListener('click', clearSearch)
 
   if (searchInput) {
     searchInput.addEventListener('input', debounce(handleSearch, 300))
@@ -280,15 +268,12 @@ function displayVectorResults(results) {
     card.href = `/moodboard/${item.slug}`
     card.className = 'moodboard-item vector-result-item'
 
-    const percentage = Math.round(result.score * 100)
-    
     // USE THE SEARCH RESULT IMAGE, NOT THE DEFAULT COVER
     const imageUrl = result.image_url  // ← Changed from: item.cover || result.image_url
 
     card.innerHTML = `
       <div style="position: relative;">
         <img src="${imageUrl}" alt="${item.name}" loading="lazy" decoding="async" data-skeleton />
-        <div class="relevance-badge">${percentage}%</div>
       </div>
       <div class="item-overlay">
         <h3>${item.name}</h3>
