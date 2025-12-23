@@ -1,0 +1,32 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout title="Dashboard - Acceso">
+  <Navbar />
+  <main style="max-width: 800px; margin: 80px auto; padding: 0 24px;">
+    <h1 style="font-size: 32px; font-weight: 400; color: var(--color-white); margin-bottom: 24px;">
+      Dashboard
+    </h1>
+    <div style="padding: 24px; background-color: var(--color-bg-secondary); border: 1px solid var(--color-stroke); border-radius: 8px; margin-bottom: 24px;">
+      <p style="color: var(--color-white); font-size: 16px; margin-bottom: 8px;">
+        Welcome, <strong>{user.email}</strong>!
+      </p>
+      <p style="color: var(--color-gray); font-size: 14px;">
+        Email verified: {user.emailVerified ? 'Yes' : 'No'}
+      </p>
+    </div>
+    <form action="/auth/logout" method="POST" style="display: inline;">
+      <button type="submit" style="height: 48px; padding: 0 24px; background-color: var(--color-bg-secondary); border: 1px solid var(--color-stroke); border-radius: 8px; color: var(--color-white); font-size: 16px; cursor: pointer; transition: opacity 0.2s;">
+        Logout
+      </button>
+    </form>
+  </main>
+</Layout>
+

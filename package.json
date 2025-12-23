@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "scripts": {
     "prebuild": "tsx scripts/generate-studios.ts && tsx scripts/generate-moodboard.ts && tsx scripts/generate-spotlight.ts",
-
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
@@ -18,9 +17,11 @@
     "@astrojs/cloudflare": "^12.6.10",
     "@libsql/client": "^0.6.0",
     "@types/leaflet": "^1.9.21",
+    "arctic": "^3.7.0",
     "astro": "^5.15.3",
     "dotenv": "^17.2.3",
-    "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4",
+    "lucia": "^3.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

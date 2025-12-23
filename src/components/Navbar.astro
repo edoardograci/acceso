@@ -14,7 +14,7 @@ function isActive(href: string): boolean {
   return currentPath.startsWith(href);
 }
 
-const isLoggedIn = false;
+const user = Astro.locals.user;
 ---
 
 <nav class="navbar">
@@ -37,8 +37,13 @@ const isLoggedIn = false;
     <div class="navbar-actions">
       <a href="/contact" class="navbar-info">Info</a>
 
-      {isLoggedIn ? (
-        <button class="navbar-login" id="logoutBtn">Log Out</button>
+      {user ? (
+        <>
+          <a href="/dashboard" class="navbar-login">Dashboard</a>
+          <form action="/auth/logout" method="POST" style="display: inline;">
+            <button type="submit" class="navbar-login">Log Out</button>
+          </form>
+        </>
       ) : (
         <a href="/login" class="navbar-login">Log In</a>
       )}
@@ -203,11 +208,3 @@ const isLoggedIn = false;
 
 </style>
 
-<script>
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      window.location.href = '/';
-    });
-  }
-</script>
