@@ -1,3 +1,4 @@
+/* src/styles/global.css */
 @font-face {
   font-family: 'PP Supply Mono';
   src: url('/fonts/PPSupplySans-Variable.ttf') format('truetype');
@@ -19,24 +20,38 @@
 }
 
 :root {
-  --bg-primary: #171717;
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.5);
-  --accent-yellow: #EDFE44;
-  --gray-dark: #3E3E3E;
-  --gray-border: #575757;
-  --gray-icon: #A6A6A6;
+  /* Colors */
+  --color-black: #171717;
+  --color-white: #FFFFFF;
+  --color-bg-secondary: #242424;
+  --color-stroke: #575757;
+  --color-gray: #8B8B8B;
+  --color-yellow: #EDFE44;
+  --color-dark-yellow: #2C2E15;
   
+  /* Typography */
   --font-mono: 'PP Supply Mono', monospace;
   --font-sans: 'PP Fraktion Sans', sans-serif;
   
+  /* Spacing */
   --spacing-page: 16px;
-  --navbar-height: 112px;
+  --navbar-height-mobile: 96px;
+  --navbar-height-desktop: 56px;
+  
+  /* Button sizes */
+  --btn-height: 36px;
+  --btn-height-large: 48px;
+  --btn-padding-x: 16px;
+  --btn-padding-y: 8px;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: var(--color-black);
+  color: var(--color-white);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -50,53 +65,25 @@ h1, h2, h3 {
 
 a {
   color: inherit;
-  text-decoration: underline;
-  transition: opacity 0.2s ease;
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 a:hover {
-  opacity: 0.7;
-}
-
-.container {
-  padding-left: var(--spacing-page);
-  padding-right: var(--spacing-page);
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-/* Ensure CSS variables are correctly applied */
-:root {
-  --bg-primary: #171717;
-  --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.5);
-  --accent-yellow: #EDFE44;
-  --gray-dark: #3E3E3E;
-  --gray-border: #575757;
-  --gray-icon: #A6A6A6;
-  
-  --font-mono: 'PP Supply Mono', monospace;
-  --font-sans: 'PP Fraktion Sans', sans-serif;
-  
-  --spacing-page: 16px;
-  --navbar-height: 112px;
+  color: var(--color-yellow);
 }
 
 /* Image skeleton loading state */
 .image-skeleton {
   position: relative;
-  background: linear-gradient(90deg, #2a2a2a 0px, #3a3a3a 40px, #2a2a2a 80px);
+  background: linear-gradient(90deg, #242424 0px, #2a2a2a 40px, #242424 80px);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.2s ease-in-out infinite;
-  color: transparent;
 }
 
 .image-skeleton.image-loaded {
   animation: none;
   background: none;
-  color: inherit;
 }
 
 @keyframes skeleton-shimmer {

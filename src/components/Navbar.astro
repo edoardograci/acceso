@@ -1,91 +1,213 @@
 ---
+// src/components/Navbar.astro
 import type { NavLink } from '../lib/types';
 
-const links: NavLink[] = [
-  { label: 'Map', href: '/map' },
+const navLinks: NavLink[] = [
   { label: 'Designers', href: '/designers' },
   { label: 'Moodboard', href: '/moodboard' },
-  { label: 'Contacts', href: '/contact' }
+  { label: 'Map', href: '/map' }
 ];
 
 const currentPath = Astro.url.pathname;
 
 function isActive(href: string): boolean {
-  if (href === '/') {
-    return currentPath === '/';
-  }
   return currentPath.startsWith(href);
 }
+
+const isLoggedIn = false;
 ---
 
 <nav class="navbar">
-  <div class="navbar-container">
-    <a href="/" class="navbar-logo">ACCESO</a>
-    
-    <div class="navbar-links">
-      {links.map(link => (
-        <a 
-          href={link.href} 
-          class:list={['navbar-link', { active: isActive(link.href) }]}
+  <div class="navbar-inner">
+    <a href="/" class="navbar-logo" aria-label="Acceso Home">
+      <img src="/icons/logo.svg" alt="Acceso" />
+    </a>
+
+    <div class="navbar-tabs">
+      {navLinks.map(link => (
+        <a
+          href={link.href}
+          class:list={['navbar-tab', { active: isActive(link.href) }]}
         >
-          {link.label}
+          <span>{link.label}</span>
         </a>
       ))}
+    </div>
+
+    <div class="navbar-actions">
+      <a href="/contact" class="navbar-info">Info</a>
+
+      {isLoggedIn ? (
+        <button class="navbar-login" id="logoutBtn">Log Out</button>
+      ) : (
+        <a href="/login" class="navbar-login">Log In</a>
+      )}
     </div>
   </div>
 </nav>
 
 <style>
-  .navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: var(--navbar-height);
-    background-color: var(--bg-primary);
-    z-index: 100;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-black);
+}
 
-  .navbar-container {
-    height: 100%;
-    padding: 0 var(--spacing-page);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+/* ======================
+   MOBILE
+====================== */
+
+.navbar-inner {
+  position: relative;
+  height: 100px;
+  padding: 24px 16px 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 36px 1fr;
+  align-items: center;
+}
+
+/* bottom rule */
+.navbar-inner::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 1px;
+  background-color: var(--color-stroke);
+}
+
+.navbar-logo {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+}
+
+.navbar-logo img {
+  height: 14px;
+  display: block;
+}
+
+.navbar-actions {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navbar-info {
+  font-size: 14px;
+  line-height: 14px;
+  color: var(--color-white);
+}
+
+.navbar-login {
+  height: 36px;
+  min-width: 69px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-stroke);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-white);
+  cursor: pointer;
+}
+
+.navbar-tabs {
+  grid-column: 1 / -1;
+  grid-row: 2 / 3;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: stretch;
+  height: 100%;
+}
+
+.navbar-tab {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 16px;
+  color: var(--color-gray);
+}
+
+.navbar-tab span {
+  padding-bottom: 12px;
+}
+
+.navbar-tab.active {
+  color: var(--color-white);
+}
+
+/* yellow underline replaces the gray rule */
+.navbar-tab.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background-color: var(--color-yellow);
+  z-index: 999;
+}
+
+/* ======================
+   DESKTOP
+====================== */
+
+@media (min-width: 768px) {
+  .navbar-inner {
+    height: 72px;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 72px;
     align-items: center;
-    padding-top: 26px;
   }
 
-  .navbar-logo {
-    font-family: var(--font-mono);
-    font-size: 32px;
-    font-weight: 400;
-    text-decoration: none;
-    letter-spacing: 0;
-    margin-bottom: 12px;
+  .navbar-inner::after {
+    left: 24px;
+    right: 24px;
   }
 
-  .navbar-links {
+  .navbar-tabs {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
     display: flex;
-    gap: 20px;
-    padding-bottom: 16px;
+    justify-content: center;
+    gap: 32px;
+    height: 100%;
   }
 
-  .navbar-link {
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 390;
-    text-decoration: none;
-    color: var(--text-secondary);
-    transition: color 0.2s ease;
+  .navbar-tab {
+    height: 100%;
   }
 
-  .navbar-link.active {
-    color: var(--text-primary);
+  .navbar-tab span {
+    padding-bottom: 20px;
   }
 
-  .navbar-link:hover {
-    color: var(--text-primary);
+  .navbar-actions {
+    grid-column: 3 / 4;
+    grid-row: 1 / 2;
   }
+}
+
 </style>
+
+<script>
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      window.location.href = '/';
+    });
+  }
+</script>
