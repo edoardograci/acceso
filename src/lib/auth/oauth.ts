@@ -6,7 +6,10 @@ export function createGoogleOAuth(env: Env, requestUrl?: string) {
   let siteUrl = env.PUBLIC_SITE_URL || 'http://localhost:4321';
   if (requestUrl) {
     const url = new URL(requestUrl);
-    siteUrl = `${url.protocol}//${url.host}`;
+    // Force HTTPS if not localhost/127.0.0.1 to handle proxy/SSL termination
+    const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    const protocol = isLocalhost ? url.protocol : 'https:';
+    siteUrl = `${protocol}//${url.host}`;
   }
   return new Google(
     env.GOOGLE_CLIENT_ID,

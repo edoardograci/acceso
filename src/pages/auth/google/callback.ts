@@ -105,7 +105,7 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
       return redirect(`/login?error=oauth_error&message=${encodeURIComponent(error.message)}`, 302);
     }
 
-    return redirect('/login?error=oauth_failed', 302);
+    return redirect(`/login?error=oauth_failed&message=${encodeURIComponent(error instanceof Error ? error.message : String(error))}`, 302);
   }
 };
 
