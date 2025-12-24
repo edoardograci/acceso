@@ -51,7 +51,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <slot />
     <script is:inline>
       if (typeof window !== 'undefined') {
-        const attachSkeleton = (img: HTMLImageElement) => {
+        const attachSkeleton = (img) => {
           if (!img || img.dataset.skeletonInitialized === 'true') return;
           img.dataset.skeletonInitialized = 'true';
           img.classList.add('image-skeleton');
@@ -74,7 +74,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
         const initSkeletons = () => {
           document
-            .querySelectorAll<HTMLImageElement>('img[data-skeleton]')
+            .querySelectorAll('img[data-skeleton]')
             .forEach(attachSkeleton);
         };
 
@@ -92,10 +92,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
                   node.tagName === 'IMG' &&
                   node.hasAttribute('data-skeleton')
                 ) {
-                  attachSkeleton(node as HTMLImageElement);
+                  attachSkeleton(node);
                 }
                 node
-                  .querySelectorAll?.<HTMLImageElement>('img[data-skeleton]')
+                  .querySelectorAll?.('img[data-skeleton]')
                   .forEach(attachSkeleton);
               }
             });

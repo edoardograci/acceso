@@ -1,7 +1,7 @@
 import type { Studio } from './types';
 import L from 'leaflet';
 
-const iconMap = (window as any).iconMap ?? {};
+
 
 // City configuration with bounds and map settings
 const CITY_CONFIG = {
@@ -100,7 +100,7 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
 
   // Set initial bounds
   state.map.setMaxBounds(initialCity.bounds);
-  state.map.on('drag', function() {
+  state.map.on('drag', function () {
     state.map.panInsideBounds(initialCity.bounds, { animate: false });
   });
 
@@ -117,12 +117,12 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
   if (targetStudio && targetStudio.latitude && targetStudio.longitude) {
     const lat = typeof targetStudio.latitude === 'string' ? parseFloat(targetStudio.latitude) : targetStudio.latitude;
     const lng = typeof targetStudio.longitude === 'string' ? parseFloat(targetStudio.longitude) : targetStudio.longitude;
-    
+
     if (!isNaN(lat) && !isNaN(lng)) {
       setTimeout(() => {
         state.map.flyTo([lat, lng], 16, { duration: 0.6 });
         showStudioCard(targetStudio, state);
-        
+
         // Clean up URL by removing query parameter
         window.history.replaceState({}, '', '/map');
       }, 300);
@@ -153,7 +153,7 @@ function setupCitySelector(state: MapInstance): void {
   button.addEventListener('click', (e) => {
     e.stopPropagation();
     const isOpen = wrapper.classList.contains('open');
-    
+
     if (isOpen) {
       wrapper.classList.remove('open');
       dropdown.classList.remove('open');
@@ -170,29 +170,29 @@ function setupCitySelector(state: MapInstance): void {
     option.addEventListener('click', (e) => {
       e.stopPropagation();
       const newCity = (option as HTMLElement).dataset.city as CityKey;
-      
+
       if (newCity && newCity in CITY_CONFIG && newCity !== state.currentCity) {
         state.currentCity = newCity;
         const cityInfo = CITY_CONFIG[newCity];
-        
+
         // Update UI
         selectedCitySpan.textContent = newCity;
         options.forEach(opt => opt.classList.remove('selected'));
         option.classList.add('selected');
-        
+
         // Update map bounds
         state.map.setMaxBounds(cityInfo.bounds);
-        
+
         // Pan and zoom to new city
         state.map.flyTo(cityInfo.center, cityInfo.zoom, { duration: 1 });
-        
+
         // Hide studio card when switching cities
         hideStudioCard();
-        
+
         // Re-render studios
         renderStudios(state);
       }
-      
+
       // Close dropdown
       wrapper.classList.remove('open');
       dropdown.classList.remove('open');
@@ -213,7 +213,7 @@ function setupCitySelector(state: MapInstance): void {
 function setupStudioCard(state: MapInstance): void {
   const card = document.getElementById('studio-card');
   const mapContainer = document.getElementById('map');
-  
+
   if (!card || !mapContainer) return;
 
   // Close card when clicking on map
@@ -265,6 +265,7 @@ function getIconForPlace(name: string): L.DivIcon {
   if (!name || typeof name !== 'string') {
     name = 'DEFAULT';
   }
+  const iconMap = (window as any).iconMap ?? {};
   const firstLetter = name.trim().charAt(0).toUpperCase();
   const svg = iconMap[firstLetter] || iconMap['DEFAULT'] || '';
 
@@ -291,7 +292,7 @@ function renderStudios(state: MapInstance): void {
   cityStudios.forEach(studio => {
     const lat = typeof studio.latitude === 'string' ? parseFloat(studio.latitude) : studio.latitude;
     const lng = typeof studio.longitude === 'string' ? parseFloat(studio.longitude) : studio.longitude;
-    
+
     if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) return;
 
     const marker = L.marker(
@@ -300,9 +301,9 @@ function renderStudios(state: MapInstance): void {
     ).addTo(state.map);
 
     // Handle marker click
-    marker.on('click', function(e) {
+    marker.on('click', function (e) {
       L.DomEvent.stopPropagation(e);
-      
+
       // Zoom to marker and show card
       state.map.flyTo([lat, lng], 16, { duration: 0.4 });
       showStudioCard(studio, state);
