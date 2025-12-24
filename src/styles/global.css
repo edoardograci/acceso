@@ -28,22 +28,32 @@
   --color-gray: #8B8B8B;
   --color-yellow: #EDFE44;
   --color-dark-yellow: #2C2E15;
-  
+
   /* Typography */
   --font-mono: 'PP Supply Mono', monospace;
   --font-sans: 'PP Fraktion Sans', sans-serif;
-  
+
   /* Spacing */
   --spacing-page: 16px;
-  --navbar-height-mobile: 96px;
-  --navbar-height-desktop: 56px;
-  
+  --navbar-height: 100px;
+  /* Default (mobile) matches Navbar.astro */
+  --navbar-height-mobile: 100px;
+  --navbar-height-desktop: 72px;
+
   /* Button sizes */
   --btn-height: 36px;
   --btn-height-large: 48px;
   --btn-padding-x: 16px;
   --btn-padding-y: 8px;
 }
+
+@media (min-width: 768px) {
+  :root {
+    --navbar-height: 72px;
+    /* Matches Navbar.astro desktop */
+  }
+}
+
 
 html {
   scroll-behavior: smooth;
@@ -58,7 +68,9 @@ body {
   overflow-x: hidden;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   font-family: var(--font-mono);
   font-weight: 200;
 }
@@ -90,6 +102,7 @@ a:hover {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }

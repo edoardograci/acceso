@@ -1,21 +1,21 @@
 /* Map page styles */
 .map-page {
   position: relative;
-  padding-top: var(--navbar-height);
-  height: 100vh;
+  /* padding-top removed - content follows sticky navbar */
+  height: calc(100vh - var(--navbar-height));
   overflow: hidden;
 }
 
 #map {
   width: 100%;
-  height: calc(100vh - var(--navbar-height));
+  height: 100%;
   background-color: #000;
 }
 
 /* City Selector - Top Center */
 .city-selector {
   position: absolute;
-  top: calc(var(--navbar-height) + 16px);
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -32,20 +32,19 @@
   font-size: 14px;
   font-weight: 400;
   padding: 12px 40px 12px 16px;
-  background: var(--gray-dark);
-  border: 1px solid var(--gray-border);
-  color: var(--text-primary);
+  background: var(--color-black);
+  border: 1px solid var(--color-stroke);
+  color: var(--color-white);
   cursor: pointer;
   appearance: none;
   width: 100%;
-  border-radius: 0;
+  border-radius: 6px;
   transition: border-color 0.2s ease;
   text-align: left;
 }
 
 #city-select-button:focus {
   outline: none;
-  border-color: var(--accent-yellow);
 }
 
 .city-select-arrow {
@@ -75,10 +74,12 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: var(--gray-dark);
-  border: 1px solid var(--gray-border);
+  background: var(--color-black);
+  border: 1px solid var(--color-stroke);
+  border-radius: 6px;
   opacity: 0;
   visibility: hidden;
+  overflow: hidden;
   transform: translateY(-8px);
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
   z-index: 1001;
@@ -94,7 +95,7 @@
   padding: 14px 16px;
   font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--text-primary);
+  color: var(--color-white);
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
   border: none;
@@ -105,12 +106,12 @@
 
 .city-option:hover,
 .city-option.selected {
-  background-color: var(--accent-yellow);
+  background-color: var(--color-yellow);
   color: #000;
 }
 
-.city-option + .city-option {
-  border-top: 1px solid var(--gray-border);
+.city-option+.city-option {
+  border-top: 1px solid var(--color-stroke);
 }
 
 /* Studio Card - Bottom Center */
@@ -122,8 +123,9 @@
   z-index: 1000;
   width: calc(100% - 32px);
   max-width: 400px;
-  background: var(--bg-primary);
-  border: 1px solid var(--gray-border);
+  background: var(--color-black);
+  border: 1px solid var(--color-stroke);
+  border-radius: 6px;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
@@ -159,10 +161,10 @@
 }
 
 .studio-card-title {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 16px;
-  font-weight: 450;
-  color: var(--text-primary);
+  font-weight: 500;
+  color: var(--color-white);
   margin-bottom: 6px;
   line-height: 1.3;
   letter-spacing: 0.02em;
@@ -171,7 +173,7 @@
 .studio-card-address {
   font-family: var(--font-sans);
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--color-gray);
   line-height: 1.4;
   margin: 0;
 }
@@ -192,7 +194,7 @@
 
 @media (min-width: 768px) {
   .city-selector {
-    top: calc(var(--navbar-height) + 24px);
+    top: 24px;
     max-width: 320px;
   }
 
