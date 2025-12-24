@@ -115,7 +115,8 @@
 }
 
 /* Studio Card - Bottom Center */
-.studio-card {
+/* Studio UI Container - Handles Position & Visibility */
+.studio-ui-container {
   position: fixed;
   bottom: 24px;
   left: 50%;
@@ -123,19 +124,69 @@
   z-index: 1000;
   width: calc(100% - 32px);
   max-width: 400px;
-  background: var(--color-black);
-  border: 1px solid var(--color-stroke);
-  border-radius: 6px;
+  pointer-events: none;
+  /* Let clicks pass through gaps */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
-  cursor: pointer;
 }
 
-.studio-card.visible {
+.studio-ui-container.visible {
   opacity: 1;
   visibility: visible;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Navigation Buttons */
+.map-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  pointer-events: none;
+  /* Container itself usually transparent but just in case */
+}
+
+.map-nav-btn {
+  pointer-events: auto;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-stroke);
+  border-radius: 9999px;
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1;
+  /* Ensure text creates no extra height */
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.map-nav-btn:hover {
+  border-color: var(--color-white);
+}
+
+.map-nav-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.5px;
+  /* Slightly thicker for visibility at small size */
+}
+
+/* Studio Card - Visual Box */
+.studio-card {
+  position: relative;
+  width: 100%;
+  pointer-events: auto;
+  background: var(--color-black);
+  border: 1px solid var(--color-stroke);
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .studio-card-inner {
@@ -152,7 +203,7 @@
   height: 100px;
   flex-shrink: 0;
   object-fit: cover;
-  background-color: var(--bg-primary);
+  background-color: var(--color-bg-secondary);
 }
 
 .studio-card-content {
@@ -198,7 +249,7 @@
     max-width: 320px;
   }
 
-  .studio-card {
+  .studio-ui-container {
     bottom: 32px;
     max-width: 440px;
   }

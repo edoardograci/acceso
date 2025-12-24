@@ -46,28 +46,46 @@ const studioSlug = Astro.url.searchParams.get('studio') || null;
       </div>
     </div>
 
-    <!-- Studio Card - Bottom Center -->
-    <div class="studio-card" id="studio-card">
-      <a href="#" class="studio-card-inner" id="studio-card-link">
-        <img 
-          src="" 
-          alt="" 
-          class="studio-card-image" 
-          id="studio-card-image" 
-          loading="lazy" 
-          decoding="async"
-          data-skeleton
-        />
-        <div class="studio-card-content">
-          <h3 class="studio-card-title" id="studio-card-title"></h3>
-          <p class="studio-card-address" id="studio-card-address"></p>
-        </div>
-        <span class="studio-card-arrow">
+    <!-- Studio Card Wrapper with Navigation -->
+    <div class="studio-ui-container" id="studio-ui-container">
+      <!-- Navigation Buttons -->
+      <div class="map-navigation">
+        <button type="button" id="nav-btn-back" class="map-nav-btn prev" aria-label="Previous studio">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back
+        </button>
+        <button type="button" id="nav-btn-next" class="map-nav-btn next" aria-label="Next studio">
+          Next
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        </span>
-      </a>
+        </button>
+      </div>
+
+      <div class="studio-card" id="studio-card">
+        <a href="#" class="studio-card-inner" id="studio-card-link">
+          <img 
+            src="" 
+            alt="" 
+            class="studio-card-image" 
+            id="studio-card-image" 
+            loading="lazy" 
+            decoding="async"
+            data-skeleton
+          />
+          <div class="studio-card-content">
+            <h3 class="studio-card-title" id="studio-card-title"></h3>
+            <p class="studio-card-address" id="studio-card-address"></p>
+          </div>
+          <span class="studio-card-arrow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+      </div>
     </div>
 
     <div id="map"></div>

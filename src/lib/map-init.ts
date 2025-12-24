@@ -31,6 +31,7 @@ interface MapInstance {
   currentCity: CityKey;
   studiosData: Studio[];
   currentStudio: Studio | null;
+  visitHistory: Studio[];
 }
 
 export function initializeMap(studiosData: Studio[], targetStudioSlug?: string | null): MapInstance | null {
@@ -64,7 +65,8 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
     markers: [],
     currentCity: initialCityKey,
     studiosData,
-    currentStudio: null
+    currentStudio: null,
+    visitHistory: []
   };
 
   const initialCity = CITY_CONFIG[state.currentCity];
@@ -109,6 +111,9 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
 
   // Setup studio card interactions
   setupStudioCard(state);
+
+  // Setup navigation
+  setupNavigation(state);
 
   // Initial render
   renderStudios(state);
@@ -230,14 +235,67 @@ function setupStudioCard(state: MapInstance): void {
   });
 }
 
+function setupNavigation(state: MapInstance): void {
+  const nextBtn = document.getElementById('nav-btn-next');
+  const backBtn = document.getElementById('nav-btn-back');
+
+  if (!nextBtn || !backBtn) return;
+
+  nextBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const cityStudios = state.studiosData.filter(s => s.city === state.currentCity);
+    if (cityStudios.length <= 1) return;
+
+    let nextStudio: Studio;
+    // Try to find a random different studio
+    // Safety break after 10 tries just in case
+    let tries = 0;
+    do {
+      const randomIndex = Math.floor(Math.random() * cityStudios.length);
+      nextStudio = cityStudios[randomIndex];
+      tries++;
+    } while (nextStudio === state.currentStudio && tries < 10);
+
+    if (nextStudio && nextStudio !== state.currentStudio) {
+      navigateToStudio(nextStudio, state);
+    }
+  });
+
+  backBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (state.visitHistory.length === 0) return;
+
+    const previousStudio = state.visitHistory.pop();
+    if (previousStudio) {
+      navigateToStudio(previousStudio, state, true);
+    }
+  });
+}
+
+function navigateToStudio(studio: Studio, state: MapInstance, isBack: boolean = false): void {
+  // If not going back, and we have a current studio, save it to history
+  if (!isBack && state.currentStudio && state.currentStudio !== studio) {
+    state.visitHistory.push(state.currentStudio);
+  }
+
+  const lat = typeof studio.latitude === 'string' ? parseFloat(studio.latitude) : studio.latitude;
+  const lng = typeof studio.longitude === 'string' ? parseFloat(studio.longitude) : studio.longitude;
+
+  if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
+    state.map.flyTo([lat, lng], 16, { duration: 0.6 });
+    showStudioCard(studio, state);
+  }
+}
+
 function showStudioCard(studio: Studio, state: MapInstance): void {
-  const card = document.getElementById('studio-card');
+  // We now target the container for visibility
+  const container = document.getElementById('studio-ui-container');
   const title = document.getElementById('studio-card-title');
   const address = document.getElementById('studio-card-address');
   const image = document.getElementById('studio-card-image') as HTMLImageElement;
   const link = document.getElementById('studio-card-link') as HTMLAnchorElement;
 
-  if (!card || !title || !address || !image || !link) return;
+  if (!container || !title || !address || !image || !link) return;
 
   state.currentStudio = studio;
 
@@ -248,16 +306,16 @@ function showStudioCard(studio: Studio, state: MapInstance): void {
   image.alt = studio.name;
   link.href = `/designers/${studio.slug}`;
 
-  // Show card
+  // Show container
   requestAnimationFrame(() => {
-    card.classList.add('visible');
+    container.classList.add('visible');
   });
 }
 
 function hideStudioCard(): void {
-  const card = document.getElementById('studio-card');
-  if (card) {
-    card.classList.remove('visible');
+  const container = document.getElementById('studio-ui-container');
+  if (container) {
+    container.classList.remove('visible');
   }
 }
 
@@ -303,10 +361,7 @@ function renderStudios(state: MapInstance): void {
     // Handle marker click
     marker.on('click', function (e) {
       L.DomEvent.stopPropagation(e);
-
-      // Zoom to marker and show card
-      state.map.flyTo([lat, lng], 16, { duration: 0.4 });
-      showStudioCard(studio, state);
+      navigateToStudio(studio, state);
     });
 
     state.markers.push(marker);
