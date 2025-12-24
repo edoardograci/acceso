@@ -1,10 +1,21 @@
-// src/middleware.ts
 import type { MiddlewareHandler } from 'astro';
 import { createLucia } from './lib/auth/lucia';
+import type { Env } from './env.d';
 
 export const onRequest: MiddlewareHandler = async (context, next) => {
   const { locals, cookies } = context;
-  const env = locals.runtime.env;
+
+  // Initialize user and session as null
+  locals.user = null;
+  locals.session = null;
+
+  const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+
+  // Check if we have minimal configuration
+  if (!env?.TURSO_DATABASE_URL || !env?.TURSO_AUTH_TOKEN) {
+    console.warn('[Middleware] Auth environment variables missing');
+    return next();
+  }
 
   try {
     const lucia = createLucia(env);
@@ -30,11 +41,12 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
       cookies.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
       locals.user = null;
       locals.session = null;
-    } else {
+    } else if (user) {
+      // Set user and session in locals only if user exists
       locals.user = {
         id: user.id,
         email: user.email,
-        emailVerified: user.emailVerified, // Fixed: use camelCase from Lucia adapter
+        emailVerified: user.emailVerified,
       };
       locals.session = {
         id: session.id,

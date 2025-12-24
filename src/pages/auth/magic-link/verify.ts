@@ -4,8 +4,10 @@ import { validateMagicLinkToken, deleteMagicLinkToken } from '../../../lib/auth/
 import { createLucia } from '../../../lib/auth/lucia';
 import { TursoHttpClient } from '../../../lib/auth/lucia';
 
-export const GET: APIRoute = async ({ request, locals, redirect }) => {
-  const env = locals.runtime.env;
+import type { Env } from '../../../env.d';
+
+export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
+  const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
   const url = new URL(request.url);
   const token = url.searchParams.get('token');
 

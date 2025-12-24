@@ -4,7 +4,7 @@ import type { Env } from '../../env.d';
 
 export async function generateMagicLink(email: string, env: Env): Promise<string> {
   const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
-  
+
   try {
     // Find or create user
     let userId: string;
@@ -12,7 +12,7 @@ export async function generateMagicLink(email: string, env: Env): Promise<string
       sql: 'SELECT id FROM users WHERE email = ? LIMIT 1',
       args: [email],
     });
-    
+
     if (userResult.rows.length > 0) {
       userId = userResult.rows[0].id;
     } else {
@@ -24,19 +24,20 @@ export async function generateMagicLink(email: string, env: Env): Promise<string
         args: [userId, email, 0, now, now],
       });
     }
-    
+
     // Generate token
     const tokenId = crypto.randomUUID();
     const expiresAt = Math.floor(Date.now() / 1000) + 15 * 60; // 15 minutes
-    
+
     // Store token
     await turso.execute({
       sql: 'INSERT INTO magic_link_tokens (id, user_id, email, expires_at, created_at) VALUES (?, ?, ?, ?, ?)',
       args: [tokenId, userId, email, expiresAt, Math.floor(Date.now() / 1000)],
     });
-    
+
     // Return verification URL
-    return `${env.PUBLIC_SITE_URL}/auth/magic-link/verify?token=${tokenId}`;
+    const siteUrl = env.PUBLIC_SITE_URL || 'http://localhost:4321';
+    return `${siteUrl}/auth/magic-link/verify?token=${tokenId}`;
   } catch (error) {
     console.error('[Magic Link] Error generating magic link:', error);
     throw error;
@@ -45,25 +46,25 @@ export async function generateMagicLink(email: string, env: Env): Promise<string
 
 export async function validateMagicLinkToken(tokenId: string, env: Env): Promise<{ userId: string; email: string } | null> {
   const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
-  
+
   try {
     const result = await turso.execute({
       sql: 'SELECT user_id, email, expires_at FROM magic_link_tokens WHERE id = ? LIMIT 1',
       args: [tokenId],
     });
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     const token = result.rows[0];
     const now = Math.floor(Date.now() / 1000);
-    
+
     if (token.expires_at < now) {
       // Token expired
       return null;
     }
-    
+
     return {
       userId: token.user_id,
       email: token.email,
@@ -76,7 +77,7 @@ export async function validateMagicLinkToken(tokenId: string, env: Env): Promise
 
 export async function deleteMagicLinkToken(tokenId: string, env: Env): Promise<void> {
   const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
-  
+
   try {
     await turso.execute({
       sql: 'DELETE FROM magic_link_tokens WHERE id = ?',

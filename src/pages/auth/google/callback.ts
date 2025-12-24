@@ -3,10 +3,11 @@ import type { APIRoute } from 'astro';
 import { createGoogleOAuth } from '../../../lib/auth/oauth';
 import { createLucia } from '../../../lib/auth/lucia';
 import { TursoHttpClient } from '../../../lib/auth/lucia';
+import type { Env } from '../../../env.d';
 import { OAuth2RequestError } from 'arctic';
 
 export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
-  const env = locals.runtime.env;
+  const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
@@ -52,7 +53,7 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
     if (oauthResult.rows.length > 0) {
       // Existing user
       userId = oauthResult.rows[0].user_id;
-      
+
       // Update email verification status if needed
       await turso.execute({
         sql: 'UPDATE users SET email_verified = ?, updated_at = ? WHERE id = ?',
@@ -95,15 +96,15 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
     // Clear OAuth cookies
     cookies.delete('oauth_state', { path: '/' });
     cookies.delete('oauth_code_verifier', { path: '/' });
-    
+
     return redirect('/dashboard', 302);
   } catch (error) {
     console.error('[OAuth] Error in callback:', error);
-    
+
     if (error instanceof OAuth2RequestError) {
       return redirect(`/login?error=oauth_error&message=${encodeURIComponent(error.message)}`, 302);
     }
-    
+
     return redirect('/login?error=oauth_failed', 302);
   }
 };

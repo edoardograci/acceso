@@ -4,38 +4,45 @@
 
 declare module '@libsql/client';
 
-interface Env {
+export type Env = {
   TURSO_DATABASE_URL: string;
   TURSO_AUTH_TOKEN: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   PUBLIC_SITE_URL: string;
-}
+};
 
-type Runtime = import('@astrojs/cloudflare').Runtime<Env>;
+type Runtime = {
+  env: Env;
+  cf?: any;
+  ctx?: any;
+};
 
-declare namespace App {
-  interface Locals extends Runtime {
-    user: {
-      id: string;
-      email: string;
-      emailVerified: boolean;
-    } | null;
-    session: {
-      id: string;
-      expiresAt: Date;
-    } | null;
-  };
-}
+declare global {
+  namespace App {
+    interface Locals {
+      runtime?: Runtime;
+      user: {
+        id: string;
+        email: string;
+        emailVerified: boolean;
+      } | null;
+      session: {
+        id: string;
+        expiresAt: Date;
+      } | null;
+    }
+  }
 
-interface ImportMetaEnv {
-  readonly TURSO_DATABASE_URL?: string;
-  readonly TURSO_AUTH_TOKEN?: string;
-  readonly GOOGLE_CLIENT_ID?: string;
-  readonly GOOGLE_CLIENT_SECRET?: string;
-  readonly PUBLIC_SITE_URL?: string;
-}
+  interface ImportMetaEnv {
+    readonly TURSO_DATABASE_URL?: string;
+    readonly TURSO_AUTH_TOKEN?: string;
+    readonly GOOGLE_CLIENT_ID?: string;
+    readonly GOOGLE_CLIENT_SECRET?: string;
+    readonly PUBLIC_SITE_URL?: string;
+  }
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
 }
