@@ -8,15 +8,15 @@ if (!user) {
 }
 ---
 
-<Layout title="Dashboard - Acceso">
+<Layout title="Profile - Acceso">
   <Navbar />
   <main style="max-width: 800px; margin: 80px auto; padding: 0 24px;">
     <h1 style="font-size: 32px; font-weight: 400; color: var(--color-white); margin-bottom: 24px;">
-      Dashboard
+      Profile
     </h1>
     <div style="padding: 24px; background-color: var(--color-bg-secondary); border: 1px solid var(--color-stroke); border-radius: 8px; margin-bottom: 24px;">
       <p style="color: var(--color-white); font-size: 16px; margin-bottom: 8px;">
-        Welcome, <strong>{user.email}</strong>!
+        Welcome back, <strong>{user.email}</strong>!
       </p>
       <p style="color: var(--color-gray); font-size: 14px;">
         Email verified: {user.emailVerified ? 'Yes' : 'No'}

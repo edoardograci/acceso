@@ -3,8 +3,10 @@ import type { APIRoute } from 'astro';
 import { createLucia } from '../../lib/auth/lucia';
 
 export const POST: APIRoute = async ({ locals, redirect, cookies }) => {
-  const env = locals.runtime.env;
-  
+  const runtimeEnv = locals.runtime?.env || {};
+  const metaEnv = import.meta.env || {};
+  const env = { ...metaEnv, ...runtimeEnv } as unknown as any; // Type 'any' used to matching Env usually but explicitly ensuring it passes to createLucia
+
   try {
     const lucia = createLucia(env);
     const sessionId = cookies.get(lucia.sessionCookieName)?.value;
@@ -16,7 +18,7 @@ export const POST: APIRoute = async ({ locals, redirect, cookies }) => {
     // Create blank session cookie to clear it
     const blankCookie = lucia.createBlankSessionCookie();
     cookies.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
-    
+
     return redirect('/', 302);
   } catch (error) {
     console.error('[Logout] Error logging out:', error);

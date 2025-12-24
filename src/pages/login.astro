@@ -236,11 +236,10 @@ const errorMessage = url.searchParams.get('message');
         
         // Show different message based on whether email was sent or dev mode
         if (data.magicLink) {
-          // Dev mode - show the link
+          // Dev mode - show the link (only if server sends it, which it shouldn't anymore)
           resultDiv.innerHTML = `
-            <strong>Magic link generated (dev mode)!</strong><br>
-            <small>Click to log in:</small><br>
-            <a href="${data.magicLink}" style="color: inherit; text-decoration: underline; word-break: break-all;">${data.magicLink}</a>
+            <strong>Magic link generated!</strong><br>
+            <small>Check server console for link.</small>
           `;
         } else {
           // Production - email was sent

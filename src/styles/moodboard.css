@@ -1,6 +1,5 @@
 /* Moodboard page styles */
 .moodboard-page {
-  padding-top: var(--navbar-height);
   min-height: 100vh;
 }
 

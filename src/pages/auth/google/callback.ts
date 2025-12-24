@@ -7,7 +7,9 @@ import type { Env } from '../../../env.d';
 import { OAuth2RequestError } from 'arctic';
 
 export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
-  const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+  const runtimeEnv = locals.runtime?.env || {};
+  const metaEnv = import.meta.env || {};
+  const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
@@ -118,7 +120,7 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
     cookies.delete('oauth_state', { path: '/' });
     cookies.delete('oauth_code_verifier', { path: '/' });
 
-    return redirect('/dashboard', 302);
+    return redirect('/profile', 302);
   } catch (error) {
     console.error('[OAuth] Error in callback:', error);
 

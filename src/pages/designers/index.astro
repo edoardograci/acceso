@@ -29,20 +29,6 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
   <Navbar />
   
   <main class="designers-page">
-    <div class="designers-header">
-      <h1>Designers</h1>
-      {!error && <p id="studio-count">{studios.length} Design Studios</p>}
-    </div>
-
-    {error && (
-      <div class="error-state">
-        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Studios</h2>
-        <p style="color: var(--color-gray);">
-          Unable to load studio data. Please try again later.
-        </p>
-      </div>
-    )}
-
     {!error && (
       <>
         <div class="filters-container">
@@ -61,6 +47,8 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
               <button class="filter-btn" data-city={city} class:list={{active: initialCity === city}}>{city}</button>
             ))}
           </div>
+
+          <p id="studio-count">{studios.length} Design Studios</p>
         </div>
 
         <div class="designers-grid" id="studios-grid">
@@ -187,28 +175,21 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
 
 <style>
   .designers-page {
-    padding-top: var(--navbar-height);
     min-height: 100vh;
-  }
-
-  .designers-header {
-    padding: 48px var(--spacing-page);
-    text-align: center;
-  }
-
-  .designers-header h1 {
-    font-size: 48px;
-    margin-bottom: 12px;
-  }
-
-  .designers-header p {
-    color: var(--color-gray);
   }
 
   .filters-container {
     padding: 0 var(--spacing-page) 32px;
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 48px auto 0;
+  }
+
+  #studio-count {
+    color: var(--color-gray);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    margin-top: 24px;
+    text-align: left;
   }
 
   .search-bar {

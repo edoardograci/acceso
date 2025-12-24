@@ -47,12 +47,14 @@ const { studio } = Astro.props;
 
   <div class="info-links">
     {studio.website && (
-      <a href={studio.website} target="_blank" rel="noopener noreferrer" class="info-link">
-        Website
+      <a href={studio.website} target="_blank" rel="noopener noreferrer" class="info-btn">
+        <img src="/icons/source.svg" alt="" />
+        Source
       </a>
     )}
     {studio.instagram && (
-      <a href={studio.instagram} target="_blank" rel="noopener noreferrer" class="info-link">
+      <a href={studio.instagram} target="_blank" rel="noopener noreferrer" class="info-btn">
+        <img src="/icons/instagram.svg" alt="" />
         Instagram
       </a>
     )}
@@ -79,9 +81,10 @@ const { studio } = Astro.props;
 
   .info-value {
     font-family: var(--font-sans);
-    font-size: 16px;
+    font-size: 16px; 
     font-weight: 450;
     line-height: 1.4;
+    text-decoration: underline;
   }
 
   .info-value a {
@@ -90,14 +93,33 @@ const { studio } = Astro.props;
 
   .info-links {
     display: flex;
-    gap: 16px;
+    gap: 12px;
     margin-top: 32px;
   }
 
-  .info-link {
+  .info-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    color: var(--color-white);
     font-family: var(--font-sans);
-    font-size: 16px;
+    font-size: 14px; /* Assuming button text size */
     font-weight: 450;
-    text-decoration: underline;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .info-btn:hover {
+    opacity: 0.8;
+  }
+
+  .info-btn img {
+    height: 14px; /* Adjusting icon size */
+    width: auto;
   }
 </style>

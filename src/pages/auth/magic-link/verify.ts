@@ -7,7 +7,10 @@ import { TursoHttpClient } from '../../../lib/auth/lucia';
 import type { Env } from '../../../env.d';
 
 export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
-  const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+  const runtimeEnv = locals.runtime?.env || {};
+  const metaEnv = import.meta.env || {};
+  const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
+
   const url = new URL(request.url);
   const token = url.searchParams.get('token');
 
@@ -40,7 +43,7 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
 
     cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
 
-    return redirect('/dashboard', 302);
+    return redirect('/profile', 302);
   } catch (error) {
     console.error('[Magic Link] Error verifying token:', error);
     return redirect('/login?error=verification_failed', 302);

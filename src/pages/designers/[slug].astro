@@ -4,7 +4,8 @@ import Navbar from '../../components/Navbar.astro';
 import Tabs from '../../components/Tabs.astro';
 import DesignerInfo from '../../components/DesignerInfo.astro';
 import DesignerMoodboard from '../../components/DesignerMoodboard.astro';
-import ActionButtons from '../../components/ActionButtons.astro';
+
+import DesignerActionButtons from '../../components/DesignerActionButtons.astro';
 import type { Studio } from '../../lib/types';
 
 const { slug } = Astro.params;
@@ -43,115 +44,137 @@ const pageImage = studio?.cover || '/og-default.jpg';
   <Navbar />
   
   <main class="designer-page">
-    <div class="designer-header">
-      <div class="designer-header-left">
-        <h1 class="designer-page-title"><a href="/designers">Designers</a></h1>
-        <p class="designer-breadcrumb">/ {studio?.name || 'Not Found'}</p>
+    <div class="designer-left-col">
+      <div class="designer-header">
+        <h1 class="designer-name">{studio?.name || 'Not Found'}</h1>
       </div>
-      <div class="designer-header-right">
-        <ActionButtons />
-      </div>
+
+      {error ? (
+        <div class="error-state">
+          <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Studio</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">
+            Unable to load studio data. Please try again later.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div class="designer-image-container">
+            {studio.cover ? (
+              <img 
+                src={studio.cover} 
+                alt={studio.name}
+                class="designer-image"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+                data-skeleton
+              />
+            ) : (
+              <div class="designer-image-placeholder">
+                <span>No image available</span>
+              </div>
+            )}
+          </div>
+
+          <DesignerActionButtons />
+        </>
+      )}
     </div>
 
-    {error ? (
-      <div class="error-state">
-        <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Studio</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 16px;">
-          Unable to load studio data. Please try again later.
-        </p>
+    {!error && (
+      <div class="designer-content">
+        <Tabs active="info" />
+        
+        <div id="tab-info" class="tab-content tab-content-active">
+          <DesignerInfo studio={studio} />
+        </div>
+        
+        <div id="tab-moodboard" class="tab-content">
+          <DesignerMoodboard studio={studio} />
+        </div>
       </div>
-    ) : (
-      <>
-        <div class="designer-image-container">
-          {studio.cover ? (
-            <img 
-              src={studio.cover} 
-              alt={studio.name}
-              class="designer-image"
-              loading="eager"
-              fetchpriority="high"
-              decoding="async"
-              data-skeleton
-            />
-          ) : (
-            <div class="designer-image-placeholder">
-              <span>No image available</span>
-            </div>
-          )}
-        </div>
-
-        <div class="designer-content">
-          <Tabs active="info" />
-          
-          <div id="tab-info" class="tab-content tab-content-active">
-            <DesignerInfo studio={studio} />
-          </div>
-          
-          <div id="tab-moodboard" class="tab-content">
-            <DesignerMoodboard studio={studio} />
-          </div>
-        </div>
-      </>
     )}
   </main>
 </Layout>
 
 <style>
   .designer-page {
-    padding-top: var(--navbar-height);
     min-height: 100vh;
     max-width: 1400px;
     margin-left: auto;
     margin-right: auto;
+    /* Default mobile layout */
+    display: block;
+  }
+
+  .designer-left-col {
+    /* Mobile styles effectively inherit/block */
+  }
+
+  /* Desktop Layout */
+  @media (min-width: 768px) {
+    .designer-page {
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* 50% 50% split */
+      gap: 48px;
+      padding-left: 24px;
+      padding-right: 24px;
+      padding-top: calc(var(--navbar-height) + 40px);
+      align-items: start;
+    }
+
+    .designer-left-col {
+      position: sticky;
+      top: 100px; /* Adjust based on navbar */
+    }
+
+    /* Adjust image sizing for desktop */
+    .designer-image-container {
+      margin-bottom: 24px;
+    }
+    
+    .designer-image {
+      max-height: 60vh; /* Allow larger image on desktop */
+      object-fit: contain;
+    }
   }
 
   .designer-header {
-    padding: 32px var(--spacing-page);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 24px;
+    padding: 32px var(--spacing-page) 16px; /* Adjusted padding */
+  }
+  
+  @media (min-width: 768px) {
+    .designer-header {
+      padding: 0 0 24px 0;
+    }
   }
 
-  .designer-header-left {
-    flex: 1;
-  }
-
-  .designer-header-right {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-  }
-
-  .designer-page-title {
+  .designer-name {
     font-family: var(--font-mono);
-    font-size: 16px;
-    font-weight: 200;
-    letter-spacing: 0.64px;
-    margin-bottom: 8px;
-  }
-
-  .designer-page-title a {
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .designer-page-title a:hover {
-    opacity: 1;
-  }
-
-  .designer-breadcrumb {
-    font-family: var(--font-mono);
-    font-size: 14px;
-    font-weight: 200;
-    letter-spacing: 0.56px;
-    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    font-variation-settings: 'wght' 500;
+    margin: 0;
+    line-height: 1.2;
   }
 
   .designer-image-container {
     padding: 0 var(--spacing-page);
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
+
+  @media (min-width: 768px) {
+    .designer-image-container {
+      padding: 0;
+    }
+    
+    /* Ensure action buttons align with container */
+    :global(.designer-actions) {
+      padding: 0 !important;
+    }
+  }
+
 
   .designer-image {
     width: 100%;
@@ -174,6 +197,18 @@ const pageImage = studio?.cover || '/og-default.jpg';
 
   .designer-content {
     padding: 16px var(--spacing-page);
+  }
+  
+  @media (min-width: 768px) {
+    .designer-content {
+      padding: 0;
+      margin-top: 0;
+    }
+    
+    /* Adjust tabs margin on desktop */
+    :global(.tabs) {
+      margin-top: 0 !important;
+    }
   }
 
   .error-state {

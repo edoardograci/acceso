@@ -5,7 +5,9 @@ import { createGoogleOAuth } from '../../../lib/auth/oauth';
 import { generateState, generateCodeVerifier } from 'arctic';
 
 export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
-  const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+  const runtimeEnv = locals.runtime?.env || {};
+  const metaEnv = import.meta.env || {};
+  const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
 
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
     console.error('[OAuth] Missing Google OAuth credentials');

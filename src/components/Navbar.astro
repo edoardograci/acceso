@@ -1,6 +1,7 @@
 ---
 // src/components/Navbar.astro
 import type { NavLink } from '../lib/types';
+import { iconMap } from '../lib/map-icons';
 
 const navLinks: NavLink[] = [
   { label: 'Designers', href: '/designers' },
@@ -15,6 +16,12 @@ function isActive(href: string): boolean {
 }
 
 const user = Astro.locals.user;
+let userIcon = iconMap['DEFAULT'];
+
+if (user && user.email) {
+  const firstLetter = user.email.charAt(0).toUpperCase();
+  userIcon = iconMap[firstLetter] || iconMap['DEFAULT'];
+}
 ---
 
 <nav class="navbar">
@@ -38,12 +45,9 @@ const user = Astro.locals.user;
       <a href="/contact" class="navbar-info">Info</a>
 
       {user ? (
-        <>
-          <a href="/dashboard" class="navbar-login">Dashboard</a>
-          <form action="/auth/logout" method="POST" style="display: inline;">
-            <button type="submit" class="navbar-login">Log Out</button>
-          </form>
-        </>
+        <a href="/profile" class="navbar-profile-btn" aria-label="Profile">
+          <div class="profile-icon" set:html={userIcon} />
+        </a>
       ) : (
         <a href="/login" class="navbar-login">Log In</a>
       )}
@@ -123,6 +127,33 @@ const user = Astro.locals.user;
   color: var(--color-white);
   cursor: pointer;
 }
+
+.navbar-profile-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.navbar-profile-btn:hover {
+  opacity: 0.8;
+}
+
+.profile-icon {
+  width: 100%;
+  height: 100%;
+}
+
+.profile-icon :global(svg) {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 
 .navbar-tabs {
   grid-column: 1 / -1;

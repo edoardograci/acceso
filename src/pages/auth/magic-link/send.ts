@@ -6,7 +6,13 @@ import { Resend } from 'resend';
 import type { Env } from '../../../env.d';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+  // Try to get env from Cloudflare runtime locals or import.meta.env
+  // We merge them to ensure we don't miss keys if one source is partial
+  const runtimeEnv = locals.runtime?.env || {};
+  const metaEnv = import.meta.env || {};
+
+  // Create a combined env object. runtimeEnv takes precedence for overrides.
+  const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
 
   try {
     const body = await request.json() as { email?: string };
@@ -71,7 +77,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (resendError) {
         console.error('[Magic Link] Resend error:', resendError);
         return new Response(
-          JSON.stringify({ success: false, error: 'Failed to send email. If this persists, the domain might not be verified in Resend.' }),
+          JSON.stringify({ success: false, error: 'Failed to send email. please try again later.' }),
           { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
       }
@@ -86,14 +92,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     } else {
-      // Fallback for development/testing
+      console.warn('[Magic Link] RESEND_API_KEY is missing. Code: NO_KEY');
+
+      // In development, log the link to console but DO NOT return it to client to simulate production behavior
+      if (import.meta.env.DEV) {
+        console.log('--- DEVELOPMENT MAGIC LINK ---');
+        console.log(magicLink);
+        console.log('------------------------------');
+      }
+
+      // Check specifically if we have any environment variables loaded to help debug
+      const keyCount = Object.keys(env).length;
+      console.log(`[Magic Link] Environment check: found ${keyCount} keys.`);
+
       return new Response(
         JSON.stringify({
-          success: true,
-          magicLink,
-          message: 'Magic link generated (dev mode - email not configured)',
+          success: false,
+          error: 'Email service not configured (server-side). Check console logs if you are the developer.'
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
   } catch (error) {
