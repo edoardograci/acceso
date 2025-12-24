@@ -23,15 +23,26 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
     const tokens = await google.validateAuthorizationCode(code, codeVerifier);
     const accessToken = tokens.accessToken;
 
+    console.log('[OAuth] Access Token length:', accessToken?.length);
+    console.log('[OAuth] Turso Token length:', env.TURSO_AUTH_TOKEN?.length);
+
     // Fetch user info from Google
-    const userResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    let userResponse;
+    try {
+      userResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (e) {
+      console.error('[OAuth] Failed to fetch user info:', e);
+      throw new Error(`Google UserInfo fetch failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
 
     if (!userResponse.ok) {
-      throw new Error('Failed to fetch user info from Google');
+      const text = await userResponse.text();
+      console.error('[OAuth] Google UserInfo error:', userResponse.status, text);
+      throw new Error(`Failed to fetch user info from Google: ${userResponse.status}`);
     }
 
     const googleUser: { email: string; email_verified: boolean; sub: string; name?: string } = await userResponse.json();
@@ -43,10 +54,16 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
     const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
 
     // Check if OAuth account exists
-    const oauthResult = await turso.execute({
-      sql: 'SELECT user_id FROM oauth_accounts WHERE provider = ? AND provider_user_id = ? LIMIT 1',
-      args: ['google', googleUser.sub],
-    });
+    let oauthResult;
+    try {
+      oauthResult = await turso.execute({
+        sql: 'SELECT user_id FROM oauth_accounts WHERE provider = ? AND provider_user_id = ? LIMIT 1',
+        args: ['google', googleUser.sub],
+      });
+    } catch (e) {
+      console.error('[OAuth] Turso check failed:', e);
+      throw new Error(`Turso check failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
 
     let userId: string;
 
