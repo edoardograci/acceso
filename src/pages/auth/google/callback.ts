@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
   }
 
   try {
-    const google = createGoogleOAuth(env);
+    const google = createGoogleOAuth(env, request.url);
     const tokens = await google.validateAuthorizationCode(code, codeVerifier);
     const accessToken = tokens.accessToken;
 
