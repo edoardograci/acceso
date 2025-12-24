@@ -1,10 +1,13 @@
 // src/pages/auth/magic-link/send.ts
 import type { APIRoute } from 'astro';
 import { generateMagicLink } from '../../../lib/auth/magic-link';
+import { Resend } from 'resend';
+
+import type { Env } from '../../../env.d';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const env = locals.runtime.env;
-  
+  const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+
   try {
     const body = await request.json() as { email?: string };
     const { email } = body;
@@ -16,24 +19,88 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const magicLink = await generateMagicLink(email.toLowerCase().trim(), env);
+    const magicLink = await generateMagicLink(email.toLowerCase().trim(), env, request.url);
 
-    // TODO: In production, send email via Resend or similar service
-    // For MVP, return the link in the response for testing
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        magicLink,
-        message: 'Magic link generated. In production, this will be sent via email.',
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    // Send email via Resend
+    if (env.RESEND_API_KEY) {
+      const resend = new Resend(env.RESEND_API_KEY);
+
+      const { data, error: resendError } = await resend.emails.send({
+        from: 'Acceso <login@acceso.design>',
+        to: email,
+        subject: 'Your login link for Acceso',
+        html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #171717; color: #ffffff;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+                <tr>
+                  <td style="text-align: center; padding-bottom: 32px;">
+                    <img src="https://acceso.pages.dev/icon.svg" alt="Acceso" width="48" height="48" style="display: inline-block;">
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background-color: #242424; border: 1px solid #575757; border-radius: 8px; padding: 32px;">
+                    <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 400; color: #ffffff;">Your login link</h1>
+                    <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.5; color: #8B8B8B;">Click the button below to log in to Acceso. This link will expire in 15 minutes.</p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="text-align: center; padding: 24px 0;">
+                          <a href="${magicLink}" style="display: inline-block; padding: 14px 32px; background-color: #EDFE44; color: #000000; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 500;">Log in to Acceso</a>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.5; color: #8B8B8B;">If you didn't request this email, you can safely ignore it.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="text-align: center; padding-top: 32px;">
+                    <p style="margin: 0; font-size: 12px; color: #575757;">© 2025 Acceso. All rights reserved.</p>
+                  </td>
+                </tr>
+              </table>
+            </body>
+          </html>
+        `,
+      });
+
+      if (resendError) {
+        console.error('[Magic Link] Resend error:', resendError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to send email. If this persists, the domain might not be verified in Resend.' }),
+          { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[Magic Link] Link sent successfully via Resend:', data?.id);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Magic link sent to your email',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    } else {
+      // Fallback for development/testing
+      return new Response(
+        JSON.stringify({
+          success: true,
+          magicLink,
+          message: 'Magic link generated (dev mode - email not configured)',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
   } catch (error) {
-    console.error('[Magic Link] Error generating magic link:', error);
+    console.error('[Magic Link] Error sending magic link:', error);
     return new Response(
-      JSON.stringify({ success: false, error: 'Failed to generate magic link' }),
+      JSON.stringify({ success: false, error: 'Failed to send magic link' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
-

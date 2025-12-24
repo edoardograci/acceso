@@ -21,7 +21,8 @@
     "astro": "^5.15.3",
     "dotenv": "^17.2.3",
     "leaflet": "^1.9.4",
-    "lucia": "^3.2.2"
+    "lucia": "^3.2.2",
+    "resend": "^6.6.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

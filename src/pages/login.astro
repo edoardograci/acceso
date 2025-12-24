@@ -233,14 +233,25 @@ const errorMessage = url.searchParams.get('message');
       
       if (data.success) {
         resultDiv.className = 'magic-link-result show success';
-        resultDiv.innerHTML = `
-          <strong>Magic link generated!</strong><br>
-          <small>For testing, click this link:</small><br>
-          <a href="${data.magicLink}" style="color: inherit; text-decoration: underline;">${data.magicLink}</a>
-        `;
+        
+        // Show different message based on whether email was sent or dev mode
+        if (data.magicLink) {
+          // Dev mode - show the link
+          resultDiv.innerHTML = `
+            <strong>Magic link generated (dev mode)!</strong><br>
+            <small>Click to log in:</small><br>
+            <a href="${data.magicLink}" style="color: inherit; text-decoration: underline; word-break: break-all;">${data.magicLink}</a>
+          `;
+        } else {
+          // Production - email was sent
+          resultDiv.innerHTML = `
+            <strong>Check your email!</strong><br>
+            <small>We've sent a login link to ${email}. The link will expire in 15 minutes.</small>
+          `;
+        }
       } else {
         resultDiv.className = 'magic-link-result show error';
-        resultDiv.textContent = data.error || 'Failed to generate magic link';
+        resultDiv.textContent = data.error || 'Failed to send magic link';
       }
     } catch (error) {
       resultDiv.className = 'magic-link-result show error';
@@ -251,4 +262,3 @@ const errorMessage = url.searchParams.get('message');
     }
   });
 </script>
-

@@ -10,6 +10,7 @@ export type Env = {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   PUBLIC_SITE_URL: string;
+  RESEND_API_KEY: string;
 };
 
 type Runtime = {
@@ -40,6 +41,7 @@ declare global {
     readonly GOOGLE_CLIENT_ID?: string;
     readonly GOOGLE_CLIENT_SECRET?: string;
     readonly PUBLIC_SITE_URL?: string;
+    readonly RESEND_API_KEY?: string;
   }
 
   interface ImportMeta {

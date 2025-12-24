@@ -2,7 +2,7 @@
 import { TursoHttpClient } from './lucia';
 import type { Env } from '../../env.d';
 
-export async function generateMagicLink(email: string, env: Env): Promise<string> {
+export async function generateMagicLink(email: string, env: Env, requestUrl?: string): Promise<string> {
   const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
 
   try {
@@ -35,8 +35,15 @@ export async function generateMagicLink(email: string, env: Env): Promise<string
       args: [tokenId, userId, email, expiresAt, Math.floor(Date.now() / 1000)],
     });
 
-    // Return verification URL
-    const siteUrl = env.PUBLIC_SITE_URL || 'http://localhost:4321';
+    // Determine site URL
+    let siteUrl = env.PUBLIC_SITE_URL || 'http://localhost:4321';
+    if (requestUrl) {
+      const url = new URL(requestUrl);
+      const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+      const protocol = isLocalhost ? url.protocol : 'https:';
+      siteUrl = `${protocol}//${url.host}`;
+    }
+
     return `${siteUrl}/auth/magic-link/verify?token=${tokenId}`;
   } catch (error) {
     console.error('[Magic Link] Error generating magic link:', error);
