@@ -21,9 +21,13 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
   try {
     const google = createGoogleOAuth(env, request.url);
     const tokens = await google.validateAuthorizationCode(code, codeVerifier);
-    const accessToken = tokens.accessToken;
+    const accessToken = tokens.accessToken();
 
-    console.log('[OAuth] Access Token length:', accessToken?.length);
+    if (!accessToken) {
+      throw new Error('No access token returned from Google');
+    }
+
+    console.log('[OAuth] Access Token length:', accessToken.length);
     console.log('[OAuth] Turso Token length:', env.TURSO_AUTH_TOKEN?.length);
 
     // Fetch user info from Google
