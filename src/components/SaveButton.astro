@@ -1,0 +1,109 @@
+---
+interface Props {
+  type: 'designer' | 'object';
+  itemId: string; // studio_id or product_id
+  isSaved?: boolean;
+}
+
+const { type, itemId, isSaved = false } = Astro.props;
+const isLoggedIn = !!Astro.locals.user;
+---
+
+<save-button
+  data-type={type}
+  data-id={itemId}
+  data-saved={isSaved.toString()}
+  data-logged-in={isLoggedIn.toString()}
+>
+  <button class="save-btn">
+    {isLoggedIn ? (isSaved ? 'Remove' : 'Save') : 'Log in to save'}
+  </button>
+</save-button>
+
+<style>
+  .save-btn {
+    height: 36px;
+    padding: 8px 16px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    color: white;
+    font-family: 'PP Fraktion Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: fit-content;
+    white-space: nowrap;
+    border-radius: 999px;
+  }
+  
+  .save-btn:hover {
+    border-color: var(--color-yellow);
+  }
+
+  /* Optional: Disabled style for logged out if strictly enforcing disabled */
+  /* Prompt says "Button is hidden or shows 'Log in to save'". */
+</style>
+
+<script>
+  class SaveButton extends HTMLElement {
+    constructor() {
+      super();
+      const btn = this.querySelector('button');
+      const type = this.dataset.type;
+      const id = this.dataset.id;
+      const isLoggedIn = this.dataset.loggedIn === 'true';
+
+      if (!btn) return;
+
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isLoggedIn) {
+          window.location.href = '/auth/login'; // Adjust login path if different
+          return;
+        }
+
+        const isSaved = this.dataset.saved === 'true';
+        const newSavedState = !isSaved;
+
+        // Optimistic UI update
+        this.dataset.saved = newSavedState.toString();
+        btn.textContent = newSavedState ? 'Remove' : 'Save';
+
+        const endpoint = type === 'designer' 
+          ? '/api/collections/designers' 
+          : '/api/collections/objects';
+        
+        const method = isSaved ? 'DELETE' : 'POST'; // If was saved, we delete.
+        const url = isSaved 
+          ? `${endpoint}/${id}` 
+          : endpoint;
+
+        const body = isSaved ? undefined : JSON.stringify(
+          type === 'designer' ? { studio_id: id } : { product_id: id }
+        );
+
+        try {
+          const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body
+          });
+
+          if (!res.ok) {
+            throw new Error('Action failed');
+          }
+        } catch (error) {
+          console.error('Save action failed:', error);
+          // Revert optimistic update
+          this.dataset.saved = isSaved.toString();
+          btn.textContent = isSaved ? 'Remove' : 'Save';
+          alert('Failed to update collection. Please try again.');
+        }
+      });
+    }
+  }
+
+  customElements.define('save-button', SaveButton);
+</script>

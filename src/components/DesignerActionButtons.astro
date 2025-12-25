@@ -1,4 +1,12 @@
 ---
+import SaveButton from './SaveButton.astro';
+
+interface Props {
+  studioId: string;
+  isSaved?: boolean;
+}
+
+const { studioId, isSaved = false } = Astro.props;
 ---
 <div class="designer-actions">
   <div class="left-actions">
@@ -10,9 +18,7 @@
     </button>
   </div>
   
-  <button class="action-btn save-btn">
-    Save
-  </button>
+  <SaveButton type="designer" itemId={studioId} isSaved={isSaved} />
 </div>
 
 <style>

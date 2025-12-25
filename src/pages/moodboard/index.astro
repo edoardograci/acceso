@@ -29,7 +29,6 @@ interface MoodboardItem {
 }
 
 let moodboardItems: MoodboardItem[] = [];
-let moodboardMap: Map<string, MoodboardItem> = new Map();
 let error = null;
 
 try {
@@ -37,11 +36,6 @@ try {
   const response = await fetch(moodboardUrl.toString());
   if (!response.ok) throw new Error('Failed to load moodboard data');
   moodboardItems = await response.json();
-  
-  // Create product_id -> item mapping for search results
-  for (const item of moodboardItems) {
-    moodboardMap.set(item.id, item);
-  }
 } catch (e) {
   error = e;
   console.error('Failed to fetch moodboard:', e);
@@ -153,7 +147,7 @@ try {
     }
 
     const gap = 16 // matches .moodboard-grid column-gap
-    const containerWidth = vectorResultsGrid.clientWidth || 0
+    const containerWidth = vectorResultsGrid.getBoundingClientRect().width || 0
     if (!containerWidth) return
 
     let columns = 4
@@ -215,10 +209,10 @@ async function handleSearch(e) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Server returned error:', errorData.error);  // This will log the specific message, e.g., "Failed to generate embeddings" or TypeError details
+      console.error('Server returned error:', errorData.error);
       if (searchStatus) {
         searchStatus.textContent = 'Search failed: ' + (errorData.error || 'Unknown error');
-        searchStatus.style.color = 'red';  // Optional: Make it visible to user
+        searchStatus.style.color = 'red';
       }
       isSearching = false;
       return;
@@ -244,6 +238,13 @@ async function handleSearch(e) {
 }
 
 function displayVectorResults(results) {
+  // Show results container FIRST so dimensions can be calculated
+  moodboardGrid.style.display = 'none'
+  vectorResults.style.display = 'block'
+  emptyResult.style.display = 'none'
+  searchStatus.style.display = 'none'
+  isSearching = false
+  
   vectorResultsGrid.innerHTML = ''
 
   results.forEach((result) => {
@@ -255,7 +256,7 @@ function displayVectorResults(results) {
     card.className = 'moodboard-item vector-result-item'
 
     // USE THE SEARCH RESULT IMAGE, NOT THE DEFAULT COVER
-    const imageUrl = result.image_url  // ← Changed from: item.cover || result.image_url
+    const imageUrl = result.image_url
 
     card.innerHTML = `
       <div style="position: relative;">
@@ -280,13 +281,19 @@ function displayVectorResults(results) {
     }
   })
 
-  // Initial layout in case some images are already cached
+  // Initial layout now that container is visible
   layoutVectorMasonry()
-
-  moodboardGrid.style.display = 'none'
-  vectorResults.style.display = 'block'
-  emptyResult.style.display = 'none'
-  searchStatus.style.display = 'none'
-  isSearching = false
 }
 </script>
+
+<style>
+
+
+
+  
+  /* Make sure .moodboard-item inside wrapper fills it */
+  .moodboard-item {
+    display: block;
+    width: 100%;
+  }
+</style>

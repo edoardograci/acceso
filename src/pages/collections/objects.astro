@@ -1,0 +1,190 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import SaveButton from '../../components/SaveButton.astro';
+import { getSavedObjects } from '../../lib/db';
+import type { Env } from '../../env.d';
+
+// Protected
+if (!Astro.locals.user) {
+  return Astro.redirect('/auth/login');
+}
+
+const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+
+let objects: any[] = [];
+let error = null;
+
+try {
+  const [savedIds, response] = await Promise.all([
+    getSavedObjects(Astro.locals.user.id, env),
+    fetch(new URL('/moodboard.json', Astro.url.origin))
+  ]);
+
+  if (!response.ok) throw new Error('Failed to load moodboard data');
+  const allObjects = await response.json();
+  
+  objects = allObjects.filter((o: any) => savedIds.includes(o.id));
+} catch (e) {
+  error = e;
+  console.error('Failed to fetch moodboard collection:', e);
+}
+---
+
+<Layout title="My Moodboard - Acceso">
+  <Navbar />
+  
+  <main class="objects-page">
+    <div class="header">
+      <h1 class="page-title">Moodboard</h1>
+      <p class="count">{objects.length} saved</p>
+    </div>
+
+    {!error && (
+      <div class="objects-grid">
+        {objects.map(item => (
+          <div class="object-card-wrapper">
+            <a 
+              href={`/moodboard/${item.slug}`} 
+              class="object-card"
+            >
+              {item.cover && (
+                <img 
+                  src={item.cover} 
+                  alt={item.name}
+                  loading="lazy"
+                />
+              )}
+              <div class="item-overlay">
+                <h3>{item.name}</h3>
+                {item.designer && <p>{item.designer}</p>}
+              </div>
+            </a>
+            
+            <div class="save-btn-container">
+              <SaveButton 
+                type="object" 
+                itemId={item.id} 
+                isSaved={true} 
+              />
+            </div>
+          </div>
+        ))}
+        {objects.length === 0 && (
+          <div class="empty-state">
+             <p>No saved objects.</p>
+             <a href="/moodboard" class="browse-link">Explore Moodboard</a>
+          </div>
+        )}
+      </div>
+    )}
+  </main>
+</Layout>
+
+<style>
+  .objects-page {
+    min-height: 100vh;
+    padding-top: 80px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .page-title {
+    font-size: 48px;
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+
+  .count {
+    color: var(--color-gray);
+  }
+
+  .objects-grid {
+    column-count: 4;
+    column-gap: 16px;
+    padding: 0 var(--spacing-page) 48px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 1024px) {
+    .objects-grid {
+      column-count: 3;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .objects-grid {
+      column-count: 2;
+    }
+  }
+
+  .object-card-wrapper {
+    position: relative;
+    break-inside: avoid;
+    margin-bottom: 16px;
+    background: var(--color-bg-secondary);
+  }
+
+  .object-card {
+    display: block;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .object-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+
+  .object-card:hover img {
+    transform: scale(1.02);
+  }
+
+  .item-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .object-card:hover .item-overlay {
+    opacity: 1;
+  }
+
+  .item-overlay h3 {
+    font-size: 14px;
+    margin-bottom: 4px;
+    font-weight: 400;
+  }
+
+  .item-overlay p {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .save-btn-container {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+  }
+
+  .browse-link {
+    color: var(--color-yellow);
+    text-decoration: none;
+    margin-top: 16px;
+    display: inline-block;
+  }
+</style>

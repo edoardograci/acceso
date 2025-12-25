@@ -1,32 +1,301 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
+import { getSavedDesigners, getSavedObjects } from '../lib/db';
+import type { Env } from '../env.d';
+import type { Studio } from '../lib/types';
 
 const user = Astro.locals.user;
 if (!user) {
-  return Astro.redirect('/login');
+  return Astro.redirect('/auth/login');
+}
+
+let savedDesignersCount = 0;
+let savedObjectsCount = 0;
+let designerCover = null;
+let objectCover = null;
+
+try {
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  
+  const [designerIds, objectIds] = await Promise.all([
+    getSavedDesigners(user.id, env),
+    getSavedObjects(user.id, env)
+  ]);
+  
+  savedDesignersCount = designerIds.length;
+  savedObjectsCount = objectIds.length;
+
+  if (savedDesignersCount > 0) {
+    const studiosUrl = new URL('/studios.json', Astro.url.origin);
+    const res = await fetch(studiosUrl.toString());
+    if (res.ok) {
+        const studios: Studio[] = await res.json();
+        const found = studios.find(s => designerIds.includes(s.id));
+        if (found) designerCover = found.cover;
+    }
+  }
+
+  if (savedObjectsCount > 0) {
+    const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
+    const res = await fetch(moodboardUrl.toString());
+    if (res.ok) {
+        const items = await res.json();
+        const found = items.find((i: any) => objectIds.includes(i.id));
+        if (found) objectCover = found.cover;
+    }
+  }
+
+} catch (e) {
+  console.error('Error fetching profile data:', e);
 }
 ---
 
 <Layout title="Profile - Acceso">
   <Navbar />
-  <main style="max-width: 800px; margin: 80px auto; padding: 0 24px;">
-    <h1 style="font-size: 32px; font-weight: 400; color: var(--color-white); margin-bottom: 24px;">
-      Profile
-    </h1>
-    <div style="padding: 24px; background-color: var(--color-bg-secondary); border: 1px solid var(--color-stroke); border-radius: 8px; margin-bottom: 24px;">
-      <p style="color: var(--color-white); font-size: 16px; margin-bottom: 8px;">
-        Welcome back, <strong>{user.email}</strong>!
-      </p>
-      <p style="color: var(--color-gray); font-size: 14px;">
-        Email verified: {user.emailVerified ? 'Yes' : 'No'}
-      </p>
+  <main class="profile-page">
+    <div class="profile-header">
+      <h1 class="page-title">Profile</h1>
+      
+      <div class="user-info-card">
+        <p class="welcome-text">
+          Welcome back, <strong>{user.email}</strong>
+        </p>
+        <div class="user-meta">
+          <span class="status-badge">
+            <span class="dot"></span>
+            {user.emailVerified ? 'Verified Account' : 'Unverified'}
+          </span>
+        </div>
+      </div>
     </div>
-    <form action="/auth/logout" method="POST" style="display: inline;">
-      <button type="submit" style="height: 48px; padding: 0 24px; background-color: var(--color-bg-secondary); border: 1px solid var(--color-stroke); border-radius: 8px; color: var(--color-white); font-size: 16px; cursor: pointer; transition: opacity 0.2s;">
-        Logout
-      </button>
-    </form>
+
+    <div class="collections-section">
+      <h2 class="section-title">My Collections</h2>
+      <div class="collections-grid">
+        <a href="/collections/designers" class="collection-card">
+          <div class="card-image-container">
+            {designerCover ? (
+              <img src={designerCover} alt="Designers" class="card-image" />
+            ) : (
+              <div class="card-placeholder">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="placeholder-icon">
+                  <path d="M3 21h18M5 21V7l8-4 8 4v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            )}
+            <div class="card-overlay"></div>
+          </div>
+          <div class="card-content">
+            <div class="card-header">
+              <h3>Designers</h3>
+              <span class="count-badge">{savedDesignersCount}</span>
+            </div>
+            <p class="card-description">Saved studios and designers</p>
+          </div>
+        </a>
+
+        <a href="/collections/objects" class="collection-card">
+          <div class="card-image-container">
+            {objectCover ? (
+              <img src={objectCover} alt="Moodboard" class="card-image" />
+            ) : (
+              <div class="card-placeholder">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="placeholder-icon">
+                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            )}
+            <div class="card-overlay"></div>
+          </div>
+          <div class="card-content">
+            <div class="card-header">
+              <h3>Moodboard</h3>
+              <span class="count-badge">{savedObjectsCount}</span>
+            </div>
+            <p class="card-description">Saved objects and inspiration</p>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="actions-section">
+      <form action="/auth/logout" method="POST">
+        <button type="submit" class="logout-btn">
+          Sign Out
+        </button>
+      </form>
+    </div>
   </main>
 </Layout>
+
+<style>
+  .profile-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 120px 24px 60px;
+    font-family: var(--font-sans);
+  }
+
+  .page-title {
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--color-white);
+    margin-bottom: 32px;
+    font-family: var(--font-mono);
+  }
+
+  .user-info-card {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 48px;
+  }
+
+  .welcome-text {
+    color: var(--color-white);
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .user-meta {
+    display: flex;
+    align-items: center;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+    border-radius: 999px;
+    color: #2ecc71;
+    font-size: 13px;
+    font-family: var(--font-mono);
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    background-color: currentColor;
+    border-radius: 50%;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--color-white);
+    margin-bottom: 24px;
+    font-family: var(--font-mono);
+  }
+
+  .collections-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+
+  @media (min-width: 640px) {
+    .collections-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .collection-card {
+    display: block;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 6px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .collection-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-gray);
+  }
+
+  .card-image-container {
+    height: 200px;
+    position: relative;
+    background: var(--gray-dark);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray);
+  }
+
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+  }
+
+  .card-content {
+    padding: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .card-header h3 {
+    color: var(--color-white);
+    font-size: 18px;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .count-badge {
+    background: var(--color-black);
+    color: var(--color-gray);
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    border: 1px solid var(--color-stroke);
+  }
+
+  .card-description {
+    color: var(--color-gray);
+    font-size: 14px;
+  }
+
+  .logout-btn {
+    height: 48px;
+    padding: 0 24px;
+    background-color: transparent;
+    border: 1px solid var(--color-stroke);
+    border-radius: 6px;
+    color: var(--color-gray);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .logout-btn:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+  }
+</style>
 

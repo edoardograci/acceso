@@ -364,6 +364,7 @@
   /* Disable CSS column masonry: we compute layout in JS to preserve result order */
   column-count: initial;
   column-gap: 0;
+  width: 100%;
 }
 
 #vector-results-grid .moodboard-item {

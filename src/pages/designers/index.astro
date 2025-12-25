@@ -259,9 +259,13 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
     margin: 0 auto;
   }
 
+
+
   .studio-card {
     text-decoration: none;
     transition: transform 0.2s ease;
+    display: block;
+    color: inherit;
   }
 
   .studio-card:hover {
@@ -295,6 +299,8 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
     color: var(--color-gray);
     font-size: 14px;
   }
+
+
 
   .empty-state,
   .empty-result {

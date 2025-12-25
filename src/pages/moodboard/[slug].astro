@@ -3,6 +3,8 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import ActionButtons from '../../components/ActionButtons.astro';
 import '../../styles/moodboard.css';
+import { getSavedObjects } from '../../lib/db';
+import type { Env } from '../../env.d';
 
 interface ProductImage {
   id: string;
@@ -33,6 +35,7 @@ const { slug } = Astro.params;
 
 let item: MoodboardItem | null = null;
 let error = null;
+let isSaved = false;
 
 try {
   const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
@@ -41,6 +44,12 @@ try {
   
   const items: MoodboardItem[] = await response.json();
   item = items.find(i => i.slug === slug) || null;
+
+  if (item && Astro.locals.user) {
+    const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+    const savedIds = await getSavedObjects(Astro.locals.user.id, env);
+    isSaved = savedIds.includes(item.id);
+  }
 } catch (e) {
   error = e;
   console.error('Failed to fetch moodboard item:', e);
@@ -87,7 +96,7 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
         <p class="detail-breadcrumb">/ {item?.name || 'Not Found'}</p>
       </div>
       <div class="detail-header-right">
-        <ActionButtons />
+        <ActionButtons productId={item?.id || ''} isSaved={isSaved} />
       </div>
     </div>
 
