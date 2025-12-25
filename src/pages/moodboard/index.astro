@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
+import OptimizedImage from '../../components/OptimizedImage.astro';
 import '../../styles/moodboard.css';
 
 interface ProductImage {
@@ -70,12 +71,11 @@ try {
                 data-name={item.name.toLowerCase()}
                 data-designer={item.designer ? item.designer.toLowerCase() : ''}
               >
-                <img 
-                  src={item.cover} 
+                <OptimizedImage
+                  src={item.cover}
                   alt={item.name}
-                  loading="lazy"
-                  decoding="async"
-                  data-skeleton
+                  width={600}
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
                 <div class="item-overlay">
                   <h3>{item.name}</h3>

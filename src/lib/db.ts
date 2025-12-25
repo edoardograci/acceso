@@ -274,3 +274,28 @@ export async function checkSavedStatus(userId: string, type: 'designers' | 'obje
     throw error;
   }
 }
+
+export async function getCollectionsCounts(userId: string, env: Env): Promise<{ designers: number, objects: number }> {
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+
+    const [designersResult, objectsResult] = await Promise.all([
+      turso.execute({
+        sql: 'SELECT COUNT(*) as count FROM user_saved_designers WHERE user_id = ?',
+        args: [userId],
+      }),
+      turso.execute({
+        sql: 'SELECT COUNT(*) as count FROM user_saved_objects WHERE user_id = ?',
+        args: [userId],
+      })
+    ]);
+
+    return {
+      designers: Number(designersResult.rows[0]?.count) || 0,
+      objects: Number(objectsResult.rows[0]?.count) || 0
+    };
+  } catch (error) {
+    console.error('[DB] Error fetching collection counts:', error);
+    throw error;
+  }
+}

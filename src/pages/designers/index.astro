@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
+import OptimizedImage from '../../components/OptimizedImage.astro';
 import type { Studio } from '../../lib/types';
 
 // Fetch from static JSON file - this is served from Cloudflare's edge
@@ -60,13 +61,13 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
               data-city={studio.city}
             >
               {studio.cover ? (
-                <img 
-                  src={studio.cover} 
-                  alt={studio.name} 
-                  class="studio-image" 
-                  loading="lazy" 
-                  decoding="async"
-                  data-skeleton
+                <OptimizedImage
+                  src={studio.cover}
+                  alt={studio.name}
+                  width={400}
+                  height={300}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+                  class="studio-image"
                 />
               ) : (
                 <div class="studio-image-placeholder">No image</div>

@@ -1,0 +1,50 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+  class?: string;
+  quality?: number;
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  sizes = '100vw',
+  loading = 'lazy',
+  class: className,
+  quality = 80,
+} = Astro.props;
+
+// Generate Cloudflare Image Resizing URLs
+function getResizedUrl(url: string, width: number, quality = 80, format = 'auto') {
+  // Cloudflare Image Resizing syntax
+  return `/cdn-cgi/image/width=${width},quality=${quality},format=${format}/${url}`;
+}
+
+// Generate srcset for responsive images
+const widths = [320, 640, 768, 1024, 1280, 1536];
+const srcset = widths
+  .map(w => `${getResizedUrl(src, w, quality)} ${w}w`)
+  .join(', ');
+
+const optimizedSrc = width ? getResizedUrl(src, width, quality) : getResizedUrl(src, 1024, quality);
+---
+
+<img
+  src={optimizedSrc}
+  srcset={srcset}
+  sizes={sizes}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={loading}
+  decoding="async"
+  class={className}
+  data-skeleton
+/>

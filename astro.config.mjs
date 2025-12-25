@@ -12,8 +12,9 @@ export default defineConfig({
   site: 'https://acceso.pages.dev',
   image: {
     service: {
-      entrypoint: 'astro/assets/services/noop'
-    }
+      entrypoint: 'astro/assets/services/sharp' // Use Sharp for local dev
+    },
+    domains: ['mood.acceso.design', 'img.acceso.design', 'mood.acceso.edoardograci.com'], // Allow external domains
   },
   vite: {
     ssr: {

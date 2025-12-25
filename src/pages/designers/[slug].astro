@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar.astro';
 import Tabs from '../../components/Tabs.astro';
 import DesignerInfo from '../../components/DesignerInfo.astro';
 import DesignerMoodboard from '../../components/DesignerMoodboard.astro';
+import OptimizedImage from '../../components/OptimizedImage.astro';
 
 import DesignerActionButtons from '../../components/DesignerActionButtons.astro';
 import type { Studio } from '../../lib/types';
@@ -59,14 +60,13 @@ const pageImage = studio?.cover || '/og-default.jpg';
         <>
           <div class="designer-image-container">
             {studio.cover ? (
-              <img 
-                src={studio.cover} 
+              <OptimizedImage
+                src={studio.cover}
                 alt={studio.name}
-                class="designer-image"
+                width={800}
+                sizes="(max-width: 768px) 100vw, 50vw"
                 loading="eager"
-                fetchpriority="high"
-                decoding="async"
-                data-skeleton
+                class="designer-image"
               />
             ) : (
               <div class="designer-image-placeholder">

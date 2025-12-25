@@ -1,24 +1,42 @@
-# public/_headers
-# Cache images aggressively
+# API endpoints - cache for logged-in users
+/api/collections/status
+  Cache-Control: private, max-age=300
+
+# Static JSON files - aggressive caching
+/studios.json
+  Cache-Control: public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800
+  
+/moodboard.json
+  Cache-Control: public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800
+
+/spotlight.json
+  Cache-Control: public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800
+
+# JavaScript state manager
+/js/collections-state.js
+  Cache-Control: public, max-age=3600, immutable
+
+# Images - with Cloudflare resizing
 /*.jpg
   Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
   
 /*.jpeg
   Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
   
 /*.png
   Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
   
 /*.webp
   Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
   
 /*.avif
   Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
 
-# Cache static JSON
-/studios.json
-  Cache-Control: public, max-age=3600, s-maxage=86400
-  
-# Cache fonts
-/fonts/*
+# Cloudflare Image Resizing
+/cdn-cgi/image/*
   Cache-Control: public, max-age=31536000, immutable

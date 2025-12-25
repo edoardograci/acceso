@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import SaveButton from '../../components/SaveButton.astro';
+import OptimizedImage from '../../components/OptimizedImage.astro';
 import { getSavedDesigners } from '../../lib/db';
 import type { Env } from '../../env.d';
 
@@ -49,11 +50,12 @@ try {
               class="studio-card"
             >
               {studio.cover ? (
-                <img 
-                  src={studio.cover} 
-                  alt={studio.name} 
-                  class="studio-image" 
-                  loading="lazy" 
+                <OptimizedImage
+                  src={studio.cover}
+                  alt={studio.name}
+                  width={400}
+                  height={200}
+                  class="studio-image"
                 />
               ) : (
                 <div class="studio-image-placeholder">No image</div>

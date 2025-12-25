@@ -1,7 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
-import ActionButtons from '../../components/ActionButtons.astro';
 import '../../styles/moodboard.css';
 
 import type { Env } from '../../env.d';
@@ -84,13 +83,7 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
   
   <main class="moodboard-detail-page">
     <div class="detail-header">
-      <div class="detail-header-left">
-        <h1 class="detail-page-title"><a href="/moodboard">Moodboard</a></h1>
-        <p class="detail-breadcrumb">/ {item?.name || 'Not Found'}</p>
-      </div>
-      <div class="detail-header-right">
-        <ActionButtons productId={item?.id || ''} />
-      </div>
+      <h1 class="detail-page-title">{item?.name || 'Not Found'}</h1>
     </div>
 
     {error ? (
@@ -189,8 +182,9 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
 
           {item.link && (
             <div class="info-links">
-              <a href={item.link} target="_blank" rel="noopener noreferrer" class="info-link">
-                External Link
+              <a href={item.link} target="_blank" rel="noopener noreferrer" class="info-btn">
+                <img src="/icons/source.svg" alt="" />
+                Source
               </a>
             </div>
           )}

@@ -8,6 +8,23 @@ window.collectionsState = {
     async init() {
         if (this.loaded) return;
 
+        // Try to load from sessionStorage first
+        const cached = sessionStorage.getItem('collections_state');
+        if (cached) {
+            try {
+                const data = JSON.parse(cached);
+                this.designers = new Set(data.designers);
+                this.objects = new Set(data.objects);
+                this.loaded = true;
+                this.notifyListeners();
+                console.log('[Collections] Loaded from cache');
+                return;
+            } catch (e) {
+                console.error('Failed to parse cached collections:', e);
+            }
+        }
+
+        // Fetch from API if no cache
         try {
             const response = await fetch('/api/collections/status');
             if (!response.ok) throw new Error('Failed to fetch collections');
@@ -17,7 +34,13 @@ window.collectionsState = {
             this.objects = new Set(data.objects);
             this.loaded = true;
 
-            // Notify all listeners
+            // Cache in sessionStorage
+            sessionStorage.setItem('collections_state', JSON.stringify({
+                designers: data.designers,
+                objects: data.objects
+            }));
+
+            console.log('[Collections] Loaded from API and cached');
             this.notifyListeners();
         } catch (error) {
             console.error('Failed to load collections:', error);
@@ -36,6 +59,7 @@ window.collectionsState = {
         } else {
             this.objects.add(id);
         }
+        this.updateCache();
         this.notifyListeners({ type, id, action: 'add' });
     },
 
@@ -45,7 +69,15 @@ window.collectionsState = {
         } else {
             this.objects.delete(id);
         }
+        this.updateCache();
         this.notifyListeners({ type, id, action: 'remove' });
+    },
+
+    updateCache() {
+        sessionStorage.setItem('collections_state', JSON.stringify({
+            designers: Array.from(this.designers),
+            objects: Array.from(this.objects)
+        }));
     },
 
     subscribe(callback) {
