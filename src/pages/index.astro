@@ -136,101 +136,90 @@ try {
 <Layout title="Acceso Design">
   <Navbar />
   
-  <main class="home-page">
+  <main class="spotlight-page">
   {activeSpotlight?.product && spotlightImages.length > 0 ? (
-    <div class="spotlight-section">
-      <div class="spotlight-wrapper">
-        <div class="spotlight-tag">SPOTLIGHT</div>
-      </div>
+    <div class="spotlight-container">
+      {/* Radial Gradient Background */}
+      <div class="radial-gradient"></div>
       
-      <div class="spotlight-info">
-        <h1 class="spotlight-title">{activeSpotlight.product.name}</h1>
-        <div class="spotlight-meta">
-          {activeSpotlight.product.year && <span>{activeSpotlight.product.year}</span>}
-          {activeSpotlight.product.city && <span>{activeSpotlight.product.city}</span>}
-        </div>
+      {/* Header Section */}
+      <div class="spotlight-header">
+        <h1 class="spotlight-heading">SPOTLIGHT OF<br/>THE WEEK</h1>
+        <div class="week-badge">#1 week</div>
       </div>
 
-        {/* Carousel */}
-        <div class="spotlight-carousel">
-          <div class="carousel-wrapper">
-            <div class="carousel-track" id="carousel-track">
-              {spotlightImages.map((image, index) => (
-                <div class="carousel-slide" data-index={index}>
-                  <img 
-                    src={image.image_url} 
-                    alt={`${activeSpotlight.product.name} - Image ${index + 1}`}
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                    fetchpriority={index === 0 ? 'high' : 'auto'}
-                    decoding="async"
-                    data-skeleton
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Year and City */}
+      <div class="spotlight-meta">
+        {activeSpotlight.product.year && <span>{activeSpotlight.product.year}</span>}
+        {activeSpotlight.product.city && (
+          <>
+            <svg width="4" height="4" viewBox="0 0 4 4" fill="currentColor">
+              <circle cx="2" cy="2" r="2"/>
+            </svg>
+            <span>{activeSpotlight.product.city}</span>
+          </>
+        )}
+      </div>
+
+      {/* Product Name */}
+      <h2 class="product-name">{activeSpotlight.product.name}</h2>
+
+      {/* Cover Image */}
+      <div class="cover-image-container">
+        <img 
+          src={spotlightImages[0].image_url} 
+          alt={activeSpotlight.product.name}
+          class="cover-image"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          data-skeleton
+        />
+      </div>
+
+      {/* See Other Photos Button */}
+      <a href={`/moodboard/${activeSpotlight.product.slug}`} class="see-photos-btn">
+        See other photos
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+
+      {/* Designer Section */}
+      {activeSpotlight.product.designer && (
+        <div class="designer-section">
+          <div class="designer-label">Designer</div>
           
-          {spotlightImages.length > 1 && (
-            <div class="carousel-controls">
-              <button class="carousel-btn carousel-prev" id="carousel-prev" aria-label="Previous image">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <div class="carousel-indicators" id="carousel-indicators">
-                {spotlightImages.map((_, index) => (
-                  <button 
-                    class={`indicator ${index === 0 ? 'active' : ''}`}
-                    data-index={index}
-                    aria-label={`Go to image ${index + 1}`}
-                  />
-                ))}
-              </div>
-              <button class="carousel-btn carousel-next" id="carousel-next" aria-label="Next image">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Moodboard Button */}
-        <a href={`/moodboard/${activeSpotlight.product.slug}`} class="moodboard-button">
-          {activeSpotlight.product.name} Moodboard
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </a>
-
-        {/* Designer Section */}
-        {activeSpotlight.product.designer && (
-          <div class="designer-section">
-            <div class="designer-label">Designer</div>
-            
-            {designerStudio ? (
-              <a href={`/designers/${designerStudio.slug}`} class="designer-card">
+          {designerStudio ? (
+            <a href={`/designers/${designerStudio.slug}`} class="designer-card">
+              <div class="designer-card-inner">
                 {designerStudio.cover && (
                   <img 
                     src={designerStudio.cover} 
                     alt={designerStudio.name}
-                    class="designer-image"
+                    class="designer-card-image"
                     loading="lazy"
                     decoding="async"
                     data-skeleton
                   />
                 )}
-                <span class="designer-name">{designerStudio.name}</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="designer-chevron">
-                  <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </a>
-            ) : (
-              <div class="designer-name-only">{activeSpotlight.product.designer}</div>
-            )}
-          </div>
-        )}
-      </div>
+                <div class="designer-card-content">
+                  <div class="designer-card-title">{designerStudio.name}</div>
+                  <div class="designer-card-address">Via Massimo Gorki 2</div>
+                </div>
+                <div class="designer-card-arrow">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </a>
+          ) : (
+            <div class="designer-name-only">{activeSpotlight.product.designer}</div>
+          )}
+        </div>
+      )}
+    </div>
     ) : (
       <div class="no-spotlight">
         <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 32px;">
@@ -249,291 +238,149 @@ try {
   </main>
 </Layout>
 
-<script>
-  const track = document.getElementById('carousel-track');
-  const prevBtn = document.getElementById('carousel-prev');
-  const nextBtn = document.getElementById('carousel-next');
-  const indicators = document.querySelectorAll('.indicator');
-  const slides = document.querySelectorAll('.carousel-slide');
-  
-  if (track && slides.length > 0) {
-    let currentIndex = 0;
-    let startX = 0;
-    let isDragging = false;
-    let currentTranslate = 0;
-    let prevTranslate = 0;
-
-    function updateCarousel() {
-      const offset = -currentIndex * 100;
-      track.style.transform = 'translateX(' + offset + '%)';
-      
-      indicators.forEach(function(ind, idx) {
-        ind.classList.toggle('active', idx === currentIndex);
-      });
-    }
-
-    function goToSlide(index) {
-      currentIndex = Math.max(0, Math.min(index, slides.length - 1));
-      updateCarousel();
-    }
-
-    if (prevBtn) prevBtn.addEventListener('click', function() { goToSlide(currentIndex - 1); });
-    if (nextBtn) nextBtn.addEventListener('click', function() { goToSlide(currentIndex + 1); });
-    
-    indicators.forEach(function(indicator, index) {
-      indicator.addEventListener('click', function() { goToSlide(index); });
-    });
-
-    // Touch controls
-    track.addEventListener('touchstart', function(e) {
-      startX = e.touches[0].clientX;
-      isDragging = true;
-    });
-
-    track.addEventListener('touchmove', function(e) {
-      if (!isDragging) return;
-      const currentX = e.touches[0].clientX;
-      const diff = currentX - startX;
-      currentTranslate = prevTranslate + diff;
-    });
-
-    track.addEventListener('touchend', function() {
-      isDragging = false;
-      const movedBy = currentTranslate - prevTranslate;
-      
-      if (movedBy < -50 && currentIndex < slides.length - 1) {
-        currentIndex++;
-      } else if (movedBy > 50 && currentIndex > 0) {
-        currentIndex--;
-      }
-      
-      updateCarousel();
-      prevTranslate = currentTranslate;
-    });
-
-    // Mouse drag controls
-    track.addEventListener('mousedown', function(e) {
-      startX = e.clientX;
-      isDragging = true;
-      track.style.cursor = 'grabbing';
-    });
-
-    track.addEventListener('mousemove', function(e) {
-      if (!isDragging) return;
-      const currentX = e.clientX;
-      const diff = currentX - startX;
-      currentTranslate = prevTranslate + diff;
-    });
-
-    track.addEventListener('mouseup', function() {
-      isDragging = false;
-      track.style.cursor = 'grab';
-      
-      const movedBy = currentTranslate - prevTranslate;
-      
-      if (movedBy < -50 && currentIndex < slides.length - 1) {
-        currentIndex++;
-      } else if (movedBy > 50 && currentIndex > 0) {
-        currentIndex--;
-      }
-      
-      updateCarousel();
-      prevTranslate = currentTranslate;
-    });
-
-    track.addEventListener('mouseleave', function() {
-      if (isDragging) {
-        isDragging = false;
-        track.style.cursor = 'grab';
-        updateCarousel();
-      }
-    });
-
-    // Keyboard navigation
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'ArrowLeft') goToSlide(currentIndex - 1);
-      if (e.key === 'ArrowRight') goToSlide(currentIndex + 1);
-    });
-  }
-</script>
-
 <style>
-  .home-page {
-    padding-top: var(--navbar-height);
+  .spotlight-page {
+    position: relative;
     min-height: 100vh;
-    max-width: 1400px;
+    background: var(--color-black);
+  }
+
+  .spotlight-container {
+    position: relative;
+    max-width: 600px;
     margin: 0 auto;
-  }
-
-  .spotlight-section {
-    padding: 48px var(--spacing-page);
-  }
-
-.spotlight-wrapper {
-  text-align: center;
-}
-
-.spotlight-tag {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 24px;
-  background: var(--accent-yellow);
-  color: #000;
-
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 0.56px;
-  line-height: 1;
-
-  padding: 7px 12px 2px;
-  white-space: nowrap;
-}
-
-  .spotlight-info {
-    margin-bottom: 32px;
-  }
-
-  .spotlight-title {
-    font-family: var(--font-mono);
-    font-size: 48px;
-    font-weight: 200;
-    margin-bottom: 12px;
-    letter-spacing: 0;
+    padding: 0 var(--spacing-page) 80px;
     text-align: center;
   }
 
-  .spotlight-meta {
-    display: flex;
-    justify-content: center;
+  /* Radial Gradient */
+  .radial-gradient {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 800px;
+    height: 400px;
+    background: radial-gradient(ellipse at center top, rgba(255, 224, 0, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header Section */
+  .spotlight-header {
+    position: relative;
+    z-index: 1;
+    padding-top: 48px;
+    margin-bottom: 24px;
+  }
+
+  .spotlight-heading {
+    font-family: var(--font-mono);
+    font-size: 36px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    margin: 0 0 16px 0;
+    color: var(--color-white);
+  }
+
+  .week-badge {
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: rgba(255, 224, 0, 0.1);
+    border: 1px solid var(--color-yellow);
+    color: var(--color-yellow);
     font-family: var(--font-sans);
     font-size: 16px;
-    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1;
   }
 
-  /* Carousel Styles */
-  .spotlight-carousel {
-    margin-bottom: 36px;
-    margin-top: 0;
-  }
-
-  .carousel-wrapper {
+  /* Meta Info */
+  .spotlight-meta {
     position: relative;
-    overflow: hidden;
-    max-height: 600px;
-    margin-bottom: 16px;
-  }
-
-  .carousel-track {
-    display: flex;
-    transition: transform 0.3s ease;
-    cursor: grab;
-  }
-
-  .carousel-track:active {
-    cursor: grabbing;
-  }
-
-  .carousel-slide {
-    min-width: 100%;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-gray);
   }
 
-  .carousel-slide img {
+  .spotlight-meta svg {
+    opacity: 0.5;
+  }
+
+  /* Product Name */
+  .product-name {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    margin: 0 0 32px 0;
+    color: var(--color-white);
+  }
+
+  /* Cover Image */
+  .cover-image-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .cover-image {
     width: 100%;
     height: auto;
-    max-height: 600px;
-    object-fit: contain;
-    user-select: none;
-    pointer-events: none;
+    display: block;
   }
 
-  .carousel-controls {
-    display: flex;
+  /* See Photos Button */
+  .see-photos-btn {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-  }
-
-  .carousel-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--gray-dark);
-    border: 1px solid var(--gray-border);
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .carousel-btn:hover {
-    background: var(--accent-yellow);
-    color: #000;
-    border-color: var(--accent-yellow);
-  }
-
-  .carousel-indicators {
-    display: flex;
+    width: 100%;
     gap: 8px;
-  }
-
-  .indicator {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--gray-border);
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .indicator.active {
-    background: var(--accent-yellow);
-    transform: scale(1.3);
-  }
-
-  .indicator:hover {
-    background: var(--text-secondary);
-  }
-
-  /* Moodboard Button */
-  .moodboard-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
     padding: 14px 24px;
-    background: var(--bg-primary);
-    border: 1px solid var(--gray-border);
-    color: var(--text-primary);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 6px;
+    color: var(--color-white);
     font-family: var(--font-sans);
     font-size: 16px;
     font-weight: 450;
     text-decoration: none;
     transition: all 0.2s ease;
-    margin: 0 auto 0px;
-    white-space: nowrap;
+    margin-bottom: 48px;
   }
 
-  .moodboard-button:hover {
+  .see-photos-btn:hover {
+    border-color: var(--color-white);
     transform: translateY(-2px);
   }
 
-  .moodboard-button svg {
+  .see-photos-btn svg {
     flex-shrink: 0;
   }
 
   /* Designer Section */
   .designer-section {
-    padding-top: 32px;
-    margin-top: 0;
+    position: relative;
+    z-index: 1;
+    text-align: left;
   }
 
   .designer-label {
@@ -541,42 +388,75 @@ try {
     font-size: 14px;
     font-weight: 200;
     letter-spacing: 0.56px;
-    color: var(--text-primary);
+    color: var(--color-white);
     margin-bottom: 16px;
   }
 
+  /* Designer Card - Map Style */
   .designer-card {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--bg-primary);
-    border: 1px solid var(--gray-border);
+    display: block;
+    background: var(--color-black);
+    border: 1px solid var(--color-stroke);
+    border-radius: 6px;
     text-decoration: none;
-    color: var(--text-primary);
+    color: inherit;
     transition: all 0.2s ease;
   }
 
   .designer-card:hover {
-    transform: translateY(-2px);
+    border-color: var(--color-white);
   }
 
-  .designer-image {
-    width: 64px;
-    height: 64px;
+  .designer-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .designer-card-image {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
     object-fit: cover;
-    flex-shrink: 0;
+    background-color: var(--color-bg-secondary);
   }
 
-  .designer-name {
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 450;
+  .designer-card-content {
     flex: 1;
+    min-width: 0;
   }
 
-  .designer-chevron {
+  .designer-card-title {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-white);
+    margin-bottom: 6px;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+  }
+
+  .designer-card-address {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-gray);
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .designer-card-arrow {
     flex-shrink: 0;
+    padding-left: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+  }
+
+  .designer-card-arrow svg {
+    width: 24px;
+    height: 24px;
   }
 
   .designer-name-only {
@@ -593,24 +473,29 @@ try {
   }
 
   @media (max-width: 768px) {
-    .spotlight-title {
-      font-size: 32px;
+    .spotlight-heading {
+      font-size: 28px;
     }
 
-    .spotlight-meta {
-      gap: 8px;
+    .product-name {
+      font-size: 24px;
     }
 
-    .moodboard-button {
-      width: 100%;
+    .designer-card-inner {
+      padding: 12px;
     }
 
-    .carousel-wrapper {
-      max-height: 400px;
+    .designer-card-image {
+      width: 80px;
+      height: 80px;
     }
 
-    .carousel-slide img {
-      max-height: 400px;
+    .designer-card-title {
+      font-size: 14px;
+    }
+
+    .designer-card-address {
+      font-size: 12px;
     }
   }
 </style>
