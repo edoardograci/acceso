@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
+import MoodboardActionButtons from '../../components/MoodboardActionButtons.astro';
 import '../../styles/moodboard.css';
 
 import type { Env } from '../../env.d';
@@ -139,6 +140,9 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
           )}
         </div>
 
+        {/* Action Buttons */}
+        <MoodboardActionButtons productId={item.id} />
+
         {/* Info Section */}
         <div class="detail-content">
           <div class="info-section">
@@ -176,7 +180,9 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
           {item.city && (
             <div class="info-section">
               <div class="info-label">Location</div>
-              <div class="info-value">{item.city}</div>
+              <div class="info-value">
+                <a href={`/designers?city=${encodeURIComponent(item.city)}`}>{item.city}</a>
+              </div>
             </div>
           )}
 

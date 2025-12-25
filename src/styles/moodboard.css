@@ -122,7 +122,6 @@
 
 /* Moodboard detail page styles */
 .moodboard-detail-page {
-  padding-top: var(--navbar-height);
   min-height: 100vh;
   max-width: 1400px;
   margin-left: auto;
@@ -269,7 +268,12 @@
 }
 
 .info-value a {
-  display: inline;
+  text-decoration: underline;
+  color: inherit;
+}
+
+.info-value a:hover {
+  opacity: 0.8;
 }
 
 .info-links {

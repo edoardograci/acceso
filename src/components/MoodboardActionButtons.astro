@@ -1,0 +1,98 @@
+---
+import SaveButton from './SaveButton.astro';
+
+interface Props {
+  productId: string;
+}
+
+const { productId } = Astro.props;
+---
+<div class="moodboard-actions">
+  <div class="left-actions">
+    <button class="action-btn icon-btn" id="shareButton" aria-label="Share">
+      <img src="/icons/share.svg" alt="" />
+    </button>
+    <button class="action-btn icon-btn" aria-label="More options">
+      <img src="/icons/three-dots.svg" alt="" />
+    </button>
+  </div>
+  
+  <SaveButton type="object" itemId={productId} />
+</div>
+
+<style>
+  .moodboard-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 20px;
+    padding: 0 var(--spacing-page);
+  }
+
+  .left-actions {
+    display: flex;
+    gap: 16px;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    padding: 0;
+  }
+
+  .action-btn:hover {
+    opacity: 0.8;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+  }
+
+  .icon-btn img {
+    width: 16px;
+    height: auto;
+  }
+
+  .save-btn {
+    height: 36px;
+    border-radius: 999px;
+    padding: 0 24px;
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 450;
+  }
+</style>
+
+<script>
+  const shareButton = document.getElementById('shareButton');
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      const shareData = {
+        title: document.title,
+        url: window.location.href,
+        text: 'Check out this project on Acceso'
+      };
+
+      try {
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          // Fallback to clipboard
+          await navigator.clipboard.writeText(window.location.href);
+          alert('Link copied to clipboard');
+        }
+      } catch (err) {
+        console.error('Share failed:', err);
+      }
+    });
+  }
+</script>
