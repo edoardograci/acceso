@@ -3,10 +3,9 @@ import SaveButton from './SaveButton.astro';
 
 interface Props {
   productId: string;
-  isSaved?: boolean;
 }
 
-const { productId, isSaved = false } = Astro.props;
+const { productId } = Astro.props;
 ---
 <div class="action-buttons">
   <button 
@@ -30,7 +29,7 @@ const { productId, isSaved = false } = Astro.props;
     </svg>
   </button>
 
-  <SaveButton type="object" itemId={productId} isSaved={isSaved} />
+  <SaveButton type="object" itemId={productId} />
 </div>
 
 <script>

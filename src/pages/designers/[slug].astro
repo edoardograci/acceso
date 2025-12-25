@@ -7,14 +7,10 @@ import DesignerMoodboard from '../../components/DesignerMoodboard.astro';
 
 import DesignerActionButtons from '../../components/DesignerActionButtons.astro';
 import type { Studio } from '../../lib/types';
-import { getSavedDesigners } from '../../lib/db';
-import type { Env } from '../../env.d';
-
 const { slug } = Astro.params;
 
 let studio: Studio | null = null;
 let error = null;
-let isSaved = false;
 
 try {
   // Fetch from static JSON - cached at edge
@@ -24,12 +20,6 @@ try {
   
   const studios: Studio[] = await response.json();
   studio = studios.find(s => s.slug === slug) || null;
-
-  if (studio && Astro.locals.user) {
-    const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
-    const savedIds = await getSavedDesigners(Astro.locals.user.id, env);
-    isSaved = savedIds.includes(studio.id);
-  }
 } catch (e) {
   error = e;
   console.error('Failed to fetch studio:', e);
@@ -85,7 +75,7 @@ const pageImage = studio?.cover || '/og-default.jpg';
             )}
           </div>
 
-          <DesignerActionButtons studioId={studio.id} isSaved={isSaved} />
+          <DesignerActionButtons studioId={studio.id} />
         </>
       )}
     </div>

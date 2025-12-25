@@ -147,8 +147,17 @@ try {
     }
 
     const gap = 16 // matches .moodboard-grid column-gap
+    
+    // Get computed styles to account for padding
+    const style = window.getComputedStyle(vectorResultsGrid);
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    const paddingRight = parseFloat(style.paddingRight) || 0;
+    
     const containerWidth = vectorResultsGrid.getBoundingClientRect().width || 0
     if (!containerWidth) return
+    
+    // Calculate available width for content
+    const contentWidth = containerWidth - paddingLeft - paddingRight;
 
     let columns = 4
     const viewportWidth = window.innerWidth
@@ -158,7 +167,7 @@ try {
       columns = 3
     }
 
-    const columnWidth = (containerWidth - gap * (columns - 1)) / columns
+    const columnWidth = (contentWidth - gap * (columns - 1)) / columns
     const columnHeights = new Array(columns).fill(0)
 
     cards.forEach((card) => {
@@ -169,7 +178,8 @@ try {
       const minHeight = Math.min(...columnHeights)
       const columnIndex = columnHeights.indexOf(minHeight)
 
-      const x = (columnWidth + gap) * columnIndex
+      // Start x from paddingLeft
+      const x = paddingLeft + (columnWidth + gap) * columnIndex
       const y = minHeight
 
       card.style.transform = `translate(${x}px, ${y}px)`

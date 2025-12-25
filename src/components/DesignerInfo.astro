@@ -100,6 +100,7 @@ const { studio } = Astro.props;
   .info-btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center; /* Ensure horizontal center */
     gap: 8px;
     height: 36px;
     padding: 0 16px;
@@ -112,6 +113,8 @@ const { studio } = Astro.props;
     font-weight: 450;
     text-decoration: none;
     transition: opacity 0.2s ease;
+    line-height: 1;
+    padding-bottom: 2px; /* Visual tweak for font baseline */
   }
 
   .info-btn:hover {

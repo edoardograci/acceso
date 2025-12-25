@@ -1,29 +1,30 @@
 ---
 interface Props {
   type: 'designer' | 'object';
-  itemId: string; // studio_id or product_id
-  isSaved?: boolean;
+  itemId: string;
 }
 
-const { type, itemId, isSaved = false } = Astro.props;
+const { type, itemId } = Astro.props;
 const isLoggedIn = !!Astro.locals.user;
 ---
 
 <save-button
   data-type={type}
   data-id={itemId}
-  data-saved={isSaved.toString()}
   data-logged-in={isLoggedIn.toString()}
 >
   <button class="save-btn">
-    {isLoggedIn ? (isSaved ? 'Remove' : 'Save') : 'Log in to save'}
+    {isLoggedIn ? 'Loading...' : 'Log in to save'}
   </button>
 </save-button>
 
 <style>
   .save-btn {
     height: 36px;
-    padding: 8px 16px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid var(--color-stroke);
     background: var(--color-bg-secondary);
     color: white;
@@ -34,14 +35,13 @@ const isLoggedIn = !!Astro.locals.user;
     width: fit-content;
     white-space: nowrap;
     border-radius: 999px;
+    line-height: 1;
+    padding-bottom: 2px; /* Visual tweak for font baseline */
   }
   
   .save-btn:hover {
     border-color: var(--color-yellow);
   }
-
-  /* Optional: Disabled style for logged out if strictly enforcing disabled */
-  /* Prompt says "Button is hidden or shows 'Log in to save'". */
 </style>
 
 <script>
@@ -53,46 +53,70 @@ const isLoggedIn = !!Astro.locals.user;
       const id = this.dataset.id;
       const isLoggedIn = this.dataset.loggedIn === 'true';
 
-      if (!btn) return;
+      if (!btn || !isLoggedIn) {
+        if (btn && !isLoggedIn) {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = '/login';
+          });
+        }
+        return;
+      }
 
+      // Wait for collections state to load
+      const updateButton = () => {
+        // @ts-ignore
+        if (!window.collectionsState?.loaded) {
+          btn.textContent = 'Loading...';
+          return;
+        }
+
+        // @ts-ignore
+        const isSaved = window.collectionsState.isSaved(type, id);
+        btn.textContent = isSaved ? 'Remove' : 'Save';
+      };
+
+      // Initial update
+      updateButton();
+
+      // Subscribe to state changes
+      // @ts-ignore
+      const unsubscribe = window.collectionsState?.subscribe((change) => {
+        // Only update if this button is affected
+        if (!change || (change.type === type && change.id === id)) {
+          updateButton();
+        }
+      });
+
+      // Handle clicks
       btn.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!isLoggedIn) {
-          window.location.href = '/login';
-          return;
-        }
+        // @ts-ignore
+        if (!window.collectionsState?.loaded) return;
 
-        const isSaved = this.dataset.saved === 'true';
-        const newSavedState = !isSaved;
-
-        // Optimistic UI update
-        this.dataset.saved = newSavedState.toString();
-        btn.textContent = newSavedState ? 'Remove' : 'Save';
-
-        // Dispatch status change event
-        this.dispatchEvent(new CustomEvent('save-change', {
-          bubbles: true,
-          detail: { 
-            saved: newSavedState,
-            type: type,
-            id: id 
-          }
-        }));
-
+        // @ts-ignore
+        const isSaved = window.collectionsState.isSaved(type, id);
         const endpoint = type === 'designer' 
           ? '/api/collections/designers' 
           : '/api/collections/objects';
         
-        const method = isSaved ? 'DELETE' : 'POST'; // If was saved, we delete.
-        const url = isSaved 
-          ? `${endpoint}/${id}` 
-          : endpoint;
-
+        const method = isSaved ? 'DELETE' : 'POST';
+        const url = isSaved ? `${endpoint}/${id}` : endpoint;
         const body = isSaved ? undefined : JSON.stringify(
           type === 'designer' ? { studio_id: id } : { product_id: id }
         );
+
+        // Optimistic update
+        if (isSaved) {
+          // @ts-ignore
+          window.collectionsState.remove(type, id);
+        } else {
+          // @ts-ignore
+          window.collectionsState.add(type, id);
+        }
 
         try {
           const res = await fetch(url, {
@@ -101,17 +125,36 @@ const isLoggedIn = !!Astro.locals.user;
             body
           });
 
-          if (!res.ok) {
-            throw new Error('Action failed');
-          }
+          if (!res.ok) throw new Error('Action failed');
+          
+          // Dispatch event for other components (e.g., collection pages)
+          this.dispatchEvent(new CustomEvent('save-change', {
+            bubbles: true,
+            detail: { 
+              saved: !isSaved,
+              type: type,
+              id: id 
+            }
+          }));
         } catch (error) {
           console.error('Save action failed:', error);
           // Revert optimistic update
-          this.dataset.saved = isSaved.toString();
-          btn.textContent = isSaved ? 'Remove' : 'Save';
+          if (isSaved) {
+            // @ts-ignore
+            window.collectionsState.add(type, id);
+          } else {
+            // @ts-ignore
+            window.collectionsState.remove(type, id);
+          }
           alert('Failed to update collection. Please try again.');
         }
       });
+
+      // Cleanup on disconnect
+      // @ts-ignore
+      this.disconnectedCallback = () => {
+        unsubscribe?.();
+      };
     }
   }
 

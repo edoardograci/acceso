@@ -91,6 +91,12 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
 
       if (userResult.rows.length > 0) {
         userId = userResult.rows[0].id;
+
+        // Update verification status for existing user linking Google
+        await turso.execute({
+          sql: 'UPDATE users SET email_verified = ?, updated_at = ? WHERE id = ?',
+          args: [googleUser.email_verified ? 1 : 0, Math.floor(Date.now() / 1000), userId],
+        });
       } else {
         // Create new user
         userId = crypto.randomUUID();
