@@ -87,7 +87,9 @@ try {
         </div>
 
         <div id="vector-results" class="vector-results" style="display: none;">
-          <div class="moodboard-grid" id="vector-results-grid"></div>
+          <div class="moodboard-grid" style="column-count: auto; display: block; column-gap: 0;">
+            <div id="vector-results-grid" style="position: relative; width: 100%;"></div>
+          </div>
         </div>
 
         <div class="empty-result" id="empty-result" style="display: none;">
@@ -148,16 +150,10 @@ try {
 
     const gap = 16 // matches .moodboard-grid column-gap
     
-    // Get computed styles to account for padding
-    const style = window.getComputedStyle(vectorResultsGrid);
-    const paddingLeft = parseFloat(style.paddingLeft) || 0;
-    const paddingRight = parseFloat(style.paddingRight) || 0;
-    
+    // With the new wrapper structure, vectorResultsGrid is inside the padded container
+    // So its width IS the content width. No need to subtract padding.
     const containerWidth = vectorResultsGrid.getBoundingClientRect().width || 0
     if (!containerWidth) return
-    
-    // Calculate available width for content
-    const contentWidth = containerWidth - paddingLeft - paddingRight;
 
     let columns = 4
     const viewportWidth = window.innerWidth
@@ -167,7 +163,7 @@ try {
       columns = 3
     }
 
-    const columnWidth = (contentWidth - gap * (columns - 1)) / columns
+    const columnWidth = (containerWidth - gap * (columns - 1)) / columns
     const columnHeights = new Array(columns).fill(0)
 
     cards.forEach((card) => {
@@ -178,8 +174,8 @@ try {
       const minHeight = Math.min(...columnHeights)
       const columnIndex = columnHeights.indexOf(minHeight)
 
-      // Start x from paddingLeft
-      const x = paddingLeft + (columnWidth + gap) * columnIndex
+      // Start x from 0, as we are inside the padding content box now
+      const x = (columnWidth + gap) * columnIndex
       const y = minHeight
 
       card.style.transform = `translate(${x}px, ${y}px)`
