@@ -181,3 +181,32 @@ try {
     display: inline-block;
   }
 </style>
+
+<script>
+  document.addEventListener('save-change', ((e: CustomEvent) => {
+    const { saved, type } = e.detail;
+    if (!saved && type === 'designer') {
+      const target = e.target as HTMLElement;
+      const cardWrapper = target.closest('.studio-card-wrapper');
+      
+      if (cardWrapper) {
+        // Animate removal
+        (cardWrapper as HTMLElement).style.opacity = '0';
+        (cardWrapper as HTMLElement).style.transform = 'scale(0.95)';
+        
+        setTimeout(() => {
+          cardWrapper.remove();
+          
+          // Check if grid is empty
+          const grid = document.querySelector('.designers-grid');
+          if (grid && grid.children.length === 0) {
+            // Can reload or show empty state manually
+            // For simplicity, just reload to fetch empty state from server or toggle it
+            // Or simpler: make the empty state visible if hidden
+            window.location.reload(); 
+          }
+        }, 200);
+      }
+    }
+  }) as EventListener);
+</script>

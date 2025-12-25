@@ -71,6 +71,16 @@ const isLoggedIn = !!Astro.locals.user;
         this.dataset.saved = newSavedState.toString();
         btn.textContent = newSavedState ? 'Remove' : 'Save';
 
+        // Dispatch status change event
+        this.dispatchEvent(new CustomEvent('save-change', {
+          bubbles: true,
+          detail: { 
+            saved: newSavedState,
+            type: type,
+            id: id 
+          }
+        }));
+
         const endpoint = type === 'designer' 
           ? '/api/collections/designers' 
           : '/api/collections/objects';

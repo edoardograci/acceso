@@ -55,7 +55,14 @@ try {
   <Navbar />
   <main class="profile-page">
     <div class="profile-header">
-      <h1 class="page-title">Profile</h1>
+      <div class="header-top">
+        <h1 class="page-title">Profile</h1>
+        <form action="/auth/logout" method="POST">
+          <button type="submit" class="logout-btn">
+            Sign Out
+          </button>
+        </form>
+      </div>
       
       <div class="user-info-card">
         <p class="welcome-text">
@@ -80,7 +87,7 @@ try {
             ) : (
               <div class="card-placeholder">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="placeholder-icon">
-                  <path d="M3 21h18M5 21V7l8-4 8 4v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
             )}
@@ -102,7 +109,7 @@ try {
             ) : (
               <div class="card-placeholder">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="placeholder-icon">
-                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </div>
             )}
@@ -118,14 +125,6 @@ try {
         </a>
       </div>
     </div>
-
-    <div class="actions-section">
-      <form action="/auth/logout" method="POST">
-        <button type="submit" class="logout-btn">
-          Sign Out
-        </button>
-      </form>
-    </div>
   </main>
 </Layout>
 
@@ -133,7 +132,7 @@ try {
   .profile-page {
     max-width: 1000px;
     margin: 0 auto;
-    padding: 120px 24px 60px;
+    padding: 48px 24px 60px;
     font-family: var(--font-sans);
   }
 
@@ -141,8 +140,15 @@ try {
     font-size: 32px;
     font-weight: 400;
     color: var(--color-white);
-    margin-bottom: 32px;
+    margin: 0;
     font-family: var(--font-mono);
+  }
+  
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
   }
 
   .user-info-card {
@@ -281,13 +287,13 @@ try {
   }
 
   .logout-btn {
-    height: 48px;
+    height: 36px;
     padding: 0 24px;
     background-color: transparent;
     border: 1px solid var(--color-stroke);
-    border-radius: 6px;
+    border-radius: 999px;
     color: var(--color-gray);
-    font-size: 15px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
   }

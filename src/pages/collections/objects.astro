@@ -129,6 +129,11 @@ try {
     background: var(--color-bg-secondary);
   }
 
+  .moodboard-item {
+    display: block;
+    width: 100%;
+  }
+
   .object-card {
     display: block;
     text-decoration: none;
@@ -188,3 +193,29 @@ try {
     display: inline-block;
   }
 </style>
+
+<script>
+  document.addEventListener('save-change', ((e: CustomEvent) => {
+    const { saved, type } = e.detail;
+    if (!saved && type === 'object') {
+      const target = e.target as HTMLElement;
+      const cardWrapper = target.closest('.object-card-wrapper');
+      
+      if (cardWrapper) {
+        // Animate removal
+        (cardWrapper as HTMLElement).style.opacity = '0';
+        (cardWrapper as HTMLElement).style.transform = 'scale(0.95)';
+        
+        setTimeout(() => {
+          cardWrapper.remove();
+          
+          // Check if grid is empty
+          const grid = document.querySelector('.objects-grid');
+          if (grid && !grid.querySelector('.object-card-wrapper')) {
+             window.location.reload();
+          }
+        }, 200);
+      }
+    }
+  }) as EventListener);
+</script>
