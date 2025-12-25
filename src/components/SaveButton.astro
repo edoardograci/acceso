@@ -60,7 +60,7 @@ const isLoggedIn = !!Astro.locals.user;
         e.stopPropagation();
 
         if (!isLoggedIn) {
-          window.location.href = '/auth/login'; // Adjust login path if different
+          window.location.href = '/login';
           return;
         }
 
