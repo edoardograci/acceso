@@ -34,6 +34,10 @@ const srcset = widths
   .join(', ');
 
 const optimizedSrc = width ? getResizedUrl(src, width, quality) : getResizedUrl(src, 1024, quality);
+
+// Use width/height for aspect ratio if provided, otherwise use common ratios
+const aspectWidth = width || 16;
+const aspectHeight = height || 9;
 ---
 
 <img
@@ -41,6 +45,8 @@ const optimizedSrc = width ? getResizedUrl(src, width, quality) : getResizedUrl(
   srcset={srcset}
   sizes={sizes}
   alt={alt}
+  width={aspectWidth}
+  height={aspectHeight}
   loading={loading}
   decoding="async"
   class={className}
