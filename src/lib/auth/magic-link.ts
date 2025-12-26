@@ -1,22 +1,21 @@
 // src/lib/auth/magic-link.ts
-import { TursoHttpClient } from './lucia';
+import { TursoHttpClient } from '../turso';
 import type { Env } from '../../env.d';
 
 export async function generateMagicLink(email: string, env: Env, requestUrl?: string): Promise<string> {
   const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
 
   try {
-    // Find or create user
+    // Find or create user - optimized with a single flow
     let userId: string;
     const userResult = await turso.execute({
       sql: 'SELECT id FROM users WHERE email = ? LIMIT 1',
       args: [email],
-    });
+    }, { useCache: true });
 
     if (userResult.rows.length > 0) {
       userId = userResult.rows[0].id;
     } else {
-      // Create new user
       userId = crypto.randomUUID();
       const now = Math.floor(Date.now() / 1000);
       await turso.execute({

@@ -80,7 +80,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Query Vectorize
     console.log('Querying Vectorize...');
     const vectorizeResult = (await env.VECTORIZE.query(queryEmbedding, {
-      topK: 50,
+      topK: 80,
       returnMetadata: 'all',
     })) as VectorizeResult;
 

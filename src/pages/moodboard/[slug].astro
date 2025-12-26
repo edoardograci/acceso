@@ -141,7 +141,11 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
         </div>
 
         {/* Action Buttons */}
-        <MoodboardActionButtons productId={item.id} />
+        <MoodboardActionButtons 
+          productId={item.id} 
+          currentImageUrl={item.images[0]?.image_url}
+          imageName={`${item.slug}-image`}
+        />
 
         {/* Info Section */}
         <div class="detail-content">
@@ -222,6 +226,18 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
     indicators.forEach((ind, idx) => {
       ind.classList.toggle('active', idx === currentIndex);
     });
+    
+    // Update the three-dots menu with current image URL
+    const currentSlide = slides[currentIndex];
+    if (currentSlide) {
+      const currentImg = currentSlide.querySelector('img');
+      if (currentImg) {
+        const threeDotsMenu = document.querySelector('.three-dots-menu');
+        if (threeDotsMenu) {
+          threeDotsMenu.setAttribute('data-image-url', currentImg.src);
+        }
+      }
+    }
   }
 
   function goToSlide(index) {

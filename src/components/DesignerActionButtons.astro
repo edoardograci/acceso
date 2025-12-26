@@ -1,20 +1,21 @@
 ---
 import SaveButton from './SaveButton.astro';
+import ThreeDotsMenu from './ThreeDotsMenu.astro';
 
 interface Props {
   studioId: string;
+  designerImageUrl?: string;
+  designerName?: string;
 }
 
-const { studioId } = Astro.props;
+const { studioId, designerImageUrl, designerName } = Astro.props;
 ---
 <div class="designer-actions">
   <div class="left-actions">
     <button class="action-btn icon-btn" id="shareButton" aria-label="Share">
       <img src="/icons/share.svg" alt="" />
     </button>
-    <button class="action-btn icon-btn" aria-label="More options">
-      <img src="/icons/three-dots.svg" alt="" />
-    </button>
+    <ThreeDotsMenu imageUrl={designerImageUrl} downloadFileName={designerName} />
   </div>
   
   <SaveButton type="designer" itemId={studioId} />

@@ -1,0 +1,198 @@
+---
+// Component for the three-dots menu modal
+interface Props {
+  imageUrl?: string; // For moodboard pages - the current image URL
+  downloadFileName?: string; // Optional custom filename
+}
+
+const { imageUrl, downloadFileName } = Astro.props;
+---
+
+<div class="three-dots-menu" data-image-url={imageUrl} data-filename={downloadFileName}>
+  <button class="action-btn icon-btn three-dots-btn" aria-label="More options">
+    <img src="/icons/three-dots.svg" alt="" />
+  </button>
+  
+  <div class="three-dots-modal" style="display: none;">
+    <button class="modal-option copy-link-btn">
+      Copy Link
+    </button>
+    <button class="modal-option download-image-btn">
+      Download Image
+    </button>
+  </div>
+</div>
+
+<style>
+  .three-dots-menu {
+    position: relative;
+    display: inline-block;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .action-btn:hover {
+    opacity: 0.8;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50% !important;
+    flex-shrink: 0;
+  }
+
+  .icon-btn img {
+    width: 16px;
+    height: auto;
+    display: block;
+  }
+
+  .three-dots-modal {
+    position: absolute;
+    top: calc(100% + 8px);
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 6px;
+    overflow: hidden;
+    z-index: 1000;
+    min-width: 160px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-option {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 450;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .modal-option:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .modal-option:not(:last-child) {
+    border-bottom: 1px solid var(--color-stroke);
+  }
+</style>
+
+<script>
+  // Handle three-dots menu functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const menus = document.querySelectorAll('.three-dots-menu');
+    
+    menus.forEach(menu => {
+      const btn = menu.querySelector('.three-dots-btn') as HTMLButtonElement;
+      const modal = menu.querySelector('.three-dots-modal') as HTMLElement;
+      const copyLinkBtn = menu.querySelector('.copy-link-btn') as HTMLButtonElement;
+      const downloadImageBtn = menu.querySelector('.download-image-btn') as HTMLButtonElement;
+      
+      if (!btn || !modal) return;
+      
+      // Toggle modal
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = modal.style.display === 'block';
+        
+        // Close all other modals first
+        document.querySelectorAll('.three-dots-modal').forEach(m => {
+          (m as HTMLElement).style.display = 'none';
+        });
+        
+        modal.style.display = isVisible ? 'none' : 'block';
+      });
+      
+      // Copy link functionality
+      if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            
+            // Visual feedback
+            const originalText = copyLinkBtn.textContent;
+            copyLinkBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyLinkBtn.textContent = originalText;
+              modal.style.display = 'none';
+            }, 1000);
+          } catch (err) {
+            console.error('Failed to copy link:', err);
+            alert('Failed to copy link');
+          }
+        });
+      }
+      
+      // Download image functionality
+      if (downloadImageBtn) {
+        downloadImageBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          
+          const imageUrl = menu.dataset.imageUrl;
+          if (!imageUrl) {
+            console.error('No image URL provided');
+            return;
+          }
+          
+          try {
+            // Fetch the image
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Use custom filename or extract from URL
+            const filename = menu.dataset.filename || 
+              imageUrl.split('/').pop()?.split('?')[0] || 
+              'image.jpg';
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Visual feedback
+            const originalText = downloadImageBtn.textContent;
+            downloadImageBtn.textContent = 'Downloaded!';
+            setTimeout(() => {
+              downloadImageBtn.textContent = originalText;
+              modal.style.display = 'none';
+            }, 1000);
+          } catch (err) {
+            console.error('Failed to download image:', err);
+            alert('Failed to download image');
+          }
+        });
+      }
+    });
+    
+    // Close modal when clicking outside
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.three-dots-modal').forEach(modal => {
+        (modal as HTMLElement).style.display = 'none';
+      });
+    });
+  });
+</script>

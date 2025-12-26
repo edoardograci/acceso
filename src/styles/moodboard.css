@@ -53,7 +53,7 @@
 .moodboard-grid {
   column-count: 4;
   column-gap: 16px;
-  padding: 0 0 48px;
+  padding: 0 var(--spacing-page) 48px;
   max-width: 1600px;
   margin: 0 auto;
 }

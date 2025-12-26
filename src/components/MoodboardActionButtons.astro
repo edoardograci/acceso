@@ -1,20 +1,21 @@
 ---
 import SaveButton from './SaveButton.astro';
+import ThreeDotsMenu from './ThreeDotsMenu.astro';
 
 interface Props {
   productId: string;
+  currentImageUrl?: string;
+  imageName?: string;
 }
 
-const { productId } = Astro.props;
+const { productId, currentImageUrl, imageName } = Astro.props;
 ---
 <div class="moodboard-actions">
   <div class="left-actions">
     <button class="action-btn icon-btn" id="shareButton" aria-label="Share">
       <img src="/icons/share.svg" alt="" />
     </button>
-    <button class="action-btn icon-btn" aria-label="More options">
-      <img src="/icons/three-dots.svg" alt="" />
-    </button>
+    <ThreeDotsMenu imageUrl={currentImageUrl} downloadFileName={imageName} />
   </div>
   
   <SaveButton type="object" itemId={productId} />

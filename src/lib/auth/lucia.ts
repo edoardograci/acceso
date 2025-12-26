@@ -1,112 +1,6 @@
-// src/lib/auth/lucia.ts
 import { Lucia } from 'lucia';
 import type { Env } from '../../env.d';
-
-// Re-export TursoHttpClient for use in adapter
-export class TursoHttpClient {
-  private baseUrl: string;
-  private authToken: string;
-
-  constructor(url: string, authToken: string) {
-    this.baseUrl = url.replace('libsql://', 'https://');
-    this.authToken = authToken;
-  }
-
-  async execute(query: { sql: string; args?: any[] }) {
-    const endpoint = `${this.baseUrl}/v2/pipeline`;
-
-    // Wrap args in typed format for Turso HTTP API
-    const typedArgs = (query.args || []).map(arg => {
-      if (typeof arg === 'string') {
-        return { type: 'text', value: arg };
-      } else if (typeof arg === 'number') {
-        return Number.isInteger(arg) ? { type: 'integer', value: String(arg) } : { type: 'float', value: String(arg) };
-      } else if (arg === null) {
-        return { type: 'null' };
-      } else if (typeof arg === 'boolean') {
-        return { type: 'integer', value: arg ? '1' : '0' };
-      } else {
-        throw new Error(`Unsupported arg type: ${typeof arg}`);
-      }
-    });
-
-    const requestBody = {
-      requests: [
-        {
-          type: 'execute',
-          stmt: {
-            sql: query.sql,
-            args: typedArgs,
-          },
-        },
-      ],
-    };
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.authToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Turso] Request body:', JSON.stringify(requestBody, null, 2));
-      throw new Error(`Turso HTTP API error: ${response.status} ${errorText}`);
-    }
-
-    const data: TursoHttpResponse = await response.json();
-    const pipelineResult = data.results?.[0];
-    if (!pipelineResult || pipelineResult.type !== 'ok') {
-      throw new Error('No valid pipeline result in Turso API response');
-    }
-
-    const result = pipelineResult.response.result;
-    if (!result) throw new Error('No execute result in Turso API response');
-
-    // Convert rows array to objects, extracting values if typed
-    const rows = result.rows.map((row) => {
-      const obj: any = {};
-      result.cols.forEach((col, idx) => {
-        let val = row[idx];
-        if (val && typeof val === 'object' && 'type' in val) {
-          if (val.type === 'null') {
-            val = null;
-          } else if (val.type === 'blob') {
-            val = atob(val.base64 || '');
-          } else if (val.type === 'integer' || val.type === 'float') {
-            // Check type BEFORE extracting value
-            val = Number(val.value);
-          } else {
-            val = val.value;
-          }
-        }
-        obj[col.name] = val;
-      });
-      return obj;
-    });
-
-    return { rows };
-  }
-}
-
-interface TursoHttpResponse {
-  results: {
-    type: string;
-    response: {
-      type: string;
-      result: {
-        cols: { name: string; decltype?: string }[];
-        rows: any[][];
-        affected_row_count: number;
-        last_insert_rowid: string | null;
-        replication_index: string;
-      };
-    };
-  }[];
-}
+import { TursoHttpClient } from '../turso';
 
 // Custom Turso adapter for Lucia
 function createTursoAdapter(env: Env) {
@@ -139,7 +33,7 @@ function createTursoAdapter(env: Env) {
           sql: 'SELECT * FROM sessions WHERE user_id = ?',
           args: [userId],
         });
-        return result.rows.map((session) => ({
+        return result.rows.map((session: any) => ({
           id: session.id,
           userId: session.user_id,
           expiresAt: new Date(session.expires_at * 1000),
@@ -292,7 +186,7 @@ function createTursoAdapter(env: Env) {
             LIMIT 1
           `,
           args: [sessionId],
-        });
+        }, { useCache: true });
 
         if (result.rows.length === 0) {
           return [null, null] as [null, null];

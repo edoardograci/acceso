@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { createGoogleOAuth } from '../../../lib/auth/oauth';
 import { createLucia } from '../../../lib/auth/lucia';
-import { TursoHttpClient } from '../../../lib/auth/lucia';
+import { TursoHttpClient } from '../../../lib/turso';
 import type { Env } from '../../../env.d';
 import { OAuth2RequestError } from 'arctic';
 
@@ -59,59 +59,71 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
 
     const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
 
-    // Check if OAuth account exists
-    let oauthResult;
+    // Optimized: Check for BOTH OAuth account AND User Email in a single query
+    let userId: string | null = null;
+    let isNewUser = false;
+    let needsLink = false;
+
     try {
-      oauthResult = await turso.execute({
-        sql: 'SELECT user_id FROM oauth_accounts WHERE provider = ? AND provider_user_id = ? LIMIT 1',
-        args: ['google', googleUser.sub],
-      });
+      const combinedResult = await turso.execute({
+        sql: `
+          SELECT 'oauth' as source, user_id FROM oauth_accounts WHERE provider = 'google' AND provider_user_id = ?
+          UNION ALL
+          SELECT 'user' as source, id as user_id FROM users WHERE email = ?
+          LIMIT 2
+        `,
+        args: [googleUser.sub, googleUser.email],
+      }, { useCache: true });
+
+      const rows = combinedResult.rows as Array<{ source: string; user_id: string }>;
+      const oauthMatch = rows.find(r => r.source === 'oauth');
+      const emailMatch = rows.find(r => r.source === 'user');
+
+      if (oauthMatch) {
+        userId = oauthMatch.user_id;
+      } else if (emailMatch) {
+        userId = emailMatch.user_id;
+        needsLink = true;
+      } else {
+        isNewUser = true;
+        userId = crypto.randomUUID();
+      }
     } catch (e) {
-      console.error('[OAuth] Turso check failed:', e);
+      console.error('[OAuth] Turso combined check failed:', e);
       throw new Error(`Turso check failed: ${e instanceof Error ? e.message : String(e)}`);
     }
 
-    let userId: string;
+    if (!userId) {
+      throw new Error('Failed to resolve user ID');
+    }
 
-    if (oauthResult.rows.length > 0) {
-      // Existing user
-      userId = oauthResult.rows[0].user_id;
+    const now = Math.floor(Date.now() / 1000);
 
-      // Update email verification status if needed
+    if (isNewUser) {
+      // Create new user AND OAuth account in separate queries but logically one flow
+      // We could even pipeline these!
       await turso.execute({
-        sql: 'UPDATE users SET email_verified = ?, updated_at = ? WHERE id = ?',
-        args: [googleUser.email_verified ? 1 : 0, Math.floor(Date.now() / 1000), userId],
+        sql: 'INSERT INTO users (id, email, email_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+        args: [userId, googleUser.email, googleUser.email_verified ? 1 : 0, now, now],
       });
-    } else {
-      // Check if user with email exists
-      const userResult = await turso.execute({
-        sql: 'SELECT id FROM users WHERE email = ? LIMIT 1',
-        args: [googleUser.email],
-      });
-
-      if (userResult.rows.length > 0) {
-        userId = userResult.rows[0].id;
-
-        // Update verification status for existing user linking Google
-        await turso.execute({
-          sql: 'UPDATE users SET email_verified = ?, updated_at = ? WHERE id = ?',
-          args: [googleUser.email_verified ? 1 : 0, Math.floor(Date.now() / 1000), userId],
-        });
-      } else {
-        // Create new user
-        userId = crypto.randomUUID();
-        const now = Math.floor(Date.now() / 1000);
-        await turso.execute({
-          sql: 'INSERT INTO users (id, email, email_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
-          args: [userId, googleUser.email, googleUser.email_verified ? 1 : 0, now, now],
-        });
-      }
-
-      // Create OAuth account
       await turso.execute({
         sql: 'INSERT INTO oauth_accounts (provider, provider_user_id, user_id, created_at) VALUES (?, ?, ?, ?)',
-        args: ['google', googleUser.sub, userId, Math.floor(Date.now() / 1000)],
+        args: ['google', googleUser.sub, userId, now],
       });
+    } else {
+      // Update email verification status
+      await turso.execute({
+        sql: 'UPDATE users SET email_verified = ?, updated_at = ? WHERE id = ?',
+        args: [googleUser.email_verified ? 1 : 0, now, userId],
+      });
+
+      if (needsLink) {
+        // Link existing email user to Google account
+        await turso.execute({
+          sql: 'INSERT INTO oauth_accounts (provider, provider_user_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+          args: ['google', googleUser.sub, userId, now],
+        });
+      }
     }
 
     // Create session

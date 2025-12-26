@@ -75,7 +75,11 @@ const pageImage = studio?.cover || '/og-default.jpg';
             )}
           </div>
 
-          <DesignerActionButtons studioId={studio.id} />
+          <DesignerActionButtons 
+            studioId={studio.id} 
+            designerImageUrl={studio.cover}
+            designerName={studio.slug}
+          />
         </>
       )}
     </div>
