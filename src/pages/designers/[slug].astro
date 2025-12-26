@@ -189,6 +189,12 @@ const pageImage = studio?.cover || '/og-default.jpg';
     content-visibility: auto;
   }
 
+  @media (min-width: 768px) {
+    .designer-image {
+      max-height: 600px;
+    }
+  }
+
   .designer-image-placeholder {
     width: 100%;
     height: 379px;
@@ -197,6 +203,12 @@ const pageImage = studio?.cover || '/og-default.jpg';
     align-items: center;
     justify-content: center;
     color: var(--text-secondary);
+  }
+
+  @media (min-width: 768px) {
+    .designer-image-placeholder {
+      height: 600px;
+    }
   }
 
   .designer-content {

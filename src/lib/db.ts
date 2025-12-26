@@ -181,32 +181,42 @@ export async function getCollectionsCounts(userId: string, env: Env): Promise<{ 
   }
 }
 
-// Get the most recently saved designer ID for thumbnail
-export async function getMostRecentSavedDesigner(userId: string, env: Env): Promise<string | null> {
+// Optimized: Get designer collection summary (count + most recent ID) in single query
+export async function getDesignerCollectionSummary(userId: string, env: Env): Promise<{ count: number; recentId: string | null }> {
   try {
     const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
     const result = await turso.execute({
-      sql: 'SELECT studio_id FROM user_saved_designers WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-      args: [userId],
+      sql: `SELECT 
+              (SELECT COUNT(*) FROM user_saved_designers WHERE user_id = ?) as count,
+              (SELECT studio_id FROM user_saved_designers WHERE user_id = ? ORDER BY created_at DESC LIMIT 1) as recent_id`,
+      args: [userId, userId],
     });
-    return result.rows.length > 0 ? (result.rows[0].studio_id as string) : null;
+    return {
+      count: Number(result.rows[0]?.count) || 0,
+      recentId: result.rows[0]?.recent_id as string | null
+    };
   } catch (error) {
-    console.error('[DB] Error fetching most recent saved designer:', error);
-    return null;
+    console.error('[DB] Error fetching designer collection summary:', error);
+    return { count: 0, recentId: null };
   }
 }
 
-// Get the most recently saved object ID for thumbnail
-export async function getMostRecentSavedObject(userId: string, env: Env): Promise<string | null> {
+// Optimized: Get object collection summary (count + most recent ID) in single query
+export async function getObjectCollectionSummary(userId: string, env: Env): Promise<{ count: number; recentId: string | null }> {
   try {
     const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
     const result = await turso.execute({
-      sql: 'SELECT product_id FROM user_saved_objects WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-      args: [userId],
+      sql: `SELECT 
+              (SELECT COUNT(*) FROM user_saved_objects WHERE user_id = ?) as count,
+              (SELECT product_id FROM user_saved_objects WHERE user_id = ? ORDER BY created_at DESC LIMIT 1) as recent_id`,
+      args: [userId, userId],
     });
-    return result.rows.length > 0 ? (result.rows[0].product_id as string) : null;
+    return {
+      count: Number(result.rows[0]?.count) || 0,
+      recentId: result.rows[0]?.recent_id as string | null
+    };
   } catch (error) {
-    console.error('[DB] Error fetching most recent saved object:', error);
-    return null;
+    console.error('[DB] Error fetching object collection summary:', error);
+    return { count: 0, recentId: null };
   }
 }

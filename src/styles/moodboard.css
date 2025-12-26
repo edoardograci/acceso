@@ -142,6 +142,7 @@
     padding-top: calc(var(--navbar-height) + 40px);
     align-items: start;
     overflow: visible;
+    margin-top: 0px;
   }
 
   .moodboard-left-col {

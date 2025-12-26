@@ -27,7 +27,9 @@ export const GET: APIRoute = async ({ locals }) => {
         }), {
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'private, no-cache' // Don't cache user-specific data
+                // Smart caching: 3s browser cache, serve stale for 10s while revalidating
+                // This reduces DB hits during rapid navigation without noticeable staleness
+                'Cache-Control': 'private, max-age=3, stale-while-revalidate=10'
             }
         });
     } catch (error) {

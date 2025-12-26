@@ -23,23 +23,24 @@ export async function generateMagicLink(email: string, env: Env, requestUrl?: st
       };
     }
 
-    // Find or create user - optimized with a single flow
-    let userId: string;
+    // Optimized: Use INSERT OR IGNORE to avoid separate check for existing user
+    // This reduces queries by eliminating the conditional branch
+    const newUserId = crypto.randomUUID();
+    const insertNow = Math.floor(Date.now() / 1000);
+
+    // Try to insert (will be ignored if email already exists due to UNIQUE constraint)
+    await turso.execute({
+      sql: 'INSERT OR IGNORE INTO users (id, email, email_verified, created_at, updated_at) VALUES (?, ?, 0, ?, ?)',
+      args: [newUserId, email, insertNow, insertNow],
+    });
+
+    // Now get the user (whether just inserted or existing)
     const userResult = await turso.execute({
       sql: 'SELECT id FROM users WHERE email = ? LIMIT 1',
       args: [email],
-    }, { useCache: true });
+    });
 
-    if (userResult.rows.length > 0) {
-      userId = userResult.rows[0].id;
-    } else {
-      userId = crypto.randomUUID();
-      const insertNow = Math.floor(Date.now() / 1000);
-      await turso.execute({
-        sql: 'INSERT INTO users (id, email, email_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
-        args: [userId, email, 0, insertNow, insertNow],
-      });
-    }
+    const userId = userResult.rows[0].id as string;
 
     // Generate token
     const tokenId = crypto.randomUUID();
