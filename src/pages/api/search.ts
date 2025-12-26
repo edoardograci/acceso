@@ -52,27 +52,45 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    if (!locals.runtime) {
+      console.error('locals.runtime is undefined. Environment bindings missing.');
+      throw new Error('Server environment not initialized correctly');
+    }
+
     const env = locals.runtime.env as any;
 
-    if (!env.AI || !env.VECTORIZE) {
+    if (!env || !env.AI || !env.VECTORIZE) {
+      console.error('Bindings missing in env:', { hasAi: !!env?.AI, hasVectorize: !!env?.VECTORIZE });
       throw new Error('AI or VECTORIZE binding not available');
     }
 
     // Generate embeddings
-    console.log('Generating embeddings...');
-    const embeddingsResponse = await env.AI.run(
-      '@cf/qwen/qwen3-embedding-0.6b',
-      { text: [query] }
-    ) as any;
+    console.log('Generating embeddings for query:', query);
+    let embeddingsResponse;
+    try {
+      embeddingsResponse = await env.AI.run(
+        '@cf/qwen/qwen3-embedding-0.6b',
+        { text: [query] }
+      ) as any;
+    } catch (aiError: any) {
+      console.error('AI Run error:', aiError);
+      throw new Error(`AI model failed: ${aiError.message}`);
+    }
 
     if (!embeddingsResponse?.data?.[0]) {
+      console.error('Empty response from AI model:', embeddingsResponse);
       throw new Error('Failed to generate embeddings');
     }
 
     const queryEmbedding = embeddingsResponse.data[0];
 
     if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== 1024) {
-      throw new Error(`Invalid embedding: expected array of 1024, got ${typeof queryEmbedding} with length ${queryEmbedding?.length}`);
+      console.error('Invalid embedding format:', {
+        type: typeof queryEmbedding,
+        isArray: Array.isArray(queryEmbedding),
+        length: queryEmbedding?.length
+      });
+      throw new Error(`Invalid embedding: expected array of 1024, got ${typeof queryEmbedding}`);
     }
 
     console.log('✓ Embedding generated');
@@ -80,7 +98,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Query Vectorize
     console.log('Querying Vectorize...');
     const vectorizeResult = (await env.VECTORIZE.query(queryEmbedding, {
-      topK: 80,
+      topK: 50,
       returnMetadata: 'all',
     })) as VectorizeResult;
 

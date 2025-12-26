@@ -75,6 +75,7 @@ try {
                   alt={item.name}
                   loading="lazy"
                   decoding="async"
+                  crossorigin="anonymous"
                   data-skeleton
                 />
                 <div class="item-overlay">
@@ -266,7 +267,7 @@ function displayVectorResults(results) {
 
     card.innerHTML = `
       <div style="position: relative;">
-        <img src="${imageUrl}" alt="${item.name}" loading="lazy" decoding="async" data-skeleton />
+        <img src="${imageUrl}" alt="${item.name}" loading="lazy" decoding="async" data-skeleton crossorigin="anonymous" />
       </div>
       <div class="item-overlay">
         <h3>${item.name}</h3>
