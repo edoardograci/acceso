@@ -255,3 +255,10 @@
 .leaflet-popup {
   display: none !important;
 }
+
+/* Move zoom controls down on mobile to avoid filter overlap */
+@media (max-width: 767px) {
+  .leaflet-control-zoom {
+    margin-top: 80px !important;
+  }
+}
