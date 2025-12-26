@@ -1,8 +1,13 @@
 {
-  "lastUpdated": "2025-12-26T10:57:55.056Z",
-  "count": 81,
+  "lastUpdated": "2025-12-26T21:46:08.512Z",
+  "count": 86,
   "cities": [
+    "Berlin",
+    "Copenhagen",
+    "London",
     "Milan",
-    "Seoul"
+    "Paris",
+    "Seoul",
+    "Tokyo"
   ]
 }

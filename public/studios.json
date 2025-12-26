@@ -90,6 +90,21 @@
     "status": "Published"
   },
   {
+    "id": "2d10d7da-2e8c-808c-947c-c0b83d360fb5",
+    "slug": "aspekt-office",
+    "name": "Aspekt Office",
+    "city": "Copenhagen",
+    "cover": "https://img.acceso.design/studios/aspekt-office-f5155f52.webp",
+    "website": "https://aspektoffice.com/",
+    "instagram": "https://www.instagram.com/aspektoffice/",
+    "email": "terkel@aspektoffice.com",
+    "email2": "hans@aspektoffice.com",
+    "address": "Krusågade 13",
+    "latitude": 55.66671807578064,
+    "longitude": 12.555207348331749,
+    "status": "Published"
+  },
+  {
     "id": "1fb0d7da-2e8c-800b-97ca-dbbb16256f94",
     "slug": "attila-veress-studio",
     "name": "Attila Veress Studio",
@@ -165,11 +180,26 @@
     "status": "Published"
   },
   {
+    "id": "2cf0d7da-2e8c-8060-9cb2-d8720eeb415b",
+    "slug": "bttcher-kayser",
+    "name": "BÖTTCHER & KAYSER",
+    "city": "Berlin",
+    "cover": "https://img.acceso.design/studios/bttcher-kayser-b41bfe48.webp",
+    "website": "https://boettcher-kayser.de/",
+    "instagram": "https://www.instagram.com/boettcher.kayser/",
+    "email": "mail@b-k.design",
+    "email2": null,
+    "address": "Templiner Str. 10",
+    "latitude": 52.53246942439859,
+    "longitude": 13.408165860311565,
+    "status": "Published"
+  },
+  {
     "id": "1f60d7da-2e8c-80a2-aa29-e0ab6020a36b",
     "slug": "cara-davide",
     "name": "CARA \\ DAVIDE",
     "city": "Milan",
-    "cover": "https://img.acceso.design/studios/cara-davide.webp",
+    "cover": "https://img.acceso.design/studios/cara-davide-61afac79.webp",
     "website": "https://www.caradavide.com/",
     "instagram": "https://www.instagram.com/_caradavide_/",
     "email": "info@caradavide.com",
@@ -555,6 +585,21 @@
     "status": "Published"
   },
   {
+    "id": "2d00d7da-2e8c-8086-b5b0-cedd59cecb24",
+    "slug": "layer",
+    "name": "Layer",
+    "city": "London",
+    "cover": "https://img.acceso.design/studios/layer-5548950a.webp",
+    "website": "https://layerdesign.com/",
+    "instagram": "https://www.instagram.com/layer_design/",
+    "email": "enquiries@layerdesign.com",
+    "email2": "careers@layerdesign.com",
+    "address": "1st Floor, 445 Hackney Rd",
+    "latitude": 51.53211540372592,
+    "longitude": -0.06085290302260189,
+    "status": "Published"
+  },
+  {
     "id": "2550d7da-2e8c-80b7-8633-e4a654439c41",
     "slug": "lorenzkaz",
     "name": "Lorenz+Kaz",
@@ -664,7 +709,7 @@
     "slug": "matteo-ragni-design-studio",
     "name": "Matteo Ragni Design Studio",
     "city": "Milan",
-    "cover": "https://img.acceso.design/studios/matteo-ragni-design-studio.webp",
+    "cover": "https://img.acceso.design/studios/matteo-ragni-design-studio-cda50acb.webp",
     "website": "https://www.matteoragni.com/",
     "instagram": "https://www.instagram.com/matteoragni_designstudio/",
     "email": "info@matteoragni.com",
@@ -795,6 +840,21 @@
     "status": "Published"
   },
   {
+    "id": "2d00d7da-2e8c-8012-8142-ccb8169785a3",
+    "slug": "patrick-norguet",
+    "name": "Patrick Norguet",
+    "city": "Paris",
+    "cover": "https://img.acceso.design/studios/patrick-norguet-aa9531b9.webp",
+    "website": "https://www.patricknorguet.com/",
+    "instagram": "https://www.instagram.com/patrick_norguet/",
+    "email": "info@patricknorguet.com",
+    "email2": null,
+    "address": "25 Rue de Verneuil",
+    "latitude": 48.857747353338596,
+    "longitude": 2.3296495907750523,
+    "status": "Published"
+  },
+  {
     "id": "20b0d7da-2e8c-80b6-88c7-ee6efc23b6b9",
     "slug": "philippe-tabet",
     "name": "Philippe Tabet",
@@ -919,7 +979,7 @@
     "slug": "simone-bonanni-studio",
     "name": "Simone Bonanni Studio",
     "city": "Milan",
-    "cover": "https://img.acceso.design/studios/simone-bonanni-studio.webp",
+    "cover": "https://img.acceso.design/studios/simone-bonanni-studio-48d20e19.webp",
     "website": "https://simonebonanni.com/",
     "instagram": "https://www.instagram.com/simonebonannistudio/",
     "email": "info@simonebonanni.com",
@@ -1092,6 +1152,21 @@
     "address": "Via Gian Francesco Pizzi 8",
     "latitude": 45.4370002746582,
     "longitude": 9.202237129211426,
+    "status": "Published"
+  },
+  {
+    "id": "2d00d7da-2e8c-8094-ad2f-cec614f5db58",
+    "slug": "yusuke-watanae",
+    "name": "YUSUKE WATANAE",
+    "city": "Tokyo",
+    "cover": "https://img.acceso.design/studios/yusuke-watanae-d5943ba6.webp",
+    "website": "https://www.wdtokyo.com/",
+    "instagram": "https://www.instagram.com/wdtokyousk/",
+    "email": "info@wdtokyo.com",
+    "email2": null,
+    "address": "2-17-5 3F Taishido Setagaya-ku",
+    "latitude": 35.64466163750917,
+    "longitude": 139.6707911607826,
     "status": "Published"
   },
   {

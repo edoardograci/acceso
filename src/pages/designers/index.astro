@@ -222,9 +222,26 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
 
   .filter-buttons {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px;
-    justify-content: center;
+    overflow-x: auto;
+    padding-bottom: 4px; /* Space for scrollbar or touch area */
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .filter-buttons::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .filter-buttons {
+      flex-wrap: wrap;
+      justify-content: center;
+      overflow-x: visible;
+    }
   }
 
   .filter-btn {

@@ -20,6 +20,46 @@ const CITY_CONFIG = {
       L.latLng(37.45, 126.85),
       L.latLng(37.65, 127.15)
     )
+  },
+  Berlin: {
+    center: [52.5200, 13.4050] as [number, number],
+    zoom: 12,
+    bounds: L.latLngBounds(
+      L.latLng(52.35, 13.10),
+      L.latLng(52.66, 13.75)
+    )
+  },
+  London: {
+    center: [51.5074, -0.1278] as [number, number],
+    zoom: 11,
+    bounds: L.latLngBounds(
+      L.latLng(51.28, -0.5),
+      L.latLng(51.70, 0.3)
+    )
+  },
+  Paris: {
+    center: [48.8566, 2.3522] as [number, number],
+    zoom: 12,
+    bounds: L.latLngBounds(
+      L.latLng(48.81, 2.22),
+      L.latLng(48.91, 2.47)
+    )
+  },
+  Tokyo: {
+    center: [35.6762, 139.6503] as [number, number],
+    zoom: 11,
+    bounds: L.latLngBounds(
+      L.latLng(35.50, 139.30),
+      L.latLng(35.90, 140.10) // Covered 23 Wards + some surrounding
+    )
+  },
+  Copenhagen: {
+    center: [55.6761, 12.5683] as [number, number],
+    zoom: 13,
+    bounds: L.latLngBounds(
+      L.latLng(55.61, 12.45),
+      L.latLng(55.73, 12.65)
+    )
   }
 } as const;
 

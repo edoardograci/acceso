@@ -14,15 +14,13 @@
 
 /* City Selector - Top Center */
 /* City Selector - Top Center */
+/* City Selector - Top Center */
 .city-selector {
   position: absolute;
   top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  width: 100%;
   z-index: 1000;
-  display: flex;
-  justify-content: center;
-  width: auto;
   pointer-events: none;
   /* Let clicks pass through container */
 }
@@ -30,12 +28,28 @@
 .filter-buttons {
   display: flex;
   gap: 12px;
-  justify-content: center;
+  padding: 0 16px;
+  /* Left/Right padding */
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
   pointer-events: auto;
-  /* Re-enable clicks on buttons */
+  justify-content: flex-start;
+  /* Default left align for scroll */
+}
+
+.filter-buttons::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari/Webkit */
 }
 
 .filter-btn {
+  flex-shrink: 0;
+  /* Prevent shrinking */
   text-transform: uppercase;
   padding: 8px 24px;
   background: var(--color-bg-secondary);
@@ -192,7 +206,19 @@
 @media (min-width: 768px) {
   .city-selector {
     top: 24px;
-    max-width: 320px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    max-width: 90%;
+    /* Safety limit */
+    display: flex;
+    justify-content: center;
+  }
+
+  .filter-buttons {
+    justify-content: center;
+    padding: 0;
+    overflow-x: visible;
   }
 
   .studio-ui-container {
