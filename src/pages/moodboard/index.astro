@@ -41,7 +41,11 @@ try {
   console.error('Failed to fetch moodboard:', e);
 }
 
-const cities = [...new Set(moodboardItems.map(item => item.city).filter(Boolean))].sort();
+const cities = [...new Set(moodboardItems.map(item => item.city).filter(Boolean))].sort((a, b) => {
+  if (a === 'Milan') return -1;
+  if (b === 'Milan') return 1;
+  return a!.localeCompare(b!);
+});
 const initialCity = Astro.url.searchParams.get('city') || 'all';
 ---
 

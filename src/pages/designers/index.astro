@@ -18,8 +18,12 @@ try {
   console.error('Failed to fetch studios:', e);
 }
 
-// Get unique cities for filter
-const cities = [...new Set(studios.map(s => s.city))].sort();
+// Get unique cities for filter, ensuring Milan is first
+const cities = [...new Set(studios.map(s => s.city))].sort((a, b) => {
+  if (a === 'Milan') return -1;
+  if (b === 'Milan') return 1;
+  return a.localeCompare(b);
+});
 
 // Get initial city filter from URL query parameter
 const initialCity = Astro.url.searchParams.get('city') || 'all';

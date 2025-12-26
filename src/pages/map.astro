@@ -20,8 +20,12 @@ try {
 // Filter studios with valid coordinates
 const studiosWithCoords = studios.filter(s => s.latitude && s.longitude);
 
-// Get unique cities for filter buttons
-const cities = [...new Set(studiosWithCoords.map(s => s.city))].sort();
+// Get unique cities for filter buttons, ensuring Milan is first
+const cities = [...new Set(studiosWithCoords.map(s => s.city))].sort((a, b) => {
+  if (a === 'Milan') return -1;
+  if (b === 'Milan') return 1;
+  return a.localeCompare(b);
+});
 
 // Get studio slug from URL query parameter
 const studioSlug = Astro.url.searchParams.get('studio') || null;
