@@ -231,23 +231,19 @@ const errorMessage = url.searchParams.get('message');
       
       const data = await response.json();
       
+      if (response.status === 429) {
+        resultDiv.className = 'magic-link-result show error';
+        resultDiv.textContent = data.error || 'Too many requests. Please try again later.';
+        return;
+      }
+
       if (data.success) {
         resultDiv.className = 'magic-link-result show success';
         
-        // Show different message based on whether email was sent or dev mode
-        if (data.magicLink) {
-          // Dev mode - show the link (only if server sends it, which it shouldn't anymore)
-          resultDiv.innerHTML = `
-            <strong>Magic link generated!</strong><br>
-            <small>Check server console for link.</small>
-          `;
-        } else {
-          // Production - email was sent
-          resultDiv.innerHTML = `
-            <strong>Check your email!</strong><br>
-            <small>We've sent a login link to ${email}. The link will expire in 15 minutes.</small>
-          `;
-        }
+        resultDiv.innerHTML = `
+          <strong>Check your email!</strong><br>
+          <small>We've sent a login link to ${email}. Check your inbox and spam folder.</small>
+        `;
       } else {
         resultDiv.className = 'magic-link-result show error';
         resultDiv.textContent = data.error || 'Failed to send magic link';

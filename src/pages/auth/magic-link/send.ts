@@ -22,7 +22,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const magicLink = await generateMagicLink(normalizedEmail, env, request.url);
+    const result = await generateMagicLink(normalizedEmail, env, request.url);
+
+    if (result.error) {
+      return new Response(
+        JSON.stringify({ success: false, error: result.error, retryAfter: result.retryAfter }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const magicLink = result.link!;
 
     if (env.RESEND_API_KEY) {
       const resend = new Resend(env.RESEND_API_KEY);
