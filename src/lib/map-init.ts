@@ -138,52 +138,32 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
 }
 
 function setupCitySelector(state: MapInstance): void {
-  const button = document.getElementById('city-select-button');
-  const dropdown = document.getElementById('city-dropdown');
-  const wrapper = button?.closest('.city-select-wrapper');
-  const selectedCitySpan = document.getElementById('selected-city');
-  const options = dropdown?.querySelectorAll('.city-option');
+  const container = document.getElementById('city-filters');
+  if (!container) return;
 
-  if (!button || !dropdown || !wrapper || !selectedCitySpan || !options) return;
+  const buttons = container.querySelectorAll('.filter-btn');
 
-  // Set initial selected state
-  options.forEach(option => {
-    const cityValue = (option as HTMLElement).dataset.city as CityKey;
-    if (cityValue === state.currentCity) {
-      option.classList.add('selected');
-    }
-  });
-
-  // Toggle dropdown
-  button.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isOpen = wrapper.classList.contains('open');
-
-    if (isOpen) {
-      wrapper.classList.remove('open');
-      dropdown.classList.remove('open');
-      button.setAttribute('aria-expanded', 'false');
+  // Set initial active state
+  buttons.forEach(btn => {
+    const city = (btn as HTMLElement).dataset.city as CityKey;
+    if (city === state.currentCity) {
+      btn.classList.add('active');
     } else {
-      wrapper.classList.add('open');
-      dropdown.classList.add('open');
-      button.setAttribute('aria-expanded', 'true');
+      btn.classList.remove('active');
     }
-  });
 
-  // Handle city selection
-  options.forEach(option => {
-    option.addEventListener('click', (e) => {
+    // Add click listener
+    btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const newCity = (option as HTMLElement).dataset.city as CityKey;
+      const newCity = (btn as HTMLElement).dataset.city as CityKey;
 
       if (newCity && newCity in CITY_CONFIG && newCity !== state.currentCity) {
         state.currentCity = newCity;
         const cityInfo = CITY_CONFIG[newCity];
 
         // Update UI
-        selectedCitySpan.textContent = newCity;
-        options.forEach(opt => opt.classList.remove('selected'));
-        option.classList.add('selected');
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
 
         // Update map bounds
         state.map.setMaxBounds(cityInfo.bounds);
@@ -197,21 +177,7 @@ function setupCitySelector(state: MapInstance): void {
         // Re-render studios
         renderStudios(state);
       }
-
-      // Close dropdown
-      wrapper.classList.remove('open');
-      dropdown.classList.remove('open');
-      button.setAttribute('aria-expanded', 'false');
     });
-  });
-
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target as Node)) {
-      wrapper.classList.remove('open');
-      dropdown.classList.remove('open');
-      button.setAttribute('aria-expanded', 'false');
-    }
   });
 }
 

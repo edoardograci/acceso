@@ -30,19 +30,9 @@ const studioSlug = Astro.url.searchParams.get('studio') || null;
   <main class="map-page">
     <!-- City Selector - Top Center -->
     <div class="city-selector">
-      <div class="city-select-wrapper">
-        <button type="button" id="city-select-button" class="city-select-button" aria-label="Select city" aria-expanded="false">
-          <span id="selected-city">Milan</span>
-        </button>
-        <div class="city-select-arrow">
-          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M1 1L6 6L11 1" stroke="white" stroke-width="1" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <div class="city-dropdown" id="city-dropdown">
-          <button type="button" class="city-option" data-city="Milan">Milan</button>
-          <button type="button" class="city-option" data-city="Seoul">Seoul</button>
-        </div>
+      <div class="filter-buttons" id="city-filters">
+        <button type="button" class="filter-btn active" data-city="Milan">Milan</button>
+        <button type="button" class="filter-btn" data-city="Seoul">Seoul</button>
       </div>
     </div>
 

@@ -13,105 +13,51 @@
 }
 
 /* City Selector - Top Center */
+/* City Selector - Top Center */
 .city-selector {
   position: absolute;
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  width: calc(100% - 32px);
-  max-width: 280px;
-}
-
-.city-select-wrapper {
-  position: relative;
-}
-
-#city-select-button {
-  font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 400;
-  padding: 12px 40px 12px 16px;
-  background: var(--color-black);
-  border: 1px solid var(--color-stroke);
-  color: var(--color-white);
-  cursor: pointer;
-  appearance: none;
-  width: 100%;
-  border-radius: 6px;
-  transition: border-color 0.2s ease;
-  text-align: left;
-}
-
-#city-select-button:focus {
-  outline: none;
-}
-
-.city-select-arrow {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  width: auto;
   pointer-events: none;
-  transition: transform 0.3s ease;
-  width: 12px;
-  height: 12px;
+  /* Let clicks pass through container */
 }
 
-.city-select-arrow svg {
-  width: 100%;
-  height: 100%;
-  display: block;
+.filter-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  pointer-events: auto;
+  /* Re-enable clicks on buttons */
 }
 
-.city-select-wrapper.open .city-select-arrow {
-  transform: translateY(-50%) rotate(180deg);
-}
-
-/* Custom Dropdown */
-.city-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: var(--color-black);
+.filter-btn {
+  text-transform: uppercase;
+  padding: 8px 24px;
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-stroke);
-  border-radius: 6px;
-  opacity: 0;
-  visibility: hidden;
-  overflow: hidden;
-  transform: translateY(-8px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
-  z-index: 1001;
-}
-
-.city-dropdown.open {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.city-option {
-  padding: 14px 16px;
+  color: var(--color-white);
   font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--color-white);
+  border-radius: 9999px;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
+  transition: all 0.2s ease;
+  line-height: normal;
+  /* Ensure proper vertical alignment */
 }
 
-.city-option:hover,
-.city-option.selected {
-  background-color: var(--color-yellow);
-  color: #000;
+.filter-btn:hover {
+  border-color: var(--color-white);
 }
 
-.city-option+.city-option {
-  border-top: 1px solid var(--color-stroke);
+.filter-btn.active {
+  background: var(--color-yellow);
+  color: var(--color-black);
+  border-color: var(--color-yellow);
 }
 
 /* Studio Card - Bottom Center */
