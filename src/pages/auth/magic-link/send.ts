@@ -118,14 +118,14 @@ If you did not request this email, you can safely ignore it.
           width="60"
           height="60"
           alt="Acceso"
-          style="display:block;border-radius:12px;"
+          style="display:block;"
         />
       </td>
     </tr>
 
     <tr>
       <td align="center" style="padding:0 20px 40px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-container" style="max-width:500px;background-color:#1A1A1A;border:1px solid #333333;border-radius:16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-container" style="max-width:500px;background-color:#1A1A1A;border:1px solid #333333;">
           <tr>
             <td align="center" style="padding:40px 40px 20px;">
               <h1 style="margin:0;font-size:24px;line-height:32px;font-weight:600;color:#ffffff;">
@@ -157,7 +157,7 @@ If you did not request this email, you can safely ignore it.
                 href="${magicLink}"
                 target="_blank"
                 rel="noopener noreferrer"
-                style="display:inline-block;padding:14px 32px;background-color:#EDFE44;color:#000000;font-size:16px;font-weight:600;text-decoration:none;border-radius:8px;"
+                style="display:inline-block;padding:14px 32px;background-color:#EDFE44;color:#000000;font-size:16px;font-weight:600;text-decoration:none;border-radius:6px;"
               >
                 Log in to Acceso
               </a>
