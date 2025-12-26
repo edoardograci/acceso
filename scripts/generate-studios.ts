@@ -99,6 +99,15 @@ async function queryTurso(url: string, authToken: string, sql: string, args: any
       }
       obj[col.name] = val;
     });
+
+    // Normalize URLs to HTTPS
+    if (typeof obj.cover === 'string' && obj.cover.startsWith('http://')) {
+      obj.cover = obj.cover.replace('http://', 'https://');
+    }
+    if (typeof obj.website === 'string' && obj.website.startsWith('http://')) {
+      obj.website = obj.website.replace('http://', 'https://');
+    }
+
     return obj;
   });
 

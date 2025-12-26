@@ -103,6 +103,13 @@ export class TursoHttpClient {
                         val = val.value;
                     }
                 }
+
+                // Automatically upgrade http to https for internal domains to fix mixed content
+                if (typeof val === 'string' && val.startsWith('http://') &&
+                    (val.includes('acceso.design') || val.includes('acceso.edoardograci.com'))) {
+                    val = val.replace('http://', 'https://');
+                }
+
                 obj[col.name] = val;
             });
             return obj;

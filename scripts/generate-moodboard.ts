@@ -110,6 +110,12 @@ async function queryTurso(url: string, authToken: string, sql: string, args: any
       }
       obj[col.name] = val;
     });
+
+    // Normalize URLs to HTTPS
+    if (typeof obj.image_url === 'string' && obj.image_url.startsWith('http://')) {
+      obj.image_url = obj.image_url.replace('http://', 'https://');
+    }
+
     return obj;
   });
 
