@@ -33,11 +33,11 @@ interface SearchResponse {
 
 export const POST: APIRoute = async ({ request, locals }) => {
   console.log('=== Search API Called ===');
-  
+
   try {
     const body = await request.json() as { query: string };
     const { query } = body;
-    
+
     console.log('Search query:', query);
 
     if (!query || query.trim().length === 0) {
@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Generate embeddings
     console.log('Generating embeddings...');
     const embeddingsResponse = await env.AI.run(
-      '@cf/baai/bge-m3',
+      '@cf/qwen/qwen3-embedding-0.6b',
       { text: [query] }
     ) as any;
 
@@ -70,7 +70,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const queryEmbedding = embeddingsResponse.data[0];
-    
+
     if (!Array.isArray(queryEmbedding) || queryEmbedding.length !== 1024) {
       throw new Error(`Invalid embedding: expected array of 1024, got ${typeof queryEmbedding} with length ${queryEmbedding?.length}`);
     }
@@ -156,7 +156,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   } catch (error) {
     console.error('Search error:', error);
-    
+
     return new Response(
       JSON.stringify({
         success: false,

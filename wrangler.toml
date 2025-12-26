@@ -10,7 +10,7 @@ binding = "AI"
 
 [[env.production.vectorize]]
 binding = "VECTORIZE"
-index_name = "ai-search-ai-search"
+index_name = "ai-search-optimus"
 
 [env.production.routes]
 pattern = "acceso.pages.dev/*"
