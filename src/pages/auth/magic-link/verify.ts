@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { validateMagicLinkToken, deleteMagicLinkToken } from '../../../lib/auth/magic-link';
 import { createLucia } from '../../../lib/auth/lucia';
-import { TursoHttpClient } from '../../../lib/auth/lucia';
+import { TursoHttpClient } from '../../../lib/turso';
 
 import type { Env } from '../../../env.d';
 
