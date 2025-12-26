@@ -180,3 +180,33 @@ export async function getCollectionsCounts(userId: string, env: Env): Promise<{ 
     throw error;
   }
 }
+
+// Get the most recently saved designer ID for thumbnail
+export async function getMostRecentSavedDesigner(userId: string, env: Env): Promise<string | null> {
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+    const result = await turso.execute({
+      sql: 'SELECT studio_id FROM user_saved_designers WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      args: [userId],
+    });
+    return result.rows.length > 0 ? (result.rows[0].studio_id as string) : null;
+  } catch (error) {
+    console.error('[DB] Error fetching most recent saved designer:', error);
+    return null;
+  }
+}
+
+// Get the most recently saved object ID for thumbnail
+export async function getMostRecentSavedObject(userId: string, env: Env): Promise<string | null> {
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+    const result = await turso.execute({
+      sql: 'SELECT product_id FROM user_saved_objects WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      args: [userId],
+    });
+    return result.rows.length > 0 ? (result.rows[0].product_id as string) : null;
+  } catch (error) {
+    console.error('[DB] Error fetching most recent saved object:', error);
+    return null;
+  }
+}

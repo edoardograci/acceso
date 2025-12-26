@@ -83,10 +83,6 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
   <Navbar />
   
   <main class="moodboard-detail-page">
-    <div class="detail-header">
-      <h1 class="detail-page-title">{item?.name || 'Not Found'}</h1>
-    </div>
-
     {error ? (
       <div class="error-state">
         <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Project</h2>
@@ -96,60 +92,62 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
       </div>
     ) : (
       <>
-        {/* Carousel */}
-        <div class="carousel-container">
-          <div class="carousel-wrapper">
-            <div class="carousel-track" id="carousel-track">
-              {item.images.map((image, index) => (
-                <div class="carousel-slide" data-index={index}>
-                  <img 
-                    src={image.image_url} 
-                    alt={`${item.name} - Image ${index + 1}`}
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                    fetchpriority={index === 0 ? 'high' : 'auto'}
-                    decoding="async"
-                    data-skeleton
-                    crossorigin="anonymous"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {item.images.length > 1 && (
-            <div class="carousel-controls">
-              <button class="carousel-btn carousel-prev" id="carousel-prev" aria-label="Previous image">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <div class="carousel-indicators" id="carousel-indicators">
-                {item.images.map((_, index) => (
-                  <button 
-                    class={`indicator ${index === 0 ? 'active' : ''}`}
-                    data-index={index}
-                    aria-label={`Go to image ${index + 1}`}
-                  />
+        <div class="moodboard-left-col">
+          {/* Carousel */}
+          <div class="carousel-container">
+            <div class="carousel-wrapper">
+              <div class="carousel-track" id="carousel-track">
+                {item.images.map((image, index) => (
+                  <div class="carousel-slide" data-index={index}>
+                    <img 
+                      src={image.image_url} 
+                      alt={`${item.name} - Image ${index + 1}`}
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      fetchpriority={index === 0 ? 'high' : 'auto'}
+                      decoding="async"
+                      data-skeleton
+                      crossorigin="anonymous"
+                    />
+                  </div>
                 ))}
               </div>
-              <button class="carousel-btn carousel-next" id="carousel-next" aria-label="Next image">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
             </div>
-          )}
+            
+            {item.images.length > 1 && (
+              <div class="carousel-controls">
+                <button class="carousel-btn carousel-prev" id="carousel-prev" aria-label="Previous image">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="carousel-indicators" id="carousel-indicators">
+                  {item.images.map((_, index) => (
+                    <button 
+                      class={`indicator ${index === 0 ? 'active' : ''}`}
+                      data-index={index}
+                      aria-label={`Go to image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+                <button class="carousel-btn carousel-next" id="carousel-next" aria-label="Next image">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <MoodboardActionButtons 
+            productId={item.id} 
+            currentImageUrl={item.images[0]?.image_url}
+            imageName={`${item.slug}-image`}
+          />
         </div>
 
-        {/* Action Buttons */}
-        <MoodboardActionButtons 
-          productId={item.id} 
-          currentImageUrl={item.images[0]?.image_url}
-          imageName={`${item.slug}-image`}
-        />
-
-        {/* Info Section */}
-        <div class="detail-content">
+      {/* Info Section */}
+      <div class="detail-content">
           <div class="info-section">
             <div class="info-label">Name</div>
             <div class="info-value">{item.name}</div>

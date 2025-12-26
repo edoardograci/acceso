@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
-import { getCollectionsCounts } from '../lib/db';
+import { getCollectionsCounts, getMostRecentSavedDesigner, getMostRecentSavedObject } from '../lib/db';
 import type { Env } from '../env.d';
 
 const user = Astro.locals.user;
@@ -22,24 +22,31 @@ try {
   savedDesignersCount = counts.designers;
   savedObjectsCount = counts.objects;
 
-  // Only fetch cover images if there are saved items
+  // Fetch the most recently saved designer for thumbnail
   if (savedDesignersCount > 0) {
-    const studiosUrl = new URL('/studios.json', Astro.url.origin);
-    const res = await fetch(studiosUrl.toString());
-    if (res.ok) {
-      const studios = await res.json();
-      // Just use the first studio's cover as a placeholder
-      designerCover = studios[0]?.cover || null;
+    const recentDesignerId = await getMostRecentSavedDesigner(user.id, env);
+    if (recentDesignerId) {
+      const studiosUrl = new URL('/studios.json', Astro.url.origin);
+      const res = await fetch(studiosUrl.toString());
+      if (res.ok) {
+        const studios = await res.json();
+        const recentStudio = studios.find((s: any) => s.id === recentDesignerId);
+        designerCover = recentStudio?.cover || null;
+      }
     }
   }
 
+  // Fetch the most recently saved object for thumbnail
   if (savedObjectsCount > 0) {
-    const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
-    const res = await fetch(moodboardUrl.toString());
-    if (res.ok) {
-      const items = await res.json();
-      // Just use the first item's cover as a placeholder
-      objectCover = items[0]?.cover || null;
+    const recentObjectId = await getMostRecentSavedObject(user.id, env);
+    if (recentObjectId) {
+      const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
+      const res = await fetch(moodboardUrl.toString());
+      if (res.ok) {
+        const items = await res.json();
+        const recentItem = items.find((i: any) => i.id === recentObjectId);
+        objectCover = recentItem?.cover || null;
+      }
     }
   }
 

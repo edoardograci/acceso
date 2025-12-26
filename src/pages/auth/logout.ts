@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { createLucia } from '../../lib/auth/lucia';
 
-export const POST: APIRoute = async ({ locals, redirect, cookies }) => {
+export const POST: APIRoute = async ({ locals, cookies }) => {
   const runtimeEnv = locals.runtime?.env || {};
   const metaEnv = import.meta.env || {};
   const env = { ...metaEnv, ...runtimeEnv } as unknown as any; // Type 'any' used to matching Env usually but explicitly ensuring it passes to createLucia
@@ -19,11 +19,60 @@ export const POST: APIRoute = async ({ locals, redirect, cookies }) => {
     const blankCookie = lucia.createBlankSessionCookie();
     cookies.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
 
-    return redirect('/', 302);
+    // Return HTML that clears sessionStorage before redirecting
+    return new Response(
+      `<!DOCTYPE html>
+<html>
+<head>
+  <title>Logging out...</title>
+</head>
+<body>
+  <script>
+    // Clear all sessionStorage including collections state
+    sessionStorage.clear();
+    
+    // Clear collections state if it exists
+    if (window.collectionsState) {
+      window.collectionsState.clear();
+    }
+    
+    // Redirect to home
+    window.location.href = '/';
+  </script>
+  <p>Logging out...</p>
+</body>
+</html>`,
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html',
+        },
+      }
+    );
   } catch (error) {
     console.error('[Logout] Error logging out:', error);
-    // Still redirect even if there's an error
-    return redirect('/', 302);
+    // Still clear and redirect even if there's an error
+    return new Response(
+      `<!DOCTYPE html>
+<html>
+<head>
+  <title>Logging out...</title>
+</head>
+<body>
+  <script>
+    sessionStorage.clear();
+    window.location.href = '/';
+  </script>
+  <p>Logging out...</p>
+</body>
+</html>`,
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html',
+        },
+      }
+    );
   }
 };
 

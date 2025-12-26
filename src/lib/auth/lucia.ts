@@ -159,10 +159,30 @@ function createTursoAdapter(env: Env) {
 
     async deleteUser(userId: string) {
       try {
+        // Delete user's collections first
+        await turso.execute({
+          sql: 'DELETE FROM user_saved_designers WHERE user_id = ?',
+          args: [userId],
+        });
+
+        await turso.execute({
+          sql: 'DELETE FROM user_saved_objects WHERE user_id = ?',
+          args: [userId],
+        });
+
+        // Delete user's sessions
+        await turso.execute({
+          sql: 'DELETE FROM sessions WHERE user_id = ?',
+          args: [userId],
+        });
+
+        // Finally delete the user
         await turso.execute({
           sql: 'DELETE FROM users WHERE id = ?',
           args: [userId],
         });
+
+        console.log('[Lucia] User and all associated data deleted:', userId);
       } catch (error) {
         console.error('[Lucia] Error deleting user:', error);
         throw error;
