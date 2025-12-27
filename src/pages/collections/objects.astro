@@ -7,7 +7,7 @@ import type { Env } from '../../env.d';
 
 // Protected
 if (!Astro.locals.user) {
-  return Astro.redirect('/auth/login');
+  return Astro.redirect('/login');
 }
 
 const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;

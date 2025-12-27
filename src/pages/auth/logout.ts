@@ -19,6 +19,12 @@ export const POST: APIRoute = async ({ locals, cookies }) => {
     const blankCookie = lucia.createBlankSessionCookie();
     cookies.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
 
+    // Clear JWT as well
+    cookies.delete('auth_token', { path: '/' });
+
+    // Clear collections state if possible from cookie perspective (though script does it better)
+    cookies.delete('collections_state', { path: '/' });
+
     // Return HTML that clears sessionStorage before redirecting
     return new Response(
       `<!DOCTYPE html>

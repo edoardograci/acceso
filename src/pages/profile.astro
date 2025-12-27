@@ -7,7 +7,7 @@ import moodboard from '../../public/moodboard.json';
 
 const user = Astro.locals.user;
 if (!user) {
-  return Astro.redirect('/auth/login');
+  return Astro.redirect('/login');
 }
 
 let savedDesignersCount = 0;

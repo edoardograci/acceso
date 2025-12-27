@@ -89,7 +89,7 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 
   // Protect /collections routes
   if (context.url.pathname.startsWith('/collections') && !locals.user) {
-    return context.redirect('/auth/login');
+    return context.redirect('/login');
   }
 
   return next();

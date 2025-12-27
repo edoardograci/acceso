@@ -36,10 +36,12 @@ export const POST: APIRoute = async ({ locals, cookies, redirect }) => {
             args: [userId],
         });
 
-        // 4. Invalidate session cookie
+        // 4. Invalidate session cookies
         const lucia = createLucia(env);
         const blankCookie = lucia.createBlankSessionCookie();
         cookies.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
+        cookies.delete('auth_token', { path: '/' });
+        cookies.delete('collections_state', { path: '/' });
 
         return new Response(JSON.stringify({ success: true }), {
             status: 200,
