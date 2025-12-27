@@ -148,10 +148,12 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
 
       {/* Info Section */}
       <div class="detail-content">
-          <div class="info-section">
-            <div class="info-label">Name</div>
-            <div class="info-value">{item.name}</div>
-          </div>
+          {item.name && (
+            <div class="info-section">
+              <div class="info-label">Name</div>
+              <div class="info-value">{item.name}</div>
+            </div>
+          )}
 
           {item.designer && (
             <div class="info-section">

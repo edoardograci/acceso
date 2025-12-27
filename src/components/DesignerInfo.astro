@@ -9,17 +9,21 @@ const { studio } = Astro.props;
 ---
 
 <div class="designer-info">
-  <div class="info-section">
-    <div class="info-label">Name</div>
-    <div class="info-value">{studio.name}</div>
-  </div>
+  {studio.name && (
+    <div class="info-section">
+      <div class="info-label">Name</div>
+      <div class="info-value">{studio.name}</div>
+    </div>
+  )}
 
-  <div class="info-section">
-    <div class="info-label">Location</div>
-    <a href={`/designers?city=${studio.city}`} class="info-value">
-      {studio.city}
-    </a>
-  </div>
+  {studio.city && (
+    <div class="info-section">
+      <div class="info-label">Location</div>
+      <a href={`/designers?city=${studio.city}`} class="info-value">
+        {studio.city}
+      </a>
+    </div>
+  )}
 
   {studio.address && (
     <div class="info-section">
@@ -30,20 +34,22 @@ const { studio } = Astro.props;
     </div>
   )}
 
-  <div class="info-section">
-    <div class="info-label">Email</div>
-    <div class="info-value">
-      {studio.email && (
-        <a href={`mailto:${studio.email}`}>{studio.email}</a>
-      )}
-      {studio.email2 && (
-        <>
-          <br />
-          <a href={`mailto:${studio.email2}`}>{studio.email2}</a>
-        </>
-      )}
+  {(studio.email || studio.email2) && (
+    <div class="info-section">
+      <div class="info-label">Email</div>
+      <div class="info-value">
+        {studio.email && (
+          <a href={`mailto:${studio.email}`}>{studio.email}</a>
+        )}
+        {studio.email2 && (
+          <>
+            <br />
+            <a href={`mailto:${studio.email2}`}>{studio.email2}</a>
+          </>
+        )}
+      </div>
     </div>
-  </div>
+  )}
 
   <div class="info-links">
     {studio.website && (
