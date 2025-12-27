@@ -68,7 +68,7 @@ window.collectionsState = {
         });
     },
 
-    async fetchAndCache(userId) {
+    async fetchAndCache(userId, retries = 3) {
         try {
             console.log('[Collections] Fetching fresh data...');
             const response = await fetch('/api/collections/status');
@@ -94,6 +94,10 @@ window.collectionsState = {
             }
         } catch (error) {
             console.error('Failed to load collections:', error);
+            if (retries > 0) {
+                console.log(`[Collections] Retrying fetch... (${retries} attempts left)`);
+                setTimeout(() => this.fetchAndCache(userId, retries - 1), 1000 * (4 - retries));
+            }
         }
     },
 

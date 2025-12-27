@@ -11,6 +11,7 @@ export type Env = {
   GOOGLE_CLIENT_SECRET: string;
   PUBLIC_SITE_URL: string;
   RESEND_API_KEY: string;
+  JWT_SECRET: string;
 };
 
 type Runtime = {

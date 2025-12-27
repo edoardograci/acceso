@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'astro';
 import { createLucia } from './lib/auth/lucia';
+import { verifySessionJWT, createSessionJWT } from './lib/auth/jwt';
 import type { Env } from './env.d';
 
 export const onRequest: MiddlewareHandler = async (context, next) => {
@@ -19,47 +20,72 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 
   try {
     const lucia = createLucia(env);
-    const sessionId = cookies.get(lucia.sessionCookieName)?.value;
+    const jwtToken = cookies.get('auth_token')?.value;
 
+    // Step 1: Quick JWT check for session ID hint
+    let sessionId: string | null = null;
+
+    if (jwtToken) {
+      const payload = await verifySessionJWT(jwtToken, env);
+      if (payload) {
+        sessionId = payload.sessionId;
+      }
+    }
+
+    // If no JWT or invalid, try regular cookie
     if (!sessionId) {
-      locals.user = null;
-      locals.session = null;
-      return next();
+      sessionId = cookies.get(lucia.sessionCookieName)?.value || null;
     }
 
-    const { session, user } = await lucia.validateSession(sessionId);
+    // Step 2: ALWAYS validate with database (but with cache hints)
+    if (sessionId) {
+      const { session, user } = await lucia.validateSession(sessionId);
 
-    if (session && session.fresh) {
-      // Refresh session cookie
-      const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
-    }
+      if (session && session.fresh) {
+        const sessionCookie = lucia.createSessionCookie(session.id);
+        cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);
+      }
 
-    if (!session) {
-      // Invalid session - clear cookie
-      const blankCookie = lucia.createBlankSessionCookie();
-      cookies.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
-      locals.user = null;
-      locals.session = null;
-    } else if (user) {
-      // Set user and session in locals only if user exists
-      locals.user = {
-        id: user.id,
-        email: user.email,
-        emailVerified: user.emailVerified,
-      };
-      locals.session = {
-        id: session.id,
-        expiresAt: session.expiresAt,
-      };
+      if (!session) {
+        // Session invalid - clear everything
+        const blankCookie = lucia.createBlankSessionCookie();
+        cookies.set(blankCookie.name, blankCookie.value, blankCookie.attributes);
+        cookies.delete('auth_token', { path: '/' });
+        locals.user = null;
+        locals.session = null;
+      } else if (user) {
+        locals.user = {
+          id: user.id,
+          email: user.email,
+          emailVerified: user.emailVerified,
+        };
+        locals.session = {
+          id: session.id,
+          expiresAt: session.expiresAt,
+        };
+
+        // Issue/refresh JWT only if we don't have one or it was invalid
+        const validJwt = jwtToken ? await verifySessionJWT(jwtToken, env) : null;
+        if (!validJwt) {
+          const token = await createSessionJWT({
+            userId: user.id,
+            sessionId: session.id
+          }, env);
+          cookies.set('auth_token', token, {
+            path: '/',
+            secure: import.meta.env.PROD,
+            httpOnly: true,
+            sameSite: 'lax',
+            maxAge: 60 * 15 // 15 minutes
+          });
+        }
+      }
     }
   } catch (error) {
     console.error('[Middleware] Error validating session:', error);
     locals.user = null;
     locals.session = null;
   }
-
-
 
   // Protect /collections routes
   if (context.url.pathname.startsWith('/collections') && !locals.user) {
