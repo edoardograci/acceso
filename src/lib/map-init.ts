@@ -96,7 +96,7 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
 
   // Determine initial city based on target studio or default to Milan
   let initialCityKey: CityKey = 'Milan';
-  if (targetStudio && (targetStudio.city === 'Milan' || targetStudio.city === 'Seoul')) {
+  if (targetStudio && targetStudio.city && targetStudio.city in CITY_CONFIG) {
     initialCityKey = targetStudio.city as CityKey;
   }
 
