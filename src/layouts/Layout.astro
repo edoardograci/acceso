@@ -48,7 +48,12 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta property="twitter:image" content={new URL(image, Astro.site)} />
     
     <!-- Collections State Manager - Load first if user is logged in -->
-    {!!Astro.locals.user && <script src="/js/collections-state.js" is:inline></script>}
+    {!!Astro.locals.user && (
+      <script define:vars={{ userId: Astro.locals.user.id }}>
+        window.currentUserId = userId;
+      </script>
+      <script src="/js/collections-state.js" is:inline></script>
+    )}
   </head>
   <body>
     <slot />

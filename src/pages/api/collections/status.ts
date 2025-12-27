@@ -14,21 +14,18 @@ export const GET: APIRoute = async ({ locals }) => {
 
     try {
         const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+        const { getFullCollectionStatus } = await import('../../../lib/db');
 
-        // Single batch read - only 2 DB queries total!
-        const [designers, objects] = await Promise.all([
-            getSavedDesigners(locals.user.id, env),
-            getSavedObjects(locals.user.id, env)
-        ]);
+        // Single query optimized fetch
+        const { designers, objects } = await getFullCollectionStatus(locals.user.id, env);
 
         return new Response(JSON.stringify({
-            designers,  // Array of studio IDs
-            objects     // Array of product IDs
+            designers,
+            objects
         }), {
             headers: {
                 'Content-Type': 'application/json',
-                // Smart caching: 3s browser cache, serve stale for 10s while revalidating
-                // This reduces DB hits during rapid navigation without noticeable staleness
+                // Keep smart caching
                 'Cache-Control': 'private, max-age=3, stale-while-revalidate=10'
             }
         });

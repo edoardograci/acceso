@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
-import { getDesignerCollectionSummary, getObjectCollectionSummary } from '../lib/db';
 import type { Env } from '../env.d';
 
 const user = Astro.locals.user;
@@ -17,30 +16,28 @@ let objectCover = null;
 try {
   const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
   
-  // Optimized: 2 queries instead of 4 (count + recent ID combined per table)
-  const [designerSummary, objectSummary] = await Promise.all([
-    getDesignerCollectionSummary(user.id, env),
-    getObjectCollectionSummary(user.id, env)
-  ]);
+  // Optimized: 1 query instead of 4
+  const { getProfileSummary } = await import('../lib/db');
+  const summary = await getProfileSummary(user.id, env);
   
-  savedDesignersCount = designerSummary.count;
-  savedObjectsCount = objectSummary.count;
+  savedDesignersCount = summary.designers.count;
+  savedObjectsCount = summary.objects.count;
 
   // Fetch cover images from static JSON (no DB calls)
   const [studiosRes, moodboardRes] = await Promise.all([
-    designerSummary.recentId ? fetch(new URL('/studios.json', Astro.url.origin).toString()) : null,
-    objectSummary.recentId ? fetch(new URL('/moodboard.json', Astro.url.origin).toString()) : null
+    summary.designers.recentId ? fetch(new URL('/studios.json', Astro.url.origin).toString()) : null,
+    summary.objects.recentId ? fetch(new URL('/moodboard.json', Astro.url.origin).toString()) : null
   ]);
 
-  if (studiosRes?.ok && designerSummary.recentId) {
+  if (studiosRes?.ok && summary.designers.recentId) {
     const studios = await studiosRes.json();
-    const recentStudio = studios.find((s: any) => s.id === designerSummary.recentId);
+    const recentStudio = studios.find((s: any) => s.id === summary.designers.recentId);
     designerCover = recentStudio?.cover || null;
   }
 
-  if (moodboardRes?.ok && objectSummary.recentId) {
+  if (moodboardRes?.ok && summary.objects.recentId) {
     const items = await moodboardRes.json();
-    const recentItem = items.find((i: any) => i.id === objectSummary.recentId);
+    const recentItem = items.find((i: any) => i.id === summary.objects.recentId);
     objectCover = recentItem?.cover || null;
   }
 

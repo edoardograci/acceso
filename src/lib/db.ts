@@ -220,3 +220,57 @@ export async function getObjectCollectionSummary(userId: string, env: Env): Prom
     return { count: 0, recentId: null };
   }
 }
+
+export async function getFullCollectionStatus(userId: string, env: Env): Promise<{ designers: string[], objects: string[] }> {
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+    const result = await turso.execute({
+      sql: `SELECT studio_id as id, 'designer' as type FROM user_saved_designers WHERE user_id = ?
+            UNION ALL
+            SELECT product_id as id, 'object' as type FROM user_saved_objects WHERE user_id = ?`,
+      args: [userId, userId],
+    }, { useCache: true }); // Cache safe as it's user specific and we handle invalidation via client
+
+    const designers: string[] = [];
+    const objects: string[] = [];
+
+    result.rows.forEach((row: any) => {
+      if (row.type === 'designer') designers.push(row.id);
+      else objects.push(row.id);
+    });
+
+    return { designers, objects };
+  } catch (error) {
+    console.error('[DB] Error fetching full collection status:', error);
+    throw error;
+  }
+}
+
+export async function getProfileSummary(userId: string, env: Env): Promise<{
+  designers: { count: number, recentId: string | null },
+  objects: { count: number, recentId: string | null }
+}> {
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+    const result = await turso.execute({
+      sql: `SELECT 
+              (SELECT COUNT(*) FROM user_saved_designers WHERE user_id = ?) as d_count,
+              (SELECT COUNT(*) FROM user_saved_objects WHERE user_id = ?) as o_count,
+              (SELECT studio_id FROM user_saved_designers WHERE user_id = ? ORDER BY created_at DESC LIMIT 1) as d_recent,
+              (SELECT product_id FROM user_saved_objects WHERE user_id = ? ORDER BY created_at DESC LIMIT 1) as o_recent`,
+      args: [userId, userId, userId, userId],
+    });
+
+    const row = result.rows[0];
+    return {
+      designers: { count: Number(row?.d_count) || 0, recentId: row?.d_recent as string | null },
+      objects: { count: Number(row?.o_count) || 0, recentId: row?.o_recent as string | null }
+    };
+  } catch (error) {
+    console.error('[DB] Error fetching profile summary:', error);
+    return {
+      designers: { count: 0, recentId: null },
+      objects: { count: 0, recentId: null }
+    };
+  }
+}

@@ -5,73 +5,106 @@ window.collectionsState = {
     loaded: false,
     listeners: new Set(),
 
+    // Config
+    CACHE_KEY: 'collections_state_v1',
+    CACHE_TTL: 30 * 1000, // 30 seconds freshness preference
+
     async init() {
         if (this.loaded) return;
 
-        // Try to load from sessionStorage first
-        const cached = sessionStorage.getItem('collections_state');
-        if (cached) {
+        const currentUserId = window.currentUserId;
+        if (!currentUserId) return; // Not logged in
+
+        // 1. Instant Load from Cache
+        const cachedStr = localStorage.getItem(this.CACHE_KEY);
+        let shouldFetch = true;
+
+        if (cachedStr) {
             try {
-                const data = JSON.parse(cached);
+                const cached = JSON.parse(cachedStr);
 
-                // Validate that cached data belongs to current user
-                // Fetch current user's collections to verify
-                const response = await fetch('/api/collections/status');
-                if (!response.ok) throw new Error('Failed to fetch collections');
-
-                const currentData = await response.json();
-
-                // Check if cached data matches current user's data
-                // If the counts are drastically different, it's likely a different user
-                const cachedCount = (data.designers?.length || 0) + (data.objects?.length || 0);
-                const currentCount = (currentData.designers?.length || 0) + (currentData.objects?.length || 0);
-
-                // If cached data seems valid (similar count), use it for faster load
-                // Otherwise, use fresh data
-                if (Math.abs(cachedCount - currentCount) <= 5) {
-                    this.designers = new Set(data.designers);
-                    this.objects = new Set(data.objects);
+                // Only use cache if it belongs to current user
+                if (cached.userId === currentUserId) {
+                    this.designers = new Set(cached.designers);
+                    this.objects = new Set(cached.objects);
                     this.loaded = true;
-                    this.notifyListeners();
+                    this.notifyListeners(); // Instant UI update
                     console.log('[Collections] Loaded from cache');
 
-                    // Still update cache with fresh data in background
-                    this.designers = new Set(currentData.designers);
-                    this.objects = new Set(currentData.objects);
-                    this.updateCache();
-                    return;
-                } else {
-                    // Cache is stale (different user), clear it
-                    console.log('[Collections] Cache is stale, clearing...');
-                    sessionStorage.removeItem('collections_state');
+                    // Check freshness
+                    const age = Date.now() - (cached.timestamp || 0);
+                    if (age < this.CACHE_TTL) {
+                        shouldFetch = false;
+                        console.log('[Collections] Cache acts as fresh (age: ' + Math.round(age / 1000) + 's)');
+                    }
                 }
             } catch (e) {
                 console.error('Failed to parse cached collections:', e);
-                sessionStorage.removeItem('collections_state');
+                localStorage.removeItem(this.CACHE_KEY);
             }
         }
 
-        // Fetch from API if no cache or cache was invalid
+        // 2. Background Sync (Stale-While-Revalidate)
+        if (shouldFetch) {
+            await this.fetchAndCache(currentUserId);
+        }
+
+        // 3. Setup Cross-Tab Sync
+        window.addEventListener('storage', (e) => {
+            if (e.key === this.CACHE_KEY && e.newValue) {
+                try {
+                    const synced = JSON.parse(e.newValue);
+                    if (synced.userId === window.currentUserId) {
+                        console.log('[Collections] Syncing from other tab');
+                        this.designers = new Set(synced.designers);
+                        this.objects = new Set(synced.objects);
+                        this.loaded = true;
+                        this.notifyListeners();
+                    }
+                } catch (err) {
+                    console.error('Sync error:', err);
+                }
+            }
+        });
+    },
+
+    async fetchAndCache(userId) {
         try {
+            console.log('[Collections] Fetching fresh data...');
             const response = await fetch('/api/collections/status');
             if (!response.ok) throw new Error('Failed to fetch collections');
 
             const data = await response.json();
-            this.designers = new Set(data.designers);
-            this.objects = new Set(data.objects);
-            this.loaded = true;
 
-            // Cache in sessionStorage
-            sessionStorage.setItem('collections_state', JSON.stringify({
-                designers: data.designers,
-                objects: data.objects
-            }));
+            // Diff check before updating to avoid unnecessary re-renders
+            const newDesigners = new Set(data.designers);
+            const newObjects = new Set(data.objects);
 
-            console.log('[Collections] Loaded from API and cached');
-            this.notifyListeners();
+            if (this.hasChanged(newDesigners, newObjects)) {
+                this.designers = newDesigners;
+                this.objects = newObjects;
+                this.loaded = true;
+                this.updateCache(userId);
+                this.notifyListeners();
+                console.log('[Collections] Updated from API');
+            } else {
+                console.log('[Collections] API data matches cache, no update needed');
+                // Update timestamp in cache even if data hasn't changed
+                this.updateCache(userId);
+            }
         } catch (error) {
             console.error('Failed to load collections:', error);
         }
+    },
+
+    hasChanged(newDesigners, newObjects) {
+        if (this.designers.size !== newDesigners.size) return true;
+        if (this.objects.size !== newObjects.size) return true;
+
+        for (let a of newDesigners) if (!this.designers.has(a)) return true;
+        for (let a of newObjects) if (!this.objects.has(a)) return true;
+
+        return false;
     },
 
     isSaved(type, id) {
@@ -86,7 +119,7 @@ window.collectionsState = {
         } else {
             this.objects.add(id);
         }
-        this.updateCache();
+        this.updateCache(window.currentUserId);
         this.notifyListeners({ type, id, action: 'add' });
     },
 
@@ -96,15 +129,22 @@ window.collectionsState = {
         } else {
             this.objects.delete(id);
         }
-        this.updateCache();
+        this.updateCache(window.currentUserId);
         this.notifyListeners({ type, id, action: 'remove' });
     },
 
-    updateCache() {
-        sessionStorage.setItem('collections_state', JSON.stringify({
-            designers: Array.from(this.designers),
-            objects: Array.from(this.objects)
-        }));
+    updateCache(userId) {
+        if (!userId) return;
+        try {
+            localStorage.setItem(this.CACHE_KEY, JSON.stringify({
+                userId: userId,
+                timestamp: Date.now(),
+                designers: Array.from(this.designers),
+                objects: Array.from(this.objects)
+            }));
+        } catch (e) {
+            console.error('Failed to save to localStorage', e);
+        }
     },
 
     subscribe(callback) {
@@ -117,20 +157,16 @@ window.collectionsState = {
     },
 
     clear() {
-        // Clear all state
         this.designers.clear();
         this.objects.clear();
         this.loaded = false;
-
-        // Remove from sessionStorage
-        sessionStorage.removeItem('collections_state');
-
+        localStorage.removeItem(this.CACHE_KEY);
         console.log('[Collections] State cleared');
         this.notifyListeners({ action: 'clear' });
     }
 };
 
-// Auto-initialize on page load
+// Auto-initialize
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.collectionsState.init();
