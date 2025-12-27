@@ -2,7 +2,7 @@ const CACHE_NAME = 'acceso-static-v1';
 const API_CACHE_NAME = 'acceso-api-v1';
 const URLS_TO_CACHE = [
     '/',
-    '/manifest.json',
+    '/manifest.webmanifest',
     '/icon.svg',
     '/js/collections-state.js'
 ];
@@ -10,7 +10,14 @@ const URLS_TO_CACHE = [
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(URLS_TO_CACHE))
+            .then((cache) => {
+                console.log('[SW] Pre-caching critical assets...');
+                return Promise.allSettled(
+                    URLS_TO_CACHE.map(url =>
+                        cache.add(url).catch(err => console.error(`[SW] Failed to cache: ${url}`, err))
+                    )
+                );
+            })
     );
 });
 
