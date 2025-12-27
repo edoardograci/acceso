@@ -2,8 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import SaveButton from '../../components/SaveButton.astro';
-import { getSavedDesigners } from '../../lib/db';
-import type { Env } from '../../env.d';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 // Protected
 if (!Astro.locals.user) {
@@ -16,15 +16,9 @@ let studios: any[] = [];
 let error = null;
 
 try {
-  const [savedIds, response] = await Promise.all([
-    getSavedDesigners(Astro.locals.user.id, env),
-    fetch(new URL('/studios.json', Astro.url.origin))
-  ]);
-
-  if (!response.ok) throw new Error('Failed to load studios data');
-  const allStudios = await response.json();
-  
-  studios = allStudios.filter((s: any) => savedIds.includes(s.id));
+  const publicDir = path.join(process.cwd(), 'public');
+  const studiosStr = await fs.readFile(path.join(publicDir, 'studios.json'), 'utf-8');
+  studios = JSON.parse(studiosStr);
 } catch (e) {
   error = e;
   console.error('Failed to fetch designers collection:', e);
@@ -37,13 +31,13 @@ try {
   <main class="designers-page">
     <div class="header">
       <h1 class="page-title">My Designers</h1>
-      <p class="count">{studios.length} saved</p>
+      <p id="count" class="count">Loading saved designers...</p>
     </div>
 
     {!error && (
-      <div class="designers-grid">
+      <div id="designers-grid" class="designers-grid" style="opacity: 0; transition: opacity 0.3s ease;">
         {studios.map(studio => (
-          <div class="studio-card-wrapper">
+          <div class="studio-card-wrapper" data-id={studio.id} style="display: none;">
             <a 
               href={`/designers/${studio.slug}`} 
               class="studio-card"
@@ -54,6 +48,7 @@ try {
                   alt={studio.name} 
                   class="studio-image" 
                   loading="lazy" 
+                  data-skeleton
                 />
               ) : (
                 <div class="studio-image-placeholder">No image</div>
@@ -72,12 +67,10 @@ try {
             </div>
           </div>
         ))}
-        {studios.length === 0 && (
-          <div class="empty-state">
-             <p>No saved designers.</p>
-             <a href="/designers" class="browse-link">Browse Designers</a>
-          </div>
-        )}
+        <div id="empty-state" class="empty-state" style="display: none;">
+           <p>No saved designers.</p>
+           <a href="/designers" class="browse-link">Browse Designers</a>
+        </div>
       </div>
     )}
   </main>
@@ -182,30 +175,61 @@ try {
 </style>
 
 <script>
+const filterGrid = () => {
+    const grid = document.getElementById('designers-grid');
+    const emptyState = document.getElementById('empty-state');
+    const countLabel = document.getElementById('count');
+    if (!grid || !window.collectionsState) return;
+
+    const cards = grid.querySelectorAll('.studio-card-wrapper');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const id = card.getAttribute('data-id');
+      if (window.collectionsState.isSaved('designer', id)) {
+        (card as HTMLElement).style.display = 'block';
+        visibleCount++;
+      } else {
+        (card as HTMLElement).style.display = 'none';
+      }
+    });
+
+    if (visibleCount === 0) {
+      if (emptyState) emptyState.style.display = 'block';
+      if (countLabel) countLabel.innerText = '0 saved';
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+      if (countLabel) countLabel.innerText = `${visibleCount} saved`;
+    }
+
+    grid.style.opacity = '1';
+  };
+
+  // Run on init
+  if (window.collectionsState?.loaded) {
+    filterGrid();
+  } else {
+    // Wait for state to load
+    const checkState = setInterval(() => {
+      if (window.collectionsState?.loaded) {
+        filterGrid();
+        clearInterval(checkState);
+      }
+    }, 50);
+  }
+
+  // Sync on changes
   document.addEventListener('save-change', ((e: CustomEvent) => {
     const { saved, type } = e.detail;
-    if (!saved && type === 'designer') {
-      const target = e.target as HTMLElement;
-      const cardWrapper = target.closest('.studio-card-wrapper');
-      
-      if (cardWrapper) {
-        // Animate removal
-        (cardWrapper as HTMLElement).style.opacity = '0';
-        (cardWrapper as HTMLElement).style.transform = 'scale(0.95)';
-        
-        setTimeout(() => {
-          cardWrapper.remove();
-          
-          // Check if grid is empty
-          const grid = document.querySelector('.designers-grid');
-          if (grid && grid.children.length === 0) {
-            // Can reload or show empty state manually
-            // For simplicity, just reload to fetch empty state from server or toggle it
-            // Or simpler: make the empty state visible if hidden
-            window.location.reload(); 
-          }
-        }, 200);
-      }
+    if (type === 'designer') {
+      filterGrid();
     }
   }) as EventListener);
+
+  // Sync on cross-tab storage changes
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'collections_state_v1') {
+      filterGrid();
+    }
+  });
 </script>

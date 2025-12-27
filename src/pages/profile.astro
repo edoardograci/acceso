@@ -2,6 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import type { Env } from '../env.d';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 const user = Astro.locals.user;
 if (!user) {
@@ -16,31 +18,31 @@ let objectCover = null;
 try {
   const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
   
-  // Optimized: 1 query instead of 4
+  // Optimized: 1 DB query
   const { getProfileSummary } = await import('../lib/db');
   const summary = await getProfileSummary(user.id, env);
   
   savedDesignersCount = summary.designers.count;
   savedObjectsCount = summary.objects.count;
 
-  // Fetch cover images from static JSON (no DB calls)
-  const [studiosRes, moodboardRes] = await Promise.all([
-    summary.designers.recentId ? fetch(new URL('/studios.json', Astro.url.origin).toString()) : null,
-    summary.objects.recentId ? fetch(new URL('/moodboard.json', Astro.url.origin).toString()) : null
-  ]);
+  // Optimized: Local filesystem read (0ms network)
+  if (summary.designers.recentId || summary.objects.recentId) {
+    const publicDir = path.join(process.cwd(), 'public');
 
-  if (studiosRes?.ok && summary.designers.recentId) {
-    const studios = await studiosRes.json();
-    const recentStudio = studios.find((s: any) => s.id === summary.designers.recentId);
-    designerCover = recentStudio?.cover || null;
+    if (summary.designers.recentId) {
+      const studiosStr = await fs.readFile(path.join(publicDir, 'studios.json'), 'utf-8');
+      const studios = JSON.parse(studiosStr);
+      const recentStudio = studios.find((s: any) => s.id === summary.designers.recentId);
+      designerCover = recentStudio?.cover || null;
+    }
+
+    if (summary.objects.recentId) {
+      const moodboardStr = await fs.readFile(path.join(publicDir, 'moodboard.json'), 'utf-8');
+      const items = JSON.parse(moodboardStr);
+      const recentItem = items.find((i: any) => i.id === summary.objects.recentId);
+      objectCover = recentItem?.cover || null;
+    }
   }
-
-  if (moodboardRes?.ok && summary.objects.recentId) {
-    const items = await moodboardRes.json();
-    const recentItem = items.find((i: any) => i.id === summary.objects.recentId);
-    objectCover = recentItem?.cover || null;
-  }
-
 } catch (e) {
   console.error('Error fetching profile data:', e);
 }

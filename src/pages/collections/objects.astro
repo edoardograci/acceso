@@ -2,8 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import SaveButton from '../../components/SaveButton.astro';
-import { getSavedObjects } from '../../lib/db';
-import type { Env } from '../../env.d';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 // Protected
 if (!Astro.locals.user) {
@@ -16,15 +16,9 @@ let objects: any[] = [];
 let error = null;
 
 try {
-  const [savedIds, response] = await Promise.all([
-    getSavedObjects(Astro.locals.user.id, env),
-    fetch(new URL('/moodboard.json', Astro.url.origin))
-  ]);
-
-  if (!response.ok) throw new Error('Failed to load moodboard data');
-  const allObjects = await response.json();
-  
-  objects = allObjects.filter((o: any) => savedIds.includes(o.id));
+  const publicDir = path.join(process.cwd(), 'public');
+  const moodboardStr = await fs.readFile(path.join(publicDir, 'moodboard.json'), 'utf-8');
+  objects = JSON.parse(moodboardStr);
 } catch (e) {
   error = e;
   console.error('Failed to fetch moodboard collection:', e);
@@ -37,13 +31,13 @@ try {
   <main class="objects-page">
     <div class="header">
       <h1 class="page-title">Moodboard</h1>
-      <p class="count">{objects.length} saved</p>
+      <p id="count" class="count">Loading moodboard...</p>
     </div>
 
     {!error && (
-      <div class="objects-grid">
+      <div id="objects-grid" class="objects-grid" style="opacity: 0; transition: opacity 0.3s ease;">
         {objects.map(item => (
-          <div class="object-card-wrapper">
+          <div class="object-card-wrapper" data-id={item.id} style="display: none;">
             <a 
               href={`/moodboard/${item.slug}`} 
               class="object-card"
@@ -53,6 +47,7 @@ try {
                   src={item.cover} 
                   alt={item.name}
                   loading="lazy"
+                  data-skeleton
                 />
               )}
               <div class="item-overlay">
@@ -69,12 +64,10 @@ try {
             </div>
           </div>
         ))}
-        {objects.length === 0 && (
-          <div class="empty-state">
-             <p>No saved objects.</p>
-             <a href="/moodboard" class="browse-link">Explore Moodboard</a>
-          </div>
-        )}
+        <div id="empty-state" class="empty-state" style="display: none;">
+           <p>No saved objects.</p>
+           <a href="/moodboard" class="browse-link">Explore Moodboard</a>
+        </div>
       </div>
     )}
   </main>
@@ -194,27 +187,61 @@ try {
 </style>
 
 <script>
+const filterGrid = () => {
+    const grid = document.getElementById('objects-grid');
+    const emptyState = document.getElementById('empty-state');
+    const countLabel = document.getElementById('count');
+    if (!grid || !window.collectionsState) return;
+
+    const cards = grid.querySelectorAll('.object-card-wrapper');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const id = card.getAttribute('data-id');
+      if (window.collectionsState.isSaved('object', id)) {
+        (card as HTMLElement).style.display = 'block';
+        visibleCount++;
+      } else {
+        (card as HTMLElement).style.display = 'none';
+      }
+    });
+
+    if (visibleCount === 0) {
+      if (emptyState) emptyState.style.display = 'block';
+      if (countLabel) countLabel.innerText = '0 saved';
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+      if (countLabel) countLabel.innerText = `${visibleCount} saved`;
+    }
+
+    grid.style.opacity = '1';
+  };
+
+  // Run on init
+  if (window.collectionsState?.loaded) {
+    filterGrid();
+  } else {
+    // Wait for state to load
+    const checkState = setInterval(() => {
+      if (window.collectionsState?.loaded) {
+        filterGrid();
+        clearInterval(checkState);
+      }
+    }, 50);
+  }
+
+  // Sync on changes
   document.addEventListener('save-change', ((e: CustomEvent) => {
     const { saved, type } = e.detail;
-    if (!saved && type === 'object') {
-      const target = e.target as HTMLElement;
-      const cardWrapper = target.closest('.object-card-wrapper');
-      
-      if (cardWrapper) {
-        // Animate removal
-        (cardWrapper as HTMLElement).style.opacity = '0';
-        (cardWrapper as HTMLElement).style.transform = 'scale(0.95)';
-        
-        setTimeout(() => {
-          cardWrapper.remove();
-          
-          // Check if grid is empty
-          const grid = document.querySelector('.objects-grid');
-          if (grid && !grid.querySelector('.object-card-wrapper')) {
-             window.location.reload();
-          }
-        }, 200);
-      }
+    if (type === 'object') {
+      filterGrid();
     }
   }) as EventListener);
+
+  // Sync on cross-tab storage changes
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'collections_state_v1') {
+      filterGrid();
+    }
+  });
 </script>
