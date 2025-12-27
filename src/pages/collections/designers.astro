@@ -2,8 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import SaveButton from '../../components/SaveButton.astro';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import studiosData from '../../../public/studios.json';
+import type { Env } from '../../env.d';
 
 // Protected
 if (!Astro.locals.user) {
@@ -16,9 +16,7 @@ let studios: any[] = [];
 let error = null;
 
 try {
-  const publicDir = path.join(process.cwd(), 'public');
-  const studiosStr = await fs.readFile(path.join(publicDir, 'studios.json'), 'utf-8');
-  studios = JSON.parse(studiosStr);
+  studios = studiosData as any[];
 } catch (e) {
   error = e;
   console.error('Failed to fetch designers collection:', e);

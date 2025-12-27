@@ -2,8 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import SaveButton from '../../components/SaveButton.astro';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import moodboardData from '../../../public/moodboard.json';
+import type { Env } from '../../env.d';
 
 // Protected
 if (!Astro.locals.user) {
@@ -16,9 +16,7 @@ let objects: any[] = [];
 let error = null;
 
 try {
-  const publicDir = path.join(process.cwd(), 'public');
-  const moodboardStr = await fs.readFile(path.join(publicDir, 'moodboard.json'), 'utf-8');
-  objects = JSON.parse(moodboardStr);
+  objects = moodboardData as any[];
 } catch (e) {
   error = e;
   console.error('Failed to fetch moodboard collection:', e);

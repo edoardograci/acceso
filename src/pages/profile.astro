@@ -2,8 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import type { Env } from '../env.d';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import studios from '../../public/studios.json';
+import moodboard from '../../public/moodboard.json';
 
 const user = Astro.locals.user;
 if (!user) {
@@ -25,23 +25,15 @@ try {
   savedDesignersCount = summary.designers.count;
   savedObjectsCount = summary.objects.count;
 
-  // Optimized: Local filesystem read (0ms network)
-  if (summary.designers.recentId || summary.objects.recentId) {
-    const publicDir = path.join(process.cwd(), 'public');
+  // Optimized: Direct import (Bundled with SSR)
+  if (summary.designers.recentId) {
+    const recentStudio = (studios as any[]).find((s: any) => s.id === summary.designers.recentId);
+    designerCover = recentStudio?.cover || null;
+  }
 
-    if (summary.designers.recentId) {
-      const studiosStr = await fs.readFile(path.join(publicDir, 'studios.json'), 'utf-8');
-      const studios = JSON.parse(studiosStr);
-      const recentStudio = studios.find((s: any) => s.id === summary.designers.recentId);
-      designerCover = recentStudio?.cover || null;
-    }
-
-    if (summary.objects.recentId) {
-      const moodboardStr = await fs.readFile(path.join(publicDir, 'moodboard.json'), 'utf-8');
-      const items = JSON.parse(moodboardStr);
-      const recentItem = items.find((i: any) => i.id === summary.objects.recentId);
-      objectCover = recentItem?.cover || null;
-    }
+  if (summary.objects.recentId) {
+    const recentItem = (moodboard as any[]).find((i: any) => i.id === summary.objects.recentId);
+    objectCover = recentItem?.cover || null;
   }
 } catch (e) {
   console.error('Error fetching profile data:', e);
