@@ -1,0 +1,211 @@
+---
+---
+
+<div class="hero-showreel-container">
+  <div class="slider-track">
+    {/* Clones End [3, 4] */}
+    <div class="reel-item clone" data-index="2">
+      <div class="scale-wrapper">
+        <img src="/animations/3.webp" alt="Clone 3" loading="lazy" />
+      </div>
+    </div>
+    <div class="reel-item clone" data-index="3">
+      <div class="scale-wrapper">
+        <img src="/animations/4.webp" alt="Clone 4" loading="lazy" />
+      </div>
+    </div>
+
+    {/* Real Items [1, 2, 3, 4] */}
+    {[1, 2, 3, 4].map((num, index) => (
+      <div class="reel-item" data-index={index}>
+        <div class="scale-wrapper">
+          <img 
+            src={`/animations/${num}.webp`}
+            alt={`Acceso Design Showreel ${num}`}
+            loading={index === 0 ? "eager" : "lazy"}
+          />
+        </div>
+      </div>
+    ))}
+
+    {/* Clones Start [1, 2] */}
+    <div class="reel-item clone" data-index="0">
+      <div class="scale-wrapper">
+        <img src="/animations/1.webp" alt="Clone 1" loading="lazy" />
+      </div>
+    </div>
+    <div class="reel-item clone" data-index="1">
+      <div class="scale-wrapper">
+        <img src="/animations/2.webp" alt="Clone 2" loading="lazy" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initSlider() {
+    const track = document.querySelector('.slider-track');
+    if (!track) return;
+
+    const items = Array.from(track.querySelectorAll('.reel-item'));
+    const wrappers = items.map(item => item.querySelector('.scale-wrapper'));
+    
+    // Config
+    const clonesBefore = 2; 
+    const realCount = 4;
+    const intervalTime = 3000;
+    const transitionTime = 600;
+
+    let currentIndex = clonesBefore; 
+    let autoPlayInterval;
+    let isTransitioning = false;
+
+    const updateVisuals = (smooth) => {
+      // 1. Calculate Track Position
+      const trackWidth = track.parentElement.offsetWidth;
+      const itemRect = items[0].getBoundingClientRect();
+      const itemWidth = itemRect.width;
+      const style = window.getComputedStyle(track);
+      const gap = parseFloat(style.gap) || 32;
+      const stride = itemWidth + gap;
+      
+      const centerOffset = (trackWidth / 2) - (itemWidth / 2);
+      const targetX = -(currentIndex * stride) + centerOffset;
+
+      // 2. Apply Track Transition
+      if (smooth) {
+        track.style.transition = `transform ${transitionTime}ms cubic-bezier(0.2, 0.8, 0.2, 1)`;
+      } else {
+        track.style.transition = 'none';
+      }
+      track.style.transform = `translateX(${targetX}px)`;
+
+      // 3. Update Item Scales
+      wrappers.forEach((wrapper, i) => {
+        if (smooth) {
+           wrapper.style.transition = `transform ${transitionTime}ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity ${transitionTime}ms ease`;
+        } else {
+           wrapper.style.transition = 'none';
+        }
+
+        if (i === currentIndex) {
+          wrapper.style.transform = 'scale(1)';
+          wrapper.style.opacity = '1';
+        } else {
+          wrapper.style.transform = 'scale(0.85)';
+          wrapper.style.opacity = '0.5';
+        }
+      });
+    };
+
+    const handleTransitionEnd = () => {
+      if (!isTransitioning) return;
+
+      // Check loop conditions
+      const totalIndex = clonesBefore + realCount; // Index 6 (Clone 1) matches Index 2 (Real 1)
+      
+      if (currentIndex === totalIndex) {
+        // We are at Clone 1 (visually Real 1)
+        // Snap back to Real 1
+        currentIndex = clonesBefore;
+        
+        // Force Reflow to ensure 'none' transition is applied immediately
+        requestAnimationFrame(() => {
+           updateVisuals(false); 
+           isTransitioning = false;
+        });
+      } else {
+        isTransitioning = false;
+      }
+    };
+
+    track.addEventListener('transitionend', handleTransitionEnd);
+
+    const nextSlide = () => {
+      if (isTransitioning) return;
+      isTransitioning = true;
+      currentIndex++;
+      updateVisuals(true);
+    };
+
+    const start = () => {
+      // Initial render without animation
+      updateVisuals(false);
+      clearInterval(autoPlayInterval);
+      autoPlayInterval = setInterval(nextSlide, intervalTime);
+    };
+    
+    // Robust resize handling
+    new ResizeObserver(() => {
+       if (!isTransitioning) updateVisuals(false);
+    }).observe(track.parentElement);
+
+    // Go
+    requestAnimationFrame(start);
+  }
+
+  initSlider();
+  document.addEventListener('astro:page-load', initSlider);
+</script>
+
+<style>
+  .hero-showreel-container {
+    width: 100%;
+    height: 240px; 
+    margin-top: 0px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slider-track {
+    display: flex;
+    gap: 32px;
+    height: 100%;
+    width: max-content;
+    will-change: transform;
+    padding: 0; 
+    margin: 0;
+  }
+
+  .reel-item {
+    aspect-ratio: 16 / 9;
+    height: 100%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scale-wrapper {
+    width: 100%;
+    height: 100%;
+    /* Transition controlled via JS now */
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .scale-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  @media (max-width: 768px) {
+    .reel-item {
+       height: auto;
+       width: 280px; 
+       aspect-ratio: 16/9;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .hero-showreel-container {
+      height: 260px; 
+      margin-bottom: 48px;
+    }
+  }
+</style>
