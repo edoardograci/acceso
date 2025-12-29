@@ -151,7 +151,17 @@ try {
   <section class="hero-section">
     <div class="hero-content">
       <div class="hero-showreel-container">
-        <img src="/animations/showreel.gif" alt="Acceso Design Animation" class="hero-showreel" />
+        <div class="showreel-wrapper">
+          {[1, 2, 3, 4].map((num, index) => (
+            <div class="showreel-slide">
+              <img 
+                src={`/animations/${num}.webp`}
+                alt={`Acceso Design Showreel ${num}`}
+                loading={index === 0 ? 'eager' : 'lazy'}
+              />
+            </div>
+          ))}
+        </div>
       </div>
       <h1 class="hero-title">Discover independent<br/>design studios worldwide</h1>
       <p class="hero-subtitle">A curated index of studios and objects revealing local design scenes, city by city.</p>
@@ -305,26 +315,83 @@ try {
     margin-bottom: 40px; /* Reduced gap before carousel */
   }
 
-  .hero-showreel-container {
-    width: 100%;
-    max-width: 480px;
-    height: 270px;
-    margin-bottom: 16px; /* Tightened */
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
-    pointer-events: none;
-  }
+.hero-showreel-container {
+  width: 100%;
+  max-width: 480px;
+  height: 270px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .hero-showreel {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 270px; /* Physical width (becomes visual height) */
-    height: 480px; /* Physical height (becomes visual width) */
-    transform: translate(-50%, -50%) rotate(90deg) scale(1.02);
-    object-fit: cover;
+.showreel-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.showreel-slide {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  animation: premiumSlide 20s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.showreel-slide:nth-child(1) { 
+  animation-delay: 0s;
+}
+.showreel-slide:nth-child(2) { 
+  animation-delay: 5s;
+}
+.showreel-slide:nth-child(3) { 
+  animation-delay: 10s;
+}
+.showreel-slide:nth-child(4) { 
+  animation-delay: 15s;
+}
+
+.showreel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes premiumSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(100%) scale(1.1);
+    filter: brightness(0.7) blur(8px);
   }
+  4% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: brightness(1) blur(0px);
+  }
+  21% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: brightness(1) blur(0px);
+  }
+  25% {
+    opacity: 0;
+    transform: translateX(-100%) scale(1.1);
+    filter: brightness(0.7) blur(8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%) scale(1.1);
+    filter: brightness(0.7) blur(8px);
+  }
+}
 
   .hero-title {
     margin-top: 0;
@@ -464,24 +531,37 @@ try {
   }
 
   @media (min-width: 1024px) {
-    .hero-showreel-container {
-      max-width: 800px;
-      height: 450px;
-      margin-bottom: 48px;
+  .hero-showreel-container {
+    max-width: 800px;
+    height: 450px;
+    margin-bottom: 48px;
+  }
+  
+  @keyframes premiumSlide {
+    0% {
+      opacity: 0;
+      transform: translateX(120%) scale(1.15) rotate(2deg);
+      filter: brightness(0.6) blur(12px);
     }
-
-    .hero-showreel {
-      width: 450px;
-      height: 800px;
-      transform: translate(-50%, -50%) rotate(90deg) scale(1.02);
+    4% {
+      opacity: 1;
+      transform: translateX(0) scale(1) rotate(0deg);
+      filter: brightness(1) blur(0px);
     }
-
-    .hero-section {
-      padding-top: 60px;
+    21% {
+      opacity: 1;
+      transform: translateX(0) scale(1.02) rotate(0deg);
+      filter: brightness(1) blur(0px);
     }
-    
-    .hero-title {
-      font-size: 72px;
+    25% {
+      opacity: 0;
+      transform: translateX(-120%) scale(1.15) rotate(-2deg);
+      filter: brightness(0.6) blur(12px);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-120%) scale(1.15) rotate(-2deg);
+      filter: brightness(0.6) blur(12px);
     }
   }
 
@@ -746,11 +826,35 @@ try {
     .hero-content {
       margin-bottom: 48px; /* More space before carousel */
     }
+  .hero-showreel-container {
+    margin-top: -40px;
+    margin-bottom: 16px;
+  }
 
-    .hero-showreel-container {
-      margin-top: -40px; /* Pull showreel up towards navbar */
-      margin-bottom: 32px; /* Add space below showreel */
+  .showreel-indicators {
+    bottom: 12px;
+    gap: 6px;
+  }
+
+  .indicator {
+    width: 24px;
+    height: 2.5px;
+  }
+
+  @keyframes indicatorPulse {
+    0%, 100% {
+      background: rgba(255, 255, 255, 0.25);
+      width: 24px;
     }
+    5%, 23% {
+      background: rgba(255, 224, 0, 0.3);
+      width: 36px;
+    }
+    28% {
+      background: rgba(255, 255, 255, 0.25);
+      width: 24px;
+    }
+  }
 
     .hero-title {
       margin-bottom: 24px;
