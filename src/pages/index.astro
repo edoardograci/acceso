@@ -59,9 +59,25 @@ interface Studio {
 let activeSpotlight: SpotlightItem | null = null;
 let spotlightImages: ProductImage[] = [];
 let designerStudio: Studio | null = null;
+let carouselCities: string[] = [];
 
 try {
-  // Fetch spotlight.json
+  // Fetch all studios for cities list
+  const studiosUrl = new URL('/studios.json', Astro.url.origin);
+  const studiosResponse = await fetch(studiosUrl.toString());
+  
+  if (studiosResponse.ok) {
+    const studios: Studio[] = await studiosResponse.json();
+    
+    // Extract unique cities
+    const dbCities = [...new Set(studios.map(s => s.city))];
+    const userCities = ['Milan', 'London', 'Paris', 'Berlin', 'Copenhagen', 'Tokyo', 'Seoul'];
+    carouselCities = [...new Set([...userCities, ...dbCities])].sort((a, b) => {
+      // Keep user cities in front or just alpha sort
+      return a.localeCompare(b);
+    });
+
+    // Fetch spotlight.json
   const spotlightUrl = new URL('/spotlight.json', Astro.url.origin);
   const spotlightResponse = await fetch(spotlightUrl.toString());
   
@@ -118,16 +134,11 @@ try {
 
       // Fetch designer studio info
       if (activeSpotlight.product.designer) {
-        const studiosUrl = new URL('/studios.json', Astro.url.origin);
-        const studiosResponse = await fetch(studiosUrl.toString());
-        
-        if (studiosResponse.ok) {
-          const studios: Studio[] = await studiosResponse.json();
-          designerStudio = studios.find(s => s.name === activeSpotlight.product.designer) || null;
-        }
+        designerStudio = studios.find(s => s.name === activeSpotlight!.product!.designer) || null;
       }
     }
   }
+}
 } catch (e) {
   console.error('Failed to fetch spotlight:', e);
 }
@@ -135,6 +146,35 @@ try {
 
 <Layout title="Acceso Design">
   <Navbar />
+  
+  {/* Hero Section */}
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="hero-showreel-container">
+        <img src="/animations/showreel.gif" alt="Acceso Design Animation" class="hero-showreel" />
+      </div>
+      <h1 class="hero-title">Discover independent<br/>design studios worldwide</h1>
+      <p class="hero-subtitle">A curated index of studios and objects revealing local design scenes, city by city.</p>
+      
+      <div class="hero-actions">
+        <a href="/designers" class="btn-secondary">Browse studios</a>
+        <a href="/map" class="btn-primary">Explore by city</a>
+      </div>
+    </div>
+
+    <div class="hero-lower">
+      <div class="carousel-container">
+        <div class="carousel-track">
+          {/* Duplicate for infinite loop */}
+          {[...carouselCities, ...carouselCities, ...carouselCities, ...carouselCities].map((city) => (
+            <a href={`/designers?city=${city}`} class="city-pill">
+              {city}
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
   
   <main class="spotlight-page">
   {activeSpotlight?.product && spotlightImages.length > 0 ? (
@@ -144,7 +184,7 @@ try {
       
       {/* Header Section */}
       <div class="spotlight-header">
-        <h1 class="spotlight-heading">SPOTLIGHT OF<br/>THE WEEK</h1>
+        <h2 class="spotlight-heading">SPOTLIGHT OF<br/>THE WEEK</h2>
         <div class="week-badge">#1 week</div>
       </div>
 
@@ -240,9 +280,233 @@ try {
 </Layout>
 
 <style>
+  /* Hero Section */
+  .hero-section {
+    padding: 24px var(--spacing-page) 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Center everything as a tight group */
+    text-align: center;
+    background: var(--color-black);
+    height: 100vh;
+    height: 100dvh;
+    min-height: 550px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .hero-content {
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40px; /* Reduced gap before carousel */
+  }
+
+  .hero-showreel-container {
+    width: 100%;
+    max-width: 480px;
+    height: 270px;
+    margin-bottom: 16px; /* Tightened */
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  .hero-showreel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 270px; /* Physical width (becomes visual height) */
+    height: 480px; /* Physical height (becomes visual width) */
+    transform: translate(-50%, -50%) rotate(90deg) scale(1.02);
+    object-fit: cover;
+  }
+
+  .hero-title {
+    margin-top: 0;
+
+    font-family: var(--font-mono);
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+    color: var(--color-white);
+  }
+
+  .hero-subtitle {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--color-gray);
+    max-width: 600px;
+    margin: 0 auto 24px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 32px;
+    background: var(--color-yellow);
+    color: var(--color-black);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    color: var(--color-black);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 32px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    color: var(--color-white);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--color-white);
+    transform: translateY(-2px);
+  }
+
+  .hero-lower {
+    width: 100%;
+    max-width: 1200px;
+    margin-top: 0;
+  }
+
+  .lower-title {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 300;
+    margin-bottom: 32px;
+    color: var(--color-white);
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Carousel */
+  .carousel-container {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    padding: 12px 0; /* Reduced vertical padding */
+  }
+
+  .carousel-container::before,
+  .carousel-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .carousel-container::before {
+    left: 0;
+    background: linear-gradient(to right, var(--color-black), transparent);
+  }
+
+  .carousel-container::after {
+    right: 0;
+    background: linear-gradient(to left, var(--color-black), transparent);
+  }
+
+  .carousel-track {
+    display: flex;
+    gap: 16px;
+    width: max-content;
+    animation: scroll 60s linear infinite;
+  }
+
+  .carousel-track:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-25%);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .hero-showreel-container {
+      max-width: 800px;
+      height: 450px;
+      margin-bottom: 48px;
+    }
+
+    .hero-showreel {
+      width: 450px;
+      height: 800px;
+      transform: translate(-50%, -50%) rotate(90deg) scale(1.02);
+    }
+
+    .hero-section {
+      padding-top: 60px;
+    }
+    
+    .hero-title {
+      font-size: 72px;
+    }
+  }
+
+  .city-pill {
+    padding: 8px 24px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+
+  .city-pill:hover {
+    border-color: var(--color-yellow);
+    color: var(--color-yellow);
+  }
+
   .spotlight-page {
     position: relative;
-    min-height: 100vh;
+    padding-top: 80px;
+    min-height: auto;
     background: var(--color-black);
   }
 
@@ -474,12 +738,50 @@ try {
   }
 
   @media (max-width: 768px) {
+    .hero-section {
+      padding: 0 var(--spacing-page) 32px;
+      min-height: 500px;
+    }
+
+    .hero-content {
+      margin-bottom: 48px; /* More space before carousel */
+    }
+
+    .hero-showreel-container {
+      margin-top: -40px; /* Pull showreel up towards navbar */
+      margin-bottom: 32px; /* Add space below showreel */
+    }
+
+    .hero-title {
+      margin-bottom: 24px;
+    }
+
+    .hero-subtitle {
+      margin-bottom: 48px; /* More space between text and buttons */
+    }
+
     .spotlight-heading {
       font-size: 28px;
     }
 
     .product-name {
       font-size: 24px;
+    }
+
+    .hero-title {
+      font-size: 36px;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+    }
+
+    .lower-title {
+      font-size: 16px;
+    }
+
+    .carousel-track {
+      animation-duration: 40s;
     }
 
     .designer-card-inner {
@@ -500,3 +802,4 @@ try {
     }
   }
 </style>
+
