@@ -153,13 +153,22 @@ try {
       <div class="hero-showreel-container">
         <div class="showreel-wrapper">
           {[1, 2, 3, 4].map((num, index) => (
-            <div class="showreel-slide">
+            <div 
+              class="showreel-slide" 
+              data-index={index}
+              style={`animation-delay: ${index * 4}s`}
+            >
               <img 
                 src={`/animations/${num}.webp`}
                 alt={`Acceso Design Showreel ${num}`}
                 loading={index === 0 ? 'eager' : 'lazy'}
               />
             </div>
+          ))}
+        </div>
+        <div class="showreel-indicators">
+          {[0, 1, 2, 3].map((index) => (
+            <span class="indicator" data-index={index}></span>
           ))}
         </div>
       </div>
@@ -315,83 +324,107 @@ try {
     margin-bottom: 40px; /* Reduced gap before carousel */
   }
 
-.hero-showreel-container {
-  width: 100%;
-  max-width: 480px;
-  height: 270px;
-  margin-bottom: 24px;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .hero-showreel-container {
+    width: 100%;
+    max-width: 480px;
+    height: 270px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-.showreel-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .showreel-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-.showreel-slide {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  animation: premiumSlide 20s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-}
-
-.showreel-slide:nth-child(1) { 
-  animation-delay: 0s;
-}
-.showreel-slide:nth-child(2) { 
-  animation-delay: 5s;
-}
-.showreel-slide:nth-child(3) { 
-  animation-delay: 10s;
-}
-.showreel-slide:nth-child(4) { 
-  animation-delay: 15s;
-}
-
-.showreel-slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-@keyframes premiumSlide {
-  0% {
+  .showreel-slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
     opacity: 0;
-    transform: translateX(100%) scale(1.1);
-    filter: brightness(0.7) blur(8px);
+    transform: scale(0.85);
+    animation: slideShow 16s cubic-bezier(0.45, 0, 0.15, 1) infinite;
+    will-change: transform, opacity;
   }
-  4% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-    filter: brightness(1) blur(0px);
+
+  .showreel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
   }
-  21% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-    filter: brightness(1) blur(0px);
+
+  @keyframes slideShow {
+    0% {
+      opacity: 0;
+      transform: scale(0.85) translateX(10%);
+    }
+    6.25% {
+      opacity: 1;
+      transform: scale(1) translateX(0);
+    }
+    25% {
+      opacity: 1;
+      transform: scale(1) translateX(0);
+    }
+    31.25% {
+      opacity: 0;
+      transform: scale(0.85) translateX(-10%);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.85) translateX(-10%);
+    }
   }
-  25% {
-    opacity: 0;
-    transform: translateX(-100%) scale(1.1);
-    filter: brightness(0.7) blur(8px);
+
+  .showreel-indicators {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
   }
-  100% {
-    opacity: 0;
-    transform: translateX(-100%) scale(1.1);
-    filter: brightness(0.7) blur(8px);
+
+  .indicator {
+    width: 32px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    transition: all 0.4s cubic-bezier(0.45, 0, 0.15, 1);
+    animation: indicatorPulse 16s ease-in-out infinite;
   }
-}
+
+  .indicator[data-index="0"] { animation-delay: 0s; }
+  .indicator[data-index="1"] { animation-delay: 4s; }
+  .indicator[data-index="2"] { animation-delay: 8s; }
+  .indicator[data-index="3"] { animation-delay: 12s; }
+
+  @keyframes indicatorPulse {
+    0%, 100% {
+      background: rgba(255, 255, 255, 0.3);
+      width: 32px;
+    }
+    6.25%, 25% {
+      background: rgba(255, 224, 0, 0.9);
+      width: 48px;
+    }
+    31.25% {
+      background: rgba(255, 255, 255, 0.3);
+      width: 32px;
+    }
+  }
 
   .hero-title {
     margin-top: 0;
@@ -531,37 +564,46 @@ try {
   }
 
   @media (min-width: 1024px) {
-  .hero-showreel-container {
-    max-width: 800px;
-    height: 450px;
-    margin-bottom: 48px;
-  }
-  
-  @keyframes premiumSlide {
-    0% {
-      opacity: 0;
-      transform: translateX(120%) scale(1.15) rotate(2deg);
-      filter: brightness(0.6) blur(12px);
+    .hero-showreel-container {
+      max-width: 800px;
+      height: 450px;
+      margin-bottom: 48px;
     }
-    4% {
-      opacity: 1;
-      transform: translateX(0) scale(1) rotate(0deg);
-      filter: brightness(1) blur(0px);
+
+    .showreel-slide img {
+      border-radius: 12px;
     }
-    21% {
-      opacity: 1;
-      transform: translateX(0) scale(1.02) rotate(0deg);
-      filter: brightness(1) blur(0px);
+
+    .showreel-indicators {
+      bottom: 24px;
     }
-    25% {
-      opacity: 0;
-      transform: translateX(-120%) scale(1.15) rotate(-2deg);
-      filter: brightness(0.6) blur(12px);
+
+    .indicator {
+      width: 40px;
+      height: 4px;
     }
-    100% {
-      opacity: 0;
-      transform: translateX(-120%) scale(1.15) rotate(-2deg);
-      filter: brightness(0.6) blur(12px);
+
+    @keyframes indicatorPulse {
+      0%, 100% {
+        background: rgba(255, 255, 255, 0.3);
+        width: 40px;
+      }
+      6.25%, 25% {
+        background: rgba(255, 224, 0, 0.9);
+        width: 64px;
+      }
+      31.25% {
+        background: rgba(255, 255, 255, 0.3);
+        width: 40px;
+      }
+    }
+
+    .hero-section {
+      padding-top: 60px;
+    }
+    
+    .hero-title {
+      font-size: 72px;
     }
   }
 
@@ -826,35 +868,35 @@ try {
     .hero-content {
       margin-bottom: 48px; /* More space before carousel */
     }
-  .hero-showreel-container {
-    margin-top: -40px;
-    margin-bottom: 16px;
-  }
 
-  .showreel-indicators {
-    bottom: 12px;
-    gap: 6px;
-  }
+    .hero-showreel-container {
+      margin-top: -40px; /* Pull showreel up towards navbar */
+      margin-bottom: 16px; /* Tightened */
+    }
 
-  .indicator {
-    width: 24px;
-    height: 2.5px;
-  }
+    .showreel-indicators {
+      bottom: 12px;
+    }
 
-  @keyframes indicatorPulse {
-    0%, 100% {
-      background: rgba(255, 255, 255, 0.25);
+    .indicator {
       width: 24px;
+      height: 2.5px;
     }
-    5%, 23% {
-      background: rgba(255, 224, 0, 0.3);
-      width: 36px;
+
+    @keyframes indicatorPulse {
+      0%, 100% {
+        background: rgba(255, 255, 255, 0.3);
+        width: 24px;
+      }
+      6.25%, 25% {
+        background: rgba(255, 224, 0, 0.9);
+        width: 36px;
+      }
+      31.25% {
+        background: rgba(255, 255, 255, 0.3);
+        width: 24px;
+      }
     }
-    28% {
-      background: rgba(255, 255, 255, 0.25);
-      width: 24px;
-    }
-  }
 
     .hero-title {
       margin-bottom: 24px;
