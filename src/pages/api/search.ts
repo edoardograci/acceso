@@ -24,6 +24,7 @@ interface EnrichmentData {
   images: {
     [imageId: string]: {
       embedding_text: string;
+      image_url: string;
       enrichment: any;
     };
   };
@@ -163,7 +164,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Query Vectorize
     const vectorizeResult = await env.VECTORIZE.query(queryEmbedding, {
       topK: 100,
-      returnMetadata: 'indexed',
+      returnMetadata: 'all',
       returnValues: false,
     });
     console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} semantic matches`);
@@ -211,7 +212,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       let product_id = match.metadata?.product_id;
 
       if (!product_id) {
-        // More permissive regex: match anything after moodboard/ until next slash or end of string
+        // Fallback 1: Regex on folder/key
         if (match.metadata?.folder) {
           const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)/);
           if (folderMatch) product_id = folderMatch[1];
@@ -220,23 +221,34 @@ export const POST: APIRoute = async ({ request, locals }) => {
           const keyMatch = match.metadata.key.match(/moodboard\/([^\/]+)/);
           if (keyMatch) product_id = keyMatch[1];
         }
+
+        // Fallback 2: Parse from Match ID (pattern: UUID-img-N)
+        if (!product_id && match.id.includes('-img-')) {
+          product_id = match.id.split('-img-')[0];
+        }
       }
 
       // Determine image_url
-      const image_url = match.metadata?.url || (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
+      let image_url = match.metadata?.url || (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
 
       if (!product_id) {
-        if (isFirstFew) console.log(`[DEBUG] No product_id extracted for ${match.id}, falling back to match.id`);
-        product_id = match.id;
-      }
-
-      if (!image_url) {
-        if (isFirstFew) console.log(`[DEBUG] Skipping match ${match.id}: No image_url extracted`);
-        skipped_count++;
-        continue;
+        if (isFirstFew) console.log(`[DEBUG] No product_id extracted for ${match.id}, falling back to Match ID prefix`);
+        product_id = match.id.includes('-img-') ? match.id.split('-img-')[0] : match.id;
       }
 
       const enrichment = enrichmentMap.get(product_id);
+
+      // Ultimate Fallback: If image_url is missing (because metadata is null), get it from enrichment
+      if (!image_url && enrichment && enrichment.images[match.id]) {
+        if (isFirstFew) console.log(`[DEBUG] Recovered image_url from enrichment for ${match.id}`);
+        image_url = enrichment.images[match.id].image_url;
+      }
+
+      if (!image_url) {
+        if (isFirstFew) console.log(`[DEBUG] Skipping match ${match.id}: No image_url even after fallback`);
+        skipped_count++;
+        continue;
+      }
 
       // Keyword scoring
       let keyword_score = 0;

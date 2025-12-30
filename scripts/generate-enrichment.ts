@@ -24,6 +24,7 @@ interface MoodboardEnrichment {
         images: {
             [imageId: string]: {
                 embedding_text: string;
+                image_url: string;
                 enrichment: any;
             };
         };
@@ -66,6 +67,7 @@ async function generateEnrichmentData() {
             sql: `SELECT 
               pi.product_id,
               pi.id as image_id,
+              pi.image_url,
               pi.embedding_text,
               pi.enrichment_json
             FROM product_images pi
@@ -145,6 +147,7 @@ async function generateEnrichmentData() {
             // Store image enrichment
             enrichment[productId].images[imageId] = {
                 embedding_text: row.embedding_text || '',
+                image_url: row.image_url || '',
                 enrichment: enrichmentData
             };
         });
