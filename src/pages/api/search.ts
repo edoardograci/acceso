@@ -180,10 +180,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const queryEmbedding = embeddingsResponse.data[0];
 
     // 2. Query Vectorize for semantic matches
-    const vectorizeResult = (await env.VECTORIZE.query(queryEmbedding, {
-      topK: 100, // Get more candidates for hybrid ranking
-      returnMetadata: 'all',
-    })) as VectorizeResult;
+    const vectorizeResult = await env.VECTORIZE.query(queryEmbedding, {
+      topK: 100,
+      returnMetadata: 'indexed',
+      returnValues: false,
+    })
 
     console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} semantic matches`);
 
