@@ -1,5 +1,4 @@
 // scripts/generate-spotlight.ts
-import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 
@@ -127,13 +126,10 @@ async function generateSpotlightData() {
     console.error('  TURSO_DATABASE_URL:', dbUrl ? '✅ Set' : '❌ Missing');
     console.error('  TURSO_AUTH_TOKEN:   ', authToken ? '✅ Set' : '❌ Missing');
 
-    const envKeys = Object.keys(process.env);
-    const relatedKeys = envKeys.filter(k =>
-      k.includes('TURSO') || k.includes('DATABASE') || k.includes('DB') || k.includes('URL')
-    );
-    if (relatedKeys.length > 0) {
-      console.error('\nRelated environment variables found:', relatedKeys.join(', '));
-    }
+    const envKeys = Object.keys(process.env).sort();
+    console.error('\n--- EXHAUSTIVE ENVIRONMENT KEY LIST ---');
+    console.error(envKeys.join(', '));
+    console.error('----------------------------------------');
 
     process.exit(1);
   }

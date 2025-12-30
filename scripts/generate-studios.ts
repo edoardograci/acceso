@@ -1,5 +1,4 @@
 // scripts/generate-studios.ts
-import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 
@@ -126,14 +125,11 @@ async function generateStudiosData() {
     console.error('  TURSO_DATABASE_URL:', dbUrl ? '✅ Set' : '❌ Missing');
     console.error('  TURSO_AUTH_TOKEN:   ', authToken ? '✅ Set' : '❌ Missing');
 
-    // Help debug by showing related keys that ARE present
-    const envKeys = Object.keys(process.env);
-    const relatedKeys = envKeys.filter(k =>
-      k.includes('TURSO') || k.includes('DATABASE') || k.includes('DB') || k.includes('URL')
-    );
-    if (relatedKeys.length > 0) {
-      console.error('\nRelated environment variables found:', relatedKeys.join(', '));
-    }
+    // EXHAUSTIVE DEBUG: Print every key we can see
+    const envKeys = Object.keys(process.env).sort();
+    console.error('\n--- EXHAUSTIVE ENVIRONMENT KEY LIST ---');
+    console.error(envKeys.join(', '));
+    console.error('----------------------------------------');
 
     process.exit(1);
   }

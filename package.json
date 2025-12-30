@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "prebuild": "node -r dotenv/config node_modules/.bin/tsx scripts/generate-studios.ts && node -r dotenv/config node_modules/.bin/tsx scripts/generate-moodboard.ts && node -r dotenv/config node_modules/.bin/tsx scripts/generate-spotlight.ts && node -r dotenv/config node_modules/.bin/tsx scripts/generate-enrichment.ts",
+    "prebuild": "tsx scripts/generate-studios.ts && tsx scripts/generate-moodboard.ts && tsx scripts/generate-spotlight.ts && tsx scripts/generate-enrichment.ts",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
