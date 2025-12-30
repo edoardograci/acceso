@@ -197,23 +197,44 @@ export const POST: APIRoute = async ({ request, locals }) => {
       keyword_matches: string[];
       match_type: string;
     }>();
+    let skipped_count = 0;
 
     for (const match of vectorizeResult.matches) {
+      const isFirstFew = vectorizeResult.matches.indexOf(match) < 10;
+
+      if (isFirstFew) {
+        console.log(`[DEBUG] Match ${match.id}: metadata keys: ${Object.keys(match.metadata || {}).join(', ')}`);
+        console.log(`[DEBUG] Match ${match.id} metadata:`, JSON.stringify(match.metadata));
+      }
+
       // Extract product_id
       let product_id = match.metadata?.product_id;
-      if (!product_id && match.metadata?.folder) {
-        const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
-        if (folderMatch) product_id = folderMatch[1];
-      }
-      if (!product_id && match.metadata?.key) {
-        const keyMatch = match.metadata.key.match(/moodboard\/([^\/]+)\//);
-        if (keyMatch) product_id = keyMatch[1];
-      }
-      if (!product_id) continue;
 
-      // Determine image_url (allow all matches, not just moodboard/)
+      if (!product_id) {
+        // More permissive regex: match anything after moodboard/ until next slash or end of string
+        if (match.metadata?.folder) {
+          const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)/);
+          if (folderMatch) product_id = folderMatch[1];
+        }
+        if (!product_id && match.metadata?.key) {
+          const keyMatch = match.metadata.key.match(/moodboard\/([^\/]+)/);
+          if (keyMatch) product_id = keyMatch[1];
+        }
+      }
+
+      // Determine image_url
       const image_url = match.metadata?.url || (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
-      if (!image_url) continue;
+
+      if (!product_id) {
+        if (isFirstFew) console.log(`[DEBUG] No product_id extracted for ${match.id}, falling back to match.id`);
+        product_id = match.id;
+      }
+
+      if (!image_url) {
+        if (isFirstFew) console.log(`[DEBUG] Skipping match ${match.id}: No image_url extracted`);
+        skipped_count++;
+        continue;
+      }
 
       const enrichment = enrichmentMap.get(product_id);
 
@@ -277,6 +298,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           semantic_matches: vectorizeResult.matches.length,
           hybrid_matches: rankedResults.length,
           enrichment_loaded: enrichmentMap.size > 0,
+          skipped_matches: skipped_count,
           filter_applied: 'permissive',
         },
       } as SearchResponse),
