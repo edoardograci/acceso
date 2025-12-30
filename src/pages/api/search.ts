@@ -115,21 +115,28 @@ function calculateKeywordScore(
 /**
  * Load static enrichment data
  */
-async function loadEnrichment(): Promise<Map<string, EnrichmentData>> {
+async function loadEnrichment(origin: string): Promise<Map<string, EnrichmentData>> {
   try {
-    const response = await fetch(
-      new URL('/moodboard-enrichment.json', 'https://acceso-4xj.pages.dev').toString()
-    );
-    if (!response.ok) throw new Error('Failed to load enrichment');
+    // Try to load from the current origin first
+    const enrichmentUrl = new URL('/moodboard-enrichment.json', origin).toString();
+    console.log(`Loading enrichment from: ${enrichmentUrl}`);
+
+    const response = await fetch(enrichmentUrl);
+    if (!response.ok) {
+      console.warn(`Failed to load from ${enrichmentUrl}, status: ${response.status}. Falling back to production URL.`);
+      // Fallback to production URL if current origin fails or is being built
+      const fallbackUrl = 'https://acceso-4xj.pages.dev/moodboard-enrichment.json';
+      const fallbackResponse = await fetch(fallbackUrl);
+      if (!fallbackResponse.ok) throw new Error(`Failed to load enrichment from fallback ${fallbackUrl}`);
+      const data = await fallbackResponse.json();
+      return new Map(Object.entries(data));
+    }
 
     const data = await response.json();
     console.log(`Successfully loaded enrichment for ${Object.keys(data).length} products`);
     return new Map(Object.entries(data));
   } catch (error) {
-    console.error(
-      'Failed to load enrichment data from https://acceso-4xj.pages.dev/moodboard-enrichment.json:',
-      error
-    );
+    console.error('Failed to load enrichment data:', error);
     return new Map();
   }
 }
@@ -164,7 +171,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Load static enrichment data
-    const enrichmentMap = await loadEnrichment();
+    const url = new URL(request.url);
+    const enrichmentMap = await loadEnrichment(url.origin);
     console.log(`Loaded enrichment for ${enrichmentMap.size} products`);
 
     // 1. Generate query embedding
