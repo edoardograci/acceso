@@ -52,97 +52,90 @@ interface SearchResponse {
   debug?: any;
 }
 
-// Keyword matching configuration
-const KEYWORD_BOOST = 0.25; // How much to boost keyword matches
-const EXACT_MATCH_BOOST = 0.35; // Extra boost for exact keyword matches
-
-function normalizeText(text: string): string {
-  return text.toLowerCase().trim().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ');
-}
-
-function tokenize(text: string): string[] {
-  return normalizeText(text).split(' ').filter(t => t.length > 0);
-}
-
-/**
- * Calculate keyword match score based on enrichment data
- */
-function calculateKeywordScore(
-  query: string,
-  enrichment: EnrichmentData
-): { score: number; matches: string[] } {
-  const queryTokens = tokenize(query);
-  const queryNormalized = normalizeText(query);
-
-  let score = 0;
-  const matches: string[] = [];
-
-  // Check all keywords
-  const allText = [
-    ...enrichment.metadata.all_keywords,
-    ...enrichment.metadata.materials,
-    ...enrichment.metadata.colors,
-    ...enrichment.metadata.styles
-  ].map(k => normalizeText(k));
-
-  for (const keyword of allText) {
-    // Exact match (full query matches keyword)
-    if (keyword === queryNormalized) {
-      score += EXACT_MATCH_BOOST;
-      matches.push(keyword);
-      continue;
-    }
-
-    // Partial match (keyword contains query or vice versa)
-    if (keyword.includes(queryNormalized) || queryNormalized.includes(keyword)) {
-      score += KEYWORD_BOOST * 0.8;
-      matches.push(keyword);
-      continue;
-    }
-
-    // Token overlap
-    const keywordTokens = tokenize(keyword);
-    const overlap = queryTokens.filter(qt => keywordTokens.some(kt => kt.includes(qt) || qt.includes(kt)));
-    if (overlap.length > 0) {
-      score += KEYWORD_BOOST * (overlap.length / queryTokens.length) * 0.5;
-      matches.push(keyword);
-    }
-  }
-
-  return { score: Math.min(score, 0.5), matches }; // Cap keyword boost at 0.5
-}
-
-/**
- * Load static enrichment data
- */
-async function loadEnrichment(origin: string): Promise<Map<string, EnrichmentData>> {
-  try {
-    // Try to load from the current origin first
-    const enrichmentUrl = new URL('/moodboard-enrichment.json', origin).toString();
-    console.log(`Loading enrichment from: ${enrichmentUrl}`);
-
-    const response = await fetch(enrichmentUrl);
-    if (!response.ok) {
-      console.warn(`Failed to load from ${enrichmentUrl}, status: ${response.status}. Falling back to production URL.`);
-      // Fallback to production URL if current origin fails or is being built
-      const fallbackUrl = 'https://acceso-4xj.pages.dev/moodboard-enrichment.json';
-      const fallbackResponse = await fetch(fallbackUrl);
-      if (!fallbackResponse.ok) throw new Error(`Failed to load enrichment from fallback ${fallbackUrl}`);
-      const data = await fallbackResponse.json();
-      return new Map(Object.entries(data));
-    }
-
-    const data = await response.json();
-    console.log(`Successfully loaded enrichment for ${Object.keys(data).length} products`);
-    return new Map(Object.entries(data));
-  } catch (error) {
-    console.error('Failed to load enrichment data:', error);
-    return new Map();
-  }
-}
-
 export const POST: APIRoute = async ({ request, locals }) => {
   console.log('=== Hybrid Search API Called ===');
+
+  // Runtime-only layout helpers
+  function normalizeText(text: string): string {
+    return text.toLowerCase().trim().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ');
+  }
+
+  function tokenize(text: string): string[] {
+    return normalizeText(text).split(' ').filter(t => t.length > 0);
+  }
+
+  /**
+   * Calculate keyword match score based on enrichment data
+   */
+  function calculateKeywordScore(
+    query: string,
+    enrichment: EnrichmentData
+  ): { score: number; matches: string[] } {
+    const KEYWORD_BOOST = 0.25;
+    const EXACT_MATCH_BOOST = 0.35;
+
+    const queryTokens = tokenize(query);
+    const queryNormalized = normalizeText(query);
+
+    let score = 0;
+    const matches: string[] = [];
+
+    // Check all keywords
+    const allText = [
+      ...(enrichment.metadata.all_keywords || []),
+      ...(enrichment.metadata.materials || []),
+      ...(enrichment.metadata.colors || []),
+      ...(enrichment.metadata.styles || [])
+    ].map(k => normalizeText(k));
+
+    for (const keyword of allText) {
+      if (keyword === queryNormalized) {
+        score += EXACT_MATCH_BOOST;
+        matches.push(keyword);
+        continue;
+      }
+
+      if (keyword.includes(queryNormalized) || queryNormalized.includes(keyword)) {
+        score += KEYWORD_BOOST * 0.8;
+        matches.push(keyword);
+        continue;
+      }
+
+      const keywordTokens = tokenize(keyword);
+      const overlap = queryTokens.filter(qt => keywordTokens.some(kt => kt.includes(qt) || qt.includes(kt)));
+      if (overlap.length > 0) {
+        score += KEYWORD_BOOST * (overlap.length / queryTokens.length) * 0.5;
+        matches.push(keyword);
+      }
+    }
+
+    return { score: Math.min(score, 0.5), matches };
+  }
+
+  /**
+   * Load static enrichment data
+   */
+  async function loadEnrichment(origin: string): Promise<Map<string, EnrichmentData>> {
+    try {
+      const enrichmentUrl = new URL('/moodboard-enrichment.json', origin).toString();
+      const response = await fetch(enrichmentUrl);
+      if (!response.ok) {
+        console.warn(`Failed to load from ${enrichmentUrl}. Trying fallback.`);
+        const fallbackUrl = 'https://acceso-4xj.pages.dev/moodboard-enrichment.json';
+        const fallbackResponse = await fetch(fallbackUrl);
+        if (!fallbackResponse.ok) throw new Error('Failed to load enrichment');
+        const data = await fallbackResponse.json();
+        return new Map(Object.entries(data));
+      }
+
+      const data = await response.json();
+      return new Map(Object.entries(data));
+    } catch (error) {
+      console.error('Failed to load enrichment data:', error);
+      return new Map();
+    }
+  }
+
 
   try {
     const body = await request.json() as { query: string };
