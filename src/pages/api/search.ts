@@ -117,15 +117,19 @@ function calculateKeywordScore(
  */
 async function loadEnrichment(): Promise<Map<string, EnrichmentData>> {
   try {
-    // In production, this is bundled and cached by Cloudflare
-    const response = await fetch(new URL('/moodboard-enrichment.json', 'https://acceso.pages.dev').toString());
+    const response = await fetch(
+      new URL('/moodboard-enrichment.json', 'https://acceso-4xj.pages.dev').toString()
+    );
     if (!response.ok) throw new Error('Failed to load enrichment');
 
     const data = await response.json();
     console.log(`Successfully loaded enrichment for ${Object.keys(data).length} products`);
     return new Map(Object.entries(data));
   } catch (error) {
-    console.error('Failed to load enrichment data from https://acceso.pages.dev/moodboard-enrichment.json:', error);
+    console.error(
+      'Failed to load enrichment data from https://acceso-4xj.pages.dev/moodboard-enrichment.json:',
+      error
+    );
     return new Map();
   }
 }
