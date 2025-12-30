@@ -55,7 +55,9 @@ interface SearchResponse {
 export const POST: APIRoute = async ({ request, locals }) => {
   console.log('=== Hybrid Search API Called ===');
 
+  // ------------------------
   // Helper functions
+  // ------------------------
   function normalizeText(text: string): string {
     return text.toLowerCase().trim().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ');
   }
@@ -125,6 +127,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
+  // ------------------------
+  // Main logic
+  // ------------------------
   try {
     const body = await request.json() as { query: string };
     const { query } = body;
@@ -141,15 +146,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    if (!locals.runtime) {
-      throw new Error('Server environment not initialized correctly');
-    }
-
+    if (!locals.runtime) throw new Error('Server environment not initialized correctly');
     const env = locals.runtime.env as any;
-
-    if (!env || !env.AI || !env.VECTORIZE) {
-      throw new Error('AI or VECTORIZE binding not available');
-    }
+    if (!env || !env.AI || !env.VECTORIZE) throw new Error('AI or VECTORIZE binding not available');
 
     const url = new URL(request.url);
     const enrichmentMap = await loadEnrichment(url.origin);
@@ -158,11 +157,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Generate embedding
     const expandedQuery = `[PRODUCT IMAGE] ${query}`;
     const embeddingsResponse = await env.AI.run('@cf/qwen/qwen3-embedding-0.6b', { text: [expandedQuery] }) as any;
-
-    if (!embeddingsResponse?.data?.[0]) {
-      throw new Error('Failed to generate embeddings');
-    }
-
+    if (!embeddingsResponse?.data?.[0]) throw new Error('Failed to generate embeddings');
     const queryEmbedding = embeddingsResponse.data[0];
 
     // Query Vectorize
@@ -171,7 +166,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       returnMetadata: 'indexed',
       returnValues: false,
     });
-
     console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} semantic matches`);
 
     if (!vectorizeResult.matches || vectorizeResult.matches.length === 0) {
@@ -190,6 +184,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    // ------------------------
+    // Hybrid scoring
+    // ------------------------
     const scoredResults = new Map<string, {
       product_id: string;
       image_url: string;
@@ -202,30 +199,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }>();
 
     for (const match of vectorizeResult.matches) {
+      // Extract product_id
       let product_id = match.metadata?.product_id;
-
-      if (!product_id) {
-        if (match.metadata?.folder) {
-          const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
-          if (folderMatch) product_id = folderMatch[1];
-        }
-        if (!product_id && match.metadata?.key) {
-          const keyMatch = match.metadata.key.match(/moodboard\/([^\/]+)\//);
-          if (keyMatch) product_id = keyMatch[1];
-        }
+      if (!product_id && match.metadata?.folder) {
+        const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
+        if (folderMatch) product_id = folderMatch[1];
       }
-
+      if (!product_id && match.metadata?.key) {
+        const keyMatch = match.metadata.key.match(/moodboard\/([^\/]+)\//);
+        if (keyMatch) product_id = keyMatch[1];
+      }
       if (!product_id) continue;
 
-      const isMoodboard = (match.metadata?.folder?.startsWith('moodboard/')) ||
-        (match.metadata?.key?.startsWith('moodboard/'));
-      if (!isMoodboard) continue;
-
+      // Determine image_url (allow all matches, not just moodboard/)
       const image_url = match.metadata?.url || (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
       if (!image_url) continue;
 
       const enrichment = enrichmentMap.get(product_id);
 
+      // Keyword scoring
       let keyword_score = 0;
       let keyword_matches: string[] = [];
       if (enrichment) {
@@ -285,11 +277,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
           semantic_matches: vectorizeResult.matches.length,
           hybrid_matches: rankedResults.length,
           enrichment_loaded: enrichmentMap.size > 0,
-          filter_applied: 'in-code',
+          filter_applied: 'permissive',
         },
       } as SearchResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     console.error('Hybrid search error:', error);
     return new Response(
