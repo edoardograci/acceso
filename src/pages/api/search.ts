@@ -48,12 +48,12 @@ const ADJECTIVES = new Set([
 
 const CONFIG = {
   GENERIC: {
-    topK: 50,       // Limited to 50 when returnMetadata='all'
-    threshold: 0.60 // Looser threshold to avoid empty results
+    topK: 50,
+    threshold: 0.40 // Debug: Lowered to catch everything
   },
   SPECIFIC: {
-    topK: 50,       // Focused search
-    threshold: 0.72 // Stricter threshold for precision
+    topK: 50,
+    threshold: 0.55 // Debug: Lowered
   }
 };
 
@@ -161,6 +161,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
     })) as VectorizeResult;
 
     console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} raw matches`);
+
+    if (vectorizeResult.matches?.length > 0) {
+      console.log('Top match debug:', {
+        score: vectorizeResult.matches[0].score,
+        id: vectorizeResult.matches[0].id,
+        metadata_sample: {
+          folder: vectorizeResult.matches[0].metadata?.folder,
+          key: vectorizeResult.matches[0].metadata?.key
+        }
+      });
+    }
 
     if (!vectorizeResult.matches || vectorizeResult.matches.length === 0) {
       return new Response(
