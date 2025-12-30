@@ -122,9 +122,10 @@ async function loadEnrichment(): Promise<Map<string, EnrichmentData>> {
     if (!response.ok) throw new Error('Failed to load enrichment');
 
     const data = await response.json();
+    console.log(`Successfully loaded enrichment for ${Object.keys(data).length} products`);
     return new Map(Object.entries(data));
   } catch (error) {
-    console.error('Failed to load enrichment data:', error);
+    console.error('Failed to load enrichment data from https://acceso.pages.dev/moodboard-enrichment.json:', error);
     return new Map();
   }
 }
@@ -182,17 +183,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const queryEmbedding = embeddingsResponse.data[0];
 
     // 2. Query Vectorize for semantic matches
-    // CRITICAL FIX: Add filter to only search moodboard vectors
+    // NOTE: Wildcards like "moodboard/*" are not supported in Cloudflare Vectorize filters.
+    // Removed filter to ensure we get results, we will filter in code if needed.
     const vectorizeResult = await env.VECTORIZE.query(queryEmbedding, {
       topK: 100,
       returnMetadata: 'indexed',
       returnValues: false,
-      filter: { folder: "moodboard/*" } // FIXED: Filter by folder
     });
 
     console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} semantic matches`);
 
     if (!vectorizeResult.matches || vectorizeResult.matches.length === 0) {
+      console.log('No semantic matches found in Vectorize');
       return new Response(
         JSON.stringify({
           success: true,
@@ -201,7 +203,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           debug: {
             semantic_matches: 0,
             keyword_matches: 0,
-            filter_applied: 'moodboard/*'
+            filter_applied: 'none'
           }
         } as SearchResponse),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -237,7 +239,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
 
       if (!productId) {
-        console.warn('Could not extract product_id from match:', match);
+        console.warn('Could not extract product_id from match metadata:', match.metadata);
+        continue;
+      }
+
+      // Filter: Only include moodboard items in code since we removed the DB filter
+      const isMoodboard = (match.metadata?.folder?.startsWith('moodboard/')) ||
+        (match.metadata?.key?.startsWith('moodboard/'));
+
+      if (!isMoodboard) {
+        console.log(`Skipping non-moodboard item: ${productId} (${match.metadata?.folder})`);
         continue;
       }
 
@@ -246,12 +257,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
         (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
 
       if (!imageUrl) {
-        console.warn('Could not determine image URL for match:', match);
+        console.warn('Could not determine image URL for match:', match.id);
         continue;
       }
 
       // Get enrichment data for this product
       const enrichment = enrichmentMap.get(productId);
+      if (!enrichment) {
+        console.log(`No enrichment found for product_id: ${productId}. Available keys: ${Array.from(enrichmentMap.keys()).slice(0, 5)}...`);
+      }
 
       // Calculate keyword score
       let keywordScore = 0;
@@ -319,7 +333,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           semantic_matches: vectorizeResult.matches.length,
           hybrid_matches: rankedResults.length,
           enrichment_loaded: enrichmentMap.size > 0,
-          filter_applied: 'moodboard/*'
+          filter_applied: 'in-code'
         }
       } as SearchResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
