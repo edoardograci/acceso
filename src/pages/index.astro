@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
-import Showreel from '../components/landing/Showreel.astro';
 import Spotlight from '../components/landing/Spotlight.astro';
 
 interface ProductImage {
@@ -122,9 +121,13 @@ try {
   {/* Hero Section */}
   <section class="hero-section">
     <div class="hero-content">
-        <Showreel />
+      <div class="hero-image-wrapper">
+        <img src="/images/hero-image.png" alt="Acceso Design Hero" class="hero-static-image" width="1200" height="675" />
+        <div class="hero-gradient-overlay"></div>
+      </div>
+
       <h1 class="hero-title">Discover independent<br/>design studios worldwide</h1>
-      <p class="hero-subtitle">A curated index of studios and objects revealing local design scenes, city by city.</p>
+      <p class="hero-subtitle">A curated index of studios and objects rooted in local design scenes around the world.</p>
       
       <div class="hero-actions">
         <a href="/designers" class="btn-secondary">Browse studios</a>
@@ -146,6 +149,7 @@ try {
     </div>
   </section>
   
+  {/* 
   <main class="spotlight-page">
     <Spotlight 
       activeSpotlight={activeSpotlight} 
@@ -153,6 +157,7 @@ try {
       designerStudio={designerStudio} 
     />
   </main>
+  */}
 </Layout>
 
 <style>
@@ -172,12 +177,57 @@ try {
   }
 
   .hero-content {
-    max-width: 800px;
+    max-width: 1000px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-bottom: 40px; /* Reduced gap before carousel */
+    margin-bottom: 40px;
+  }
+
+  /* Hero Static Image */
+  .hero-image-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    margin-bottom: 64px;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    /* Explicitly kill all potential border/box artifacts */
+    border: none !important;
+    outline: none !important;
+    background: var(--color-black); /* Match bg to hide any bleed */
+
+  }
+
+  .hero-static-image {
+    position:relative;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    top: -1px;
+  }
+
+  .hero-gradient-overlay {
+    position: absolute;
+    /* Deeply over-extend in all directions to capture 100% of sub-pixel rendering gaps */
+    bottom: -10px; 
+    left: -10px;
+    right: -10px;
+    height: 60%; 
+    background: linear-gradient(
+      to top,
+      var(--color-black) 0%,
+      var(--color-black) 40%,
+      rgba(15, 15, 15, 0.8) 65%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 2;
   }
 
 
@@ -284,21 +334,21 @@ try {
   .carousel-container::after {
     content: "";
     position: absolute;
-    top: 0;
+    top: -2px; /* Slight vertical overlap */
+    bottom: -2px;
     width: 100px;
-    height: 100%;
     z-index: 2;
     pointer-events: none;
   }
 
   .carousel-container::before {
-    left: 0;
-    background: linear-gradient(to right, var(--color-black), transparent);
+    left: -2px; /* Deep overlap on the left edge */
+    background: linear-gradient(to right, var(--color-black) 0%, transparent 100%);
   }
 
   .carousel-container::after {
-    right: 0;
-    background: linear-gradient(to left, var(--color-black), transparent);
+    right: -2px; /* Deep overlap on the right edge */
+    background: linear-gradient(to left, var(--color-black) 0%, transparent 100%);
   }
 
   .carousel-track {
@@ -322,17 +372,46 @@ try {
     }
   }
 
-  @media (min-width: 1024px) {
+  @media (min-width: 769px) {
     .hero-section {
-      padding-top: 48px; /* Push content down below navbar */
-      height: auto; /* Allow growth */
-      min-height: 100vh; /* Restore full height on desktop */
-      overflow: visible; /* CRITICAL: Allow filters to be seen */
-      justify-content: flex-start; /* Ensure top alignment */
+      padding-top: 80px;
+      height: auto;
+      min-height: 100vh;
+      overflow: visible;
+      justify-content: flex-start;
     }
     
+    .hero-content {
+      display: grid !important;
+      grid-template-columns: 1fr;
+      justify-items: center;
+      gap: 0;
+    }
+
     .hero-title {
+      grid-row: 1;
       font-size: 64px;
+      margin-bottom: 24px;
+    }
+
+    .hero-subtitle {
+      grid-row: 2;
+      margin-bottom: 32px;
+    }
+
+    .hero-actions {
+      grid-row: 3;
+      margin-bottom: 80px; /* Space before image */
+    }
+
+    .hero-image-wrapper {
+      grid-row: 4;
+      margin-top: 0;
+      margin-bottom: 0;
+      box-shadow: none;
+      max-width: 1100px;
+      width: 100%;
+      inset: 0;
     }
   }
 
@@ -343,7 +422,9 @@ try {
   .city-pill {
     padding: 8px 24px;
     background: var(--color-bg-secondary);
-    border: 1px solid var(--color-stroke);
+    /* Corrected pill borders: inset shadow is more stable for sliding elements */
+    box-shadow: inset 0 0 0 1.5px var(--color-stroke);
+    border: none;
     color: var(--color-white);
     font-family: var(--font-sans);
     font-size: 14px;
@@ -400,6 +481,33 @@ try {
       overflow-wrap: break-word;
       word-wrap: break-word; /* Fallback */
       line-height: 1.4;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-image-wrapper {
+      margin-bottom: 0px;
+      box-shadow: none;
+      border: none;
+      outline: none;
+    }
+
+    /* Target the overlay specifically on mobile to deepen the mask */
+    .hero-image-wrapper .hero-gradient-overlay {
+      height: 60%; 
+      bottom: -3px;
+      background: linear-gradient(
+        to top,
+        var(--color-black) 0%,
+        var(--color-black) 35%,
+        rgba(15, 15, 15, 0.9) 55%,
+        transparent 100%
+      );
     }
 
     .lower-title {
