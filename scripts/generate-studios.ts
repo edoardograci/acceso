@@ -121,12 +121,20 @@ async function generateStudiosData() {
 
   if (!dbUrl || !authToken) {
     console.error('❌ Error: Missing environment variables!');
-    console.error('Please create a .env file with:');
-    console.error('  TURSO_DATABASE_URL=your_url');
-    console.error('  TURSO_AUTH_TOKEN=your_token');
-    console.error('\nCurrent values:');
-    console.error('  TURSO_DATABASE_URL:', dbUrl ? 'Set' : 'Missing');
-    console.error('  TURSO_AUTH_TOKEN:', authToken ? 'Set' : 'Missing');
+    console.error('Please ensure they are set in your environment or Cloudflare Pages dashboard.');
+    console.error('\nCurrent status:');
+    console.error('  TURSO_DATABASE_URL:', dbUrl ? '✅ Set' : '❌ Missing');
+    console.error('  TURSO_AUTH_TOKEN:   ', authToken ? '✅ Set' : '❌ Missing');
+
+    // Help debug by showing related keys that ARE present
+    const envKeys = Object.keys(process.env);
+    const relatedKeys = envKeys.filter(k =>
+      k.includes('TURSO') || k.includes('DATABASE') || k.includes('DB') || k.includes('URL')
+    );
+    if (relatedKeys.length > 0) {
+      console.error('\nRelated environment variables found:', relatedKeys.join(', '));
+    }
+
     process.exit(1);
   }
 
