@@ -29,6 +29,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     
     <!-- Preconnect for R2 images -->
     <link rel="preconnect" href="https://img.acceso.edoardograci.com" crossorigin />
+    <link rel="preconnect" href="https://mood.acceso.design" crossorigin />
+    
+    <!-- Font Preloading -->
+    <link rel="preload" href="/fonts/PPSupplySans-Variable.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="/fonts/PPFraktionSans-Variable.ttf" as="font" type="font/ttf" crossorigin />
     
     <title>{title}</title>
     <meta name="title" content={title} />

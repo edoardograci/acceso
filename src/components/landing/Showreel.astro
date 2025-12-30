@@ -6,12 +6,12 @@
     {/* Clones End [3, 4] */}
     <div class="reel-item clone" data-index="2">
       <div class="scale-wrapper">
-        <img src="/animations/3.webp" alt="Clone 3" loading="lazy" />
+        <img src="/animations/3.webp" alt="Clone 3" loading="lazy" width="800" height="450" decoding="async" />
       </div>
     </div>
     <div class="reel-item clone" data-index="3">
       <div class="scale-wrapper">
-        <img src="/animations/4.webp" alt="Clone 4" loading="lazy" />
+        <img src="/animations/4.webp" alt="Clone 4" loading="eager" width="800" height="450" decoding="async" />
       </div>
     </div>
 
@@ -22,7 +22,11 @@
           <img 
             src={`/animations/${num}.webp`}
             alt={`Acceso Design Showreel ${num}`}
-            loading={index === 0 ? "eager" : "lazy"}
+            loading={index <= 1 ? "eager" : "lazy"}
+            fetchpriority={index === 0 ? "high" : "auto"}
+            width="800"
+            height="450"
+            decoding="async"
           />
         </div>
       </div>
@@ -31,12 +35,12 @@
     {/* Clones Start [1, 2] */}
     <div class="reel-item clone" data-index="0">
       <div class="scale-wrapper">
-        <img src="/animations/1.webp" alt="Clone 1" loading="lazy" />
+        <img src="/animations/1.webp" alt="Clone 1" loading="lazy" width="800" height="450" decoding="async" />
       </div>
     </div>
     <div class="reel-item clone" data-index="1">
       <div class="scale-wrapper">
-        <img src="/animations/2.webp" alt="Clone 2" loading="lazy" />
+        <img src="/animations/2.webp" alt="Clone 2" loading="lazy" width="800" height="450" decoding="async" />
       </div>
     </div>
   </div>
