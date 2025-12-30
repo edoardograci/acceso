@@ -6,12 +6,22 @@
     {/* Clones End [3, 4] */}
     <div class="reel-item clone" data-index="2">
       <div class="scale-wrapper">
-        <img src="/animations/3.webp" alt="Clone 3" loading="lazy" width="800" height="450" decoding="async" />
+        <img 
+          src="/animations/3.webp" 
+          srcset="/cdn-cgi/image/width=560,format=auto,quality=80/animations/3.webp 560w, /animations/3.webp 800w"
+          sizes="(max-width: 768px) 280px, 800px"
+          alt="Clone 3" loading="lazy" width="800" height="450" decoding="async" 
+        />
       </div>
     </div>
     <div class="reel-item clone" data-index="3">
       <div class="scale-wrapper">
-        <img src="/animations/4.webp" alt="Clone 4" loading="eager" width="800" height="450" decoding="async" />
+        <img 
+          src="/animations/4.webp" 
+          srcset="/cdn-cgi/image/width=560,format=auto,quality=80/animations/4.webp 560w, /animations/4.webp 800w"
+          sizes="(max-width: 768px) 280px, 800px"
+          alt="Clone 4" loading="eager" width="800" height="450" decoding="async" 
+        />
       </div>
     </div>
 
@@ -21,6 +31,8 @@
         <div class="scale-wrapper">
           <img 
             src={`/animations/${num}.webp`}
+            srcset={`/cdn-cgi/image/width=560,format=auto,quality=80/animations/${num}.webp 560w, /animations/${num}.webp 800w`}
+            sizes="(max-width: 768px) 280px, 800px"
             alt={`Acceso Design Showreel ${num}`}
             loading={index <= 1 ? "eager" : "lazy"}
             fetchpriority={index === 0 ? "high" : "auto"}
@@ -35,12 +47,22 @@
     {/* Clones Start [1, 2] */}
     <div class="reel-item clone" data-index="0">
       <div class="scale-wrapper">
-        <img src="/animations/1.webp" alt="Clone 1" loading="lazy" width="800" height="450" decoding="async" />
+        <img 
+          src="/animations/1.webp" 
+          srcset="/cdn-cgi/image/width=560,format=auto,quality=80/animations/1.webp 560w, /animations/1.webp 800w"
+          sizes="(max-width: 768px) 280px, 800px"
+          alt="Clone 1" loading="lazy" width="800" height="450" decoding="async" 
+        />
       </div>
     </div>
     <div class="reel-item clone" data-index="1">
       <div class="scale-wrapper">
-        <img src="/animations/2.webp" alt="Clone 2" loading="lazy" width="800" height="450" decoding="async" />
+        <img 
+          src="/animations/2.webp" 
+          srcset="/cdn-cgi/image/width=560,format=auto,quality=80/animations/2.webp 560w, /animations/2.webp 800w"
+          sizes="(max-width: 768px) 280px, 800px"
+          alt="Clone 2" loading="lazy" width="800" height="450" decoding="async" 
+        />
       </div>
     </div>
   </div>
@@ -135,8 +157,33 @@
     const start = () => {
       // Initial render without animation
       updateVisuals(false);
-      clearInterval(autoPlayInterval);
-      autoPlayInterval = setInterval(nextSlide, intervalTime);
+      
+      // Pause animation when tab is not active or element is off-screen
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            if (!autoPlayInterval) {
+              autoPlayInterval = setInterval(nextSlide, intervalTime);
+            }
+          } else {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+          }
+        });
+      }, { threshold: 0.1 });
+
+      observer.observe(track.parentElement);
+
+      window.addEventListener('blur', () => {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+      });
+      
+      window.addEventListener('focus', () => {
+        if (!autoPlayInterval) {
+          autoPlayInterval = setInterval(nextSlide, intervalTime);
+        }
+      });
     };
     
     // Robust resize handling

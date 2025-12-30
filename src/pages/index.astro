@@ -63,86 +63,56 @@ let spotlightImages: ProductImage[] = [];
 let designerStudio: Studio | null = null;
 let carouselCities: string[] = [];
 
+// Fetch data in parallel for better performance
 try {
-  // Fetch all studios for cities list
-  const studiosUrl = new URL('/studios.json', Astro.url.origin);
-  const studiosResponse = await fetch(studiosUrl.toString());
-  
-  if (studiosResponse.ok) {
-    const studios: Studio[] = await studiosResponse.json();
-    
+  const [studiosResponse, spotlightResponse, moodboardResponse] = await Promise.all([
+    fetch(new URL('/studios.json', Astro.url.origin).toString()),
+    fetch(new URL('/spotlight.json', Astro.url.origin).toString()),
+    fetch(new URL('/moodboard.json', Astro.url.origin).toString())
+  ]);
+
+  if (studiosResponse.ok && spotlightResponse.ok && moodboardResponse.ok) {
+    const [studios, spotlights, moodboardItems] = await Promise.all([
+      studiosResponse.json() as Promise<Studio[]>,
+      spotlightResponse.json() as Promise<SpotlightItem[]>,
+      moodboardResponse.json() as Promise<MoodboardItem[]>
+    ]);
+
     // Extract unique cities
     const dbCities = [...new Set(studios.map(s => s.city))];
     const userCities = ['Milan', 'London', 'Paris', 'Berlin', 'Copenhagen', 'Tokyo', 'Seoul'];
-    carouselCities = [...new Set([...userCities, ...dbCities])].sort((a, b) => {
-      // Keep user cities in front or just alpha sort
-      return a.localeCompare(b);
-    });
+    carouselCities = [...new Set([...userCities, ...dbCities])].sort((a, b) => a.localeCompare(b));
 
-    // Fetch spotlight.json
-  const spotlightUrl = new URL('/spotlight.json', Astro.url.origin);
-  const spotlightResponse = await fetch(spotlightUrl.toString());
-  
-  if (spotlightResponse.ok) {
-    const spotlights: SpotlightItem[] = await spotlightResponse.json();
-    
-    // Find active spotlight (current date within date range)
+    // Find active spotlight
     const now = new Date();
     const nowDateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     activeSpotlight = spotlights.find(s => {
-      // Parse start date (handle both YYYY-MM-DD and YYYY-MM-DD HH:mm:ss formats)
-      const startDateStr = s.start_date.split(' ')[0]; // Get just the date part
+      const startDateStr = s.start_date.split(' ')[0];
       const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
       const start = new Date(startYear, startMonth - 1, startDay);
       
-      // Parse end date if it exists
       if (s.end_date) {
-        const endDateStr = s.end_date.split(' ')[0]; // Get just the date part
+        const endDateStr = s.end_date.split(' ')[0];
         const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
         const end = new Date(endYear, endMonth - 1, endDay);
-        // Include the end date (>= comparison)
         return nowDateOnly >= start && nowDateOnly <= end;
-      } else {
-        // No end date means it's active from start date onwards
-        return nowDateOnly >= start;
       }
-    }) || null;
+      return nowDateOnly >= start;
+    }) || spotlights.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0] || null;
 
-    // Fallback: if no active spotlight, use the most recent one (for development)
-    if (!activeSpotlight && spotlights.length > 0) {
-      // Sort by start_date descending and take the first one
-      const sorted = [...spotlights].sort((a, b) => {
-        const dateA = new Date(a.start_date);
-        const dateB = new Date(b.start_date);
-        return dateB.getTime() - dateA.getTime();
-      });
-      activeSpotlight = sorted[0];
-    }
-
-    // If we have an active spotlight, fetch its images from moodboard.json
-    if (activeSpotlight?.product) {
-      const moodboardUrl = new URL('/moodboard.json', Astro.url.origin);
-      const moodboardResponse = await fetch(moodboardUrl.toString());
-      
-      if (moodboardResponse.ok) {
-        const moodboardItems: MoodboardItem[] = await moodboardResponse.json();
-        const productItem = moodboardItems.find(item => item.id === activeSpotlight.product_id);
-        
-        if (productItem) {
-          spotlightImages = productItem.images || [];
-        }
+    if (activeSpotlight) {
+      const productItem = moodboardItems.find(item => item.id === activeSpotlight!.product_id);
+      if (productItem) {
+        spotlightImages = productItem.images || [];
       }
-
-      // Fetch designer studio info
-      if (activeSpotlight.product.designer) {
+      if (activeSpotlight.product?.designer) {
         designerStudio = studios.find(s => s.name === activeSpotlight!.product!.designer) || null;
       }
     }
   }
-}
 } catch (e) {
-  console.error('Failed to fetch spotlight:', e);
+  console.error('Failed to fetch data:', e);
 }
 ---
 
@@ -166,7 +136,7 @@ try {
       <div class="carousel-container">
         <div class="carousel-track">
           {/* Duplicate for infinite loop */}
-          {[...carouselCities, ...carouselCities, ...carouselCities, ...carouselCities].map((city) => (
+          {[...carouselCities, ...carouselCities].map((city) => (
             <a href={`/designers?city=${city}`} class="city-pill">
               {city}
             </a>
@@ -335,7 +305,7 @@ try {
     display: flex;
     gap: 16px;
     width: max-content;
-    animation: scroll 60s linear infinite;
+    animation: scroll 120s linear infinite;
     will-change: transform;
   }
 
@@ -348,7 +318,7 @@ try {
       transform: translateX(0);
     }
     100% {
-      transform: translateX(-25%);
+      transform: translateX(-50%);
     }
   }
 

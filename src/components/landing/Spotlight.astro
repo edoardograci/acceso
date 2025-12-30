@@ -77,10 +77,12 @@ const { activeSpotlight, spotlightImages, designerStudio } = Astro.props;
       <div class="cover-image-container">
         <img 
           src={spotlightImages[0].image_url} 
+          srcset={`/cdn-cgi/image/width=600,format=auto,quality=85/${spotlightImages[0].image_url} 600w, ${spotlightImages[0].image_url} 1200w`}
+          sizes="(max-width: 600px) 100vw, 600px"
           alt={activeSpotlight.product.name}
           class="cover-image"
-          loading="eager"
-          fetchpriority="high"
+          loading="lazy"
+          fetchpriority="auto"
           decoding="async"
           data-skeleton
           crossorigin="anonymous"
@@ -108,6 +110,8 @@ const { activeSpotlight, spotlightImages, designerStudio } = Astro.props;
                 {designerStudio.cover && (
                   <img 
                     src={designerStudio.cover} 
+                    srcset={`/cdn-cgi/image/width=200,format=auto,quality=80/${designerStudio.cover} 200w, ${designerStudio.cover} 400w`}
+                    sizes="100px"
                     alt={designerStudio.name}
                     class="designer-card-image"
                     loading="lazy"
