@@ -55,7 +55,7 @@ interface SearchResponse {
 export const POST: APIRoute = async ({ request, locals }) => {
   console.log('=== Hybrid Search API Called ===');
 
-  // Runtime-only layout helpers
+  // Helper functions
   function normalizeText(text: string): string {
     return text.toLowerCase().trim().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ');
   }
@@ -64,13 +64,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return normalizeText(text).split(' ').filter(t => t.length > 0);
   }
 
-  /**
-   * Calculate keyword match score based on enrichment data
-   */
-  function calculateKeywordScore(
-    query: string,
-    enrichment: EnrichmentData
-  ): { score: number; matches: string[] } {
+  function calculateKeywordScore(query: string, enrichment: EnrichmentData): { score: number; matches: string[] } {
     const KEYWORD_BOOST = 0.25;
     const EXACT_MATCH_BOOST = 0.35;
 
@@ -80,12 +74,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let score = 0;
     const matches: string[] = [];
 
-    // Check all keywords
     const allText = [
       ...(enrichment.metadata.all_keywords || []),
       ...(enrichment.metadata.materials || []),
       ...(enrichment.metadata.colors || []),
-      ...(enrichment.metadata.styles || [])
+      ...(enrichment.metadata.styles || []),
     ].map(k => normalizeText(k));
 
     for (const keyword of allText) {
@@ -94,13 +87,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
         matches.push(keyword);
         continue;
       }
-
       if (keyword.includes(queryNormalized) || queryNormalized.includes(keyword)) {
         score += KEYWORD_BOOST * 0.8;
         matches.push(keyword);
         continue;
       }
-
       const keywordTokens = tokenize(keyword);
       const overlap = queryTokens.filter(qt => keywordTokens.some(kt => kt.includes(qt) || qt.includes(kt)));
       if (overlap.length > 0) {
@@ -112,18 +103,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return { score: Math.min(score, 0.5), matches };
   }
 
-  /**
-   * Load static enrichment data
-   */
   async function loadEnrichment(origin: string): Promise<Map<string, EnrichmentData>> {
     try {
       const enrichmentUrl = new URL('/moodboard-enrichment.json', origin).toString();
       const response = await fetch(enrichmentUrl);
+
       if (!response.ok) {
-        console.warn(`Failed to load from ${enrichmentUrl}. Trying fallback.`);
+        console.warn(`Failed to load from ${enrichmentUrl}, trying fallback.`);
         const fallbackUrl = 'https://acceso-4xj.pages.dev/moodboard-enrichment.json';
         const fallbackResponse = await fetch(fallbackUrl);
-        if (!fallbackResponse.ok) throw new Error('Failed to load enrichment');
+        if (!fallbackResponse.ok) throw new Error('Failed to load enrichment data from fallback');
         const data = await fallbackResponse.json();
         return new Map(Object.entries(data));
       }
@@ -136,12 +125,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
   }
 
-
   try {
     const body = await request.json() as { query: string };
     const { query } = body;
 
-    if (!query || query.trim().length === 0) {
+    if (!query || query.trim() === '') {
       return new Response(
         JSON.stringify({
           success: false,
@@ -163,23 +151,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       throw new Error('AI or VECTORIZE binding not available');
     }
 
-    // Load static enrichment data
     const url = new URL(request.url);
     const enrichmentMap = await loadEnrichment(url.origin);
     console.log(`Loaded enrichment for ${enrichmentMap.size} products`);
 
-    // 1. Generate query embedding
+    // Generate embedding
     const expandedQuery = `[PRODUCT IMAGE] ${query}`;
-
-    let embeddingsResponse;
-    try {
-      embeddingsResponse = await env.AI.run(
-        '@cf/qwen/qwen3-embedding-0.6b',
-        { text: [expandedQuery] }
-      ) as any;
-    } catch (aiError: any) {
-      throw new Error(`AI model failed: ${aiError.message}`);
-    }
+    const embeddingsResponse = await env.AI.run('@cf/qwen/qwen3-embedding-0.6b', { text: [expandedQuery] }) as any;
 
     if (!embeddingsResponse?.data?.[0]) {
       throw new Error('Failed to generate embeddings');
@@ -187,9 +165,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const queryEmbedding = embeddingsResponse.data[0];
 
-    // 2. Query Vectorize for semantic matches
-    // NOTE: Wildcards like "moodboard/*" are not supported in Cloudflare Vectorize filters.
-    // Removed filter to ensure we get results, we will filter in code if needed.
+    // Query Vectorize
     const vectorizeResult = await env.VECTORIZE.query(queryEmbedding, {
       topK: 100,
       returnMetadata: 'indexed',
@@ -199,7 +175,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} semantic matches`);
 
     if (!vectorizeResult.matches || vectorizeResult.matches.length === 0) {
-      console.log('No semantic matches found in Vectorize');
       return new Response(
         JSON.stringify({
           success: true,
@@ -208,14 +183,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
           debug: {
             semantic_matches: 0,
             keyword_matches: 0,
-            filter_applied: 'none'
-          }
+            filter_applied: 'none',
+          },
         } as SearchResponse),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 3. Hybrid scoring: Combine semantic + keyword matches
     const scoredResults = new Map<string, {
       product_id: string;
       image_url: string;
@@ -228,95 +202,68 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }>();
 
     for (const match of vectorizeResult.matches) {
-      // Try to get product_id directly from metadata first
-      let productId = match.metadata?.product_id;
+      let product_id = match.metadata?.product_id;
 
-      // Fallback: extract from folder or key if not in metadata
-      if (!productId) {
+      if (!product_id) {
         if (match.metadata?.folder) {
           const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
-          if (folderMatch) productId = folderMatch[1];
+          if (folderMatch) product_id = folderMatch[1];
         }
-        if (!productId && match.metadata?.key) {
+        if (!product_id && match.metadata?.key) {
           const keyMatch = match.metadata.key.match(/moodboard\/([^\/]+)\//);
-          if (keyMatch) productId = keyMatch[1];
+          if (keyMatch) product_id = keyMatch[1];
         }
       }
 
-      if (!productId) {
-        console.warn('Could not extract product_id from match metadata:', match.metadata);
-        continue;
-      }
+      if (!product_id) continue;
 
-      // Filter: Only include moodboard items in code since we removed the DB filter
       const isMoodboard = (match.metadata?.folder?.startsWith('moodboard/')) ||
         (match.metadata?.key?.startsWith('moodboard/'));
+      if (!isMoodboard) continue;
 
-      if (!isMoodboard) {
-        console.log(`Skipping non-moodboard item: ${productId} (${match.metadata?.folder})`);
-        continue;
-      }
+      const image_url = match.metadata?.url || (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
+      if (!image_url) continue;
 
-      // Get image URL - prefer metadata.url, fallback to constructing from key
-      const imageUrl = match.metadata?.url ||
-        (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
+      const enrichment = enrichmentMap.get(product_id);
 
-      if (!imageUrl) {
-        console.warn('Could not determine image URL for match:', match.id);
-        continue;
-      }
-
-      // Get enrichment data for this product
-      const enrichment = enrichmentMap.get(productId);
-      if (!enrichment) {
-        console.log(`No enrichment found for product_id: ${productId}. Available keys: ${Array.from(enrichmentMap.keys()).slice(0, 5)}...`);
-      }
-
-      // Calculate keyword score
-      let keywordScore = 0;
-      let keywordMatches: string[] = [];
+      let keyword_score = 0;
+      let keyword_matches: string[] = [];
       if (enrichment) {
         const keywordResult = calculateKeywordScore(query, enrichment);
-        keywordScore = keywordResult.score;
-        keywordMatches = keywordResult.matches;
+        keyword_score = keywordResult.score;
+        keyword_matches = keywordResult.matches;
       }
 
-      // Combine scores
-      const semanticScore = match.score;
-      const finalScore = semanticScore + keywordScore;
+      const semantic_score = match.score;
+      const final_score = semantic_score + keyword_score;
 
-      // Determine match type
-      let matchType = 'semantic';
-      if (keywordScore > 0.2) {
-        matchType = semanticScore > 0.4 ? 'hybrid' : 'keyword';
-      }
+      let match_type = 'semantic';
+      if (keyword_score > 0.2) match_type = semantic_score > 0.4 ? 'hybrid' : 'keyword';
 
-      const existing = scoredResults.get(productId);
+      const existing = scoredResults.get(product_id);
       if (!existing) {
-        scoredResults.set(productId, {
-          product_id: productId,
-          image_url: imageUrl,
-          semantic_score: semanticScore,
-          keyword_score: keywordScore,
-          final_score: finalScore,
+        scoredResults.set(product_id, {
+          product_id,
+          image_url,
+          semantic_score,
+          keyword_score,
+          final_score,
           match_count: 1,
-          keyword_matches: keywordMatches,
-          match_type: matchType
+          keyword_matches,
+          match_type,
         });
       } else {
-        // If multiple images from same product, keep the best combined score
-        if (finalScore > existing.final_score) {
-          existing.image_url = imageUrl;
-          existing.semantic_score = Math.max(existing.semantic_score, semanticScore);
-          existing.keyword_score = Math.max(existing.keyword_score, keywordScore);
-          existing.final_score = finalScore;
+        if (final_score > existing.final_score) {
+          existing.image_url = image_url;
+          existing.semantic_score = Math.max(existing.semantic_score, semantic_score);
+          existing.keyword_score = Math.max(existing.keyword_score, keyword_score);
+          existing.final_score = final_score;
         }
         existing.match_count++;
-        existing.keyword_matches.push(...keywordMatches);
+        existing.keyword_matches.push(...keyword_matches);
       }
     }
 
-    // 4. Sort by final score and format results
     const rankedResults: SearchResult[] = Array.from(scoredResults.values())
       .sort((a, b) => b.final_score - a.final_score)
       .map(result => ({
@@ -324,7 +271,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         image_url: result.image_url,
         score: result.final_score,
         match_count: result.match_count,
-        match_type: result.match_type
+        match_type: result.match_type,
       }));
 
     console.log(`Hybrid search complete: ${rankedResults.length} results`);
@@ -338,12 +285,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
           semantic_matches: vectorizeResult.matches.length,
           hybrid_matches: rankedResults.length,
           enrichment_loaded: enrichmentMap.size > 0,
-          filter_applied: 'in-code'
-        }
+          filter_applied: 'in-code',
+        },
       } as SearchResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
     console.error('Hybrid search error:', error);
     return new Response(
