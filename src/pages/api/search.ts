@@ -1,3 +1,4 @@
+// src/pages/api/search.ts
 import type { APIRoute } from 'astro';
 
 interface VectorizeMatch {
@@ -17,11 +18,28 @@ interface VectorizeResult {
   matches: VectorizeMatch[];
 }
 
+interface EnrichmentData {
+  images: {
+    [imageId: string]: {
+      embedding_text: string;
+      enrichment: any;
+    };
+  };
+  metadata: {
+    all_keywords: string[];
+    primary_category: string;
+    materials: string[];
+    colors: string[];
+    styles: string[];
+  };
+}
+
 interface SearchResult {
   product_id: string;
   image_url: string;
   score: number;
-  match_count?: number; // Debug/Internal use
+  match_count?: number;
+  match_type?: string; // 'semantic' | 'keyword' | 'hybrid'
 }
 
 interface SearchResponse {
@@ -32,76 +50,89 @@ interface SearchResponse {
   debug?: any;
 }
 
-// --------------------------------------------------------------------------
-// Configuration & heuristics
-// --------------------------------------------------------------------------
+// Keyword matching configuration
+const KEYWORD_BOOST = 0.25; // How much to boost keyword matches
+const EXACT_MATCH_BOOST = 0.35; // Extra boost for exact keyword matches
 
-const ADJECTIVES = new Set([
-  'modern', 'vintage', 'retro', 'antique', 'industrial', 'minimal', 'minimalist', 'contemporary',
-  'wood', 'wooden', 'metal', 'metallic', 'glass', 'marble', 'stone', 'ceramic', 'concrete', 'leather', 'fabric', 'textile', 'plastic', 'acrylic',
-  'red', 'blue', 'green', 'black', 'white', 'yellow', 'orange', 'purple', 'grey', 'gray', 'brown', 'beige', 'gold', 'silver', 'copper', 'brass',
-  'floor', 'table', 'wall', 'ceiling', 'suspension', 'pendant', 'outdoor', 'indoor',
-  'small', 'large', 'big', 'tall', 'low', 'high', 'round', 'square', 'rectangular',
-  'italian', 'scandinavian', 'japanese', 'french', 'german',
-  'living', 'dining', 'bedroom', 'kitchen', 'office', 'desk'
-]);
-
-const CONFIG = {
-  GENERIC: {
-    topK: 50,
-    threshold: 0.40 // Debug: Lowered to catch everything
-  },
-  SPECIFIC: {
-    topK: 50,
-    threshold: 0.55 // Debug: Lowered
-  }
-};
-
-// --------------------------------------------------------------------------
-// Helper Functions
-// --------------------------------------------------------------------------
-
-function classifyQuery(query: string): 'GENERIC' | 'SPECIFIC' {
-  const tokens = query.toLowerCase().trim().split(/\s+/).filter(t => t.length > 0);
-
-  // Rule 1: Long queries are specific
-  if (tokens.length > 2) return 'SPECIFIC';
-
-  // Rule 2: Short queries with adjectives/constraints are specific
-  const hasAdjective = tokens.some(token => ADJECTIVES.has(token));
-  if (hasAdjective) return 'SPECIFIC';
-
-  // Default: Generic (e.g., "lamp", "chair")
-  return 'GENERIC';
+function normalizeText(text: string): string {
+  return text.toLowerCase().trim().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ');
 }
 
-function expandQuery(query: string, type: 'GENERIC' | 'SPECIFIC'): string {
-  // Type Anchoring: Must match the format in Turso 'embedding_text' column
-  // Found format: [PRODUCT IMAGE]\nObject type: ...\nCategory: design...
-  const prefix = '[PRODUCT IMAGE]';
-  const cleanQuery = query.trim();
+function tokenize(text: string): string[] {
+  return normalizeText(text).split(' ').filter(t => t.length > 0);
+}
 
-  if (type === 'GENERIC') {
-    // Structured expansion for generic queries to match indexed documents
-    // This maximizes dot product with the structured metadata in the DB
-    return `${prefix}
-Object type: ${cleanQuery}
-Category: design
-Platform: Acceso moodboard`;
+/**
+ * Calculate keyword match score based on enrichment data
+ */
+function calculateKeywordScore(
+  query: string,
+  enrichment: EnrichmentData
+): { score: number; matches: string[] } {
+  const queryTokens = tokenize(query);
+  const queryNormalized = normalizeText(query);
+
+  let score = 0;
+  const matches: string[] = [];
+
+  // Check all keywords
+  const allText = [
+    ...enrichment.metadata.all_keywords,
+    ...enrichment.metadata.materials,
+    ...enrichment.metadata.colors,
+    ...enrichment.metadata.styles
+  ].map(k => normalizeText(k));
+
+  for (const keyword of allText) {
+    // Exact match (full query matches keyword)
+    if (keyword === queryNormalized) {
+      score += EXACT_MATCH_BOOST;
+      matches.push(keyword);
+      continue;
+    }
+
+    // Partial match (keyword contains query or vice versa)
+    if (keyword.includes(queryNormalized) || queryNormalized.includes(keyword)) {
+      score += KEYWORD_BOOST * 0.8;
+      matches.push(keyword);
+      continue;
+    }
+
+    // Token overlap
+    const keywordTokens = tokenize(keyword);
+    const overlap = queryTokens.filter(qt => keywordTokens.some(kt => kt.includes(qt) || qt.includes(kt)));
+    if (overlap.length > 0) {
+      score += KEYWORD_BOOST * (overlap.length / queryTokens.length) * 0.5;
+      matches.push(keyword);
+    }
   }
 
-  // Specific queries: Anchor to the same domain
-  return `${prefix} ${cleanQuery}`;
+  return { score: Math.min(score, 0.5), matches }; // Cap keyword boost at 0.5
+}
+
+/**
+ * Load static enrichment data
+ */
+async function loadEnrichment(): Promise<Map<string, EnrichmentData>> {
+  try {
+    // In production, this is bundled and cached by Cloudflare
+    const response = await fetch(new URL('/moodboard-enrichment.json', 'https://acceso.pages.dev').toString());
+    if (!response.ok) throw new Error('Failed to load enrichment');
+
+    const data = await response.json();
+    return new Map(Object.entries(data));
+  } catch (error) {
+    console.error('Failed to load enrichment data:', error);
+    return new Map();
+  }
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  console.log('=== Search API Called ===');
+  console.log('=== Hybrid Search API Called ===');
 
   try {
     const body = await request.json() as { query: string };
     const { query } = body;
-
-    console.log('Original query:', query);
 
     if (!query || query.trim().length === 0) {
       return new Response(
@@ -116,27 +147,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     if (!locals.runtime) {
-      console.error('locals.runtime is undefined. Environment bindings missing.');
       throw new Error('Server environment not initialized correctly');
     }
 
     const env = locals.runtime.env as any;
 
     if (!env || !env.AI || !env.VECTORIZE) {
-      console.error('Bindings missing in env:', { hasAi: !!env?.AI, hasVectorize: !!env?.VECTORIZE });
       throw new Error('AI or VECTORIZE binding not available');
     }
 
-    // 1. Classify & Expand
-    const queryType = classifyQuery(query);
-    const expandedQuery = expandQuery(query, queryType);
-    const config = CONFIG[queryType];
+    // Load static enrichment data
+    const enrichmentMap = await loadEnrichment();
+    console.log(`Loaded enrichment for ${enrichmentMap.size} products`);
 
-    console.log(`Query classified as: ${queryType}`);
-    console.log(`Expanded query:\n${expandedQuery}`);
-    console.log(`Using config: topK=${config.topK}, threshold=${config.threshold}`);
+    // 1. Generate query embedding
+    const expandedQuery = `[PRODUCT IMAGE] ${query}`;
 
-    // 2. Generate Embeddings
     let embeddingsResponse;
     try {
       embeddingsResponse = await env.AI.run(
@@ -144,7 +170,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         { text: [expandedQuery] }
       ) as any;
     } catch (aiError: any) {
-      console.error('AI Run error:', aiError);
       throw new Error(`AI model failed: ${aiError.message}`);
     }
 
@@ -154,24 +179,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const queryEmbedding = embeddingsResponse.data[0];
 
-    // 3. Query Vectorize
+    // 2. Query Vectorize for semantic matches
     const vectorizeResult = (await env.VECTORIZE.query(queryEmbedding, {
-      topK: config.topK, // Dynamic topK
+      topK: 100, // Get more candidates for hybrid ranking
       returnMetadata: 'all',
     })) as VectorizeResult;
 
-    console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} raw matches`);
-
-    if (vectorizeResult.matches?.length > 0) {
-      console.log('Top match debug:', {
-        score: vectorizeResult.matches[0].score,
-        id: vectorizeResult.matches[0].id,
-        metadata_sample: {
-          folder: vectorizeResult.matches[0].metadata?.folder,
-          key: vectorizeResult.matches[0].metadata?.key
-        }
-      });
-    }
+    console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} semantic matches`);
 
     if (!vectorizeResult.matches || vectorizeResult.matches.length === 0) {
       return new Response(
@@ -179,108 +193,109 @@ export const POST: APIRoute = async ({ request, locals }) => {
           success: true,
           results: [],
           query,
-          debug: { type: queryType, matches: 0 }
+          debug: { semantic_matches: 0, keyword_matches: 0 }
         } as SearchResponse),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 4. Process, Group, and Rank
-    const groups = new Map<string, {
-      scores: number[];
-      bestImage: string;
-      maxScore: number;
+    // 3. Hybrid scoring: Combine semantic + keyword matches
+    const scoredResults = new Map<string, {
+      product_id: string;
+      image_url: string;
+      semantic_score: number;
+      keyword_score: number;
+      final_score: number;
+      match_count: number;
+      keyword_matches: string[];
+      match_type: string;
     }>();
 
     for (const match of vectorizeResult.matches) {
-      // Basic filtering based on dynamic threshold
-      // We process match.score to normalized filtering
-      // But first we must just collect valid metadata
-
       if (!match.metadata?.folder || !match.metadata?.key) continue;
 
       const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
       if (!folderMatch) continue;
 
-      // Apply strict threshold check early
-      // if (match.score < config.threshold) continue; // REMOVED to ensure "always return results"
-
       const productId = folderMatch[1];
       const imageUrl = `https://mood.acceso.design/${match.metadata.key}`;
 
-      const existing = groups.get(productId);
+      // Get enrichment data for this product
+      const enrichment = enrichmentMap.get(productId);
+
+      // Calculate keyword score
+      let keywordScore = 0;
+      let keywordMatches: string[] = [];
+      if (enrichment) {
+        const keywordResult = calculateKeywordScore(query, enrichment);
+        keywordScore = keywordResult.score;
+        keywordMatches = keywordResult.matches;
+      }
+
+      // Combine scores
+      const semanticScore = match.score;
+      const finalScore = semanticScore + keywordScore;
+
+      // Determine match type
+      let matchType = 'semantic';
+      if (keywordScore > 0.2) {
+        matchType = semanticScore > 0.4 ? 'hybrid' : 'keyword';
+      }
+
+      const existing = scoredResults.get(productId);
       if (!existing) {
-        groups.set(productId, {
-          scores: [match.score],
-          bestImage: imageUrl,
-          maxScore: match.score
+        scoredResults.set(productId, {
+          product_id: productId,
+          image_url: imageUrl,
+          semantic_score: semanticScore,
+          keyword_score: keywordScore,
+          final_score: finalScore,
+          match_count: 1,
+          keyword_matches: keywordMatches,
+          match_type: matchType
         });
       } else {
-        existing.scores.push(match.score);
-        if (match.score > existing.maxScore) {
-          existing.bestImage = imageUrl;
-          existing.maxScore = match.score;
+        // If multiple images from same product, keep the best combined score
+        if (finalScore > existing.final_score) {
+          existing.image_url = imageUrl;
+          existing.semantic_score = Math.max(existing.semantic_score, semanticScore);
+          existing.keyword_score = Math.max(existing.keyword_score, keywordScore);
+          existing.final_score = finalScore;
         }
+        existing.match_count++;
+        existing.keyword_matches.push(...keywordMatches);
       }
     }
 
-    console.log(`Filtered and grouped into ${groups.size} products`);
+    // 4. Sort by final score and format results
+    const rankedResults: SearchResult[] = Array.from(scoredResults.values())
+      .sort((a, b) => b.final_score - a.final_score)
+      .map(result => ({
+        product_id: result.product_id,
+        image_url: result.image_url,
+        score: result.final_score,
+        match_count: result.match_count,
+        match_type: result.match_type
+      }));
 
-    // 5. Advanced Ranking calculation
-    const rankedResults: SearchResult[] = Array.from(groups.entries())
-      .map(([productId, data]) => {
-        const count = data.scores.length;
-        const avgScore = data.scores.reduce((a, b) => a + b, 0) / count;
+    console.log(`Hybrid search complete: ${rankedResults.length} results`);
 
-        // Base score is the best match
-        let finalScore = data.maxScore;
-
-        // Boost for multiple matches (implies product is visually consistent with query across multiple angles/images)
-        if (count > 1) {
-          // Add a weighted average boost
-          // Heuristic: If we have multiple matches, we trust the average more
-          finalScore = (finalScore * 0.7) + (avgScore * 0.3);
-
-          // Add a small log boost for count to favor "rich" results
-          // Cap the boost to avoid counting thousands of low quality matches
-          finalScore += Math.log10(count) * 0.05;
-        } else {
-          // Slight penalty for single matches that are weak
-          // (helps reduce random noise in generic queries)
-          if (finalScore < (config.threshold + 0.05)) {
-            finalScore *= 0.95;
-          }
-        }
-
-        return {
-          product_id: productId,
-          image_url: data.bestImage,
-          score: finalScore,
-          match_count: count
-        };
-      })
-      .sort((a, b) => b.score - a.score);
-    // .slice(0, 20); // Top 20 REMOVED
-
-    // 6. Final Response
     return new Response(
       JSON.stringify({
         success: true,
         results: rankedResults,
         query,
         debug: {
-          type: queryType,
-          expanded: expandedQuery,
-          threshold: config.threshold,
-          raw_matches: vectorizeResult.matches.length,
-          grouped_matches: groups.size
+          semantic_matches: vectorizeResult.matches.length,
+          hybrid_matches: rankedResults.length,
+          enrichment_loaded: enrichmentMap.size > 0
         }
       } as SearchResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Search error:', error);
+    console.error('Hybrid search error:', error);
     return new Response(
       JSON.stringify({
         success: false,

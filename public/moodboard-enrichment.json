@@ -1,0 +1,1933 @@
+{
+  "2050d7da-2e8c-800e-9c17-c7fbe4211dd0": {
+    "images": {
+      "2050d7da-2e8c-800e-9c17-c7fbe4211dd0-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tray\nCategory: design\nMaterials: stainless steel\nKeywords: wave, tray, 2021, muuto, cara, davidde\nDescription: Stainless steel tray inspired by wave undulations, designed in 2021.\nProduct name: WAVE TRAY\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2021\nImage index: 1 of 3\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tray",
+          "category": "design",
+          "materials": [
+            "stainless steel"
+          ],
+          "keywords": [
+            "wave",
+            "tray",
+            "2021",
+            "muuto",
+            "cara",
+            "davide"
+          ],
+          "description": "Stainless steel tray inspired by wave undulations, designed in 2021.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-800e-9c17-c7fbe4211dd0-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tray\nCategory: design\nMaterials: stainless steel\nKeywords: wave, tray, 2021, muuto, cara, davidde\nDescription: Stainless steel tray inspired by wave undulations, designed in 2021.\nProduct name: WAVE TRAY\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2021\nImage index: 2 of 3\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tray",
+          "category": "design",
+          "materials": [
+            "stainless steel"
+          ],
+          "keywords": [
+            "wave",
+            "tray",
+            "2021",
+            "muuto",
+            "cara",
+            "davide"
+          ],
+          "description": "Stainless steel tray inspired by wave undulations, designed in 2021.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-800e-9c17-c7fbe4211dd0-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tray\nCategory: design\nMaterials: stainless steel\nKeywords: wave, tray, 2021, muuto, cara, davidde\nDescription: Stainless steel tray inspired by wave undulations, designed in 2021.\nProduct name: WAVE TRAY\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2021\nImage index: 3 of 3\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tray",
+          "category": "design",
+          "materials": [
+            "stainless steel"
+          ],
+          "keywords": [
+            "wave",
+            "tray",
+            "2021",
+            "muuto",
+            "cara",
+            "davide"
+          ],
+          "description": "Stainless steel tray inspired by wave undulations, designed in 2021.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "wave tray",
+        "cara \\ davide",
+        "muuto",
+        "2021",
+        "milan",
+        "wave",
+        "tray",
+        "cara",
+        "davide"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "stainless steel"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7": {
+    "images": {
+      "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: kyoto, simone bonanni studio, 2021, milan, pianca & partners\nDescription: Kyoto chair designed by Simone Bonanni Studio in 2021 for Pianca & Partners.\nProduct name: Kyoto\nDesigner: Simone Bonanni Studio\nCity: Milan\nYear: 2021\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Drawer Unit",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "kyoto",
+            "simone bonanni studio",
+            "2021",
+            "milan",
+            "pianca & partners"
+          ],
+          "description": "Kyoto chair designed by Simone Bonanni Studio in 2021 for Pianca & Partners.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: kyoto, simone bonanni studio, 2021, milan, pianca & partners\nDescription: Kyoto chair designed by Simone Bonanni Studio in 2021 for Pianca & Partners.\nProduct name: Kyoto\nDesigner: Simone Bonanni Studio\nCity: Milan\nYear: 2021\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Drawer Unit",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "kyoto",
+            "simone bonanni studio",
+            "2021",
+            "milan",
+            "pianca & partners"
+          ],
+          "description": "Kyoto chair designed by Simone Bonanni Studio in 2021 for Pianca & Partners.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: kyoto, simone bonanni studio, 2021, milan, pianca & partners\nDescription: Kyoto chair designed by Simone Bonanni Studio in 2021 for Pianca & Partners.\nProduct name: Kyoto\nDesigner: Simone Bonanni Studio\nCity: Milan\nYear: 2021\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Drawer Unit",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "kyoto",
+            "simone bonanni studio",
+            "2021",
+            "milan",
+            "pianca & partners"
+          ],
+          "description": "Kyoto chair designed by Simone Bonanni Studio in 2021 for Pianca & Partners.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: kyoto, simone bonanni studio, 2021, milan, pianca & partners\nDescription: Kyoto chair designed by Simone Bonanni Studio in 2021 for Pianca & Partners.\nProduct name: Kyoto\nDesigner: Simone Bonanni Studio\nCity: Milan\nYear: 2021\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Drawer Unit",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "kyoto",
+            "simone bonanni studio",
+            "2021",
+            "milan",
+            "pianca & partners"
+          ],
+          "description": "Kyoto chair designed by Simone Bonanni Studio in 2021 for Pianca & Partners.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "kyoto",
+        "simone bonanni studio",
+        "pianca & partners",
+        "2021",
+        "milan"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "w",
+        "o",
+        "d"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2050d7da-2e8c-805f-9df4-e7b4ef7f3592": {
+    "images": {
+      "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: container\nCategory: accessory\nMaterials: leather\nKeywords: rotonda, tan brown, uniqka, cara \\ davide, 2019, leather holder\nDescription: Leather container from CARA \\ DAVIDE, 2019.\nProduct name: Rotonda Tan Brown\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2019\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "container",
+          "category": "accessory",
+          "materials": [
+            "leather"
+          ],
+          "keywords": [
+            "rotonda",
+            "tan brown",
+            "uniqka",
+            "cara \\ davide",
+            "2019",
+            "leather holder"
+          ],
+          "description": "Leather container from CARA \\ DAVIDE, 2019.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: container\nCategory: accessory\nMaterials: leather\nKeywords: rotonda, tan brown, uniqka, cara \\ davide, 2019, leather holder\nDescription: Leather container from CARA \\ DAVIDE, 2019.\nProduct name: Rotonda Tan Brown\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2019\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "container",
+          "category": "accessory",
+          "materials": [
+            "leather"
+          ],
+          "keywords": [
+            "rotonda",
+            "tan brown",
+            "uniqka",
+            "cara \\ davide",
+            "2019",
+            "leather holder"
+          ],
+          "description": "Leather container from CARA \\ DAVIDE, 2019.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: container\nCategory: accessory\nMaterials: leather\nKeywords: rotonda, tan brown, uniqka, cara \\ davide, 2019, leather holder\nDescription: Leather container from CARA \\ DAVIDE, 2019.\nProduct name: Rotonda Tan Brown\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2019\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "container",
+          "category": "accessory",
+          "materials": [
+            "leather"
+          ],
+          "keywords": [
+            "rotonda",
+            "tan brown",
+            "uniqka",
+            "cara \\ davide",
+            "2019",
+            "leather holder"
+          ],
+          "description": "Leather container from CARA \\ DAVIDE, 2019.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: container\nCategory: accessory\nMaterials: leather\nKeywords: rotonda, tan brown, uniqka, cara \\ davide, 2019, leather holder\nDescription: Leather container from CARA \\ DAVIDE, 2019.\nProduct name: Rotonda Tan Brown\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2019\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "container",
+          "category": "accessory",
+          "materials": [
+            "leather"
+          ],
+          "keywords": [
+            "rotonda",
+            "tan brown",
+            "uniqka",
+            "cara \\ davide",
+            "2019",
+            "leather holder"
+          ],
+          "description": "Leather container from CARA \\ DAVIDE, 2019.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "rotonda tan brown",
+        "cara \\ davide",
+        "uniqka",
+        "2019",
+        "milan",
+        "rotonda",
+        "tan brown",
+        "leather holder"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "leather"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2050d7da-2e8c-806e-bc17-eb46adb81d15": {
+    "images": {
+      "2050d7da-2e8c-806e-bc17-eb46adb81d15-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: table\nCategory: furniture\nMaterials: marble\nKeywords: marmo bolli, bardiglio marble, milan, sfrido estate, cara \\\ndavide, 2024\nDescription: Boldly contrasts industrial rubber with natural stone, featuring Bardiglio marble.\nProduct name: Marmo Bolli\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2024\nImage index: 1 of 3\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "table",
+          "category": "furniture",
+          "materials": [
+            "marble"
+          ],
+          "keywords": [
+            "marmo bolli",
+            "bardiglio marble",
+            "milan",
+            "sfrido estate",
+            "cara \\\ndavide",
+            "2024"
+          ],
+          "description": "Boldly contrasts industrial rubber with natural stone, featuring Bardiglio marble.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-806e-bc17-eb46adb81d15-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: table\nCategory: furniture\nMaterials: marble\nKeywords: marmo bolli, bardiglio marble, milan, sfrido estate, cara \\\ndavide, 2024\nDescription: Boldly contrasts industrial rubber with natural stone, featuring Bardiglio marble.\nProduct name: Marmo Bolli\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2024\nImage index: 2 of 3\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "table",
+          "category": "furniture",
+          "materials": [
+            "marble"
+          ],
+          "keywords": [
+            "marmo bolli",
+            "bardiglio marble",
+            "milan",
+            "sfrido estate",
+            "cara \\\ndavide",
+            "2024"
+          ],
+          "description": "Boldly contrasts industrial rubber with natural stone, featuring Bardiglio marble.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2050d7da-2e8c-806e-bc17-eb46adb81d15-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: table\nCategory: furniture\nMaterials: marble\nKeywords: marmo bolli, bardiglio marble, milan, sfrido estate, cara \\\ndavide, 2024\nDescription: Boldly contrasts industrial rubber with natural stone, featuring Bardiglio marble.\nProduct name: Marmo Bolli\nDesigner: CARA \\ DAVIDE\nCity: Milan\nYear: 2024\nImage index: 3 of 3\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "table",
+          "category": "furniture",
+          "materials": [
+            "marble"
+          ],
+          "keywords": [
+            "marmo bolli",
+            "bardiglio marble",
+            "milan",
+            "sfrido estate",
+            "cara \\\ndavide",
+            "2024"
+          ],
+          "description": "Boldly contrasts industrial rubber with natural stone, featuring Bardiglio marble.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "marmo bolli",
+        "cara \\ davide",
+        "sfrido estate",
+        "2024",
+        "milan",
+        "bardiglio marble",
+        "cara \\\ndavide"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "marble"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2070d7da-2e8c-8063-be37-de7de2f512d8": {
+    "images": {
+      "2070d7da-2e8c-8063-be37-de7de2f512d8-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: plywood, ash, steel\nKeywords: shell, curved, veneer, frame, legs, feet\nDescription: A compact armchair with curved plywood veneered in ash and steel tubular frame, featuring three legs ending in generous feet.\nProduct name: Acquavite\nDesigner: Alessandro Stabile Design Studio\nCity: Milan\nYear: 2024\nImage index: 1 of 2\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": [
+            "plywood",
+            "ash",
+            "steel"
+          ],
+          "keywords": [
+            "shell",
+            "curved",
+            "veneer",
+            "green",
+            "legs",
+            "feet"
+          ],
+          "description": "A compact green armchair with curved plywood veneered in ash and steel tubular frame, featuring three legs ending in generous feet.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2070d7da-2e8c-8063-be37-de7de2f512d8-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: plywood, ash, steel\nKeywords: shell, curved, veneer, frame, legs, feet\nDescription: A compact armchair with curved plywood veneered in ash and steel tubular frame, featuring three legs ending in generous feet.\nProduct name: Acquavite\nDesigner: Alessandro Stabile Design Studio\nCity: Milan\nYear: 2024\nImage index: 2 of 2\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": [
+            "plywood",
+            "ash",
+            "steel"
+          ],
+          "keywords": [
+            "shell",
+            "curved",
+            "veneer",
+            "green",
+            "legs",
+            "feet"
+          ],
+          "description": "A compact green armchair with curved plywood veneered in ash and steel tubular frame, featuring three legs ending in generous feet.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "acquavite",
+        "alessandro stabile design studio",
+        "venedia",
+        "2024",
+        "milan",
+        "shell",
+        "curved",
+        "veneer",
+        "green",
+        "legs",
+        "feet"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "plywood",
+        "ash",
+        "steel"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2070d7da-2e8c-8074-baa6-db0d2938f978": {
+    "images": {
+      "2070d7da-2e8c-8074-baa6-db0d2938f978-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: unknown\nKeywords: taco, alessandro stabile design studio, milan, lacividina, upholstered, innovative\nDescription: Taco armchair by Alessandro Stabile Design Studio redefines production with sustainable, lightweight design.\nProduct name: Taco\nDesigner: Alessandro Stabile Design Studio\nCity: Milan\nYear: 2023\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "taco",
+            "alessandro stabile design studio",
+            "milan",
+            "lacividina",
+            "upholstered",
+            "yellow"
+          ],
+          "description": "Taco armchair by Alessandro Stabile Design Studio redefines production with sustainable, lightweight design.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2070d7da-2e8c-8074-baa6-db0d2938f978-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: unknown\nKeywords: taco, alessandro stabile design studio, milan, lacividina, upholstered, innovative\nDescription: Taco armchair by Alessandro Stabile Design Studio redefines production with sustainable, lightweight design.\nProduct name: Taco\nDesigner: Alessandro Stabile Design Studio\nCity: Milan\nYear: 2023\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "taco",
+            "alessandro stabile design studio",
+            "milan",
+            "lacividina",
+            "upholstered",
+            "yellow"
+          ],
+          "description": "Taco armchair by Alessandro Stabile Design Studio redefines production with sustainable, lightweight design.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2070d7da-2e8c-8074-baa6-db0d2938f978-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: unknown\nKeywords: taco, alessandro stabile design studio, milan, lacividina, upholstered, innovative\nDescription: Taco armchair by Alessandro Stabile Design Studio redefines production with sustainable, lightweight design.\nProduct name: Taco\nDesigner: Alessandro Stabile Design Studio\nCity: Milan\nYear: 2023\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "taco",
+            "alessandro stabile design studio",
+            "milan",
+            "lacividina",
+            "upholstered",
+            "yellow"
+          ],
+          "description": "Taco armchair by Alessandro Stabile Design Studio redefines production with sustainable, lightweight design.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2070d7da-2e8c-8074-baa6-db0d2938f978-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: unknown\nKeywords: taco, alessandro stabile design studio, milan, lacividina, upholstered, innovative\nDescription: Taco armchair by Alessandro Stabile Design Studio redefines production with sustainable, lightweight design.\nProduct name: Taco\nDesigner: Alessandro Stabile Design Studio\nCity: Milan\nYear: 2023\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "taco",
+            "alessandro stabile design studio",
+            "milan",
+            "lacividina",
+            "upholstered",
+            "yellow"
+          ],
+          "description": "Taco armchair by Alessandro Stabile Design Studio redefines production with sustainable, lightweight design.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "taco",
+        "alessandro stabile design studio",
+        "lacividina",
+        "2023",
+        "milan",
+        "upholstered",
+        "yellow"
+      ],
+      "primary_category": "design",
+      "materials": [],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2090d7da-2e8c-8023-bb46-d53fa805ae17": {
+    "images": {
+      "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: object\nCategory: design\nMaterials: unknown\nKeywords: studio klass, h387, industrial design, milan, valli fusital\nDescription: H387 is a design by Studio Klass for Valli, Fusital.\nProduct name: H387\nDesigner: Studio Klass\nCity: Milan\nYear: 2024\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "handle",
+          "category": "design",
+          "materials": null,
+          "keywords": [
+            "studio klass",
+            "h387",
+            "industrial design",
+            "milan",
+            "valli fusital"
+          ],
+          "description": "H387 is a design by Studio Klass for Valli, Fusital.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: object\nCategory: design\nMaterials: unknown\nKeywords: studio klass, h387, industrial design, milan, valli fusital\nDescription: H387 is a design by Studio Klass for Valli, Fusital.\nProduct name: H387\nDesigner: Studio Klass\nCity: Milan\nYear: 2024\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "handle",
+          "category": "design",
+          "materials": "metal",
+          "keywords": [
+            "studio klass",
+            "h387",
+            "industrial design",
+            "milan",
+            "valli fusital"
+          ],
+          "description": "H387 is a design by Studio Klass for Valli, Fusital.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: object\nCategory: design\nMaterials: unknown\nKeywords: studio klass, h387, industrial design, milan, valli fusital\nDescription: H387 is a design by Studio Klass for Valli, Fusital.\nProduct name: H387\nDesigner: Studio Klass\nCity: Milan\nYear: 2024\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "handle",
+          "category": "design",
+          "materials": "metal",
+          "keywords": [
+            "studio klass",
+            "h387",
+            "industrial design",
+            "milan",
+            "valli fusital"
+          ],
+          "description": "H387 is a design by Studio Klass for Valli, Fusital.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: object\nCategory: design\nMaterials: unknown\nKeywords: studio klass, h387, industrial design, milan, valli fusital\nDescription: H387 is a design by Studio Klass for Valli, Fusital.\nProduct name: H387\nDesigner: Studio Klass\nCity: Milan\nYear: 2024\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "handle",
+          "category": "design",
+          "materials": "metal",
+          "keywords": [
+            "studio klass",
+            "h387",
+            "industrial design",
+            "milan",
+            "valli fusital"
+          ],
+          "description": "H387 is a design by Studio Klass for Valli, Fusital.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "h387",
+        "studio klass",
+        "valli, fusital",
+        "2024",
+        "milan",
+        "industrial design",
+        "valli fusital"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "m",
+        "e",
+        "t",
+        "a",
+        "l"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2090d7da-2e8c-8035-a363-e667fb06b0e4": {
+    "images": {
+      "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: aluminum, marble\nKeywords: portable, table, rechargeable, slim, sleek, lightweight\nDescription: Portofino is a slim, sleek, and lightweight portable table lamp designed by Valerio Sommella.\nProduct name: Portofino\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 1 of 5\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": [
+            "aluminum",
+            "marble"
+          ],
+          "keywords": [
+            "portable",
+            "table",
+            "rechargeable",
+            "slim",
+            "green",
+            "lightweight"
+          ],
+          "description": "Portofino is a slim, green, and lightweight portable table lamp designed by Valerio Sommella.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: aluminum, marble\nKeywords: portable, table, rechargeable, slim, sleek, lightweight\nDescription: Portofino is a slim, sleek, and lightweight portable table lamp designed by Valerio Sommella.\nProduct name: Portofino\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 2 of 5\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": [
+            "aluminum",
+            "marble"
+          ],
+          "keywords": [
+            "portable",
+            "table",
+            "rechargeable",
+            "slim",
+            "green",
+            "lightweight"
+          ],
+          "description": "Portofino is a slim, green, and lightweight portable table lamp designed by Valerio Sommella.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: aluminum, marble\nKeywords: portable, table, rechargeable, slim, sleek, lightweight\nDescription: Portofino is a slim, sleek, and lightweight portable table lamp designed by Valerio Sommella.\nProduct name: Portofino\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 3 of 5\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": [
+            "aluminum",
+            "marble"
+          ],
+          "keywords": [
+            "portable",
+            "table",
+            "rechargeable",
+            "slim",
+            "green",
+            "lightweight"
+          ],
+          "description": "Portofino is a slim, green, and lightweight portable table lamp designed by Valerio Sommella.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: aluminum, marble\nKeywords: portable, table, rechargeable, slim, sleek, lightweight\nDescription: Portofino is a slim, sleek, and lightweight portable table lamp designed by Valerio Sommella.\nProduct name: Portofino\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 4 of 5\nView: view 4\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": [
+            "aluminum",
+            "marble"
+          ],
+          "keywords": [
+            "portable",
+            "table",
+            "rechargeable",
+            "slim",
+            "green",
+            "lightweight"
+          ],
+          "description": "Portofino is a slim, green, and lightweight portable table lamp designed by Valerio Sommella.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-4": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: aluminum, marble\nKeywords: portable, table, rechargeable, slim, sleek, lightweight\nDescription: Portofino is a slim, sleek, and lightweight portable table lamp designed by Valerio Sommella.\nProduct name: Portofino\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 5 of 5\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": [
+            "aluminum",
+            "marble"
+          ],
+          "keywords": [
+            "portable",
+            "table",
+            "rechargeable",
+            "slim",
+            "green",
+            "lightweight"
+          ],
+          "description": "Portofino is a slim, green, and lightweight portable table lamp designed by Valerio Sommella.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "portofino",
+        "valerio sommella design studio",
+        "nemo",
+        "2023",
+        "milan",
+        "portable",
+        "table",
+        "rechargeable",
+        "slim",
+        "green",
+        "lightweight"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "aluminum",
+        "marble"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2090d7da-2e8c-805c-a7dd-f9191a805f3b": {
+    "images": {
+      "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: Rue\nCategory: Design\nMaterials: unknown\nKeywords: federica biasi studio, mingardo, metalworking, cancer, fundraising, blacksmith\nDescription: Rue is a design by Federica Biasi Studio for Mingardo, featuring metalwork in support of cancer research.\nProduct name: Rue\nDesigner: Federica Biasi Studio\nCity: Milan\nYear: 2021\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Candle light",
+          "category": "Lighting",
+          "materials": "metal",
+          "keywords": [
+            "federica biasi studio",
+            "mingardo",
+            "metalworking",
+            "cancer",
+            "fundraising",
+            "blacksmith"
+          ],
+          "description": "Rue is a Candle Light by Federica Biasi Studio for Mingardo, featuring metalwork in support of cancer research.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: Rue\nCategory: Design\nMaterials: unknown\nKeywords: federica biasi studio, mingardo, metalworking, cancer, fundraising, blacksmith\nDescription: Rue is a design by Federica Biasi Studio for Mingardo, featuring metalwork in support of cancer research.\nProduct name: Rue\nDesigner: Federica Biasi Studio\nCity: Milan\nYear: 2021\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Candle light",
+          "category": "Lighting",
+          "materials": "metal",
+          "keywords": [
+            "federica biasi studio",
+            "mingardo",
+            "metalworking",
+            "cancer",
+            "fundraising",
+            "blacksmith"
+          ],
+          "description": "Rue is a Candle Light by Federica Biasi Studio for Mingardo, featuring metalwork in support of cancer research.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: Rue\nCategory: Design\nMaterials: unknown\nKeywords: federica biasi studio, mingardo, metalworking, cancer, fundraising, blacksmith\nDescription: Rue is a design by Federica Biasi Studio for Mingardo, featuring metalwork in support of cancer research.\nProduct name: Rue\nDesigner: Federica Biasi Studio\nCity: Milan\nYear: 2021\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Candle light",
+          "category": "Lighting",
+          "materials": "metal",
+          "keywords": [
+            "federica biasi studio",
+            "mingardo",
+            "metalworking",
+            "cancer",
+            "fundraising",
+            "blacksmith"
+          ],
+          "description": "Rue is a Candle Light by Federica Biasi Studio for Mingardo, featuring metalwork in support of cancer research.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: Rue\nCategory: Design\nMaterials: unknown\nKeywords: federica biasi studio, mingardo, metalworking, cancer, fundraising, blacksmith\nDescription: Rue is a design by Federica Biasi Studio for Mingardo, featuring metalwork in support of cancer research.\nProduct name: Rue\nDesigner: Federica Biasi Studio\nCity: Milan\nYear: 2021\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Candle light",
+          "category": "Lighting",
+          "materials": "metal",
+          "keywords": [
+            "federica biasi studio",
+            "mingardo",
+            "metalworking",
+            "cancer",
+            "fundraising",
+            "blacksmith"
+          ],
+          "description": "Rue is a Candle Light by Federica Biasi Studio for Mingardo, featuring metalwork in support of cancer research.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "rue",
+        "federica biasi studio",
+        "mingardo",
+        "2021",
+        "milan",
+        "metalworking",
+        "cancer",
+        "fundraising",
+        "blacksmith"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "m",
+        "e",
+        "t",
+        "a",
+        "l"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2090d7da-2e8c-809c-8b1e-f4b066c030e1": {
+    "images": {
+      "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: studioutte, 2021, milan\nDescription: 001 ERT chair designed by studioutte in 2021.\nProduct name: 001 ert chair\nDesigner: studioutte\nCity: Milan\nYear: 2021\nImage index: 1 of 5\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "studioutte",
+            "2021",
+            "milan"
+          ],
+          "description": "001 ERT chair designed by studioutte in 2021.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: studioutte, 2021, milan\nDescription: 001 ERT chair designed by studioutte in 2021.\nProduct name: 001 ert chair\nDesigner: studioutte\nCity: Milan\nYear: 2021\nImage index: 2 of 5\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "studioutte",
+            "2021",
+            "milan"
+          ],
+          "description": "001 ERT chair designed by studioutte in 2021.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: studioutte, 2021, milan\nDescription: 001 ERT chair designed by studioutte in 2021.\nProduct name: 001 ert chair\nDesigner: studioutte\nCity: Milan\nYear: 2021\nImage index: 3 of 5\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "studioutte",
+            "2021",
+            "milan"
+          ],
+          "description": "001 ERT chair designed by studioutte in 2021.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: studioutte, 2021, milan\nDescription: 001 ERT chair designed by studioutte in 2021.\nProduct name: 001 ert chair\nDesigner: studioutte\nCity: Milan\nYear: 2021\nImage index: 4 of 5\nView: view 4\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "studioutte",
+            "2021",
+            "milan"
+          ],
+          "description": "001 ERT chair designed by studioutte in 2021.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-4": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: studioutte, 2021, milan\nDescription: 001 ERT chair designed by studioutte in 2021.\nProduct name: 001 ert chair\nDesigner: studioutte\nCity: Milan\nYear: 2021\nImage index: 5 of 5\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": "wood",
+          "keywords": [
+            "studioutte",
+            "2021",
+            "milan"
+          ],
+          "description": "001 ERT chair designed by studioutte in 2021.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "001 ert chair",
+        "studioutte",
+        "2021",
+        "milan"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "w",
+        "o",
+        "d"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2090d7da-2e8c-80be-bd6e-c561fc56dca4": {
+    "images": {
+      "2090d7da-2e8c-80be-bd6e-c561fc56dca4-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: candle\nCategory: home decor\nMaterials: ceramic\nKeywords: candle, pot, design, studio, soul, useful\nDescription: Ceramic candle that transforms into a pot once the wax is gone.\nProduct name: VS02 Ceramic Candle and Pot\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Candle holder",
+          "category": "home decor",
+          "materials": [
+            "ceramic"
+          ],
+          "keywords": [
+            "candle",
+            "pot",
+            "design",
+            "studio",
+            "soul",
+            "useful"
+          ],
+          "description": "Ceramic candle holder that transforms into a pot once the wax is gone.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80be-bd6e-c561fc56dca4-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: candle\nCategory: home decor\nMaterials: ceramic\nKeywords: candle, pot, design, studio, soul, useful\nDescription: Ceramic candle that transforms into a pot once the wax is gone.\nProduct name: VS02 Ceramic Candle and Pot\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Candle holder",
+          "category": "home decor",
+          "materials": [
+            "ceramic"
+          ],
+          "keywords": [
+            "candle",
+            "pot",
+            "design",
+            "studio",
+            "soul",
+            "useful"
+          ],
+          "description": "Ceramic candle holder that transforms into a pot once the wax is gone.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80be-bd6e-c561fc56dca4-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: candle\nCategory: home decor\nMaterials: ceramic\nKeywords: candle, pot, design, studio, soul, useful\nDescription: Ceramic candle that transforms into a pot once the wax is gone.\nProduct name: VS02 Ceramic Candle and Pot\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Candle holder",
+          "category": "home decor",
+          "materials": [
+            "ceramic"
+          ],
+          "keywords": [
+            "candle",
+            "pot",
+            "design",
+            "studio",
+            "soul",
+            "useful"
+          ],
+          "description": "Ceramic candle holder that transforms into a pot once the wax is gone.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80be-bd6e-c561fc56dca4-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: candle\nCategory: home decor\nMaterials: ceramic\nKeywords: candle, pot, design, studio, soul, useful\nDescription: Ceramic candle that transforms into a pot once the wax is gone.\nProduct name: VS02 Ceramic Candle and Pot\nDesigner: Valerio Sommella Design Studio\nCity: Milan\nYear: 2023\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "Candle holder",
+          "category": "home decor",
+          "materials": [
+            "ceramic"
+          ],
+          "keywords": [
+            "candle",
+            "pot",
+            "design",
+            "studio",
+            "soul",
+            "useful"
+          ],
+          "description": "Ceramic candle holder that transforms into a pot once the wax is gone.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "candle",
+        "pot",
+        "design",
+        "studio",
+        "soul",
+        "useful"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "ceramic"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2090d7da-2e8c-80c7-bef7-e171f97c7446": {
+    "images": {
+      "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: sgabello\nCategory: mobilia\nMaterials: unknown\nKeywords: hug, giulio iacchetti studio, sgabello, tavolo, milan\nDescription: Sgabelli Hug di Giulio Iacchetti Studio, anno 2022.\nProduct name: Hug\nDesigner: Giulio Iacchetti Studio\nCity: Milan\nYear: 2022\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "sgabello",
+          "category": "mobilia",
+          "materials": null,
+          "keywords": [
+            "hug",
+            "giulio iacchetti studio",
+            "sgabello",
+            "tavolo",
+            "milan"
+          ],
+          "description": "Sgabelli Hug di Giulio Iacchetti Studio, anno 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: sgabello\nCategory: mobilia\nMaterials: unknown\nKeywords: hug, giulio iacchetti studio, sgabello, tavolo, milan\nDescription: Sgabelli Hug di Giulio Iacchetti Studio, anno 2022.\nProduct name: Hug\nDesigner: Giulio Iacchetti Studio\nCity: Milan\nYear: 2022\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "sgabello",
+          "category": "mobilia",
+          "materials": null,
+          "keywords": [
+            "hug",
+            "giulio iacchetti studio",
+            "sgabello",
+            "tavolo",
+            "milan"
+          ],
+          "description": "Sgabelli Hug di Giulio Iacchetti Studio, anno 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: sgabello\nCategory: mobilia\nMaterials: unknown\nKeywords: hug, giulio iacchetti studio, sgabello, tavolo, milan\nDescription: Sgabelli Hug di Giulio Iacchetti Studio, anno 2022.\nProduct name: Hug\nDesigner: Giulio Iacchetti Studio\nCity: Milan\nYear: 2022\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "sgabello",
+          "category": "mobilia",
+          "materials": null,
+          "keywords": [
+            "hug",
+            "giulio iacchetti studio",
+            "sgabello",
+            "tavolo",
+            "milan"
+          ],
+          "description": "Sgabelli Hug di Giulio Iacchetti Studio, anno 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: sgabello\nCategory: mobilia\nMaterials: unknown\nKeywords: hug, giulio iacchetti studio, sgabello, tavolo, milan\nDescription: Sgabelli Hug di Giulio Iacchetti Studio, anno 2022.\nProduct name: Hug\nDesigner: Giulio Iacchetti Studio\nCity: Milan\nYear: 2022\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "sgabello",
+          "category": "mobilia",
+          "materials": null,
+          "keywords": [
+            "hug",
+            "giulio iacchetti studio",
+            "sgabello",
+            "tavolo",
+            "milan"
+          ],
+          "description": "Sgabelli Hug di Giulio Iacchetti Studio, anno 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "hug",
+        "giulio iacchetti studio",
+        "fantin",
+        "2022",
+        "milan",
+        "sgabello",
+        "tavolo"
+      ],
+      "primary_category": "design",
+      "materials": [],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2090d7da-2e8c-80e1-aab1-eb8e27d1a090": {
+    "images": {
+      "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: unknown\nKeywords: led, applique, pendant, indirect, dimmable, linear\nDescription: Thula is a dimmable linear LED lighting family including appliques and pendant lamps.\nProduct name: THULA\nDesigner: Federica Biasi Studio\nCity: Milan\nYear: 2021\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": null,
+          "keywords": [
+            "led",
+            "applique",
+            "pendant",
+            "indirect",
+            "dimmable",
+            "linear"
+          ],
+          "description": "Thula is a dimmable linear LED lighting family including appliques and pendant lamps.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: unknown\nKeywords: led, applique, pendant, indirect, dimmable, linear\nDescription: Thula is a dimmable linear LED lighting family including appliques and pendant lamps.\nProduct name: THULA\nDesigner: Federica Biasi Studio\nCity: Milan\nYear: 2021\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": null,
+          "keywords": [
+            "led",
+            "applique",
+            "pendant",
+            "indirect",
+            "dimmable",
+            "linear"
+          ],
+          "description": "Thula is a dimmable linear LED lighting family including appliques and pendant lamps.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: unknown\nKeywords: led, applique, pendant, indirect, dimmable, linear\nDescription: Thula is a dimmable linear LED lighting family including appliques and pendant lamps.\nProduct name: THULA\nDesigner: Federica Biasi Studio\nCity: Milan\nYear: 2021\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": null,
+          "keywords": [
+            "led",
+            "applique",
+            "pendant",
+            "indirect",
+            "dimmable",
+            "linear"
+          ],
+          "description": "Thula is a dimmable linear LED lighting family including appliques and pendant lamps.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: lamp\nCategory: lighting\nMaterials: unknown\nKeywords: led, applique, pendant, indirect, dimmable, linear\nDescription: Thula is a dimmable linear LED lighting family including appliques and pendant lamps.\nProduct name: THULA\nDesigner: Federica Biasi Studio\nCity: Milan\nYear: 2021\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "lamp",
+          "category": "lighting",
+          "materials": null,
+          "keywords": [
+            "led",
+            "applique",
+            "pendant",
+            "indirect",
+            "dimmable",
+            "linear"
+          ],
+          "description": "Thula is a dimmable linear LED lighting family including appliques and pendant lamps.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "thula",
+        "federica biasi studio",
+        "tooy",
+        "2021",
+        "milan",
+        "led",
+        "applique",
+        "pendant",
+        "indirect",
+        "dimmable",
+        "linear"
+      ],
+      "primary_category": "design",
+      "materials": [],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26": {
+    "images": {
+      "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: gift\nCategory: design\nMaterials: unknown\nKeywords: brian, sironi, industrial, design, 2022, milano\nDescription: Industrial design gift by Brian Sironi, 2022.\nProduct name: Gift\nDesigner: Brian Sironi\nCity: Milan\nYear: 2022\nImage index: 1 of 5\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "gift",
+          "category": null,
+          "materials": null,
+          "keywords": [
+            "brian",
+            "sironi",
+            "industrial",
+            "design",
+            "2022",
+            "milano"
+          ],
+          "description": "Industrial design gift by Brian Sironi, 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: gift\nCategory: design\nMaterials: unknown\nKeywords: brian, sironi, industrial, design, 2022, milano\nDescription: Industrial design gift by Brian Sironi, 2022.\nProduct name: Gift\nDesigner: Brian Sironi\nCity: Milan\nYear: 2022\nImage index: 2 of 5\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "gift",
+          "category": null,
+          "materials": null,
+          "keywords": [
+            "brian",
+            "sironi",
+            "industrial",
+            "design",
+            "2022",
+            "milano"
+          ],
+          "description": "Industrial design gift by Brian Sironi, 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: gift\nCategory: design\nMaterials: unknown\nKeywords: brian, sironi, industrial, design, 2022, milano\nDescription: Industrial design gift by Brian Sironi, 2022.\nProduct name: Gift\nDesigner: Brian Sironi\nCity: Milan\nYear: 2022\nImage index: 3 of 5\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "gift",
+          "category": null,
+          "materials": null,
+          "keywords": [
+            "brian",
+            "sironi",
+            "industrial",
+            "design",
+            "2022",
+            "milano"
+          ],
+          "description": "Industrial design gift by Brian Sironi, 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: gift\nCategory: design\nMaterials: unknown\nKeywords: brian, sironi, industrial, design, 2022, milano\nDescription: Industrial design gift by Brian Sironi, 2022.\nProduct name: Gift\nDesigner: Brian Sironi\nCity: Milan\nYear: 2022\nImage index: 4 of 5\nView: view 4\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "gift",
+          "category": null,
+          "materials": null,
+          "keywords": [
+            "brian",
+            "sironi",
+            "industrial",
+            "design",
+            "2022",
+            "milano"
+          ],
+          "description": "Industrial design gift by Brian Sironi, 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-4": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: gift\nCategory: design\nMaterials: unknown\nKeywords: brian, sironi, industrial, design, 2022, milano\nDescription: Industrial design gift by Brian Sironi, 2022.\nProduct name: Gift\nDesigner: Brian Sironi\nCity: Milan\nYear: 2022\nImage index: 5 of 5\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "gift",
+          "category": null,
+          "materials": null,
+          "keywords": [
+            "brian",
+            "sironi",
+            "industrial",
+            "design",
+            "2022",
+            "milano"
+          ],
+          "description": "Industrial design gift by Brian Sironi, 2022.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "gift",
+        "brian sironi",
+        "ichendorf milano",
+        "2022",
+        "milan",
+        "brian",
+        "sironi",
+        "industrial",
+        "design",
+        "milano"
+      ],
+      "primary_category": "design",
+      "materials": [],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc": {
+    "images": {
+      "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: francesco, meda, zucchetti, 2020, milan\nDescription: Design chair by Francesco Meda for Zucchetti in 2020.\nProduct name: Medameda\nDesigner: Francesco Meda\nCity: Milan\nYear: 2020\nImage index: 1 of 5\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "francesco",
+            "meda",
+            "zucchetti",
+            "2020",
+            "milan"
+          ],
+          "description": "Design chair by Francesco Meda for Zucchetti in 2020.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: francesco, meda, zucchetti, 2020, milan\nDescription: Design chair by Francesco Meda for Zucchetti in 2020.\nProduct name: Medameda\nDesigner: Francesco Meda\nCity: Milan\nYear: 2020\nImage index: 2 of 5\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "francesco",
+            "meda",
+            "zucchetti",
+            "2020",
+            "milan"
+          ],
+          "description": "Design chair by Francesco Meda for Zucchetti in 2020.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: francesco, meda, zucchetti, 2020, milan\nDescription: Design chair by Francesco Meda for Zucchetti in 2020.\nProduct name: Medameda\nDesigner: Francesco Meda\nCity: Milan\nYear: 2020\nImage index: 3 of 5\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "francesco",
+            "meda",
+            "zucchetti",
+            "2020",
+            "milan"
+          ],
+          "description": "Design chair by Francesco Meda for Zucchetti in 2020.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: francesco, meda, zucchetti, 2020, milan\nDescription: Design chair by Francesco Meda for Zucchetti in 2020.\nProduct name: Medameda\nDesigner: Francesco Meda\nCity: Milan\nYear: 2020\nImage index: 4 of 5\nView: view 4\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "francesco",
+            "meda",
+            "zucchetti",
+            "2020",
+            "milan"
+          ],
+          "description": "Design chair by Francesco Meda for Zucchetti in 2020.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-4": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: furniture\nMaterials: unknown\nKeywords: francesco, meda, zucchetti, 2020, milan\nDescription: Design chair by Francesco Meda for Zucchetti in 2020.\nProduct name: Medameda\nDesigner: Francesco Meda\nCity: Milan\nYear: 2020\nImage index: 5 of 5\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "francesco",
+            "meda",
+            "zucchetti",
+            "2020",
+            "milan"
+          ],
+          "description": "Design chair by Francesco Meda for Zucchetti in 2020.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "medameda",
+        "francesco meda",
+        "zucchetti design",
+        "2020",
+        "milan",
+        "francesco",
+        "meda",
+        "zucchetti"
+      ],
+      "primary_category": "design",
+      "materials": [],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "20c0d7da-2e8c-804b-a39e-defbab402039": {
+    "images": {
+      "20c0d7da-2e8c-804b-a39e-defbab402039-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tovaglia\nCategory: accessories\nMaterials: marble\nKeywords: plates, tablecloths, checkered, marbles, curved, patterns\nDescription: Tovaglia is a series of polychrome marble plates inspired by Italian tavern tablecloths.\nProduct name: Tovaglia\nDesigner: Andrea Mancuso Studio\nCity: Milan\nYear: 2021\nImage index: 1 of 4\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tovaglia",
+          "category": "accessories",
+          "materials": [
+            "marble"
+          ],
+          "keywords": [
+            "plates",
+            "tablecloths",
+            "checkered",
+            "marbles",
+            "curved",
+            "patterns"
+          ],
+          "description": "Tovaglia is a series of polychrome marble plates inspired by Italian tavern tablecloths.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-804b-a39e-defbab402039-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tovaglia\nCategory: accessories\nMaterials: marble\nKeywords: plates, tablecloths, checkered, marbles, curved, patterns\nDescription: Tovaglia is a series of polychrome marble plates inspired by Italian tavern tablecloths.\nProduct name: Tovaglia\nDesigner: Andrea Mancuso Studio\nCity: Milan\nYear: 2021\nImage index: 2 of 4\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tovaglia",
+          "category": "accessories",
+          "materials": [
+            "marble"
+          ],
+          "keywords": [
+            "plates",
+            "tablecloths",
+            "checkered",
+            "marbles",
+            "curved",
+            "patterns"
+          ],
+          "description": "Tovaglia is a series of polychrome marble plates inspired by Italian tavern tablecloths.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-804b-a39e-defbab402039-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tovaglia\nCategory: accessories\nMaterials: marble\nKeywords: plates, tablecloths, checkered, marbles, curved, patterns\nDescription: Tovaglia is a series of polychrome marble plates inspired by Italian tavern tablecloths.\nProduct name: Tovaglia\nDesigner: Andrea Mancuso Studio\nCity: Milan\nYear: 2021\nImage index: 3 of 4\nView: view 3\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tovaglia",
+          "category": "accessories",
+          "materials": [
+            "marble"
+          ],
+          "keywords": [
+            "plates",
+            "tablecloths",
+            "checkered",
+            "marbles",
+            "curved",
+            "patterns"
+          ],
+          "description": "Tovaglia is a series of polychrome marble plates inspired by Italian tavern tablecloths.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-804b-a39e-defbab402039-img-3": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tovaglia\nCategory: accessories\nMaterials: marble\nKeywords: plates, tablecloths, checkered, marbles, curved, patterns\nDescription: Tovaglia is a series of polychrome marble plates inspired by Italian tavern tablecloths.\nProduct name: Tovaglia\nDesigner: Andrea Mancuso Studio\nCity: Milan\nYear: 2021\nImage index: 4 of 4\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tovaglia",
+          "category": "accessories",
+          "materials": [
+            "marble"
+          ],
+          "keywords": [
+            "plates",
+            "tablecloths",
+            "checkered",
+            "marbles",
+            "curved",
+            "patterns"
+          ],
+          "description": "Tovaglia is a series of polychrome marble plates inspired by Italian tavern tablecloths.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "tovaglia",
+        "andrea mancuso studio",
+        "marimar stone",
+        "2021",
+        "milan",
+        "plates",
+        "tablecloths",
+        "checkered",
+        "marbles",
+        "curved",
+        "patterns"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "marble"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e": {
+    "images": {
+      "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: collection\nCategory: furniture\nMaterials: wood\nKeywords: bentwood, light, curved, durability, strength, 20th century\nDescription: Unfold collection by Andrea Mancuso Studio features bentwood furniture.\nProduct name: Unfold\nDesigner: Andrea Mancuso Studio\nCity: Milan\nYear: 2023\nImage index: 1 of 3\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "collection",
+          "category": "furniture",
+          "materials": [
+            "wood"
+          ],
+          "keywords": [
+            "bentwood",
+            "light",
+            "curved",
+            "durability",
+            "strength",
+            "20th century"
+          ],
+          "description": "Unfold collection by Andrea Mancuso Studio features bentwood furniture.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: collection\nCategory: furniture\nMaterials: wood\nKeywords: bentwood, light, curved, durability, strength, 20th century\nDescription: Unfold collection by Andrea Mancuso Studio features bentwood furniture.\nProduct name: Unfold\nDesigner: Andrea Mancuso Studio\nCity: Milan\nYear: 2023\nImage index: 2 of 3\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "collection",
+          "category": "furniture",
+          "materials": [
+            "wood"
+          ],
+          "keywords": [
+            "bentwood",
+            "light",
+            "curved",
+            "durability",
+            "strength",
+            "20th century"
+          ],
+          "description": "Unfold collection by Andrea Mancuso Studio features bentwood furniture.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: collection\nCategory: furniture\nMaterials: wood\nKeywords: bentwood, light, curved, durability, strength, 20th century\nDescription: Unfold collection by Andrea Mancuso Studio features bentwood furniture.\nProduct name: Unfold\nDesigner: Andrea Mancuso Studio\nCity: Milan\nYear: 2023\nImage index: 3 of 3\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "collection",
+          "category": "furniture",
+          "materials": [
+            "wood"
+          ],
+          "keywords": [
+            "bentwood",
+            "light",
+            "curved",
+            "durability",
+            "strength",
+            "20th century"
+          ],
+          "description": "Unfold collection by Andrea Mancuso Studio features bentwood furniture.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "unfold",
+        "andrea mancuso studio",
+        "2023",
+        "milan",
+        "bentwood",
+        "light",
+        "curved",
+        "durability",
+        "strength",
+        "20th century"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "wood"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009": {
+    "images": {
+      "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tap\nCategory: hardware\nMaterials: steel\nKeywords: family, taps, knobs, subtraction, geometry, interaction\nDescription: A family of taps and knobs designed for interaction, featuring subtracted steel volumes.\nProduct name: Thumb\nDesigner: Giacomo Moor\nCity: Milan\nYear: 2024\nImage index: 1 of 3\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tap",
+          "category": "hardware",
+          "materials": [
+            "steel"
+          ],
+          "keywords": [
+            "family",
+            "taps",
+            "knobs",
+            "subtraction",
+            "geometry",
+            "interaction"
+          ],
+          "description": "A family of taps and knobs designed for interaction, featuring subtracted steel volumes.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tap\nCategory: hardware\nMaterials: steel\nKeywords: family, taps, knobs, subtraction, geometry, interaction\nDescription: A family of taps and knobs designed for interaction, featuring subtracted steel volumes.\nProduct name: Thumb\nDesigner: Giacomo Moor\nCity: Milan\nYear: 2024\nImage index: 2 of 3\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tap",
+          "category": "hardware",
+          "materials": [
+            "steel"
+          ],
+          "keywords": [
+            "family",
+            "taps",
+            "knobs",
+            "subtraction",
+            "geometry",
+            "interaction"
+          ],
+          "description": "A family of taps and knobs designed for interaction, featuring subtracted steel volumes.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: tap\nCategory: hardware\nMaterials: steel\nKeywords: family, taps, knobs, subtraction, geometry, interaction\nDescription: A family of taps and knobs designed for interaction, featuring subtracted steel volumes.\nProduct name: Thumb\nDesigner: Giacomo Moor\nCity: Milan\nYear: 2024\nImage index: 3 of 3\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "tap",
+          "category": "hardware",
+          "materials": [
+            "steel"
+          ],
+          "keywords": [
+            "family",
+            "taps",
+            "knobs",
+            "subtraction",
+            "geometry",
+            "interaction"
+          ],
+          "description": "A family of taps and knobs designed for interaction, featuring subtracted steel volumes.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "thumb",
+        "giacomo moor",
+        "quadrodesign",
+        "2024",
+        "milan",
+        "family",
+        "taps",
+        "knobs",
+        "subtraction",
+        "geometry",
+        "interaction"
+      ],
+      "primary_category": "design",
+      "materials": [
+        "steel"
+      ],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2210d7da-2e8c-80bb-bd05-d0724b60fdc3": {
+    "images": {
+      "2210d7da-2e8c-80bb-bd05-d0724b60fdc3-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: unknown\nKeywords: mythological, sleep, embrace, dreams, transformation\nDescription: IPNO is an armchair inspired by the god of sleep, designed to evoke dreams and transformation.\nProduct name: IPNO\nDesigner: Studio Finemateria\nCity: Milan\nYear: 2023\nImage index: 1 of 3\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "armchair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "mythological",
+            "sleep",
+            "embrace",
+            "dreams",
+            "transformation"
+          ],
+          "description": "IPNO is an armchair inspired by the god of sleep, designed to evoke dreams and transformation.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2210d7da-2e8c-80bb-bd05-d0724b60fdc3-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: unknown\nKeywords: mythological, sleep, embrace, dreams, transformation\nDescription: IPNO is an armchair inspired by the god of sleep, designed to evoke dreams and transformation.\nProduct name: IPNO\nDesigner: Studio Finemateria\nCity: Milan\nYear: 2023\nImage index: 2 of 3\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "armchair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "mythological",
+            "sleep",
+            "embrace",
+            "dreams",
+            "transformation"
+          ],
+          "description": "IPNO is an armchair inspired by the god of sleep, designed to evoke dreams and transformation.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2210d7da-2e8c-80bb-bd05-d0724b60fdc3-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: armchair\nCategory: furniture\nMaterials: unknown\nKeywords: mythological, sleep, embrace, dreams, transformation\nDescription: IPNO is an armchair inspired by the god of sleep, designed to evoke dreams and transformation.\nProduct name: IPNO\nDesigner: Studio Finemateria\nCity: Milan\nYear: 2023\nImage index: 3 of 3\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "armchair",
+          "category": "furniture",
+          "materials": null,
+          "keywords": [
+            "mythological",
+            "sleep",
+            "embrace",
+            "dreams",
+            "transformation"
+          ],
+          "description": "IPNO is an armchair inspired by the god of sleep, designed to evoke dreams and transformation.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "ipno",
+        "studio finemateria",
+        "campeggi",
+        "2023",
+        "milan",
+        "mythological",
+        "sleep",
+        "embrace",
+        "dreams",
+        "transformation"
+      ],
+      "primary_category": "design",
+      "materials": [],
+      "colors": [],
+      "styles": []
+    }
+  },
+  "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f": {
+    "images": {
+      "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f-img-0": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: lounge\nMaterials: unknown\nKeywords: nena, lounge, zanotta, milan, 2023, comfort\nDescription: Iconic lounge chair designed by Lanzavecchia + Wai for Zanotta, featuring sculpted foam volumes and a ridge seam.\nProduct name: Nena Lounge\nDesigner: Lanzavecchia + Wai\nCity: Milan\nYear: 2023\nImage index: 1 of 3\nView: primary view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "lounge",
+          "materials": null,
+          "keywords": [
+            "nena",
+            "lounge",
+            "zanotta",
+            "milan",
+            "2023",
+            "comfort"
+          ],
+          "description": "Iconic lounge chair designed by Lanzavecchia + Wai for Zanotta, featuring sculpted foam volumes and a ridge seam.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f-img-1": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: lounge\nMaterials: unknown\nKeywords: nena, lounge, zanotta, milan, 2023, comfort\nDescription: Iconic lounge chair designed by Lanzavecchia + Wai for Zanotta, featuring sculpted foam volumes and a ridge seam.\nProduct name: Nena Lounge\nDesigner: Lanzavecchia + Wai\nCity: Milan\nYear: 2023\nImage index: 2 of 3\nView: view 2\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "lounge",
+          "materials": null,
+          "keywords": [
+            "nena",
+            "lounge",
+            "zanotta",
+            "milan",
+            "2023",
+            "comfort"
+          ],
+          "description": "Iconic lounge chair designed by Lanzavecchia + Wai for Zanotta, featuring sculpted foam volumes and a ridge seam.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      },
+      "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f-img-2": {
+        "embedding_text": "[PRODUCT IMAGE]\nObject type: chair\nCategory: lounge\nMaterials: unknown\nKeywords: nena, lounge, zanotta, milan, 2023, comfort\nDescription: Iconic lounge chair designed by Lanzavecchia + Wai for Zanotta, featuring sculpted foam volumes and a ridge seam.\nProduct name: Nena Lounge\nDesigner: Lanzavecchia + Wai\nCity: Milan\nYear: 2023\nImage index: 3 of 3\nView: detail view\nPlatform: Acceso moodboard",
+        "enrichment": {
+          "object_type": "chair",
+          "category": "lounge",
+          "materials": null,
+          "keywords": [
+            "nena",
+            "lounge",
+            "zanotta",
+            "milan",
+            "2023",
+            "comfort"
+          ],
+          "description": "Iconic lounge chair designed by Lanzavecchia + Wai for Zanotta, featuring sculpted foam volumes and a ridge seam.",
+          "enrichment_source": "ai",
+          "enrichment_version": "1.0"
+        }
+      }
+    },
+    "metadata": {
+      "all_keywords": [
+        "nena lounge",
+        "lanzavecchia + wai",
+        "zanotta",
+        "2023",
+        "milan",
+        "nena",
+        "lounge",
+        "comfort"
+      ],
+      "primary_category": "design",
+      "materials": [],
+      "colors": [],
+      "styles": []
+    }
+  }
+}
