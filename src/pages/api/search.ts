@@ -11,6 +11,8 @@ interface VectorizeMatch {
     item_id?: number;
     timestamp?: number;
     info?: string;
+    product_id?: string;
+    url?: string;
   };
 }
 
@@ -180,11 +182,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const queryEmbedding = embeddingsResponse.data[0];
 
     // 2. Query Vectorize for semantic matches
+    // CRITICAL FIX: Add filter to only search moodboard vectors
     const vectorizeResult = await env.VECTORIZE.query(queryEmbedding, {
       topK: 100,
       returnMetadata: 'indexed',
       returnValues: false,
-    })
+      filter: { folder: "moodboard/*" } // FIXED: Filter by folder
+    });
 
     console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} semantic matches`);
 
@@ -194,7 +198,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
           success: true,
           results: [],
           query,
-          debug: { semantic_matches: 0, keyword_matches: 0 }
+          debug: {
+            semantic_matches: 0,
+            keyword_matches: 0,
+            filter_applied: 'moodboard/*'
+          }
         } as SearchResponse),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
@@ -213,13 +221,34 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }>();
 
     for (const match of vectorizeResult.matches) {
-      if (!match.metadata?.folder || !match.metadata?.key) continue;
+      // Try to get product_id directly from metadata first
+      let productId = match.metadata?.product_id;
 
-      const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
-      if (!folderMatch) continue;
+      // Fallback: extract from folder or key if not in metadata
+      if (!productId) {
+        if (match.metadata?.folder) {
+          const folderMatch = match.metadata.folder.match(/moodboard\/([^\/]+)\//);
+          if (folderMatch) productId = folderMatch[1];
+        }
+        if (!productId && match.metadata?.key) {
+          const keyMatch = match.metadata.key.match(/moodboard\/([^\/]+)\//);
+          if (keyMatch) productId = keyMatch[1];
+        }
+      }
 
-      const productId = folderMatch[1];
-      const imageUrl = `https://mood.acceso.design/${match.metadata.key}`;
+      if (!productId) {
+        console.warn('Could not extract product_id from match:', match);
+        continue;
+      }
+
+      // Get image URL - prefer metadata.url, fallback to constructing from key
+      const imageUrl = match.metadata?.url ||
+        (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
+
+      if (!imageUrl) {
+        console.warn('Could not determine image URL for match:', match);
+        continue;
+      }
 
       // Get enrichment data for this product
       const enrichment = enrichmentMap.get(productId);
@@ -289,7 +318,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         debug: {
           semantic_matches: vectorizeResult.matches.length,
           hybrid_matches: rankedResults.length,
-          enrichment_loaded: enrichmentMap.size > 0
+          enrichment_loaded: enrichmentMap.size > 0,
+          filter_applied: 'moodboard/*'
         }
       } as SearchResponse),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
