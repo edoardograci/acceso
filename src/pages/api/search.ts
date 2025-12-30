@@ -203,7 +203,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!folderMatch) continue;
 
       // Apply strict threshold check early
-      if (match.score < config.threshold) continue;
+      // if (match.score < config.threshold) continue; // REMOVED to ensure "always return results"
 
       const productId = folderMatch[1];
       const imageUrl = `https://mood.acceso.design/${match.metadata.key}`;
@@ -259,8 +259,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
           match_count: count
         };
       })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 20); // Top 20
+      .sort((a, b) => b.score - a.score);
+    // .slice(0, 20); // Top 20 REMOVED
 
     // 6. Final Response
     return new Response(
