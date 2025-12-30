@@ -8,46 +8,69 @@ const errorMessage = url.searchParams.get('message');
 ---
 
 <Layout title="Log In - Acceso">
-  <Navbar />
-  <main class="login-container">
-    <img src="/icon.svg" alt="Acceso" class="login-logo" />
-    <h1>Welcome to Acceso</h1>
-    
-    {error && (
-      <div class="error-message">
-        {error === 'invalid_token' && 'Invalid or expired magic link'}
-        {error === 'oauth_init_failed' && 'Failed to initialize OAuth'}
-        {error === 'oauth_error' && errorMessage ? decodeURIComponent(errorMessage) : 'OAuth error occurred'}
-        {error === 'oauth_failed' && 'OAuth authentication failed'}
-        {error === 'no_email' && 'No email found in Google account'}
-        {error === 'invalid_state' && 'Invalid OAuth state'}
-        {!['invalid_token', 'oauth_init_failed', 'oauth_error', 'oauth_failed', 'no_email', 'invalid_state'].includes(error) && 'An error occurred'}
-      </div>
-    )}
-    
-    <a href="/auth/google" class="google-btn">
-      <img src="/icons/google.svg" alt="Google" />
-      Continue with Google
-    </a>
-    
-    <div class="divider">
-      <span>or</span>
+  <div class="login-wrapper">
+    <Navbar />
+    <div class="login-content">
+      <main class="login-container">
+        <h1>Welcome to Acceso</h1>
+        {error && (
+          <div class="error-message">
+            {error === 'invalid_token' && 'Invalid or expired magic link'}
+            {error === 'oauth_init_failed' && 'Failed to initialize OAuth'}
+            {error === 'oauth_error' && errorMessage ? decodeURIComponent(errorMessage) : 'OAuth error occurred'}
+            {error === 'oauth_failed' && 'OAuth authentication failed'}
+            {error === 'no_email' && 'No email found in Google account'}
+            {error === 'invalid_state' && 'Invalid OAuth state'}
+            {!['invalid_token', 'oauth_init_failed', 'oauth_error', 'oauth_failed', 'no_email', 'invalid_state'].includes(error) && 'An error occurred'}
+          </div>
+        )}
+        
+        <a href="/auth/google" class="google-btn">
+          <img src="/icons/google.svg" alt="Google" />
+          Continue with Google
+        </a>
+        
+        <div class="divider">
+          <span>or</span>
+        </div>
+        
+        <form id="magic-link-form" class="magic-link-form">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required placeholder="your@email.com" />
+          <button type="submit">Send Magic Link</button>
+        </form>
+        
+        <div id="magic-link-result" class="magic-link-result"></div>
+
+        <p class="auth-disclaimer">
+          By continuing, you agree to our <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.
+        </p>
+      </main>
     </div>
-    
-    <form id="magic-link-form" class="magic-link-form">
-      <label for="email">Email Address</label>
-      <input type="email" id="email" name="email" required placeholder="your@email.com" />
-      <button type="submit">Send Magic Link</button>
-    </form>
-    
-    <div id="magic-link-result" class="magic-link-result"></div>
-  </main>
+    <img src="/images/login.png" alt="Acceso Login" class="login-footer-image" />
+  </div>
+
 </Layout>
 
 <style>
+  .login-wrapper {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .login-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 40px; /* Space for aesthetic balance */
+  }
+
   .login-container {
+    width: 100%;
     max-width: 400px;
-    margin: 80px auto;
     padding: 0 24px;
     display: flex;
     flex-direction: column;
@@ -196,6 +219,40 @@ const errorMessage = url.searchParams.get('message');
     background-color: rgba(255, 0, 0, 0.1);
     border-color: rgba(255, 0, 0, 0.3);
     color: #ff6b6b;
+  }
+
+  .auth-disclaimer {
+    color: var(--color-gray);
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.5;
+    margin-top: 16px;
+  }
+
+  .auth-disclaimer a {
+    color: var(--color-white);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .auth-disclaimer a:hover {
+    color: var(--color-yellow);
+  }
+
+  .login-footer-image {
+    width: 100%;
+    height: auto;
+    max-height: 25vh; /* Ensure it doesn't take too much space */
+    object-fit: cover;
+    display: block;
+    margin-top: auto;
+  }
+
+  @media (max-width: 768px) {
+    .login-footer-image {
+      max-height: 35vh;
+      transform: scale(2);
+    }
   }
 </style>
 

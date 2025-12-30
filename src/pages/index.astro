@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Spotlight from '../components/landing/Spotlight.astro';
+import Footer from '../components/Footer.astro';
 
 interface ProductImage {
   id: string;
@@ -136,14 +137,112 @@ try {
     </div>
 
     <div class="hero-lower">
+      <p class="cities-intro">
+        Independent design studios shaping the design scene in major cities worldwide.
+      </p>
+      
       <div class="carousel-container">
         <div class="carousel-track">
-          {/* Duplicate for infinite loop */}
-          {[...carouselCities, ...carouselCities].map((city) => (
+          {/* Quadruple for infinite loop safety */}
+          {[...carouselCities, ...carouselCities, ...carouselCities, ...carouselCities].map((city) => (
             <a href={`/designers?city=${city}`} class="city-pill">
               {city}
             </a>
           ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* Features Section */}
+  <section class="features-section">
+    <div class="features-header">
+      <h2 class="features-title">What you can do on Acceso</h2>
+      <p class="features-subtitle">
+        Explore independent design studios and objects through cities, projects and curated references.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-item">
+        <h3 class="feature-title">Browse studios</h3>
+        <p class="feature-description">
+          Discover independent industrial design studios, indexed and organized for clarity.
+        </p>
+      </div>
+
+      <div class="feature-item">
+        <h3 class="feature-title">Explore by city</h3>
+        <p class="feature-description">
+          View local design scenes and move across cities to compare approaches and aesthetics.
+        </p>
+      </div>
+
+      <div class="feature-item">
+        <h3 class="feature-title">Moodboard</h3>
+        <p class="feature-description">
+          Collect and browse objects, projects and references in a shared visual space.
+        </p>
+      </div>
+
+      <div class="feature-item">
+        <h3 class="feature-title">Objects and projects</h3>
+        <p class="feature-description">
+          See products and works as standalone entries, connected back to their studios.
+        </p>
+      </div>
+
+      <div class="feature-item">
+        <h3 class="feature-title">Curated, not automated</h3>
+        <p class="feature-description">
+          Every studio and reference is selected manually, with no trend-based ranking.
+        </p>
+      </div>
+
+      <div class="feature-item">
+        <h3 class="feature-title">Made for exploration</h3>
+        <p class="feature-description">
+          Useful for inspiration, research and understanding contemporary design culture.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {/* Feature Showcase: Map Discovery */}
+  <section class="feature-showcase">
+    <div class="showcase-container">
+      <div class="showcase-content">
+        <span class="showcase-label">Explore by location</span>
+        <h2 class="showcase-title">Navigate the<br/>design map</h2>
+        <p class="showcase-description">
+          Discover independent design studios on a global interactive map. Navigate by city, dive into local design scenes, and uncover studios across Milan, London, Paris, Berlin, and beyond.
+        </p>
+        <a href="/map" class="showcase-btn">Explore map</a>
+      </div>
+      <div class="showcase-image">
+        <div class="showcase-image-wrapper">
+          <img src="/images/map.png" alt="Acceso Map Interface" class="showcase-img" />
+          <div class="showcase-gradient-overlay"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* Feature Showcase: Moodboard (Mirrored) */}
+  <section class="feature-showcase feature-showcase--reversed">
+    <div class="showcase-container">
+      <div class="showcase-content">
+        <span class="showcase-label">Visual inspiration</span>
+        <h2 class="showcase-title">Curate your<br/>moodboard</h2>
+        <p class="showcase-description">
+          Explore real product photography from independent studios worldwide. Save objects, curate moodboards, and collect references for your next project in a single visual space.
+        </p>
+        <a href="/moodboard" class="showcase-btn">Browse moodboard</a>
+      </div>
+      <div class="showcase-image">
+        <div class="showcase-image-wrapper">
+          <img src="/images/moodboard.png" alt="Acceso Moodboard Interface" class="showcase-img" />
+          <div class="showcase-gradient-overlay"></div>
         </div>
       </div>
     </div>
@@ -158,6 +257,8 @@ try {
     />
   </main>
   */}
+
+  <Footer />
 </Layout>
 
 <style>
@@ -167,10 +268,9 @@ try {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* justify-content: center; REMOVED to fix overlap */
     text-align: center;
     background: var(--color-black);
-    height: auto; /* Allow auto height */
+    height: auto;
     min-height: 100vh;
     min-height: 100dvh;
     position: relative;
@@ -194,15 +294,13 @@ try {
     margin-bottom: 64px;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    /* Explicitly kill all potential border/box artifacts */
     border: none !important;
     outline: none !important;
-    background: var(--color-black); /* Match bg to hide any bleed */
-
+    background: var(--color-black);
   }
 
   .hero-static-image {
-    position:relative;
+    position: relative;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -214,7 +312,6 @@ try {
 
   .hero-gradient-overlay {
     position: absolute;
-    /* Deeply over-extend in all directions to capture 100% of sub-pixel rendering gaps */
     bottom: -10px; 
     left: -10px;
     right: -10px;
@@ -230,11 +327,8 @@ try {
     z-index: 2;
   }
 
-
-
   .hero-title {
     margin-top: 0;
-
     font-family: var(--font-mono);
     font-size: 56px;
     font-weight: 400;
@@ -307,8 +401,8 @@ try {
     width: 100%;
     max-width: 1200px;
     margin-top: 0;
-    position: relative; /* Ensure z-index works */
-    z-index: 10; /* Bring above any potential overlaps */
+    position: relative;
+    z-index: 10;
   }
 
   .lower-title {
@@ -322,19 +416,32 @@ try {
     margin-right: auto;
   }
 
+  /* Cities Introduction Text */
+  .cities-intro {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--color-white);
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 40px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+
   /* Carousel */
   .carousel-container {
     width: 100%;
     overflow: hidden;
     position: relative;
-    padding: 12px 0; /* Reduced vertical padding */
+    padding: 12px 0;
   }
 
   .carousel-container::before,
   .carousel-container::after {
     content: "";
     position: absolute;
-    top: -2px; /* Slight vertical overlap */
+    top: -2px;
     bottom: -2px;
     width: 100px;
     z-index: 2;
@@ -342,12 +449,12 @@ try {
   }
 
   .carousel-container::before {
-    left: -2px; /* Deep overlap on the left edge */
+    left: -2px;
     background: linear-gradient(to right, var(--color-black) 0%, transparent 100%);
   }
 
   .carousel-container::after {
-    right: -2px; /* Deep overlap on the right edge */
+    right: -2px;
     background: linear-gradient(to left, var(--color-black) 0%, transparent 100%);
   }
 
@@ -368,7 +475,9 @@ try {
       transform: translateX(0);
     }
     100% {
-      transform: translateX(-50%);
+      /* Move only 25% because we have 4 sets of items.
+         Moving 1 set length (1/4 = 25%) seamlessly loops back to start. */
+      transform: translateX(-25%);
     }
   }
 
@@ -401,7 +510,7 @@ try {
 
     .hero-actions {
       grid-row: 3;
-      margin-bottom: 80px; /* Space before image */
+      margin-bottom: 80px;
     }
 
     .hero-image-wrapper {
@@ -422,7 +531,6 @@ try {
   .city-pill {
     padding: 8px 24px;
     background: var(--color-bg-secondary);
-    /* Corrected pill borders: inset shadow is more stable for sliding elements */
     box-shadow: inset 0 0 0 1.5px var(--color-stroke);
     border: none;
     color: var(--color-white);
@@ -439,6 +547,66 @@ try {
     color: var(--color-yellow);
   }
 
+  /* Features Section */
+  .features-section {
+    max-width: 1400px;
+    margin: 120px auto 120px;
+    padding: 0 var(--spacing-page);
+  }
+
+  .features-header {
+    text-align: center;
+    margin-bottom: 80px;
+  }
+
+  .features-title {
+    font-family: var(--font-mono);
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    color: var(--color-white);
+    letter-spacing: -0.02em;
+  }
+
+  .features-subtitle {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 60px 40px;
+    align-items: start;
+  }
+
+  .feature-item {
+    text-align: left;
+  }
+
+  .feature-title {
+    font-family: var(--font-mono);
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    color: var(--color-white);
+    letter-spacing: -0.01em;
+  }
+
+  .feature-description {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
   .spotlight-page {
     position: relative;
     padding-top: 80px;
@@ -446,11 +614,16 @@ try {
     background: var(--color-black);
   }
 
+  @media (max-width: 1024px) {
+    .features-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 48px 32px;
+    }
+  }
+
   @media (max-width: 768px) {
     .hero-section {
-      /* Remove centering to pull content up */
       justify-content: flex-start;
-      /* Reduced padding top significantly based on user feedback */
       padding: 24px var(--spacing-page) 32px;
       min-height: auto;
       height: auto;
@@ -458,9 +631,9 @@ try {
 
     .hero-content {
       margin-bottom: 32px;
-      width: 100%; /* Force width to fit container */
-      max-width: 100%; /* Ensure it does not overflow */
-      padding: 0; /* Remove potential padding issues */
+      width: 100%;
+      max-width: 100%;
+      padding: 0;
     }
 
     .hero-title {
@@ -479,7 +652,7 @@ try {
       box-sizing: border-box;
       white-space: normal;
       overflow-wrap: break-word;
-      word-wrap: break-word; /* Fallback */
+      word-wrap: break-word;
       line-height: 1.4;
     }
 
@@ -497,7 +670,6 @@ try {
       outline: none;
     }
 
-    /* Target the overlay specifically on mobile to deepen the mask */
     .hero-image-wrapper .hero-gradient-overlay {
       height: 60%; 
       bottom: -3px;
@@ -517,6 +689,222 @@ try {
     .carousel-track {
       animation-duration: 40s;
     }
+
+    .cities-intro {
+      font-size: 16px;
+      margin-top: 48px;
+      padding: 0 8px;
+    }
+
+    .features-section {
+      margin: 80px auto 80px;
+    }
+
+    .features-header {
+      margin-bottom: 60px;
+    }
+
+    .features-title {
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+
+    .features-subtitle {
+      font-size: 16px;
+      padding: 0 8px;
+    }
+
+    .features-grid {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+
+    .feature-title {
+      font-size: 24px;
+    }
+
+    .feature-description {
+      font-size: 15px;
+    }
+
+    .feature-item {
+      border-bottom: 1px solid var(--color-gray);
+      padding-bottom: 24px;
+    }
+  }
+
+  /* Feature Showcase Sections */
+  .feature-showcase {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 80px var(--spacing-page);
+  }
+
+  .showcase-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .feature-showcase--reversed .showcase-container {
+    direction: rtl;
+  }
+
+  .feature-showcase--reversed .showcase-content,
+  .feature-showcase--reversed .showcase-image {
+    direction: ltr;
+  }
+
+  .showcase-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .showcase-label {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-yellow);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .showcase-title {
+    font-family: var(--font-mono);
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 1.05;
+    color: var(--color-white);
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .showcase-description {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    max-width: 500px;
+    margin: 8px 0 12px;
+  }
+
+  .showcase-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 32px;
+    background: transparent;
+    border: 1px solid var(--color-stroke);
+    color: var(--color-white);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+  }
+
+  .showcase-btn:hover {
+    border-color: var(--color-yellow);
+    color: var(--color-yellow);
+    transform: translateY(-2px);
+  }
+
+  .showcase-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .showcase-image-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .showcase-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .showcase-gradient-overlay {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(
+      to top,
+      var(--color-black) 0%,
+      var(--color-black) 20%,
+      rgba(15, 15, 15, 0.8) 50%,
+      transparent 100%
+    );
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .feature-showcase {
+      padding: 60px var(--spacing-page);
+    }
+
+    .showcase-container {
+      gap: 48px;
+    }
+
+    .showcase-title {
+      font-size: 44px;
+    }
+
+    .showcase-description {
+      font-size: 16px;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .feature-showcase {
+      padding: 48px var(--spacing-page);
+    }
+
+    .showcase-container {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .feature-showcase--reversed .showcase-container {
+      direction: ltr;
+    }
+
+    .showcase-content {
+      text-align: center;
+      align-items: center;
+    }
+
+    .showcase-title {
+      font-size: 36px;
+    }
+
+    .showcase-description {
+      font-size: 16px;
+      max-width: 100%;
+    }
+
+    .showcase-image {
+      aspect-ratio: 16 / 10;
+    }
+
+    .placeholder-icon {
+      font-size: 48px;
+    }
   }
 </style>
-

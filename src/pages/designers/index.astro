@@ -29,7 +29,7 @@ const cities = [...new Set(studios.map(s => s.city))].sort((a, b) => {
 const initialCity = Astro.url.searchParams.get('city') || 'all';
 ---
 
-<Layout title="Acceso - Designers">
+<Layout title="Designers - Acceso">
   <Navbar />
   
   <main class="designers-page">

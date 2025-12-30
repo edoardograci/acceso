@@ -1,0 +1,175 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Privacy Policy | Acceso Design">
+  <Navbar />
+  
+  <main class="legal-page">
+    <div class="legal-container">
+      <h1 class="legal-title">Privacy Policy</h1>
+      <p class="last-updated">Last updated: December 30, 2025</p>
+
+      <div class="legal-content">
+        <section>
+          <h2>1. Introduction</h2>
+          <p>
+            Welcome to Acceso ("we," "our," or "us"). We respect your privacy and are committed to protecting any personal data you provide. This Privacy Policy explains how we collect, use, and protect information when you visit our website (acceso.design), and outlines your privacy rights.
+          </p>
+        </section>
+
+        <section>
+          <h2>2. Information We Do Not Own</h2>
+          <p>
+            Any images, content, or information displayed on the Site are the property of their respective owners. We do not claim ownership of such content. Images may be sourced from public domain or third-party websites, and all information belongs to its original creators or sources.
+          </p>
+        </section>
+
+        <section>
+          <h2>3. Data We Collect</h2>
+          <p>
+            We may collect certain information when you interact with the Site, including:
+          </p>
+          <ul>
+            <li><strong>Identity Data:</strong> first name, last name, username or similar identifier.</li>
+            <li><strong>Contact Data:</strong> email address.</li>
+            <li><strong>Technical Data:</strong> IP address, browser type and version, time zone, location, device and platform information, and other technology used to access the Site.</li>
+            <li><strong>Usage Data:</strong> information about how you use the Site, including pages visited and features accessed.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>4. How We Use Your Data</h2>
+          <p>
+            We use collected data only where legally permitted, such as:
+          </p>
+          <ul>
+            <li>To provide and maintain the Site.</li>
+            <li>To improve your experience and understand how the Site is used.</li>
+            <li>To comply with legal obligations.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>5. Cookies</h2>
+          <p>
+            The Site uses cookies to distinguish you from other users, improve functionality, and analyze usage. You can configure your browser to refuse cookies or alert you when cookies are used.
+          </p>
+        </section>
+
+        <section>
+          <h2>6. Data Security</h2>
+          <p>
+            We implement reasonable technical and organizational measures to protect your data from unauthorized access, loss, misuse, or disclosure. Access to personal data is restricted to those who need it for legitimate business purposes.
+          </p>
+        </section>
+
+        <section>
+          <h2>7. Third-Party Links and Content</h2>
+          <p>
+            The Site may include links to third-party websites or display content from third parties. We do not control, endorse, or assume responsibility for the privacy practices or content of such third parties. Your use of third-party content is at your own risk.
+          </p>
+        </section>
+
+        <section>
+          <h2>8. Changes to This Policy</h2>
+          <p>
+            We may update this Privacy Policy from time to time. Updates will be reflected by changing the "Last updated" date. Continued use of the Site constitutes acceptance of any updates.
+          </p>
+        </section>
+
+        <section>
+          <h2>9. Contact Us</h2>
+          <p>
+            For questions or concerns regarding this Privacy Policy or our privacy practices, please contact us at: <a href="mailto:hello@acceso.design">hello@acceso.design</a>.
+          </p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .legal-page {
+    padding-top: var(--navbar-height);
+    min-height: 100vh;
+    background: var(--color-black);
+  }
+
+  .legal-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 60px var(--spacing-page) 120px;
+  }
+
+  .legal-title {
+    font-family: var(--font-mono);
+    font-size: 48px;
+    font-weight: 400;
+    color: var(--color-white);
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  .last-updated {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-gray);
+    margin-bottom: 60px;
+  }
+
+  .legal-content section {
+    margin-bottom: 48px;
+  }
+
+  h2 {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--color-white);
+    margin-bottom: 16px;
+  }
+
+  p, li {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    margin-bottom: 12px;
+  }
+
+  ul {
+    padding-left: 20px;
+    margin-bottom: 24px;
+  }
+
+  li {
+    margin-bottom: 8px;
+  }
+
+  strong {
+    color: var(--color-white);
+    font-weight: 500;
+  }
+
+  a {
+    color: var(--color-white);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 0.2s ease;
+  }
+
+  a:hover {
+    color: var(--color-yellow);
+  }
+
+  @media (max-width: 768px) {
+    .legal-title {
+      font-size: 36px;
+    }
+  }
+</style>

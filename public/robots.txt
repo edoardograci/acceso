@@ -1,0 +1,28 @@
+# Robots.txt for acceso.design
+# https://acceso.design/
+
+User-agent: *
+Allow: /
+
+# Main Pages
+Allow: /designers
+Allow: /moodboard
+Allow: /map
+Allow: /collections
+
+# Disallow private/auth pages
+Disallow: /api/
+Disallow: /auth/
+Disallow: /profile
+Disallow: /login
+
+# Disallow asset directories from indexing (but not blocking)
+Disallow: /fonts/
+Disallow: /icons/
+Disallow: /js/
+
+# Sitemap location
+Sitemap: https://acceso.design/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

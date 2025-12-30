@@ -1,0 +1,580 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Info - Acceso">
+  <Navbar />
+  <main class="info-page">
+    {/* Hero Section */}
+    <section class="info-hero">
+      <h1 class="hero-label">Info</h1>
+      <h2 class="hero-title">A platform for<br/>discovery and reference</h2>
+    </section>
+
+    {/* What We Are */}
+    <section class="info-section">
+      <div class="section-container section-container--large">
+        <div class="section-content section-content--large">
+          <p>
+            Acceso is a space where independent design studios, their projects, and objects are documented, shared, and celebrated. We aim to highlight local design scenes, connecting creators and curious minds from around the world.
+          </p>
+          <p>
+            We do not chase trends. Every studio, object, and city map is curated to reflect the values, perspective, and approach of the designers themselves.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {/* Our Mission */}
+    <section class="info-section">
+      <div class="section-container">
+        <h2 class="section-title">Why we exist</h2>
+        <div class="mission-content">
+          <p class="mission-intro">Design is more than products: it is context, culture, and intent.</p>
+          <div class="mission-grid">
+            <div class="mission-item">
+              <span class="mission-number">01</span>
+              <p>Reveal the local character of design in cities worldwide.</p>
+            </div>
+            <div class="mission-item">
+              <span class="mission-number">02</span>
+              <p>Document studios and objects without filtering through trends.</p>
+            </div>
+            <div class="mission-item">
+              <span class="mission-number">03</span>
+              <p>Give designers, brands, and enthusiasts a single reference to explore and understand design culture.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* How It Works */}
+    <section class="info-section">
+      <div class="section-container">
+        <h2 class="section-title">Our approach</h2>
+        <div class="approach-grid">
+          <div class="approach-item">
+            <div class="approach-icon">→</div>
+            <h3>Curated studios</h3>
+            <p>Each studio is selected for its approach, projects, and values.</p>
+          </div>
+          <div class="approach-item">
+            <div class="approach-icon">→</div>
+            <h3>Objects and projects</h3>
+            <p>Individual works are displayed as they are, connected to the studio that created them.</p>
+          </div>
+          <div class="approach-item">
+            <div class="approach-icon">→</div>
+            <h3>City maps</h3>
+            <p>Explore how design evolves and differs across cities.</p>
+          </div>
+          <div class="approach-item">
+            <div class="approach-icon">→</div>
+            <h3>Moodboard</h3>
+            <p>Collect objects and projects visually to build inspiration and reference.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Get in Touch */}
+    <section class="info-section">
+      <div class="section-container">
+        <div class="contact-card">
+          <h2 class="section-title">Join the network</h2>
+          <div class="contact-content">
+            <p>
+              If you are a designer or studio and want to appear on Acceso, or if you want to reach out with questions, suggestions, or feedback, we'd love to hear from you.
+            </p>
+            <div class="contact-actions">
+              <a href="mailto:hello@acceso.design" class="btn-secondary">Email us</a>
+              <a href="/request-studio" class="btn-primary">Request a Studio</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* FAQ */}
+    <section class="info-section info-section--faq">
+      <div class="section-container">
+        <h2 class="section-title">Common Questions</h2>
+        <div class="faq-accordion">
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Who owns the images and information on Acceso?</span>
+              <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </summary>
+            <div class="faq-answer">
+              <p>All images and data belong to their original creators. We only curate and display them.</p>
+            </div>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Can I submit a studio?</span>
+              <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </summary>
+            <div class="faq-answer">
+              <p>Yes, click "Request a Studio" to submit your studio for consideration.</p>
+            </div>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Is the platform free?</span>
+              <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </summary>
+            <div class="faq-answer">
+              <p>Browsing is free. Creating an account is only required for moodboards and saved collections.</p>
+            </div>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>How are studios selected?</span>
+              <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </summary>
+            <div class="faq-answer">
+              <p>Studios are handpicked by the Acceso team based on their approach, values, and work.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .info-page {
+    background: var(--color-black);
+    min-height: 100vh;
+  }
+
+  /* Hero Section */
+  .info-hero {
+    padding: 140px var(--spacing-page) 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .hero-label {
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-yellow);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+  }
+
+  .hero-title {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 72px;
+    font-weight: 400;
+    color: var(--color-white);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  /* Section Styles */
+  .info-section {
+    padding: 80px var(--spacing-page);
+  }
+
+  .info-section--faq {
+    padding-bottom: 120px;
+  }
+
+  .section-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .section-container--large {
+    max-width: 1100px;
+  }
+
+  .section-container--narrow {
+    max-width: 800px;
+  }
+
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 56px;
+    font-weight: 400;
+    color: var(--color-white);
+    margin-bottom: 48px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .section-content {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    line-height: 1.7;
+    color: var(--color-gray);
+  }
+
+  .section-content--large {
+    font-size: 24px;
+    line-height: 1.6;
+  }
+
+  .section-content p {
+    margin-bottom: 32px;
+  }
+
+  .section-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Mission Section */
+  .mission-content {
+    max-width: 900px;
+  }
+
+  .mission-intro {
+    font-size: 28px;
+    line-height: 1.4;
+    color: var(--color-white);
+    margin-bottom: 56px;
+  }
+
+  .mission-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .mission-item {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+  }
+
+  .mission-number {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--color-yellow);
+    flex-shrink: 0;
+  }
+
+  .mission-item p {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  /* Approach Grid */
+  .approach-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 56px 64px;
+  }
+
+  .approach-item {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .approach-icon {
+    font-size: 32px;
+    color: var(--color-yellow);
+    line-height: 1;
+  }
+
+  .approach-item h3 {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--color-white);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .approach-item p {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  /* Contact Section */
+  .contact-card {
+    padding: 64px 48px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .contact-card .section-title {
+    margin-bottom: 32px;
+  }
+
+  .contact-content {
+    text-align: center;
+  }
+
+  .contact-content p {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    margin-bottom: 40px;
+  }
+
+  .contact-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    padding: 0 40px;
+    background: var(--color-yellow);
+    color: var(--color-black);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    padding: 0 40px;
+    background: transparent;
+    border: 1px solid var(--color-stroke);
+    color: var(--color-white);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--color-white);
+    transform: translateY(-2px);
+  }
+
+  /* FAQ Accordion */
+  .faq-accordion {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid var(--color-stroke);
+    padding: 32px 0;
+  }
+
+  .faq-item:first-child {
+    padding-top: 0;
+  }
+
+  .faq-item:last-child {
+    border-bottom: none;
+  }
+
+  .faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--color-white);
+    transition: color 0.2s ease;
+    user-select: none;
+  }
+
+  .faq-question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-question:hover {
+    color: var(--color-yellow);
+  }
+
+  .faq-icon {
+    flex-shrink: 0;
+    color: var(--color-gray);
+    transition: transform 0.3s ease, color 0.2s ease;
+  }
+
+  .faq-item[open] .faq-icon {
+    transform: rotate(180deg);
+    color: var(--color-yellow);
+  }
+
+  .faq-answer {
+    padding-top: 20px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .faq-answer p {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .approach-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .info-hero {
+      padding: 100px var(--spacing-page) 60px;
+    }
+
+    .hero-title {
+      font-size: 48px;
+    }
+
+    .info-section {
+      padding: 60px var(--spacing-page);
+    }
+
+    .info-section--faq {
+      padding-bottom: 80px;
+    }
+
+    .section-title {
+      font-size: 40px;
+      margin-bottom: 40px;
+    }
+
+    .section-content {
+      font-size: 18px;
+    }
+
+    .section-content--large {
+      font-size: 20px;
+    }
+
+    .mission-intro {
+      font-size: 22px;
+      margin-bottom: 48px;
+    }
+
+    .mission-grid {
+      gap: 32px;
+    }
+
+    .mission-item {
+      gap: 20px;
+    }
+
+    .mission-item p {
+      font-size: 18px;
+    }
+
+    .approach-grid {
+      gap: 32px;
+    }
+
+    .approach-item h3 {
+      font-size: 24px;
+    }
+
+    .approach-item p {
+      font-size: 16px;
+    }
+
+    .contact-card {
+      padding: 48px 32px;
+    }
+
+    .contact-content p {
+      font-size: 18px;
+    }
+
+    .contact-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      width: 100%;
+    }
+
+    .faq-question {
+      font-size: 18px;
+    }
+
+    .faq-answer p {
+      font-size: 16px;
+    }
+
+    .faq-item {
+      padding: 24px 0;
+    }
+  }
+</style>
+
+<script>
+  // Smooth accordion animation
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.addEventListener('toggle', () => {
+      if (item.open) {
+        const answer = item.querySelector('.faq-answer');
+        if (answer) {
+          answer.style.animation = 'fadeIn 0.3s ease';
+        }
+      }
+    });
+  });
+</script>
