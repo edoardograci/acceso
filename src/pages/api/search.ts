@@ -48,7 +48,7 @@ const ADJECTIVES = new Set([
 
 const CONFIG = {
   GENERIC: {
-    topK: 100,      // Broader search for generic queries
+    topK: 50,       // Limited to 50 when returnMetadata='all'
     threshold: 0.60 // Looser threshold to avoid empty results
   },
   SPECIFIC: {
