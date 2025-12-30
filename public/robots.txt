@@ -9,6 +9,7 @@ Allow: /designers
 Allow: /moodboard
 Allow: /map
 Allow: /collections
+Allow: /info
 
 # Disallow private/auth pages
 Disallow: /api/
