@@ -10,7 +10,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-29T12:56:00.000Z",
-    "updated_at": "2025-11-05T13:47:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2210d7da-2e8c-804c-9d8d-eb3b7e2a3009-img-0",
@@ -50,7 +50,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-29T12:51:00.000Z",
-    "updated_at": "2025-11-05T13:47:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2210d7da-2e8c-80f9-a76d-fc9e40a59f2f-img-0",
@@ -90,7 +90,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-29T11:02:00.000Z",
-    "updated_at": "2025-11-05T13:47:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2210d7da-2e8c-80bb-bd05-d0724b60fdc3-img-0",
@@ -130,7 +130,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-08T12:26:00.000Z",
-    "updated_at": "2025-12-13T19:16:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "20c0d7da-2e8c-80ac-bcc9-e7329f1dc39e-img-0",
@@ -170,7 +170,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-08T12:22:00.000Z",
-    "updated_at": "2025-11-05T13:54:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "20c0d7da-2e8c-804b-a39e-defbab402039-img-0",
@@ -218,7 +218,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-08T12:01:00.000Z",
-    "updated_at": "2025-11-05T13:54:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "20c0d7da-2e8c-8032-8692-d6fdbabcf2dc-img-0",
@@ -274,7 +274,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-08T11:22:00.000Z",
-    "updated_at": "2025-11-05T13:54:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "20c0d7da-2e8c-800b-a0fe-c7a8072e0f26-img-0",
@@ -330,7 +330,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-05T22:09:00.000Z",
-    "updated_at": "2025-11-05T13:47:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2090d7da-2e8c-80c7-bef7-e171f97c7446-img-0",
@@ -378,7 +378,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-05T22:01:00.000Z",
-    "updated_at": "2025-11-05T13:47:00.000Z",
+    "updated_at": "2025-12-16T15:34:00.000Z",
     "images": [
       {
         "id": "2090d7da-2e8c-8023-bb46-d53fa805ae17-img-0",
@@ -426,7 +426,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-05T21:59:00.000Z",
-    "updated_at": "2025-11-05T13:47:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2090d7da-2e8c-809c-8b1e-f4b066c030e1-img-0",
@@ -482,7 +482,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-05T21:34:00.000Z",
-    "updated_at": "2025-11-05T13:47:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2090d7da-2e8c-8035-a363-e667fb06b0e4-img-0",
@@ -528,6 +528,54 @@
     "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-8035-a363-e667fb06b0e4/0-059459eb.webp"
   },
   {
+    "id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4",
+    "slug": "vs02-ceramic-candle-and-pot",
+    "name": "VS02 Ceramic Candle and Pot",
+    "designer": "Valerio Sommella Design Studio",
+    "year": "2023",
+    "client": "Weed’d",
+    "link": "https://www.sommella.com/vs02/",
+    "city": "Milan",
+    "status": "Published",
+    "created_at": "2025-06-05T21:33:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
+    "images": [
+      {
+        "id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4-img-0",
+        "product_id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/0-8fc02ea3.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/0-8fc02ea3.webp",
+        "position": "0",
+        "created_at": "2025-12-29T23:58:20.973Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4-img-1",
+        "product_id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/1-f5920c25.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/1-f5920c25.webp",
+        "position": "1",
+        "created_at": "2025-12-29T23:58:41.743Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4-img-2",
+        "product_id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/2-7c97f18b.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/2-7c97f18b.webp",
+        "position": "2",
+        "created_at": "2025-12-29T23:58:42.814Z"
+      },
+      {
+        "id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4-img-3",
+        "product_id": "2090d7da-2e8c-80be-bd6e-c561fc56dca4",
+        "image_url": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/3-5984e593.webp",
+        "r2_key": "moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/3-5984e593.webp",
+        "position": "3",
+        "created_at": "2025-12-29T23:58:48.137Z"
+      }
+    ],
+    "cover": "https://mood.acceso.design/moodboard/2090d7da-2e8c-80be-bd6e-c561fc56dca4/0-8fc02ea3.webp"
+  },
+  {
     "id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090",
     "slug": "thula",
     "name": "THULA",
@@ -538,7 +586,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-05T21:24:00.000Z",
-    "updated_at": "2025-12-13T19:14:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2090d7da-2e8c-80e1-aab1-eb8e27d1a090-img-0",
@@ -586,7 +634,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-05T21:07:00.000Z",
-    "updated_at": "2025-11-05T13:46:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2090d7da-2e8c-805c-a7dd-f9191a805f3b-img-0",
@@ -634,7 +682,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-03T20:18:00.000Z",
-    "updated_at": "2025-12-13T19:14:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2070d7da-2e8c-8074-baa6-db0d2938f978-img-0",
@@ -682,7 +730,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-03T20:14:00.000Z",
-    "updated_at": "2025-11-05T13:47:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2070d7da-2e8c-8063-be37-de7de2f512d8-img-0",
@@ -714,7 +762,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-01T19:08:00.000Z",
-    "updated_at": "2025-11-05T13:46:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2050d7da-2e8c-804b-b19b-f2f6ccaba5b7-img-0",
@@ -762,7 +810,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-01T18:53:00.000Z",
-    "updated_at": "2025-11-05T13:46:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2050d7da-2e8c-805f-9df4-e7b4ef7f3592-img-0",
@@ -810,7 +858,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-01T18:48:00.000Z",
-    "updated_at": "2025-12-13T19:15:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2050d7da-2e8c-806e-bc17-eb46adb81d15-img-0",
@@ -850,7 +898,7 @@
     "city": "Milan",
     "status": "Published",
     "created_at": "2025-06-01T18:23:00.000Z",
-    "updated_at": "2025-11-05T13:46:00.000Z",
+    "updated_at": "2025-12-16T14:08:00.000Z",
     "images": [
       {
         "id": "2050d7da-2e8c-800e-9c17-c7fbe4211dd0-img-0",
