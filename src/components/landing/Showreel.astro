@@ -8,8 +8,6 @@
       <div class="scale-wrapper">
         <img 
           src="/animations/3.webp" 
-          srcset="/cdn-cgi/image/width=560,format=auto,quality=80/animations/3.webp 560w, /animations/3.webp 800w"
-          sizes="(max-width: 768px) 280px, 800px"
           alt="Clone 3" loading="lazy" width="800" height="450" decoding="async" 
         />
       </div>
@@ -18,8 +16,6 @@
       <div class="scale-wrapper">
         <img 
           src="/animations/4.webp" 
-          srcset="/cdn-cgi/image/width=560,format=auto,quality=80/animations/4.webp 560w, /animations/4.webp 800w"
-          sizes="(max-width: 768px) 280px, 800px"
           alt="Clone 4" loading="eager" width="800" height="450" decoding="async" 
         />
       </div>
@@ -31,8 +27,6 @@
         <div class="scale-wrapper">
           <img 
             src={`/animations/${num}.webp`}
-            srcset={`/cdn-cgi/image/width=560,format=auto,quality=80/animations/${num}.webp 560w, /animations/${num}.webp 800w`}
-            sizes="(max-width: 768px) 280px, 800px"
             alt={`Acceso Design Showreel ${num}`}
             loading={index <= 1 ? "eager" : "lazy"}
             fetchpriority={index === 0 ? "high" : "auto"}
@@ -49,8 +43,6 @@
       <div class="scale-wrapper">
         <img 
           src="/animations/1.webp" 
-          srcset="/cdn-cgi/image/width=560,format=auto,quality=80/animations/1.webp 560w, /animations/1.webp 800w"
-          sizes="(max-width: 768px) 280px, 800px"
           alt="Clone 1" loading="lazy" width="800" height="450" decoding="async" 
         />
       </div>
@@ -59,8 +51,6 @@
       <div class="scale-wrapper">
         <img 
           src="/animations/2.webp" 
-          srcset="/cdn-cgi/image/width=560,format=auto,quality=80/animations/2.webp 560w, /animations/2.webp 800w"
-          sizes="(max-width: 768px) 280px, 800px"
           alt="Clone 2" loading="lazy" width="800" height="450" decoding="async" 
         />
       </div>
@@ -89,8 +79,12 @@
     const updateVisuals = (smooth) => {
       // 1. Calculate Track Position
       const trackWidth = track.parentElement.offsetWidth;
+      if (trackWidth === 0) return; // Wait for layout
+
       const itemRect = items[0].getBoundingClientRect();
       const itemWidth = itemRect.width;
+      if (itemWidth === 0) return; // Wait for layout
+
       const style = window.getComputedStyle(track);
       const gap = parseFloat(style.gap) || 32;
       const stride = itemWidth + gap;
@@ -158,10 +152,15 @@
       // Initial render without animation
       updateVisuals(false);
       
+      // Secondary attempt after a short delay to ensure layout is ready on mobile
+      setTimeout(() => updateVisuals(false), 50);
+
       // Pause animation when tab is not active or element is off-screen
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
+            // Recalculate layout on entry
+            updateVisuals(false);
             if (!autoPlayInterval) {
               autoPlayInterval = setInterval(nextSlide, intervalTime);
             }
@@ -170,7 +169,7 @@
             autoPlayInterval = null;
           }
         });
-      }, { threshold: 0.1 });
+      }, { threshold: 0.05 });
 
       observer.observe(track.parentElement);
 
