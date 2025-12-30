@@ -163,7 +163,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Query Vectorize
     const vectorizeResult = await env.VECTORIZE.query(queryEmbedding, {
-      topK: 100,
+      topK: 50,
       returnMetadata: 'all',
       returnValues: false,
     });
