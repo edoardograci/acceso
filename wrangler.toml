@@ -1,10 +1,17 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "acceso"
+main = "src/index.ts"
 compatibility_date = "2024-12-10"
 
-[ai]
+[env.production]
+
+[env.production.ai]
 binding = "AI"
 
-[[vectorize]]
+[[env.production.vectorize]]
 binding = "VECTORIZE"
 index_name = "ai-search-optimus"
+
+[env.production.routes]
+pattern = "https://acceso-4xj.pages.dev/*"
+zone_name = "https://acceso-4xj.pages.dev/"
