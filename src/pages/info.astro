@@ -1,166 +1,167 @@
 ---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout 
-  title="About Acceso - Curated Design Studio Directory"
-  description="Learn about Acceso's mission to document independent design studios, projects, and objects. Discover how we curate and organize design culture."
-  keywords="about acceso, design curation, design directory mission, independent design platform"
->
-  <Navbar />
-  <main class="info-page">
-    {/* Hero Section */}
-    <section class="info-hero">
-      <h2 class="hero-title">A platform for<br/>discovery and reference</h2>
-      <div class="hero-cta">
-        <a href="/login" class="btn-primary">Start collecting</a>
-      </div>
-    </section>
-
-    {/* What We Are */}
-    <section class="info-section">
-      <div class="section-container section-container--large">
-        <div class="section-content section-content--large">
-          <p>
-            Acceso is a space where independent design studios, their projects, and objects are documented, shared, and celebrated. We aim to highlight local design scenes, connecting creators and curious minds from around the world.
-          </p>
-          <p>
-            We do not chase trends. Every studio, object, and city map is curated to reflect the values, perspective, and approach of the designers themselves.
-          </p>
+<PostHogLayout>
+  <Layout 
+    title="About Acceso - Curated Design Studio Directory"
+    description="Learn about Acceso's mission to document independent design studios, projects, and objects. Discover how we curate and organize design culture."
+    keywords="about acceso, design curation, design directory mission, independent design platform"
+  >
+    <Navbar />
+    <main class="info-page">
+      {/* Hero Section */}
+      <section class="info-hero">
+        <h2 class="hero-title">A platform for<br/>discovery and reference</h2>
+        <div class="hero-cta">
+          <a href="/login" class="btn-primary">Start collecting</a>
         </div>
-      </div>
-    </section>
+      </section>
 
-    {/* Our Mission */}
-    <section class="info-section">
-      <div class="section-container">
-        <h2 class="section-title">Why we exist</h2>
-        <div class="mission-content">
-          <p class="mission-intro">Design is more than products: it is context, culture, and intent.</p>
-          <div class="mission-grid">
-            <div class="mission-item">
-              <span class="mission-marker"></span>
-              <p>Reveal the local character of design in cities worldwide.</p>
-            </div>
-            <div class="mission-item">
-              <span class="mission-marker"></span>
-              <p>Document studios and objects without filtering through trends.</p>
-            </div>
-            <div class="mission-item">
-              <span class="mission-marker"></span>
-              <p>Give designers, brands, and enthusiasts a single reference to explore and understand design culture.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    {/* Contribute */}
-    <section class="info-section">
-      <div class="section-container">
-        <div class="contact-card">
-          <h2 class="section-title">Contribute</h2>
-          <div class="contact-content">
+      {/* What We Are */}
+      <section class="info-section">
+        <div class="section-container section-container--large">
+          <div class="section-content section-content--large">
             <p>
-              If you are a designer or studio and want to appear on Acceso, or if you want to reach out with questions, suggestions, or feedback, we'd love to hear from you.
+              Acceso is a space where independent design studios, their projects, and objects are documented, shared, and celebrated. We aim to highlight local design scenes, connecting creators and curious minds from around the world.
             </p>
-            <div class="contact-actions">
-              <a href="/request-studio" class="btn-primary">Request a Studio</a>
+            <p>
+              We do not chase trends. Every studio, object, and city map is curated to reflect the values, perspective, and approach of the designers themselves.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Mission */}
+      <section class="info-section">
+        <div class="section-container">
+          <h2 class="section-title">Why we exist</h2>
+          <div class="mission-content">
+            <p class="mission-intro">Design is more than products: it is context, culture, and intent.</p>
+            <div class="mission-grid">
+              <div class="mission-item">
+                <span class="mission-marker"></span>
+                <p>Reveal the local character of design in cities worldwide.</p>
+              </div>
+              <div class="mission-item">
+                <span class="mission-marker"></span>
+                <p>Document studios and objects without filtering through trends.</p>
+              </div>
+              <div class="mission-item">
+                <span class="mission-marker"></span>
+                <p>Give designers, brands, and enthusiasts a single reference to explore and understand design culture.</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    {/* How It Works */}
-    <section class="info-section">
-      <div class="section-container">
-        <h2 class="section-title">Our approach</h2>
-        <div class="approach-grid">
-          <div class="approach-item">
-            <div class="approach-icon">→</div>
-            <h3>Curated studios</h3>
-            <p>Each studio is selected for its approach, projects, and values.</p>
-          </div>
-          <div class="approach-item">
-            <div class="approach-icon">→</div>
-            <h3>Objects and projects</h3>
-            <p>Individual works are displayed as they are, connected to the studio that created them.</p>
-          </div>
-          <div class="approach-item">
-            <div class="approach-icon">→</div>
-            <h3>City maps</h3>
-            <p>Explore how design evolves and differs across cities.</p>
-          </div>
-          <div class="approach-item">
-            <div class="approach-icon">→</div>
-            <h3>Moodboard</h3>
-            <p>Collect objects and projects visually to build inspiration and reference.</p>
+      {/* Contribute */}
+      <section class="info-section">
+        <div class="section-container">
+          <div class="contact-card">
+            <h2 class="section-title">Contribute</h2>
+            <div class="contact-content">
+              <p>
+                If you are a designer or studio and want to appear on Acceso, or if you want to reach out with questions, suggestions, or feedback, we'd love to hear from you.
+              </p>
+              <div class="contact-actions">
+                <a href="/request-studio" class="btn-primary">Request a Studio</a>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-
-
-    {/* FAQ */}
-    <section class="info-section info-section--faq">
-      <div class="section-container">
-        <h2 class="section-title">Common Questions</h2>
-        <div class="faq-accordion">
-          <details class="faq-item">
-            <summary class="faq-question">
-              <span>What is Acceso for?</span>
-              <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </summary>
-            <div class="faq-answer">
-              <p>Acceso is a reference tool. It helps designers, brands and curious observers discover independent studios and understand how objects are shaped by local culture.</p>
+      {/* How It Works */}
+      <section class="info-section">
+        <div class="section-container">
+          <h2 class="section-title">Our approach</h2>
+          <div class="approach-grid">
+            <div class="approach-item">
+              <div class="approach-icon">→</div>
+              <h3>Curated studios</h3>
+              <p>Each studio is selected for its approach, projects, and values.</p>
             </div>
-          </details>
-          <details class="faq-item">
-            <summary class="faq-question">
-              <span>Can I submit a studio?</span>
-              <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </summary>
-            <div class="faq-answer">
-              <p>Yes, click "Request a Studio" to submit your studio for consideration.</p>
+            <div class="approach-item">
+              <div class="approach-icon">→</div>
+              <h3>Objects and projects</h3>
+              <p>Individual works are displayed as they are, connected to the studio that created them.</p>
             </div>
-          </details>
-          <details class="faq-item">
-            <summary class="faq-question">
-              <span>Is the platform free?</span>
-              <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </summary>
-            <div class="faq-answer">
-              <p>Browsing is free. Creating an account is only required for moodboards and saved collections.</p>
+            <div class="approach-item">
+              <div class="approach-icon">→</div>
+              <h3>City maps</h3>
+              <p>Explore how design evolves and differs across cities.</p>
             </div>
-          </details>
-          <details class="faq-item">
-            <summary class="faq-question">
-              <span>How are studios selected?</span>
-              <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </summary>
-            <div class="faq-answer">
-              <p>Studios are handpicked by the Acceso team based on their aesthetics, values, and work.</p>
+            <div class="approach-item">
+              <div class="approach-icon">→</div>
+              <h3>Moodboard</h3>
+              <p>Collect objects and projects visually to build inspiration and reference.</p>
             </div>
-          </details>
+          </div>
         </div>
-      </div>
-    </section>
-  </main>
+      </section>
 
-  <Footer />
-</Layout>
+      {/* FAQ */}
+      <section class="info-section info-section--faq">
+        <div class="section-container">
+          <h2 class="section-title">Common Questions</h2>
+          <div class="faq-accordion">
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>What is Acceso for?</span>
+                <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                <p>Acceso is a reference tool. It helps designers, brands and curious observers discover independent studios and understand how objects are shaped by local culture.</p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>Can I submit a studio?</span>
+                <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                <p>Yes, click "Request a Studio" to submit your studio for consideration.</p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>Is the platform free?</span>
+                <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                <p>Browsing is free. Creating an account is only required for moodboards and saved collections.</p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>How are studios selected?</span>
+                <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                <p>Studios are handpicked by the Acceso team based on their aesthetics, values, and work.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <Footer />
+  </Layout>
+</PostHogLayout>
 
 <style>
   .info-page {

@@ -1,4 +1,4 @@
----
+import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import type { Studio } from '../../lib/types';
@@ -27,73 +27,74 @@ const cities = [...new Set(studios.map(s => s.city))].sort((a, b) => {
 
 // Get initial city filter from URL query parameter
 const initialCity = Astro.url.searchParams.get('city') || 'all';
----
 
-<Layout 
-  title="Design Studios Directory | Acceso"
-  description="Browse 86+ independent industrial design studios from Milan, Seoul, Berlin, Copenhagen, London, Paris, and Tokyo. Curated directory of product designers."
-  keywords="design studios, industrial designers, product design firms, Milan designers, independent design studios"
->
-  <Navbar />
-  
-  <main class="designers-page">
-    {!error && (
-      <>
-        <div class="filters-container">
-          <div class="search-bar">
-            <input 
-              type="text" 
-              id="search-input" 
-              placeholder="Search by name..."
-              aria-label="Search studios"
-            />
+<PostHogLayout>
+  <Layout 
+    title="Design Studios Directory | Acceso"
+    description="Browse 86+ independent industrial design studios from Milan, Seoul, Berlin, Copenhagen, London, Paris, and Tokyo. Curated directory of product designers."
+    keywords="design studios, industrial designers, product design firms, Milan designers, independent design studios"
+  >
+    <Navbar />
+    
+    <main class="designers-page">
+      {!error && (
+        <>
+          <div class="filters-container">
+            <div class="search-bar">
+              <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Search by name..."
+                aria-label="Search studios"
+              />
+            </div>
+            
+            <div class="filter-buttons">
+              <button class="filter-btn" data-city="all" class:list={{active: initialCity === 'all'}}>All</button>
+              {cities.map(city => (
+                <button class="filter-btn" data-city={city} class:list={{active: initialCity === city}}>{city}</button>
+              ))}
+            </div>
+
+            <p id="studio-count">{studios.length} Design Studios</p>
           </div>
-          
-          <div class="filter-buttons">
-            <button class="filter-btn" data-city="all" class:list={{active: initialCity === 'all'}}>All</button>
-            {cities.map(city => (
-              <button class="filter-btn" data-city={city} class:list={{active: initialCity === city}}>{city}</button>
+
+          <div class="designers-grid" id="studios-grid">
+            {studios.map(studio => (
+              <a 
+                href={`/designers/${studio.slug}`} 
+                class="studio-card"
+                data-name={studio.name.toLowerCase()}
+                data-city={studio.city}
+              >
+                {studio.cover ? (
+                  <img 
+                    src={studio.cover} 
+                    alt={studio.name} 
+                    class="studio-image" 
+                    loading="lazy" 
+                    decoding="async"
+                    data-skeleton
+                  />
+                ) : (
+                  <div class="studio-image-placeholder">No image</div>
+                )}
+                <div class="studio-info">
+                  <h3>{studio.name}</h3>
+                  <p>{studio.city}</p>
+                </div>
+              </a>
             ))}
           </div>
 
-          <p id="studio-count">{studios.length} Design Studios</p>
-        </div>
-
-        <div class="designers-grid" id="studios-grid">
-          {studios.map(studio => (
-            <a 
-              href={`/designers/${studio.slug}`} 
-              class="studio-card"
-              data-name={studio.name.toLowerCase()}
-              data-city={studio.city}
-            >
-              {studio.cover ? (
-                <img 
-                  src={studio.cover} 
-                  alt={studio.name} 
-                  class="studio-image" 
-                  loading="lazy" 
-                  decoding="async"
-                  data-skeleton
-                />
-              ) : (
-                <div class="studio-image-placeholder">No image</div>
-              )}
-              <div class="studio-info">
-                <h3>{studio.name}</h3>
-                <p>{studio.city}</p>
-              </div>
-            </a>
-          ))}
-        </div>
-
-        <div class="empty-result" id="empty-result" style="display: none;">
-          <p>No studios found matching your criteria.</p>
-        </div>
-      </>
-    )}
-  </main>
-</Layout>
+          <div class="empty-result" id="empty-result" style="display: none;">
+            <p>No studios found matching your criteria.</p>
+          </div>
+        </>
+      )}
+    </main>
+  </Layout>
+</PostHogLayout>
 
 <script>
   // Get initial city from URL query parameter

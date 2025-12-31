@@ -1,4 +1,5 @@
 ---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 
@@ -7,49 +8,51 @@ const error = url.searchParams.get('error');
 const errorMessage = url.searchParams.get('message');
 ---
 
-<Layout title="Log In - Acceso">
-  <div class="login-wrapper">
-    <Navbar />
-    <div class="login-content">
-      <main class="login-container">
-        <h1>Welcome to Acceso</h1>
-        {error && (
-          <div class="error-message">
-            {error === 'invalid_token' && 'Invalid or expired magic link'}
-            {error === 'oauth_init_failed' && 'Failed to initialize OAuth'}
-            {error === 'oauth_error' && errorMessage ? decodeURIComponent(errorMessage) : 'OAuth error occurred'}
-            {error === 'oauth_failed' && 'OAuth authentication failed'}
-            {error === 'no_email' && 'No email found in Google account'}
-            {error === 'invalid_state' && 'Invalid OAuth state'}
-            {!['invalid_token', 'oauth_init_failed', 'oauth_error', 'oauth_failed', 'no_email', 'invalid_state'].includes(error) && 'An error occurred'}
+<PostHogLayout>
+  <Layout title="Log In - Acceso">
+    <div class="login-wrapper">
+      <Navbar />
+      <div class="login-content">
+        <main class="login-container">
+          <h1>Welcome to Acceso</h1>
+          {error && (
+            <div class="error-message">
+              {error === 'invalid_token' && 'Invalid or expired magic link'}
+              {error === 'oauth_init_failed' && 'Failed to initialize OAuth'}
+              {error === 'oauth_error' && errorMessage ? decodeURIComponent(errorMessage) : 'OAuth error occurred'}
+              {error === 'oauth_failed' && 'OAuth authentication failed'}
+              {error === 'no_email' && 'No email found in Google account'}
+              {error === 'invalid_state' && 'Invalid OAuth state'}
+              {!['invalid_token', 'oauth_init_failed', 'oauth_error', 'oauth_failed', 'no_email', 'invalid_state'].includes(error) && 'An error occurred'}
+            </div>
+          )}
+          
+          <a href="/auth/google" class="google-btn">
+            <img src="/icons/google.svg" alt="Google" />
+            Continue with Google
+          </a>
+          
+          <div class="divider">
+            <span>or</span>
           </div>
-        )}
-        
-        <a href="/auth/google" class="google-btn">
-          <img src="/icons/google.svg" alt="Google" />
-          Continue with Google
-        </a>
-        
-        <div class="divider">
-          <span>or</span>
-        </div>
-        
-        <form id="magic-link-form" class="magic-link-form">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" name="email" required placeholder="your@email.com" />
-          <button type="submit">Send Magic Link</button>
-        </form>
-        
-        <div id="magic-link-result" class="magic-link-result"></div>
+          
+          <form id="magic-link-form" class="magic-link-form">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required placeholder="your@email.com" />
+            <button type="submit">Send Magic Link</button>
+          </form>
+          
+          <div id="magic-link-result" class="magic-link-result"></div>
 
-        <p class="auth-disclaimer">
-          By continuing, you agree to our <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.
-        </p>
-      </main>
+          <p class="auth-disclaimer">
+            By continuing, you agree to our <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.
+          </p>
+        </main>
+      </div>
     </div>
-  </div>
 
-</Layout>
+  </Layout>
+</PostHogLayout>
 
 <style>
   .login-wrapper {

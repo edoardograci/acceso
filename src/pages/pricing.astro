@@ -1,153 +1,156 @@
 ---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout 
-  title="Pricing - Free & Premium Plans | Acceso"
-  description="Free access to browse 86+ design studios and save up to 100 items. Premium Researcher plan coming soon with unlimited collections and advanced features."
-  keywords="design studio membership, free design directory, premium design tools"
->
-  <!-- Pricing Schema -->
-  <script type="application/ld+json" is:inline set:html={JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": "Acceso Observer",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock"
-    }
-  })} />
-  <Navbar />
-  <main class="pricing-page">
-    {/* Hero Section */}
-    <section class="pricing-hero">
-      <h2 class="hero-title">Choose the plan that<br/>fits your workflow</h2>
-    </section>
+<PostHogLayout>
+  <Layout 
+    title="Pricing - Free & Premium Plans | Acceso"
+    description="Free access to browse 86+ design studios and save up to 100 items. Premium Researcher plan coming soon with unlimited collections and advanced features."
+    keywords="design studio membership, free design directory, premium design tools"
+  >
+    <!-- Pricing Schema -->
+    <script type="application/ld+json" is:inline set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "Acceso Observer",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      }
+    })} />
+    <Navbar />
+    <main class="pricing-page">
+      {/* Hero Section */}
+      <section class="pricing-hero">
+        <h2 class="hero-title">Choose the plan that<br/>fits your workflow</h2>
+      </section>
 
-    {/* Pricing Cards */}
-    <section class="pricing-section">
-      <div class="pricing-container">
-        <div class="pricing-grid">
-          
-          {/* Free Access Card */}
-          <div class="pricing-card">
-            <div class="card-header">
-              <div class="card-title-wrapper">
-                <h3>Observer</h3>
-                <span class="tag tag--forever">Forever</span>
-              </div>
-              <div class="card-price">
-                <span class="price">Free</span>
-              </div>
-              <p class="card-description">Essential tools for discovery and collection.</p>
-              <a href="/login" class="btn-primary btn-full">Start collecting</a>
-            </div>
-            <div class="card-features">
-              <ul>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Unlimited browsing</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Max 2 collections per user</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Save up to 100 designers</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Save up to 100 moodboard projects</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Researcher Card */}
-          <div class="pricing-card pricing-card--researcher">
-            <div class="card-header">
-              <div class="card-title-wrapper">
-                <h3>Researcher</h3>
-                <span class="tag tag--unavailable">Unavailable</span>
-              </div>
-              <div class="card-price">
-                <div class="price-wrapper">
-                  <span class="currency">$</span>
-                  <span class="price">6</span>
-                  <span class="period">/month</span>
+      {/* Pricing Cards */}
+      <section class="pricing-section">
+        <div class="pricing-container">
+          <div class="pricing-grid">
+            
+            {/* Free Access Card */}
+            <div class="pricing-card">
+              <div class="card-header">
+                <div class="card-title-wrapper">
+                  <h3>Observer</h3>
+                  <span class="tag tag--forever">Forever</span>
                 </div>
-                <span class="billing-note">or $5/month billed yearly</span>
+                <div class="card-price">
+                  <span class="price">Free</span>
+                </div>
+                <p class="card-description">Essential tools for discovery and collection.</p>
+                <a href="/login" class="btn-primary btn-full">Start collecting</a>
               </div>
-              <p class="card-description">Advanced tools for professional research.</p>
-              <button class="btn-secondary btn-full" disabled>Coming Soon</button>
+              <div class="card-features">
+                <ul>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Unlimited browsing</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Max 2 collections per user</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Save up to 100 designers</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Save up to 100 moodboard projects</span>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div class="card-features">
-              <ul>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Unlimited browsing</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Up to 10 collections per user</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Unlimited saves</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Export moodboards</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Collaborative Collections</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>Additional search filters</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>30-day money-back guarantee</span>
-                </li>
-              </ul>
-            </div>
-          </div>
 
+            {/* Researcher Card */}
+            <div class="pricing-card pricing-card--researcher">
+              <div class="card-header">
+                <div class="card-title-wrapper">
+                  <h3>Researcher</h3>
+                  <span class="tag tag--unavailable">Unavailable</span>
+                </div>
+                <div class="card-price">
+                  <div class="price-wrapper">
+                    <span class="currency">$</span>
+                    <span class="price">6</span>
+                    <span class="period">/month</span>
+                  </div>
+                  <span class="billing-note">or $5/month billed yearly</span>
+                </div>
+                <p class="card-description">Advanced tools for professional research.</p>
+                <button class="btn-secondary btn-full" disabled>Coming Soon</button>
+              </div>
+              <div class="card-features">
+                <ul>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Unlimited browsing</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Up to 10 collections per user</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Unlimited saves</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Export moodboards</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Collaborative Collections</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Additional search filters</span>
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>30-day money-back guarantee</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
         </div>
-      </div>
-    </section>
-  </main>
-  <Footer />
-</Layout>
+      </section>
+    </main>
+    <Footer />
+  </Layout>
+</PostHogLayout>
 
 <style>
   .pricing-page {

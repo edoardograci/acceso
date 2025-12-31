@@ -1,81 +1,84 @@
 ---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout title="Terms of Service - Acceso Design">
-  <Navbar />
-  
-  <main class="legal-page">
-    <div class="legal-container">
-      <h1 class="legal-title">Terms of Service</h1>
-      <p class="last-updated">Last updated: December 30, 2025</p>
+<PostHogLayout>
+  <Layout title="Terms of Service - Acceso Design">
+    <Navbar />
+    
+    <main class="legal-page">
+      <div class="legal-container">
+        <h1 class="legal-title">Terms of Service</h1>
+        <p class="last-updated">Last updated: December 30, 2025</p>
 
-      <div class="legal-content">
-        <section>
-          <h2>1. Agreement to Terms</h2>
-          <p>
-            By accessing or using Acceso (the "Site"), you agree to these Terms of Service and our Privacy Policy. If you do not agree, you must not access or use the Site.
-          </p>
-        </section>
+        <div class="legal-content">
+          <section>
+            <h2>1. Agreement to Terms</h2>
+            <p>
+              By accessing or using Acceso (the "Site"), you agree to these Terms of Service and our Privacy Policy. If you do not agree, you must not access or use the Site.
+            </p>
+          </section>
 
-        <section>
-          <h2>2. Intellectual Property</h2>
-          <p>
-            The Site, including its source code, design, functionality, and layout, is proprietary. Trademarks, service marks, and logos on the Site (the "Marks") are owned or controlled by us or licensed to us and are protected by copyright and trademark laws.
-          </p>
-          <p>
-            Unless otherwise stated, any images, content, or information displayed on the Site are the property of their respective owners. We do not claim ownership over such content. Images may be sourced from public domain or third-party websites, and all information belongs to its original creators or sources. The Site and its content are provided "AS IS" for personal, non-commercial use only.
-          </p>
-          <p>
-            You may not copy, reproduce, redistribute, or exploit any part of the Site for commercial purposes without express written permission.
-          </p>
-        </section>
+          <section>
+            <h2>2. Intellectual Property</h2>
+            <p>
+              The Site, including its source code, design, functionality, and layout, is proprietary. Trademarks, service marks, and logos on the Site (the "Marks") are owned or controlled by us or licensed to us and are protected by copyright and trademark laws.
+            </p>
+            <p>
+              Unless otherwise stated, any images, content, or information displayed on the Site are the property of their respective owners. We do not claim ownership over such content. Images may be sourced from public domain or third-party websites, and all information belongs to its original creators or sources. The Site and its content are provided "AS IS" for personal, non-commercial use only.
+            </p>
+            <p>
+              You may not copy, reproduce, redistribute, or exploit any part of the Site for commercial purposes without express written permission.
+            </p>
+          </section>
 
-        <section>
-          <h2>3. User Representations</h2>
-          <p>
-            By using the Site, you represent that: (1) all registration information you provide is accurate, current, and complete; (2) you will maintain the accuracy of such information; (3) you have the legal capacity to agree to these Terms; and (4) you are not a minor under the laws of your jurisdiction.
-          </p>
-          <p>
-            You also agree to comply with all applicable laws and not infringe on the rights of others while using the Site.
-          </p>
-        </section>
+          <section>
+            <h2>3. User Representations</h2>
+            <p>
+              By using the Site, you represent that: (1) all registration information you provide is accurate, current, and complete; (2) you will maintain the accuracy of such information; (3) you have the legal capacity to agree to these Terms; and (4) you are not a minor under the laws of your jurisdiction.
+            </p>
+            <p>
+              You also agree to comply with all applicable laws and not infringe on the rights of others while using the Site.
+            </p>
+          </section>
 
-        <section>
-          <h2>4. Prohibited Activities</h2>
-          <p>
-            You may only use the Site as intended. Prohibited activities include, but are not limited to: unauthorized copying or distribution of content, scraping or automated collection of data, using the Site for commercial purposes without approval, or interfering with the Site’s operation or security.
-          </p>
-        </section>
+          <section>
+            <h2>4. Prohibited Activities</h2>
+            <p>
+              You may only use the Site as intended. Prohibited activities include, but are not limited to: unauthorized copying or distribution of content, scraping or automated collection of data, using the Site for commercial purposes without approval, or interfering with the Site’s operation or security.
+            </p>
+          </section>
 
-        <section>
-          <h2>5. Limitation of Liability</h2>
-          <p>
-            Acceso, its directors, employees, or agents are not liable for any direct, indirect, incidental, special, or consequential damages arising from your use of the Site, including lost profits, data, or other losses, even if we have been advised of the possibility of such damages.
-          </p>
-        </section>
+          <section>
+            <h2>5. Limitation of Liability</h2>
+            <p>
+              Acceso, its directors, employees, or agents are not liable for any direct, indirect, incidental, special, or consequential damages arising from your use of the Site, including lost profits, data, or other losses, even if we have been advised of the possibility of such damages.
+            </p>
+          </section>
 
-        <section>
-          <h2>6. Changes to Terms</h2>
-          <p>
-            We may update these Terms of Service at any time. Changes will be indicated by updating the "Last updated" date. Continued use of the Site after changes constitutes acceptance of the new Terms.
-          </p>
-        </section>
+          <section>
+            <h2>6. Changes to Terms</h2>
+            <p>
+              We may update these Terms of Service at any time. Changes will be indicated by updating the "Last updated" date. Continued use of the Site after changes constitutes acceptance of the new Terms.
+            </p>
+          </section>
 
-        <section>
-          <h2>7. Contact Us</h2>
-          <p>
-            For questions, complaints, or further information about the Site, please contact us at: <a href="mailto:hello@acceso.design">hello@acceso.design</a>.
-          </p>
-        </section>
+          <section>
+            <h2>7. Contact Us</h2>
+            <p>
+              For questions, complaints, or further information about the Site, please contact us at: <a href="mailto:hello@acceso.design">hello@acceso.design</a>.
+            </p>
+          </section>
+        </div>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <Footer />
-</Layout>
+    <Footer />
+  </Layout>
+</PostHogLayout>
 
 <style>
   .legal-page {

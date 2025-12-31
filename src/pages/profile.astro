@@ -1,4 +1,5 @@
 ---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import type { Env } from '../env.d';
@@ -40,460 +41,471 @@ try {
 }
 ---
 
-<Layout title="Profile - Acceso">
-  <Navbar />
-  <main class="profile-page">
-    <div class="profile-header">
-      <div class="header-top">
-        <h1 class="page-title">Profile</h1>
-        <form action="/auth/logout" method="POST">
-          <button type="submit" class="logout-btn">
-            Sign Out
-          </button>
-        </form>
-      </div>
-      
-      <div class="user-info-card">
-        <p class="welcome-text">
-          Welcome back, <strong>{user.email}</strong>
-        </p>
-        <div class="user-meta">
-          <span class="status-badge">
-            <span class="dot"></span>
-            {user.emailVerified ? 'Verified Account' : 'Unverified'}
-          </span>
+<PostHogLayout>
+  <Layout title="Profile - Acceso">
+    <Navbar />
+    <main class="profile-page">
+      <div class="profile-header">
+        <div class="header-top">
+          <h1 class="page-title">Profile</h1>
+          <form action="/auth/logout" method="POST">
+            <button type="submit" class="logout-btn">
+              Sign Out
+            </button>
+          </form>
         </div>
-      </div>
-    </div>
-
-    <div class="collections-section">
-      <h2 class="section-title">My Collections</h2>
-      <div class="collections-grid">
-        <a href="/collections/designers" class="collection-card">
-          <div class="card-image-container">
-            {designerCover ? (
-              <img src={designerCover} alt="Designers" class="card-image" />
-            ) : (
-              <div class="card-placeholder">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="placeholder-icon">
-                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            )}
-            <div class="card-overlay"></div>
-          </div>
-          <div class="card-content">
-            <div class="card-header">
-              <h3>Designers</h3>
-              <span class="count-badge">{savedDesignersCount >= 100 ? 'MAXED' : savedDesignersCount}</span>
-            </div>
-            <p class="card-description">Saved studios and designers</p>
-          </div>
-        </a>
-
-        <a href="/collections/moodboard" class="collection-card">
-          <div class="card-image-container">
-            {objectCover ? (
-              <img src={objectCover} alt="Moodboard" class="card-image" />
-            ) : (
-              <div class="card-placeholder">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="placeholder-icon">
-                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            )}
-            <div class="card-overlay"></div>
-          </div>
-          <div class="card-content">
-            <div class="card-header">
-              <h3>Moodboard</h3>
-              <span class="count-badge">{savedObjectsCount >= 100 ? 'MAXED' : savedObjectsCount}</span>
-            </div>
-            <p class="card-description">Saved objects and inspiration</p>
-          </div>
-        </a>
-      </div>
-    </div>
-    <div class="danger-zone">
-      <p class="danger-label">Do you want to delete your account?</p>
-      <button type="button" class="delete-account-btn" id="init-delete-btn">
-        Delete Account
-      </button>
-      <p class="danger-warning">This action is irreversible</p>
-    </div>
-
-    <!-- Delete Modal -->
-    <div class="modal-backdrop" id="delete-modal" style="display: none;">
-      <div class="modal-content">
-        <h3>Are you sure?</h3>
-        <p>This will permanently delete your account and all saved collections. This action cannot be undone.</p>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn cancel" id="cancel-delete">Cancel</button>
-          <button type="button" class="modal-btn delete" id="confirm-delete">Delete</button>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <script>
-    const deleteBtn = document.getElementById('init-delete-btn');
-    const modal = document.getElementById('delete-modal');
-    const cancelBtn = document.getElementById('cancel-delete');
-    const confirmBtn = document.getElementById('confirm-delete');
-
-    if (deleteBtn && modal && cancelBtn && confirmBtn) {
-      deleteBtn.addEventListener('click', () => {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-      });
-
-      const closeModal = () => {
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-      };
-
-      cancelBtn.addEventListener('click', closeModal);
-      
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-      });
-
-      confirmBtn.addEventListener('click', async () => {
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Deleting...';
         
-        try {
-          if (window.collectionsState) {
-             window.collectionsState.clear();
-          }
-          sessionStorage.removeItem('collections_state');
+        <div class="user-info-card">
+          <p class="welcome-text">
+            Welcome back, <strong>{user.email}</strong>
+          </p>
+          <div class="user-meta">
+            <span class="status-badge">
+              <span class="dot"></span>
+              {user.emailVerified ? 'Verified Account' : 'Unverified'}
+            </span>
+          </div>
+        </div>
+      </div>
 
-          const res = await fetch('/api/auth/delete-account', {
-            method: 'POST',
-          });
+      <div class="collections-section">
+        <h2 class="section-title">My Collections</h2>
+        <div class="collections-grid">
+          <a href="/collections/designers" class="collection-card">
+            <div class="card-image-container">
+              {designerCover ? (
+                <img src={designerCover} alt="Designers" class="card-image" />
+              ) : (
+                <div class="card-placeholder">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="placeholder-icon">
+                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              )}
+              <div class="card-overlay"></div>
+            </div>
+            <div class="card-content">
+              <div class="card-header">
+                <h3>Designers</h3>
+                <span class="count-badge">{savedDesignersCount >= 100 ? 'MAXED' : savedDesignersCount}</span>
+              </div>
+              <p class="card-description">Saved studios and designers</p>
+            </div>
+          </a>
+
+          <a href="/collections/moodboard" class="collection-card">
+            <div class="card-image-container">
+              {objectCover ? (
+                <img src={objectCover} alt="Moodboard" class="card-image" />
+              ) : (
+                <div class="card-placeholder">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="placeholder-icon">
+                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              )}
+              <div class="card-overlay"></div>
+            </div>
+            <div class="card-content">
+              <div class="card-header">
+                <h3>Moodboard</h3>
+                <span class="count-badge">{savedObjectsCount >= 100 ? 'MAXED' : savedObjectsCount}</span>
+              </div>
+              <p class="card-description">Saved objects and inspiration</p>
+            </div>
+          </a>
+        </div>
+      </div>
+      <div class="danger-zone">
+        <p class="danger-label">Do you want to delete your account?</p>
+        <button type="button" class="delete-account-btn" id="init-delete-btn">
+          Delete Account
+        </button>
+        <p class="danger-warning">This action is irreversible</p>
+      </div>
+
+      <!-- Delete Modal -->
+      <div class="modal-backdrop" id="delete-modal" style="display: none;">
+        <div class="modal-content">
+          <h3>Are you sure?</h3>
+          <p>This will permanently delete your account and all saved collections. This action cannot be undone.</p>
+          <div class="modal-actions">
+            <button type="button" class="modal-btn cancel" id="cancel-delete">Cancel</button>
+            <button type="button" class="modal-btn delete" id="confirm-delete">Delete</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const deleteBtn = document.getElementById('init-delete-btn');
+      const modal = document.getElementById('delete-modal');
+      const cancelBtn = document.getElementById('cancel-delete');
+      const confirmBtn = document.getElementById('confirm-delete');
+
+      if (deleteBtn && modal && cancelBtn && confirmBtn) {
+        deleteBtn.addEventListener('click', () => {
+          modal.style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+        });
+
+        const closeModal = () => {
+          modal.style.display = 'none';
+          document.body.style.overflow = '';
+        };
+
+        cancelBtn.addEventListener('click', closeModal);
+        
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+
+        confirmBtn.addEventListener('click', async () => {
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = 'Deleting...';
           
-          if (res.ok) {
-            window.location.href = '/';
-          } else {
-            console.error('Delete failed');
-            alert('Failed to delete account. Please try again.');
+          try {
+            if (window.collectionsState) {
+               window.collectionsState.clear();
+            }
+            sessionStorage.removeItem('collections_state');
+
+            const res = await fetch('/api/auth/delete-account', {
+              method: 'POST',
+            });
+            
+            if (res.ok) {
+              window.location.href = '/';
+            } else {
+              console.error('Delete failed');
+              alert('Failed to delete account. Please try again.');
+              confirmBtn.disabled = false;
+              confirmBtn.textContent = 'Delete';
+            }
+          } catch (e) {
+            console.error(e);
+            alert('An error occurred.');
             confirmBtn.disabled = false;
             confirmBtn.textContent = 'Delete';
           }
-        } catch (e) {
-          console.error(e);
-          alert('An error occurred.');
-          confirmBtn.disabled = false;
-          confirmBtn.textContent = 'Delete';
+        });
+      }
+    </script>
+
+    <style>
+      .profile-page {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 48px 24px 60px;
+        font-family: var(--font-sans);
+      }
+
+      .page-title {
+        font-size: 32px;
+        font-weight: 400;
+        color: var(--color-white);
+        margin: 0;
+        font-family: var(--font-mono);
+      }
+      
+      .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+      }
+
+      .user-info-card {
+        background-color: var(--color-bg-secondary);
+        border: 1px solid var(--color-stroke);
+        border-radius: 6px;
+        padding: 24px;
+        margin-bottom: 48px;
+      }
+
+      .welcome-text {
+        color: var(--color-white);
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+
+      .user-meta {
+        display: flex;
+        align-items: center;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: rgba(46, 204, 113, 0.1);
+        border: 1px solid rgba(46, 204, 113, 0.2);
+        border-radius: 999px;
+        color: #2ecc71;
+        font-size: 13px;
+        font-family: var(--font-mono);
+      }
+
+      .dot {
+        width: 6px;
+        height: 6px;
+        background-color: currentColor;
+        border-radius: 50%;
+      }
+
+      .section-title {
+        font-size: 20px;
+        font-weight: 400;
+        color: var(--color-white);
+        margin-bottom: 24px;
+        font-family: var(--font-mono);
+      }
+
+      .collections-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+        margin-bottom: 48px;
+      }
+
+      @media (min-width: 640px) {
+        .collections-grid {
+          grid-template-columns: 1fr 1fr;
         }
-      });
-    }
-  </script>
-</Layout>
+      }
 
-<style>
-  .profile-page {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 48px 24px 60px;
-    font-family: var(--font-sans);
-  }
+      .collection-card {
+        display: block;
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-stroke);
+        border-radius: 6px;
+        overflow: hidden;
+        text-decoration: none;
+        transition: transform 0.2s, border-color 0.2s;
+      }
 
-  .page-title {
-    font-size: 32px;
-    font-weight: 400;
-    color: var(--color-white);
-    margin: 0;
-    font-family: var(--font-mono);
-  }
-  
-  .header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 32px;
-  }
+      .collection-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--color-gray);
+      }
 
-  .user-info-card {
-    background-color: var(--color-bg-secondary);
-    border: 1px solid var(--color-stroke);
-    border-radius: 6px;
-    padding: 24px;
-    margin-bottom: 48px;
-  }
+      .card-image-container {
+        height: 200px;
+        position: relative;
+        background: var(--gray-dark);
+      }
 
-  .welcome-text {
-    color: var(--color-white);
-    font-size: 18px;
-    margin-bottom: 12px;
-  }
+      .card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
 
-  .user-meta {
-    display: flex;
-    align-items: center;
-  }
+      .card-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-gray);
+      }
 
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background: rgba(46, 204, 113, 0.1);
-    border: 1px solid rgba(46, 204, 113, 0.2);
-    border-radius: 999px;
-    color: #2ecc71;
-    font-size: 13px;
-    font-family: var(--font-mono);
-  }
+      .card-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+      }
 
-  .dot {
-    width: 6px;
-    height: 6px;
-    background-color: currentColor;
-    border-radius: 50%;
-  }
+      .card-content {
+        padding: 20px;
+      }
 
-  .section-title {
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--color-white);
-    margin-bottom: 24px;
-    font-family: var(--font-mono);
-  }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+      }
 
-  .collections-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 24px;
-    margin-bottom: 48px;
-  }
+      .card-header h3 {
+        color: var(--color-white);
+        font-size: 18px;
+        font-weight: 500;
+        margin: 0;
+      }
 
-  @media (min-width: 640px) {
-    .collections-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
+      .count-badge {
+        background: var(--color-black);
+        color: var(--color-gray);
+        padding: 2px 8px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-family: var(--font-mono);
+        border: 1px solid var(--color-stroke);
+      }
 
-  .collection-card {
-    display: block;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-stroke);
-    border-radius: 6px;
-    overflow: hidden;
-    text-decoration: none;
-    transition: transform 0.2s, border-color 0.2s;
-  }
+      .card-description {
+        color: var(--color-gray);
+        font-size: 14px;
+      }
 
-  .collection-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--color-gray);
-  }
+      .logout-btn {
+        height: 36px;
+        padding: 0 24px;
+        background-color: transparent;
+        border: 1px solid var(--color-stroke);
+        border-radius: 999px;
+        color: var(--color-gray);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
 
-  .card-image-container {
-    height: 200px;
-    position: relative;
-    background: var(--gray-dark);
-  }
+      .logout-btn:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+      }
 
-  .card-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+      /* Danger Zone */
+      .danger-zone {
+        margin-top: 60px;
+        border-top: 1px solid var(--color-stroke);
+        padding-top: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
 
-  .card-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-gray);
-  }
+      .danger-label {
+        font-size: 16px;
+        color: var(--color-white);
+        margin-bottom: 16px;
+        font-weight: 500;
+      }
 
-  .card-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
-  }
+      .delete-account-btn {
+        height: 36px;
+        padding: 0 24px;
+        background-color: transparent;
+        border: 1px solid var(--color-stroke);
+        border-radius: 999px;
+        color: var(--color-gray);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: 100%; /* Max width on mobile */
+        font-family: var(--font-sans);
+        margin-bottom: 8px;
+      }
 
-  .card-content {
-    padding: 20px;
-  }
+      .delete-account-btn:hover {
+        border-color: #ef4444; 
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+      }
+      
+      .danger-warning {
+        color: #ef4444;
+        font-size: 13px;
+        margin: 0;
+      }
 
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-  }
+      @media (min-width: 768px) {
+        .delete-account-btn {
+          width: auto;
+        }
+      }
 
-  .card-header h3 {
-    color: var(--color-white);
-    font-size: 18px;
-    font-weight: 500;
-    margin: 0;
-  }
+      /* Modal */
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
 
-  .count-badge {
-    background: var(--color-black);
-    color: var(--color-gray);
-    padding: 2px 8px;
-    border-radius: 99px;
-    font-size: 12px;
-    font-family: var(--font-mono);
-    border: 1px solid var(--color-stroke);
-  }
+      .modal-content {
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-stroke);
+        border-radius: 6px;
+        padding: 32px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+      }
+      
+      .modal-content h3 {
+        margin-top: 0;
+        color: var(--color-white);
+        font-family: var(--font-mono);
+        font-size: 20px;
+      }
 
-  .card-description {
-    color: var(--color-gray);
-    font-size: 14px;
-  }
+      .modal-content p {
+        color: var(--color-gray);
+        margin-bottom: 24px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
 
-  .logout-btn {
-    height: 36px;
-    padding: 0 24px;
-    background-color: transparent;
-    border: 1px solid var(--color-stroke);
-    border-radius: 999px;
-    color: var(--color-gray);
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+      }
 
-  .logout-btn:hover {
-    border-color: #ef4444;
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.05);
-  }
+      .modal-btn {
+        height: 40px;
+        padding: 0 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        font-family: var(--font-sans);
+        border: 1px solid transparent;
+      }
 
-  /* Danger Zone */
-  .danger-zone {
-    margin-top: 60px;
-    border-top: 1px solid var(--color-stroke);
-    padding-top: 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
+      .modal-btn.cancel {
+        background: transparent;
+        border-color: var(--color-stroke);
+        color: var(--color-gray);
+      }
 
-  .danger-label {
-    font-size: 16px;
-    color: var(--color-white);
-    margin-bottom: 16px;
-    font-weight: 500;
-  }
+      .modal-btn.cancel:hover {
+        border-color: var(--color-white);
+        color: var(--color-white);
+      }
 
-  .delete-account-btn {
-    height: 36px;
-    padding: 0 24px;
-    background-color: transparent;
-    border: 1px solid var(--color-stroke);
-    border-radius: 999px;
-    color: var(--color-gray);
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 100%; /* Max width on mobile */
-    font-family: var(--font-sans);
-    margin-bottom: 8px;
-  }
+      .modal-btn.delete {
+        background: #ef4444;
+        color: white;
+      }
+      
+      .modal-btn.delete:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
 
-  .delete-account-btn:hover {
-    border-color: #ef4444; 
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.05);
-  }
-  
-  .danger-warning {
-    color: #ef4444;
-    font-size: 13px;
-    margin: 0;
-  }
+      .modal-btn.delete:hover:not(:disabled) {
+        background: #dc2626;
+      }
+    </style>
 
-  @media (min-width: 768px) {
-    .delete-account-btn {
-      width: auto;
-    }
-  }
-
-  /* Modal */
-  .modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .modal-content {
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-stroke);
-    border-radius: 6px;
-    padding: 32px;
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
-  }
-  
-  .modal-content h3 {
-    margin-top: 0;
-    color: var(--color-white);
-    font-family: var(--font-mono);
-    font-size: 20px;
-  }
-
-  .modal-content p {
-    color: var(--color-gray);
-    margin-bottom: 24px;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-  }
-
-  .modal-btn {
-    height: 40px;
-    padding: 0 24px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    border: 1px solid transparent;
-  }
-
-  .modal-btn.cancel {
-    background: transparent;
-    border-color: var(--color-stroke);
-    color: var(--color-gray);
-  }
-
-  .modal-btn.cancel:hover {
-    border-color: var(--color-white);
-    color: var(--color-white);
-  }
-
-  .modal-btn.delete {
-    background: #ef4444;
-    color: white;
-  }
-  
-  .modal-btn.delete:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  .modal-btn.delete:hover:not(:disabled) {
-    background: #dc2626;
-  }
-</style>
-
+    <script>
+      // Identify user with PostHog when logged in
+      if (typeof window !== 'undefined' && window.posthog && window.posthog.identify) {
+        window.posthog.identify('{user.id}', {
+          email: '{user.email}',
+          email_verified: {user.emailVerified ? 'true' : 'false'}
+        });
+      }
+    </script>
+  </Layout>
+</PostHogLayout>

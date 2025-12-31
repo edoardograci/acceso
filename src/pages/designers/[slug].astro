@@ -1,4 +1,5 @@
 ---
+import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Tabs from '../../components/Tabs.astro';
@@ -34,91 +35,93 @@ const pageDescription = studio ? `Discover ${studio.name}, an independent design
 const pageImage = studio?.cover || '/og-default.jpg';
 ---
 
-<Layout 
-  title={`${studio.name} - ${studio.city} Design Studio | Acceso`}
-  description={`${studio.name} is an independent design studio based in ${studio.city}. Explore their projects, objects, and contact information.`}
-  image={studio.cover || '/social-card.png'}
-  type="article"
-  keywords={`${studio.name}, ${studio.city} design, industrial design studio, product design ${studio.city}`}
-  publishedTime={studio.created_at}
-  modifiedTime={studio.updated_at}
->
-  <!-- Organization Schema -->
-  <script type="application/ld+json" is:inline set:html={JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": studio.name,
-    "url": studio.website,
-    "logo": studio.cover,
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": studio.city,
-      "streetAddress": studio.address
-    },
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "email": studio.email,
-      "contactType": "General Inquiry"
-    },
-    "sameAs": [studio.instagram, studio.website].filter(Boolean)
-  })} />
-  <Navbar />
-  
-  <main class="designer-page">
-    <div class="designer-left-col">
+<PostHogLayout>
+  <Layout 
+    title={`${studio.name} - ${studio.city} Design Studio | Acceso`}
+    description={`${studio.name} is an independent design studio based in ${studio.city}. Explore their projects, objects, and contact information.`}
+    image={studio.cover || '/social-card.png'}
+    type="article"
+    keywords={`${studio.name}, ${studio.city} design, industrial design studio, product design ${studio.city}`}
+    publishedTime={studio.created_at}
+    modifiedTime={studio.updated_at}
+  >
+    <!-- Organization Schema -->
+    <script type="application/ld+json" is:inline set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": studio.name,
+      "url": studio.website,
+      "logo": studio.cover,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": studio.city,
+        "streetAddress": studio.address
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": studio.email,
+        "contactType": "General Inquiry"
+      },
+      "sameAs": [studio.instagram, studio.website].filter(Boolean)
+    })} />
+    <Navbar />
+    
+    <main class="designer-page">
+      <div class="designer-left-col">
 
 
-      {error ? (
-        <div class="error-state">
-          <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Studio</h2>
-          <p style="color: var(--text-secondary); margin-bottom: 16px;">
-            Unable to load studio data. Please try again later.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div class="designer-image-container">
-            {studio.cover ? (
-              <img 
-                src={studio.cover} 
-                alt={studio.name}
-                class="designer-image"
-                loading="eager"
-                fetchpriority="high"
-                decoding="async"
-                data-skeleton
-              />
-            ) : (
-              <div class="designer-image-placeholder">
-                <span>No image available</span>
-              </div>
-            )}
+        {error ? (
+          <div class="error-state">
+            <h2 style="color: #ff6b6b; margin-bottom: 16px;">Error Loading Studio</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 16px;">
+              Unable to load studio data. Please try again later.
+            </p>
           </div>
+        ) : (
+          <>
+            <div class="designer-image-container">
+              {studio.cover ? (
+                <img 
+                  src={studio.cover} 
+                  alt={studio.name}
+                  class="designer-image"
+                  loading="eager"
+                  fetchpriority="high"
+                  decoding="async"
+                  data-skeleton
+                />
+              ) : (
+                <div class="designer-image-placeholder">
+                  <span>No image available</span>
+                </div>
+              )}
+            </div>
 
-          <DesignerActionButtons 
-            studioId={studio.id} 
-            designerImageUrl={studio.cover}
-            designerName={studio.slug}
-          />
-        </>
-      )}
-    </div>
-
-    {!error && (
-      <div class="designer-content">
-        <Tabs active="info" />
-        
-        <div id="tab-info" class="tab-content tab-content-active">
-          <DesignerInfo studio={studio} />
-        </div>
-        
-        <div id="tab-moodboard" class="tab-content">
-          <DesignerMoodboard studio={studio} />
-        </div>
+            <DesignerActionButtons 
+              studioId={studio.id} 
+              designerImageUrl={studio.cover}
+              designerName={studio.slug}
+            />
+          </>
+        )}
       </div>
-    )}
-  </main>
-</Layout>
+
+      {!error && (
+        <div class="designer-content">
+          <Tabs active="info" />
+          
+          <div id="tab-info" class="tab-content tab-content-active">
+            <DesignerInfo studio={studio} />
+          </div>
+          
+          <div id="tab-moodboard" class="tab-content">
+            <DesignerMoodboard studio={studio} />
+          </div>
+        </div>
+      )}
+    </main>
+  </Layout>
+</PostHogLayout>
 
 <style>
   .designer-page {

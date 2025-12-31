@@ -1,4 +1,5 @@
 ---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import '../styles/map.css';
@@ -40,89 +41,91 @@ if (studioSlug) {
 }
 ---
 
-<Layout 
-  title="Design Studio Map - Explore Studios by City | Acceso"
-  description="Interactive map of independent design studios across Milan, Seoul, Berlin, London, Paris, Copenhagen, and Tokyo. Discover local design scenes."
-  keywords="design studio map, Milan design studios, Seoul designers, Berlin design scene, design studio locations"
->
-  <Navbar />
-  
-  <main class="map-page">
-    <!-- City Selector - Top Center -->
-    <div class="city-selector">
-      <div class="filter-buttons" id="city-filters">
-        {cities.map(city => (
-          <button 
-            type="button" 
-            class:list={['filter-btn', { active: city === activeCity }]} 
-            data-city={city}
-          >
-            {city}
+<PostHogLayout>
+  <Layout 
+    title="Design Studio Map - Explore Studios by City | Acceso"
+    description="Interactive map of independent design studios across Milan, Seoul, Berlin, London, Paris, Copenhagen, and Tokyo. Discover local design scenes."
+    keywords="design studio map, Milan design studios, Seoul designers, Berlin design scene, design studio locations"
+  >
+    <Navbar />
+    
+    <main class="map-page">
+      <!-- City Selector - Top Center -->
+      <div class="city-selector">
+        <div class="filter-buttons" id="city-filters">
+          {cities.map(city => (
+            <button 
+              type="button" 
+              class:list={['filter-btn', { active: city === activeCity }]} 
+              data-city={city}
+            >
+              {city}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <!-- Studio Card Wrapper with Navigation -->
+      <div class="studio-ui-container" id="studio-ui-container">
+        <!-- Navigation Buttons -->
+        <div class="map-navigation">
+          <button type="button" id="nav-btn-back" class="map-nav-btn prev" aria-label="Previous studio">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Back
           </button>
-        ))}
-      </div>
-    </div>
-
-    <!-- Studio Card Wrapper with Navigation -->
-    <div class="studio-ui-container" id="studio-ui-container">
-      <!-- Navigation Buttons -->
-      <div class="map-navigation">
-        <button type="button" id="nav-btn-back" class="map-nav-btn prev" aria-label="Previous studio">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Back
-        </button>
-        <button type="button" id="nav-btn-next" class="map-nav-btn next" aria-label="Next studio">
-          Next
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="studio-card" id="studio-card">
-        <a href="#" class="studio-card-inner" id="studio-card-link">
-          <img 
-            src="" 
-            alt="" 
-            class="studio-card-image" 
-            id="studio-card-image" 
-            loading="lazy" 
-            decoding="async"
-            data-skeleton
-          />
-          <div class="studio-card-content">
-            <h3 class="studio-card-title" id="studio-card-title"></h3>
-            <p class="studio-card-address" id="studio-card-address"></p>
-          </div>
-          <span class="studio-card-arrow">
+          <button type="button" id="nav-btn-next" class="map-nav-btn next" aria-label="Next studio">
+            Next
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </span>
-        </a>
+          </button>
+        </div>
+
+        <div class="studio-card" id="studio-card">
+          <a href="#" class="studio-card-inner" id="studio-card-link">
+            <img 
+              src="" 
+              alt="" 
+              class="studio-card-image" 
+              id="studio-card-image" 
+              loading="lazy" 
+              decoding="async"
+              data-skeleton
+            />
+            <div class="studio-card-content">
+              <h3 class="studio-card-title" id="studio-card-title"></h3>
+              <p class="studio-card-address" id="studio-card-address"></p>
+            </div>
+            <span class="studio-card-arrow">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </a>
+        </div>
       </div>
-    </div>
 
-    <div id="map"></div>
-  </main>
+      <div id="map"></div>
+    </main>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Leaflet JS -->
+    <!-- Leaflet JS -->
 
 
-  <!-- Icon map (defines window.iconMap) -->
-  <script src="/js/map-icons.js" is:inline></script>
+    <!-- Icon map (defines window.iconMap) -->
+    <script src="/js/map-icons.js" is:inline></script>
 
-  <!-- Pass studio data to client script -->
-  <script define:vars={{ studios: studiosWithCoords, studioSlug }}>
-    window.studiosData = studios;
-    window.studioSlug = studioSlug;
-  </script>
+    <!-- Pass studio data to client script -->
+    <script define:vars={{ studios: studiosWithCoords, studioSlug }}>
+      window.studiosData = studios;
+      window.studioSlug = studioSlug;
+    </script>
 
-  <!-- Initialize map (properly bundled by Astro) -->
-  <script src="../scripts/map-init-client.ts"></script>
-</Layout>
+    <!-- Initialize map (properly bundled by Astro) -->
+    <script src="../scripts/map-init-client.ts"></script>
+  </Layout>
+</PostHogLayout>

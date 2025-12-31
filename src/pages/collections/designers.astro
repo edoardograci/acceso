@@ -1,4 +1,5 @@
 ---
+import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import SaveButton from '../../components/SaveButton.astro';
@@ -23,56 +24,58 @@ try {
 }
 ---
 
-<Layout title="My Saved Designers - Acceso">
-  <Navbar />
-  
-  <main class="designers-page">
-    <div class="header">
-      <h1 class="page-title">My Designers</h1>
-      <p id="count" class="count">Loading saved designers...</p>
-    </div>
-
-    {!error && (
-      <div id="designers-grid" class="designers-grid" style="opacity: 0; transition: opacity 0.3s ease;">
-        {studios.map(studio => (
-          <div class="studio-card-wrapper" data-id={studio.id} style="display: none;">
-            <a 
-              href={`/designers/${studio.slug}`} 
-              class="studio-card"
-            >
-              {studio.cover ? (
-                <img 
-                  src={studio.cover} 
-                  alt={studio.name} 
-                  class="studio-image" 
-                  loading="lazy" 
-                  data-skeleton
-                />
-              ) : (
-                <div class="studio-image-placeholder">No image</div>
-              )}
-              <div class="studio-info">
-                <h3>{studio.name}</h3>
-                <p>{studio.city}</p>
-              </div>
-            </a>
-            
-            <div class="save-btn-container">
-              <SaveButton 
-                type="designer" 
-                itemId={studio.id} 
-              />
-            </div>
-          </div>
-        ))}
-        <div id="empty-state" class="empty-state" style="display: none;">
-           <p>No saved designers.</p>
-           <a href="/designers" class="browse-link">Browse Designers</a>
-        </div>
+<PostHogLayout>
+  <Layout title="My Saved Designers - Acceso">
+    <Navbar />
+    
+    <main class="designers-page">
+      <div class="header">
+        <h1 class="page-title">My Designers</h1>
+        <p id="count" class="count">Loading saved designers...</p>
       </div>
-    )}
-  </main>
-</Layout>
+
+      {!error && (
+        <div id="designers-grid" class="designers-grid" style="opacity: 0; transition: opacity 0.3s ease;">
+          {studios.map(studio => (
+            <div class="studio-card-wrapper" data-id={studio.id} style="display: none;">
+              <a 
+                href={`/designers/${studio.slug}`} 
+                class="studio-card"
+              >
+                {studio.cover ? (
+                  <img 
+                    src={studio.cover} 
+                    alt={studio.name} 
+                    class="studio-image" 
+                    loading="lazy" 
+                    data-skeleton
+                  />
+                ) : (
+                  <div class="studio-image-placeholder">No image</div>
+                )}
+                <div class="studio-info">
+                  <h3>{studio.name}</h3>
+                  <p>{studio.city}</p>
+                </div>
+              </a>
+              
+              <div class="save-btn-container">
+                <SaveButton 
+                  type="designer" 
+                  itemId={studio.id} 
+                />
+              </div>
+            </div>
+          ))}
+          <div id="empty-state" class="empty-state" style="display: none;">
+             <p>No saved designers.</p>
+             <a href="/designers" class="browse-link">Browse Designers</a>
+          </div>
+        </div>
+      )}
+    </main>
+  </Layout>
+</PostHogLayout>
 
 <style>
   .designers-page {

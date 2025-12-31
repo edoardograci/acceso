@@ -1,4 +1,5 @@
 ---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Spotlight from '../components/landing/Spotlight.astro';
@@ -116,164 +117,166 @@ try {
 }
 ---
 
-<Layout 
-  title="Acceso - Discover Independent Design Studios Worldwide"
-  description="Explore curated independent industrial design studios from Milan, Seoul, Berlin, London, and beyond. Browse objects, projects, and local design scenes."
-  keywords="design studios directory, industrial design, product design Milan, design moodboard, independent designers, design studio map"
-  type="website"
->
-  <Navbar />
-  
-  {/* Hero Section */}
-  <section class="hero-section">
-    <div class="hero-content">
-      <div class="hero-image-wrapper">
-        <img src="/images/hero-image.png" alt="Acceso Design Hero" class="hero-static-image" width="1200" height="675" />
-        <div class="hero-gradient-overlay"></div>
-      </div>
+<PostHogLayout>
+  <Layout 
+    title="Acceso - Discover Independent Design Studios Worldwide"
+    description="Explore curated independent industrial design studios from Milan, Seoul, Berlin, London, and beyond. Browse objects, projects, and local design scenes."
+    keywords="design studios directory, industrial design, product design Milan, design moodboard, independent designers, design studio map"
+    type="website"
+  >
+    <Navbar />
+    
+    {/* Hero Section */}
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="hero-image-wrapper">
+          <img src="/images/hero-image.png" alt="Acceso Design Hero" class="hero-static-image" width="1200" height="675" />
+          <div class="hero-gradient-overlay"></div>
+        </div>
 
-      <h1 class="hero-title">Discover independent<br/>design studios worldwide</h1>
-      <p class="hero-subtitle">A curated index of studios and objects rooted in local design scenes around the world.</p>
-      
-      <div class="hero-actions">
-        <a href="/designers" class="btn-secondary">Browse studios</a>
-        <a href="/map" class="btn-primary">Explore by city</a>
-      </div>
-    </div>
-
-    <div class="hero-lower">
-      <p class="cities-intro">
-        Independent design studios shaping the design scene in major cities worldwide.
-      </p>
-      
-      <div class="carousel-container">
-        <div class="carousel-track">
-          {/* Quadruple for infinite loop safety */}
-          {[...carouselCities, ...carouselCities, ...carouselCities, ...carouselCities].map((city) => (
-            <a href={`/designers?city=${city}`} class="city-pill">
-              {city}
-            </a>
-          ))}
+        <h1 class="hero-title">Discover independent<br/>design studios worldwide</h1>
+        <p class="hero-subtitle">A curated index of studios and objects rooted in local design scenes around the world.</p>
+        
+        <div class="hero-actions">
+          <a href="/designers" class="btn-secondary">Browse studios</a>
+          <a href="/map" class="btn-primary">Explore by city</a>
         </div>
       </div>
-    </div>
-  </section>
 
-  {/* Features Section */}
-  <section class="features-section">
-    <div class="features-header">
-      <h2 class="features-title">What you can do on Acceso</h2>
-      <p class="features-subtitle">
-        Explore independent design studios and objects through cities, projects and curated references.
-      </p>
-    </div>
-
-    <div class="features-grid">
-      <div class="feature-item">
-        <h3 class="feature-title">Browse studios</h3>
-        <p class="feature-description">
-          Discover independent industrial design studios, indexed and organized for clarity.
+      <div class="hero-lower">
+        <p class="cities-intro">
+          Independent design studios shaping the design scene in major cities worldwide.
         </p>
-      </div>
-
-      <div class="feature-item">
-        <h3 class="feature-title">Explore by city</h3>
-        <p class="feature-description">
-          View local design scenes and move across cities to compare approaches and aesthetics.
-        </p>
-      </div>
-
-      <div class="feature-item">
-        <h3 class="feature-title">Moodboard</h3>
-        <p class="feature-description">
-          Collect and browse objects, projects and references in a shared visual space.
-        </p>
-      </div>
-
-      <div class="feature-item">
-        <h3 class="feature-title">Objects and projects</h3>
-        <p class="feature-description">
-          See products and works as standalone entries, connected back to their studios.
-        </p>
-      </div>
-
-      <div class="feature-item">
-        <h3 class="feature-title">Curated, not automated</h3>
-        <p class="feature-description">
-          Every studio and reference is selected manually, with no trend-based ranking.
-        </p>
-      </div>
-
-      <div class="feature-item">
-        <h3 class="feature-title">Made for exploration</h3>
-        <p class="feature-description">
-          Useful for inspiration, research and understanding contemporary design culture.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  {/* Feature Showcase: Map Discovery */}
-  <section class="feature-showcase">
-    <div class="showcase-container">
-      <div class="showcase-content">
-        <span class="showcase-label">Explore by location</span>
-        <h2 class="showcase-title">Navigate the<br/>design map</h2>
-        <p class="showcase-description">
-          Discover independent design studios on a global interactive map. Navigate by city, dive into local design scenes, and uncover studios across Milan, London, Paris, Berlin, and beyond.
-        </p>
-        <a href="/map" class="showcase-btn">Explore map</a>
-      </div>
-      <div class="showcase-image">
-        <div class="showcase-image-wrapper">
-          <img src="/images/map.png" alt="Acceso Map Interface" class="showcase-img" />
-          <div class="showcase-gradient-overlay"></div>
+        
+        <div class="carousel-container">
+          <div class="carousel-track">
+            {/* Quadruple for infinite loop safety */}
+            {[...carouselCities, ...carouselCities, ...carouselCities, ...carouselCities].map((city) => (
+              <a href={`/designers?city=${city}`} class="city-pill">
+                {city}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  {/* Feature Showcase: Moodboard (Mirrored) */}
-  <section class="feature-showcase feature-showcase--reversed">
-    <div class="showcase-container">
-      <div class="showcase-content">
-        <span class="showcase-label">Visual inspiration</span>
-        <h2 class="showcase-title">Curate your<br/>moodboard</h2>
-        <p class="showcase-description">
-          Explore real product photography from independent studios worldwide. Save objects, curate moodboards, and collect references for your next project in a single visual space.
+    {/* Features Section */}
+    <section class="features-section">
+      <div class="features-header">
+        <h2 class="features-title">What you can do on Acceso</h2>
+        <p class="features-subtitle">
+          Explore independent design studios and objects through cities, projects and curated references.
         </p>
-        <a href="/moodboard" class="showcase-btn">Browse moodboard</a>
       </div>
-      <div class="showcase-image">
-        <div class="showcase-image-wrapper">
-          <img src="/images/moodboard.png" alt="Acceso Moodboard Interface" class="showcase-img" />
-          <div class="showcase-gradient-overlay"></div>
+
+      <div class="features-grid">
+        <div class="feature-item">
+          <h3 class="feature-title">Browse studios</h3>
+          <p class="feature-description">
+            Discover independent industrial design studios, indexed and organized for clarity.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <h3 class="feature-title">Explore by city</h3>
+          <p class="feature-description">
+            View local design scenes and move across cities to compare approaches and aesthetics.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <h3 class="feature-title">Moodboard</h3>
+          <p class="feature-description">
+            Collect and browse objects, projects and references in a shared visual space.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <h3 class="feature-title">Objects and projects</h3>
+          <p class="feature-description">
+            See products and works as standalone entries, connected back to their studios.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <h3 class="feature-title">Curated, not automated</h3>
+          <p class="feature-description">
+            Every studio and reference is selected manually, with no trend-based ranking.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <h3 class="feature-title">Made for exploration</h3>
+          <p class="feature-description">
+            Useful for inspiration, research and understanding contemporary design culture.
+          </p>
         </div>
       </div>
-    </div>
-  </section>
-  
-  {/* 
-  <main class="spotlight-page">
-    <Spotlight 
-      activeSpotlight={activeSpotlight} 
-      spotlightImages={spotlightImages} 
-      designerStudio={designerStudio} 
-    />
-  </main>
-  */}
+    </section>
 
-  {/* Join Community Section */}
-  <section class="community-section">
-    <div class="community-content">
-      <h2 class="community-title">Join the community</h2>
-      <p class="community-subtitle">Be part of a growing network of independent designers and design lovers.</p>
-      <a href="/login" class="btn-primary community-btn">Start collecting</a>
-    </div>
-  </section>
+    {/* Feature Showcase: Map Discovery */}
+    <section class="feature-showcase">
+      <div class="showcase-container">
+        <div class="showcase-content">
+          <span class="showcase-label">Explore by location</span>
+          <h2 class="showcase-title">Navigate the<br/>design map</h2>
+          <p class="showcase-description">
+            Discover independent design studios on a global interactive map. Navigate by city, dive into local design scenes, and uncover studios across Milan, London, Paris, Berlin, and beyond.
+          </p>
+          <a href="/map" class="showcase-btn">Explore map</a>
+        </div>
+        <div class="showcase-image">
+          <div class="showcase-image-wrapper">
+            <img src="/images/map.png" alt="Acceso Map Interface" class="showcase-img" />
+            <div class="showcase-gradient-overlay"></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <Footer />
-</Layout>
+    {/* Feature Showcase: Moodboard (Mirrored) */}
+    <section class="feature-showcase feature-showcase--reversed">
+      <div class="showcase-container">
+        <div class="showcase-content">
+          <span class="showcase-label">Visual inspiration</span>
+          <h2 class="showcase-title">Curate your<br/>moodboard</h2>
+          <p class="showcase-description">
+            Explore real product photography from independent studios worldwide. Save objects, curate moodboards, and collect references for your next project in a single visual space.
+          </p>
+          <a href="/moodboard" class="showcase-btn">Browse moodboard</a>
+        </div>
+        <div class="showcase-image">
+          <div class="showcase-image-wrapper">
+            <img src="/images/moodboard.png" alt="Acceso Moodboard Interface" class="showcase-img" />
+            <div class="showcase-gradient-overlay"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    {/* 
+    <main class="spotlight-page">
+      <Spotlight 
+        activeSpotlight={activeSpotlight} 
+        spotlightImages={spotlightImages} 
+        designerStudio={designerStudio} 
+      />
+    </main>
+    */}
+
+    {/* Join Community Section */}
+    <section class="community-section">
+      <div class="community-content">
+        <h2 class="community-title">Join the community</h2>
+        <p class="community-subtitle">Be part of a growing network of independent designers and design lovers.</p>
+        <a href="/login" class="btn-primary community-btn">Start collecting</a>
+      </div>
+    </section>
+
+    <Footer />
+  </Layout>
+</PostHogLayout>
 
 <style>
   /* Hero Section */

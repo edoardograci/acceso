@@ -1,4 +1,5 @@
 ---
+import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import SaveButton from '../../components/SaveButton.astro';
@@ -23,53 +24,55 @@ try {
 }
 ---
 
-<Layout title="My Moodboard - Acceso">
-  <Navbar />
-  
-  <main class="objects-page">
-    <div class="header">
-      <h1 class="page-title">Moodboard</h1>
-      <p id="count" class="count">Loading moodboard...</p>
-    </div>
-
-    {!error && (
-      <div id="objects-grid" class="objects-grid" style="opacity: 0; transition: opacity 0.3s ease;">
-        {objects.map(item => (
-          <div class="object-card-wrapper" data-id={item.id} style="display: none;">
-            <a 
-              href={`/moodboard/${item.slug}`} 
-              class="object-card"
-            >
-              {item.cover && (
-                <img 
-                  src={item.cover} 
-                  alt={item.name}
-                  loading="lazy"
-                  data-skeleton
-                />
-              )}
-              <div class="item-overlay">
-                <h3>{item.name}</h3>
-                {item.designer && <p>{item.designer}</p>}
-              </div>
-            </a>
-            
-            <div class="save-btn-container">
-              <SaveButton 
-                type="object" 
-                itemId={item.id} 
-              />
-            </div>
-          </div>
-        ))}
-        <div id="empty-state" class="empty-state" style="display: none;">
-           <p>No saved objects.</p>
-           <a href="/moodboard" class="browse-link">Explore Moodboard</a>
-        </div>
+<PostHogLayout>
+  <Layout title="My Moodboard - Acceso">
+    <Navbar />
+    
+    <main class="objects-page">
+      <div class="header">
+        <h1 class="page-title">Moodboard</h1>
+        <p id="count" class="count">Loading moodboard...</p>
       </div>
-    )}
-  </main>
-</Layout>
+
+      {!error && (
+        <div id="objects-grid" class="objects-grid" style="opacity: 0; transition: opacity 0.3s ease;">
+          {objects.map(item => (
+            <div class="object-card-wrapper" data-id={item.id} style="display: none;">
+              <a 
+                href={`/moodboard/${item.slug}`} 
+                class="object-card"
+              >
+                {item.cover && (
+                  <img 
+                    src={item.cover} 
+                    alt={item.name}
+                    loading="lazy"
+                    data-skeleton
+                  />
+                )}
+                <div class="item-overlay">
+                  <h3>{item.name}</h3>
+                  {item.designer && <p>{item.designer}</p>}
+                </div>
+              </a>
+              
+              <div class="save-btn-container">
+                <SaveButton 
+                  type="object" 
+                  itemId={item.id} 
+                />
+              </div>
+            </div>
+          ))}
+          <div id="empty-state" class="empty-state" style="display: none;">
+             <p>No saved objects.</p>
+             <a href="/moodboard" class="browse-link">Explore Moodboard</a>
+          </div>
+        </div>
+      )}
+    </main>
+  </Layout>
+</PostHogLayout>
 
 <style>
   .objects-page {

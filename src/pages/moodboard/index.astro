@@ -1,4 +1,5 @@
 ---
+import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import '../../styles/moodboard.css';
@@ -49,410 +50,412 @@ const cities = [...new Set(moodboardItems.map(item => item.city).filter(Boolean)
 const initialCity = Astro.url.searchParams.get('city') || 'all';
 ---
 
-<Layout 
-  title="Design Moodboard - Product & Object References | Acceso"
-  description="Visual collection of 20+ design projects from independent studios. Browse product photography, objects, and creative references for inspiration."
-  keywords="design moodboard, product photography, design inspiration, object references, industrial design projects"
->
-  <Navbar />
-  
-  <main class="moodboard-page">
-    {!error && (
-      <>
-        <div class="filters-container" style="margin-top: 48px;">
-          <div class="search-bar">
-            <input 
-              type="text" 
-              id="search-input" 
-              placeholder="Search by name, designer, or concept..."
-              aria-label="Search moodboard"
-            />
-            <div id="search-status" class="search-status" style="display: none;"></div>
+<PostHogLayout>
+  <Layout 
+    title="Design Moodboard - Product & Object References | Acceso"
+    description="Visual collection of 20+ design projects from independent studios. Browse product photography, objects, and creative references for inspiration."
+    keywords="design moodboard, product photography, design inspiration, object references, industrial design projects"
+  >
+    <Navbar />
+    
+    <main class="moodboard-page">
+      {!error && (
+        <>
+          <div class="filters-container" style="margin-top: 48px;">
+            <div class="search-bar">
+              <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Search by name, designer, or concept..."
+                aria-label="Search moodboard"
+              />
+              <div id="search-status" class="search-status" style="display: none;"></div>
+            </div>
+
+            <div class="filter-buttons">
+              <button class="filter-btn" data-city="all" class:list={{active: initialCity === 'all'}}>All</button>
+              {cities.map(city => (
+                <button class="filter-btn" data-city={city} class:list={{active: initialCity === city}}>{city}</button>
+              ))}
+            </div>
           </div>
 
-          <div class="filter-buttons">
-            <button class="filter-btn" data-city="all" class:list={{active: initialCity === 'all'}}>All</button>
-            {cities.map(city => (
-              <button class="filter-btn" data-city={city} class:list={{active: initialCity === city}}>{city}</button>
+          <div class="moodboard-grid" id="moodboard-grid">
+            {moodboardItems.map(item => (
+              item.cover && (
+                <a 
+                  href={`/moodboard/${item.slug}`} 
+                  class="moodboard-item"
+                  data-product-id={item.id}
+                  data-name={item.name.toLowerCase()}
+                  data-designer={item.designer ? item.designer.toLowerCase() : ''}
+                  data-city={item.city || ''}
+                >
+                  <img 
+                    src={item.cover} 
+                    alt={item.name}
+                    loading="lazy"
+                    decoding="async"
+                    crossorigin="anonymous"
+                    data-skeleton
+                  />
+                  <div class="item-overlay">
+                    <h3>{item.name}</h3>
+                    {item.designer && <p>{item.designer}</p>}
+                  </div>
+                </a>
+              )
             ))}
           </div>
-        </div>
 
-        <div class="moodboard-grid" id="moodboard-grid">
-          {moodboardItems.map(item => (
-            item.cover && (
-              <a 
-                href={`/moodboard/${item.slug}`} 
-                class="moodboard-item"
-                data-product-id={item.id}
-                data-name={item.name.toLowerCase()}
-                data-designer={item.designer ? item.designer.toLowerCase() : ''}
-                data-city={item.city || ''}
-              >
-                <img 
-                  src={item.cover} 
-                  alt={item.name}
-                  loading="lazy"
-                  decoding="async"
-                  crossorigin="anonymous"
-                  data-skeleton
-                />
-                <div class="item-overlay">
-                  <h3>{item.name}</h3>
-                  {item.designer && <p>{item.designer}</p>}
-                </div>
-              </a>
-            )
-          ))}
-        </div>
-
-        <div id="vector-results" class="vector-results" style="display: none;">
-          <div class="moodboard-grid" style="column-count: auto; display: block; column-gap: 0;">
-            <div id="vector-results-grid" style="position: relative; width: 100%;"></div>
+          <div id="vector-results" class="vector-results" style="display: none;">
+            <div class="moodboard-grid" style="column-count: auto; display: block; column-gap: 0;">
+              <div id="vector-results-grid" style="position: relative; width: 100%;"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="empty-result" id="empty-result" style="display: none;">
-          <p>No projects found matching your search.</p>
-        </div>
-      </>
-    )}
-  </main>
-</Layout>
+          <div class="empty-result" id="empty-result" style="display: none;">
+            <p>No projects found matching your search.</p>
+          </div>
+        </>
+      )}
+    </main>
+  </Layout>
 
-<script define:vars={{ moodboardItems, initialCity }}>
-  const moodboardItemsForSearch = moodboardItems
-  const itemsMap = new Map()
+  <script define:vars={{ moodboardItems, initialCity }}>
+    const moodboardItemsForSearch = moodboardItems
+    const itemsMap = new Map()
 
-  moodboardItemsForSearch.forEach((item) => {
-    itemsMap.set(item.id, item)
-  })
+    moodboardItemsForSearch.forEach((item) => {
+      itemsMap.set(item.id, item)
+    })
 
-  const searchInput = document.getElementById('search-input')
-  const moodboardGrid = document.getElementById('moodboard-grid')
-  const vectorResults = document.getElementById('vector-results')
-  const vectorResultsGrid = document.getElementById('vector-results-grid')
-  const emptyResult = document.getElementById('empty-result')
-  const searchStatus = document.getElementById('search-status')
-  const filterButtons = document.querySelectorAll('.filter-btn')
+    const searchInput = document.getElementById('search-input')
+    const moodboardGrid = document.getElementById('moodboard-grid')
+    const vectorResults = document.getElementById('vector-results')
+    const vectorResultsGrid = document.getElementById('vector-results-grid')
+    const emptyResult = document.getElementById('empty-result')
+    const searchStatus = document.getElementById('search-status')
+    const filterButtons = document.querySelectorAll('.filter-btn')
 
-  let isSearching = false
-  let currentCity = initialCity || 'all';
+    let isSearching = false
+    let currentCity = initialCity || 'all';
 
-  function showGrid() {
-    if (moodboardGrid) moodboardGrid.style.display = ''
-    if (vectorResults) vectorResults.style.display = 'none'
-    if (emptyResult) emptyResult.style.display = 'none'
-    if (searchStatus) searchStatus.style.display = 'none'
-    
-    // Re-apply filter when showing grid
-    filterItems();
-  }
-
-  // Filter functionality
-  function filterItems() {
-    // 1. Filter main grid
-    const mainCards = document.querySelectorAll('#moodboard-grid .moodboard-item');
-    let visibleCount = 0;
-    
-    mainCards.forEach(card => {
-      const itemCity = card.dataset.city || '';
-      const matchesCity = currentCity === 'all' || itemCity === currentCity;
+    function showGrid() {
+      if (moodboardGrid) moodboardGrid.style.display = ''
+      if (vectorResults) vectorResults.style.display = 'none'
+      if (emptyResult) emptyResult.style.display = 'none'
+      if (searchStatus) searchStatus.style.display = 'none'
       
-      if (matchesCity) {
-        card.style.display = '';
-        visibleCount++;
-      } else {
-        card.style.display = 'none';
-      }
-    });
+      // Re-apply filter when showing grid
+      filterItems();
+    }
 
-    // 2. Filter vector results if active
-    const vectorCards = document.querySelectorAll('#vector-results-grid .moodboard-item');
-    if (vectorCards.length > 0) {
-      vectorCards.forEach(card => {
+    // Filter functionality
+    function filterItems() {
+      // 1. Filter main grid
+      const mainCards = document.querySelectorAll('#moodboard-grid .moodboard-item');
+      let visibleCount = 0;
+      
+      mainCards.forEach(card => {
         const itemCity = card.dataset.city || '';
         const matchesCity = currentCity === 'all' || itemCity === currentCity;
         
         if (matchesCity) {
-          card.style.display = 'block'; // Vector items are absolute but we control visibility
-          card.style.opacity = '1';
+          card.style.display = '';
+          visibleCount++;
         } else {
           card.style.display = 'none';
-          card.style.opacity = '0';
         }
       });
-      layoutVectorMasonry(); // Re-layout after filtering
-    }
 
-    // Check visibility for active view
-    if (vectorResults.style.display !== 'none') {
-       // Check if any vector items are visible
-       const visibleVector = Array.from(vectorCards).some(c => c.style.display !== 'none');
-       if (!visibleVector && vectorCards.length > 0) {
-           emptyResult.style.display = 'block';
-           emptyResult.querySelector('p').textContent = `No results found in ${currentCity}.`;
-       } else if (vectorCards.length > 0) {
-           emptyResult.style.display = 'none';
-       }
-    } else {
-       // Main grid
-       if (visibleCount === 0) {
-         emptyResult.style.display = 'block';
-         emptyResult.textContent = `No projects found in ${currentCity}.`;
-       } else {
-         emptyResult.style.display = 'none';
-       }
-    }
-  }
+      // 2. Filter vector results if active
+      const vectorCards = document.querySelectorAll('#vector-results-grid .moodboard-item');
+      if (vectorCards.length > 0) {
+        vectorCards.forEach(card => {
+          const itemCity = card.dataset.city || '';
+          const matchesCity = currentCity === 'all' || itemCity === currentCity;
+          
+          if (matchesCity) {
+            card.style.display = 'block'; // Vector items are absolute but we control visibility
+            card.style.opacity = '1';
+          } else {
+            card.style.display = 'none';
+            card.style.opacity = '0';
+          }
+        });
+        layoutVectorMasonry(); // Re-layout after filtering
+      }
 
-  // City filter handlers
-  filterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const selectedCity = button.dataset.city || 'all';
-      
-      // Update URL with query parameter
-      const url = new URL(window.location);
-      if (selectedCity === 'all') {
-        url.searchParams.delete('city');
+      // Check visibility for active view
+      if (vectorResults.style.display !== 'none') {
+         // Check if any vector items are visible
+         const visibleVector = Array.from(vectorCards).some(c => c.style.display !== 'none');
+         if (!visibleVector && vectorCards.length > 0) {
+             emptyResult.style.display = 'block';
+             emptyResult.querySelector('p').textContent = `No results found in ${currentCity}.`;
+         } else if (vectorCards.length > 0) {
+             emptyResult.style.display = 'none';
+         }
       } else {
-        url.searchParams.set('city', selectedCity);
+         // Main grid
+         if (visibleCount === 0) {
+           emptyResult.style.display = 'block';
+           emptyResult.textContent = `No projects found in ${currentCity}.`;
+         } else {
+           emptyResult.style.display = 'none';
+         }
       }
-      window.history.pushState({}, '', url);
-      
-      // Update current city and filter
-      currentCity = selectedCity;
-      
-      // Update active button state
-      filterButtons.forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
-      
-      filterItems();
+    }
+
+    // City filter handlers
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const selectedCity = button.dataset.city || 'all';
+        
+        // Update URL with query parameter
+        const url = new URL(window.location);
+        if (selectedCity === 'all') {
+          url.searchParams.delete('city');
+        } else {
+          url.searchParams.set('city', selectedCity);
+        }
+        window.history.pushState({}, '', url);
+        
+        // Update current city and filter
+        currentCity = selectedCity;
+        
+        // Update active button state
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        filterItems();
+      });
     });
-  });
 
-  if (searchInput) {
-    searchInput.addEventListener('input', debounce(handleSearch, 300))
-  }
-
-  function debounce(fn, delay) {
-    let timeoutId
-    return (...args) => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => fn(...args), delay)
-    }
-  }
-
-  function layoutVectorMasonry() {
-    if (!vectorResultsGrid) return
-
-    // Only layout VISIBLE cards
-    const cards = Array.from(
-      vectorResultsGrid.querySelectorAll('.moodboard-item')
-    ).filter(c => c.style.display !== 'none');
-
-    if (!cards.length) {
-      vectorResultsGrid.style.height = '0px'
-      return
+    if (searchInput) {
+      searchInput.addEventListener('input', debounce(handleSearch, 300))
     }
 
-    const gap = 16 // matches .moodboard-grid column-gap
-    
-    // With the new wrapper structure, vectorResultsGrid is inside the padded container
-    // So its width IS the content width. No need to subtract padding.
-    const containerWidth = vectorResultsGrid.getBoundingClientRect().width || 0
-    if (!containerWidth) return
-
-    let columns = 4
-    const viewportWidth = window.innerWidth
-    if (viewportWidth <= 768) {
-      columns = 2
-    } else if (viewportWidth <= 1024) {
-      columns = 3
-    }
-
-    const columnWidth = (containerWidth - gap * (columns - 1)) / columns
-    const columnHeights = new Array(columns).fill(0)
-
-    cards.forEach((card) => {
-      card.style.width = `${columnWidth}px`
-      card.style.position = 'absolute'
-      card.style.opacity = '1'
-
-      const minHeight = Math.min(...columnHeights)
-      const columnIndex = columnHeights.indexOf(minHeight)
-
-      // Start x from 0, as we are inside the padding content box now
-      const x = (columnWidth + gap) * columnIndex
-      // Ensure y is at least 0
-      const y = Math.max(0, minHeight)
-
-      card.style.transform = `translate(${x}px, ${y}px)`
-
-      const cardHeight = card.offsetHeight
-      columnHeights[columnIndex] = y + cardHeight + gap
-    })
-
-    const maxHeight = Math.max(...columnHeights)
-    vectorResultsGrid.style.height = `${maxHeight}px`
-  }
-
-  const layoutVectorMasonryDebounced = debounce(layoutVectorMasonry, 150)
-  window.addEventListener('resize', layoutVectorMasonryDebounced)
-
-async function handleSearch(e) {
-  const query = e.target.value.trim()
-
-  if (query.length < 2) {
-    showGrid()
-    if (searchStatus) searchStatus.style.display = 'none'
-    isSearching = false
-    return
-  }
-
-  if (isSearching) return
-  isSearching = true
-
-  try {
-
-    const response = await fetch('/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query })
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Server returned error:', errorData.error);
-      if (searchStatus) {
-        searchStatus.textContent = 'Search failed: ' + (errorData.error || 'Unknown error');
-        searchStatus.style.color = 'red';
+    function debounce(fn, delay) {
+      let timeoutId
+      return (...args) => {
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(() => fn(...args), delay)
       }
-      isSearching = false;
-      return;
     }
 
-    const data = await response.json()
+    function layoutVectorMasonry() {
+      if (!vectorResultsGrid) return
 
-    if (!data.success || !data.results?.length) {
-      moodboardGrid.style.display = 'none'
-      vectorResults.style.display = 'none'
-      emptyResult.style.display = 'block'
-      emptyResult.textContent = 'No projects found matching your search.';
-      searchStatus.style.display = 'none'
+      // Only layout VISIBLE cards
+      const cards = Array.from(
+        vectorResultsGrid.querySelectorAll('.moodboard-item')
+      ).filter(c => c.style.display !== 'none');
+
+      if (!cards.length) {
+        vectorResultsGrid.style.height = '0px'
+        return
+      }
+
+      const gap = 16 // matches .moodboard-grid column-gap
+      
+      // With the new wrapper structure, vectorResultsGrid is inside the padded container
+      // So its width IS the content width. No need to subtract padding.
+      const containerWidth = vectorResultsGrid.getBoundingClientRect().width || 0
+      if (!containerWidth) return
+
+      let columns = 4
+      const viewportWidth = window.innerWidth
+      if (viewportWidth <= 768) {
+        columns = 2
+      } else if (viewportWidth <= 1024) {
+        columns = 3
+      }
+
+      const columnWidth = (containerWidth - gap * (columns - 1)) / columns
+      const columnHeights = new Array(columns).fill(0)
+
+      cards.forEach((card) => {
+        card.style.width = `${columnWidth}px`
+        card.style.position = 'absolute'
+        card.style.opacity = '1'
+
+        const minHeight = Math.min(...columnHeights)
+        const columnIndex = columnHeights.indexOf(minHeight)
+
+        // Start x from 0, as we are inside the padding content box now
+        const x = (columnWidth + gap) * columnIndex
+        // Ensure y is at least 0
+        const y = Math.max(0, minHeight)
+
+        card.style.transform = `translate(${x}px, ${y}px)`
+
+        const cardHeight = card.offsetHeight
+        columnHeights[columnIndex] = y + cardHeight + gap
+      })
+
+      const maxHeight = Math.max(...columnHeights)
+      vectorResultsGrid.style.height = `${maxHeight}px`
+    }
+
+    const layoutVectorMasonryDebounced = debounce(layoutVectorMasonry, 150)
+    window.addEventListener('resize', layoutVectorMasonryDebounced)
+
+  async function handleSearch(e) {
+    const query = e.target.value.trim()
+
+    if (query.length < 2) {
+      showGrid()
+      if (searchStatus) searchStatus.style.display = 'none'
       isSearching = false
       return
     }
 
-    displayVectorResults(data.results)
-  } catch (err) {
-    console.error('Client-side error:', err)
-    showGrid()
+    if (isSearching) return
+    isSearching = true
+
+    try {
+
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server returned error:', errorData.error);
+        if (searchStatus) {
+          searchStatus.textContent = 'Search failed: ' + (errorData.error || 'Unknown error');
+          searchStatus.style.color = 'red';
+        }
+        isSearching = false;
+        return;
+      }
+
+      const data = await response.json()
+
+      if (!data.success || !data.results?.length) {
+        moodboardGrid.style.display = 'none'
+        vectorResults.style.display = 'none'
+        emptyResult.style.display = 'block'
+        emptyResult.textContent = 'No projects found matching your search.';
+        searchStatus.style.display = 'none'
+        isSearching = false
+        return
+      }
+
+      displayVectorResults(data.results)
+    } catch (err) {
+      console.error('Client-side error:', err)
+      showGrid()
+      isSearching = false
+    }
+  }
+
+  function displayVectorResults(results) {
+    // Show results container FIRST so dimensions can be calculated
+    moodboardGrid.style.display = 'none'
+    vectorResults.style.display = 'block'
+    emptyResult.style.display = 'none'
+    searchStatus.style.display = 'none'
     isSearching = false
+    
+    vectorResultsGrid.innerHTML = ''
+
+    results.forEach((result) => {
+      const item = itemsMap.get(result.product_id)
+      if (!item) return
+
+      const card = document.createElement('a')
+      card.href = `/moodboard/${item.slug}`
+      card.className = 'moodboard-item vector-result-item'
+      // Add data attribute for filtering
+      card.dataset.city = item.city || '';
+
+      // USE THE SEARCH RESULT IMAGE, NOT THE DEFAULT COVER
+      const imageUrl = result.image_url
+
+      card.innerHTML = `
+        <div style="position: relative;">
+          <img src="${imageUrl}" alt="${item.name}" loading="lazy" decoding="async" data-skeleton crossorigin="anonymous" />
+        </div>
+        <div class="item-overlay">
+          <h3>${item.name}</h3>
+          ${item.designer ? `<p>${item.designer}</p>` : ''}
+        </div>
+      `
+
+      vectorResultsGrid.appendChild(card)
+
+      const img = card.querySelector('img')
+      if (img) {
+        img.addEventListener('load', () => {
+          filterItems(); // Use filterItems to trigger layout instead of direct layout call
+        })
+        img.addEventListener('error', () => {
+          filterItems();
+        })
+      }
+    })
+
+    // Initial layout now that container is visible
+    filterItems(); // This will call layoutVectorMasonry
   }
-}
+  </script>
 
-function displayVectorResults(results) {
-  // Show results container FIRST so dimensions can be calculated
-  moodboardGrid.style.display = 'none'
-  vectorResults.style.display = 'block'
-  emptyResult.style.display = 'none'
-  searchStatus.style.display = 'none'
-  isSearching = false
-  
-  vectorResultsGrid.innerHTML = ''
-
-  results.forEach((result) => {
-    const item = itemsMap.get(result.product_id)
-    if (!item) return
-
-    const card = document.createElement('a')
-    card.href = `/moodboard/${item.slug}`
-    card.className = 'moodboard-item vector-result-item'
-    // Add data attribute for filtering
-    card.dataset.city = item.city || '';
-
-    // USE THE SEARCH RESULT IMAGE, NOT THE DEFAULT COVER
-    const imageUrl = result.image_url
-
-    card.innerHTML = `
-      <div style="position: relative;">
-        <img src="${imageUrl}" alt="${item.name}" loading="lazy" decoding="async" data-skeleton crossorigin="anonymous" />
-      </div>
-      <div class="item-overlay">
-        <h3>${item.name}</h3>
-        ${item.designer ? `<p>${item.designer}</p>` : ''}
-      </div>
-    `
-
-    vectorResultsGrid.appendChild(card)
-
-    const img = card.querySelector('img')
-    if (img) {
-      img.addEventListener('load', () => {
-        filterItems(); // Use filterItems to trigger layout instead of direct layout call
-      })
-      img.addEventListener('error', () => {
-        filterItems();
-      })
-    }
-  })
-
-  // Initial layout now that container is visible
-  filterItems(); // This will call layoutVectorMasonry
-}
-</script>
-
-<style>
-  .filter-buttons {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 12px;
-    padding-bottom: 4px;
-    justify-content: flex-start;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    margin-bottom: 32px;
-  }
-
-  .filter-buttons::-webkit-scrollbar { display: none; }
-
-  @media (min-width: 768px) {
+  <style>
     .filter-buttons {
-       flex-wrap: wrap;
-       justify-content: center;
-       overflow-x: visible;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 12px;
+      padding-bottom: 4px;
+      justify-content: flex-start;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      margin-bottom: 32px;
     }
-  }
 
-  .filter-btn {
-    text-transform: uppercase;
-    padding: 8px 24px;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-stroke);
-    color: var(--color-white);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    border-radius: 9999px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
+    .filter-buttons::-webkit-scrollbar { display: none; }
 
-  .filter-btn:hover {
-    border-color: var(--color-white);
-  }
+    @media (min-width: 768px) {
+      .filter-buttons {
+         flex-wrap: wrap;
+         justify-content: center;
+         overflow-x: visible;
+      }
+    }
 
-  .filter-btn.active {
-    background: var(--color-yellow);
-    color: var(--color-black);
-    border-color: var(--color-yellow);
-  }
-  
-  /* Make sure .moodboard-item inside wrapper fills it */
-  .moodboard-item {
-    display: block;
-    width: 100%;
-  }
-</style>
+    .filter-btn {
+      text-transform: uppercase;
+      padding: 8px 24px;
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-stroke);
+      color: var(--color-white);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--color-white);
+    }
+
+    .filter-btn.active {
+      background: var(--color-yellow);
+      color: var(--color-black);
+      border-color: var(--color-yellow);
+    }
+    
+    /* Make sure .moodboard-item inside wrapper fills it */
+    .moodboard-item {
+      display: block;
+      width: 100%;
+    }
+  </style>
+</PostHogLayout>

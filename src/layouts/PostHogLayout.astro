@@ -1,0 +1,23 @@
+---
+import PostHog from '../components/posthog.astro';
+import Layout from './Layout.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  keywords?: string;
+  author?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
+}
+
+const props = Astro.props;
+---
+<Layout {...props}>
+  <Fragment slot="head">
+    <PostHog />
+  </Fragment>
+  <slot />
+</Layout>
