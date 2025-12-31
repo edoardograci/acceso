@@ -35,11 +35,33 @@ const pageImage = studio?.cover || '/og-default.jpg';
 ---
 
 <Layout 
-  title={pageTitle}
-  description={pageDescription}
-  image={pageImage}
+  title={`${studio.name} - ${studio.city} Design Studio | Acceso`}
+  description={`${studio.name} is an independent design studio based in ${studio.city}. Explore their projects, objects, and contact information.`}
+  image={studio.cover || '/social-card.png'}
   type="article"
+  keywords={`${studio.name}, ${studio.city} design, industrial design studio, product design ${studio.city}`}
+  publishedTime={studio.created_at}
+  modifiedTime={studio.updated_at}
 >
+  <!-- Organization Schema -->
+  <script type="application/ld+json" is:inline set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": studio.name,
+    "url": studio.website,
+    "logo": studio.cover,
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": studio.city,
+      "streetAddress": studio.address
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": studio.email,
+      "contactType": "General Inquiry"
+    },
+    "sameAs": [studio.instagram, studio.website].filter(Boolean)
+  })} />
   <Navbar />
   
   <main class="designer-page">

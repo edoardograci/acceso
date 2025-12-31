@@ -8,12 +8,12 @@ Allow: /
 Allow: /designers
 Allow: /moodboard
 Allow: /map
-Allow: /collections
 Allow: /info
 Allow: /pricing
 Allow: /request-studio
 
 # Disallow private/auth pages
+Disallow: /collections/
 Disallow: /api/
 Disallow: /auth/
 Disallow: /profile

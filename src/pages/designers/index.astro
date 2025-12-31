@@ -29,7 +29,11 @@ const cities = [...new Set(studios.map(s => s.city))].sort((a, b) => {
 const initialCity = Astro.url.searchParams.get('city') || 'all';
 ---
 
-<Layout title="Designers - Acceso">
+<Layout 
+  title="Design Studios Directory | Acceso"
+  description="Browse 86+ independent industrial design studios from Milan, Seoul, Berlin, Copenhagen, London, Paris, and Tokyo. Curated directory of product designers."
+  keywords="design studios, industrial designers, product design firms, Milan designers, independent design studios"
+>
   <Navbar />
   
   <main class="designers-page">

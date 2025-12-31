@@ -49,7 +49,11 @@ const cities = [...new Set(moodboardItems.map(item => item.city).filter(Boolean)
 const initialCity = Astro.url.searchParams.get('city') || 'all';
 ---
 
-<Layout title="Moodboard - Acceso">
+<Layout 
+  title="Design Moodboard - Product & Object References | Acceso"
+  description="Visual collection of 20+ design projects from independent studios. Browse product photography, objects, and creative references for inspiration."
+  keywords="design moodboard, product photography, design inspiration, object references, industrial design projects"
+>
   <Navbar />
   
   <main class="moodboard-page">

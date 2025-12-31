@@ -4,7 +4,23 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout title="Pricing - Acceso">
+<Layout 
+  title="Pricing - Free & Premium Plans | Acceso"
+  description="Free access to browse 86+ design studios and save up to 100 items. Premium Researcher plan coming soon with unlimited collections and advanced features."
+  keywords="design studio membership, free design directory, premium design tools"
+>
+  <!-- Pricing Schema -->
+  <script type="application/ld+json" is:inline set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Acceso Observer",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    }
+  })} />
   <Navbar />
   <main class="pricing-page">
     {/* Hero Section */}

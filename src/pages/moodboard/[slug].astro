@@ -75,11 +75,28 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
 ---
 
 <Layout 
-  title={pageTitle}
-  description={pageDescription}
-  image={pageImage}
+  title={`${item.name}${item.designer ? ` by ${item.designer}` : ''} | Acceso Moodboard`}
+  description={`${item.name} (${item.year})${item.designer ? ` designed by ${item.designer}` : ''}${item.client ? ` for ${item.client}` : ''}. View product photography and details.`}
+  image={item.cover || '/social-card.png'}
   type="article"
+  keywords={`${item.name}, ${item.designer || ''}, ${item.client || ''}, product design, industrial design object`}
+  publishedTime={item.created_at}
+  modifiedTime={item.updated_at}
 >
+  <!-- CreativeWork Schema -->
+  <script type="application/ld+json" is:inline set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "name": item.name,
+    "creator": item.designer ? {
+      "@type": "Person",
+      "name": item.designer
+    } : undefined,
+    "image": item.images?.map(img => img.image_url),
+    "dateCreated": item.year,
+    "url": Astro.url.href,
+    "description": `${item.name}${item.designer ? ` by ${item.designer}` : ''}`
+  })} />
   <Navbar />
   
   <main class="moodboard-detail-page">

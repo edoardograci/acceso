@@ -1,3 +1,14 @@
+/*
+  X-Robots-Tag: index, follow
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/api/*
+  X-Robots-Tag: noindex
+
+/collections/*
+  X-Robots-Tag: noindex, nofollow
+
 # API endpoints - cache for logged-in users
 /api/collections/status
   Cache-Control: private, max-age=300
