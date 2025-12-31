@@ -11,7 +11,7 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('[SW] Pre-caching critical assets...');
+
                 return Promise.allSettled(
                     URLS_TO_CACHE.map(url =>
                         cache.add(url).catch(err => console.error(`[SW] Failed to cache: ${url}`, err))

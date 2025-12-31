@@ -29,8 +29,7 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
       throw new Error('No access token returned from Google');
     }
 
-    console.log('[OAuth] Access Token length:', accessToken.length);
-    console.log('[OAuth] Turso Token length:', env.TURSO_AUTH_TOKEN?.length);
+
 
     // Fetch user info from Google
     let userResponse;

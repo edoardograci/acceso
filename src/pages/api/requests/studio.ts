@@ -54,7 +54,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             args: [id, type, name, website, city, 'pending', now]
         });
 
-        console.log('[Request Studio] Saved submission:', { id, type, name, website, city });
+
 
         return new Response(JSON.stringify({ success: true }), {
             status: 200,

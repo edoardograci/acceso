@@ -33,7 +33,7 @@ export async function getAllStudios(env: Env): Promise<Studio[]> {
 export async function getStudiosByCity(city: string, env: Env): Promise<Studio[]> {
   try {
     const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
-    console.log('\n[DB] Fetching studios by city:', city);
+
     const result = await turso.execute({
       sql: 'SELECT * FROM studios WHERE city = ? AND status = ? ORDER BY name ASC',
       args: [city, 'Published'],

@@ -182,7 +182,7 @@ function createTursoAdapter(env: Env) {
           args: [userId],
         });
 
-        console.log('[Lucia] User and all associated data deleted:', userId);
+
       } catch (error) {
         console.error('[Lucia] Error deleting user:', error);
         throw error;

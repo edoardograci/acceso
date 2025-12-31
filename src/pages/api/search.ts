@@ -54,7 +54,7 @@ interface SearchResponse {
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  console.log('=== Hybrid Search API Called ===');
+
 
   // ------------------------
   // Helper functions
@@ -153,7 +153,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const url = new URL(request.url);
     const enrichmentMap = await loadEnrichment(url.origin);
-    console.log(`Loaded enrichment for ${enrichmentMap.size} products`);
+
 
     // Generate embedding
     const expandedQuery = `[PRODUCT IMAGE] ${query}`;
@@ -167,7 +167,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       returnMetadata: 'all',
       returnValues: false,
     });
-    console.log(`Vectorize found ${vectorizeResult.matches?.length || 0} semantic matches`);
+
 
     if (!vectorizeResult.matches || vectorizeResult.matches.length === 0) {
       return new Response(
@@ -203,10 +203,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     for (const match of vectorizeResult.matches) {
       const isFirstFew = vectorizeResult.matches.indexOf(match) < 10;
 
-      if (isFirstFew) {
-        console.log(`[DEBUG] Match ${match.id}: metadata keys: ${Object.keys(match.metadata || {}).join(', ')}`);
-        console.log(`[DEBUG] Match ${match.id} metadata:`, JSON.stringify(match.metadata));
-      }
+
 
       // Extract product_id
       let product_id = match.metadata?.product_id;
@@ -232,7 +229,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       let image_url = match.metadata?.url || (match.metadata?.key ? `https://mood.acceso.design/${match.metadata.key}` : null);
 
       if (!product_id) {
-        if (isFirstFew) console.log(`[DEBUG] No product_id extracted for ${match.id}, falling back to Match ID prefix`);
+
         product_id = match.id.includes('-img-') ? match.id.split('-img-')[0] : match.id;
       }
 
@@ -240,12 +237,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       // Ultimate Fallback: If image_url is missing (because metadata is null), get it from enrichment
       if (!image_url && enrichment && enrichment.images[match.id]) {
-        if (isFirstFew) console.log(`[DEBUG] Recovered image_url from enrichment for ${match.id}`);
+
         image_url = enrichment.images[match.id].image_url;
       }
 
       if (!image_url) {
-        if (isFirstFew) console.log(`[DEBUG] Skipping match ${match.id}: No image_url even after fallback`);
+
         skipped_count++;
         continue;
       }
@@ -299,7 +296,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         match_type: result.match_type,
       }));
 
-    console.log(`Hybrid search complete: ${rankedResults.length} results`);
+
 
     return new Response(
       JSON.stringify({
