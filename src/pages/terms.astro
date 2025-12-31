@@ -3,6 +3,7 @@ import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import '../styles/legal.css';
 ---
 
 <PostHogLayout>
@@ -79,70 +80,3 @@ import Footer from '../components/Footer.astro';
     <Footer />
   </Layout>
 </PostHogLayout>
-
-<style>
-  .legal-page {
-    padding-top: var(--navbar-height);
-    min-height: 100vh;
-    background: var(--color-black);
-  }
-
-  .legal-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 60px var(--spacing-page) 120px;
-  }
-
-  .legal-title {
-    font-family: var(--font-mono);
-    font-size: 48px;
-    font-weight: 400;
-    color: var(--color-white);
-    margin-bottom: 16px;
-    letter-spacing: -0.02em;
-  }
-
-  .last-updated {
-    font-family: var(--font-sans);
-    font-size: 14px;
-    color: var(--color-gray);
-    margin-bottom: 60px;
-  }
-
-  .legal-content section {
-    margin-bottom: 48px;
-  }
-
-  h2 {
-    font-family: var(--font-sans);
-    font-size: 20px;
-    font-weight: 500;
-    color: var(--color-white);
-    margin-bottom: 16px;
-  }
-
-  p {
-    font-family: var(--font-sans);
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--color-gray);
-    margin-bottom: 12px;
-  }
-
-  a {
-    color: var(--color-white);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    transition: color 0.2s ease;
-  }
-
-  a:hover {
-    color: var(--color-yellow);
-  }
-
-  @media (max-width: 768px) {
-    .legal-title {
-      font-size: 36px;
-    }
-  }
-</style>

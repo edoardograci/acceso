@@ -1,0 +1,142 @@
+.designer-page {
+  min-height: 100vh;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.designer-left-col {
+  /* Mobile styles effectively inherit/block */
+}
+
+/* Desktop Layout */
+@media (min-width: 768px) {
+  .designer-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: calc(var(--navbar-height) + 40px);
+    align-items: start;
+  }
+
+  .designer-left-col {
+    position: sticky;
+    top: 100px;
+  }
+
+  .designer-image-container {
+    margin-bottom: 24px;
+  }
+  
+  .designer-image {
+    max-height: 60vh;
+    object-fit: contain;
+  }
+}
+
+.designer-header {
+  padding: 32px var(--spacing-page) 16px;
+}
+
+@media (min-width: 768px) {
+  .designer-header {
+    padding: 0 0 24px 0;
+  }
+}
+
+.designer-name {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'wght' 500;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.designer-image-container {
+  margin-top: 48px;
+  padding: 0 var(--spacing-page);
+  margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+  .designer-image-container {
+    padding: 0;
+    margin-top: 0;
+  }
+  
+  :global(.designer-actions) {
+    padding: 0 !important;
+  }
+}
+
+.designer-image {
+  width: 100%;
+  height: auto;
+  max-height: 379px;
+  object-fit: contain;
+  display: block;
+  content-visibility: auto;
+}
+
+@media (min-width: 768px) {
+  .designer-image {
+    max-height: 600px;
+  }
+}
+
+.designer-image-placeholder {
+  width: 100%;
+  height: 379px;
+  background-color: var(--gray-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 768px) {
+  .designer-image-placeholder {
+    height: 600px;
+  }
+}
+
+.designer-content {
+  padding: 16px var(--spacing-page);
+}
+
+@media (min-width: 768px) {
+  .designer-content {
+    padding: 0;
+    margin-top: 0;
+  }
+  
+  :global(.tabs) {
+    margin-top: 0 !important;
+  }
+}
+
+.error-state {
+  padding: 48px var(--spacing-page);
+  text-align: center;
+}
+
+.tab-content {
+  opacity: 0;
+  visibility: hidden;
+  display: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+
+.tab-content-active {
+  opacity: 1;
+  visibility: visible;
+  display: block;
+  pointer-events: auto;
+}
+
