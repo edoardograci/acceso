@@ -110,8 +110,8 @@ if (user && user.email) {
 }
 
 .navbar-info {
-  font-size: 14px;
-  line-height: 14px;
+  font-size: 16px;
+  line-height: 16px;
   color: var(--color-white);
 }
 
@@ -122,8 +122,8 @@ if (user && user.email) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  line-height: 14px;
+  font-size: 16px;
+  line-height: 16px;
   border-radius: 999px;
   border: 1px solid var(--color-stroke);
   background-color: var(--color-bg-secondary);
@@ -210,6 +210,7 @@ if (user && user.email) {
     grid-template-columns: auto 1fr auto;
     grid-template-rows: 72px;
     align-items: center;
+    position: relative;
   }
 
   .navbar-inner::after {
@@ -218,8 +219,12 @@ if (user && user.email) {
   }
 
   .navbar-tabs {
-    grid-column: 2 / 3;
-    grid-row: 1 / 2;
+    grid-row: 1 / -1;
+    grid-column: 1 / -1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0px;
     display: flex;
     justify-content: center;
     gap: 32px;

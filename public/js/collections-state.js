@@ -29,13 +29,12 @@ window.collectionsState = {
                     this.objects = new Set(cached.objects);
                     this.loaded = true;
                     this.notifyListeners(); // Instant UI update
-                    console.log('[Collections] Loaded from cache');
+
 
                     // Check freshness
                     const age = Date.now() - (cached.timestamp || 0);
                     if (age < this.CACHE_TTL) {
                         shouldFetch = false;
-                        console.log('[Collections] Cache acts as fresh (age: ' + Math.round(age / 1000) + 's)');
                     }
                 }
             } catch (e) {
@@ -55,7 +54,6 @@ window.collectionsState = {
                 try {
                     const synced = JSON.parse(e.newValue);
                     if (synced.userId === window.currentUserId) {
-                        console.log('[Collections] Syncing from other tab');
                         this.designers = new Set(synced.designers);
                         this.objects = new Set(synced.objects);
                         this.loaded = true;
@@ -70,7 +68,6 @@ window.collectionsState = {
 
     async fetchAndCache(userId, retries = 3) {
         try {
-            console.log('[Collections] Fetching fresh data...');
             const response = await fetch('/api/collections/status');
             if (!response.ok) throw new Error('Failed to fetch collections');
 
@@ -86,16 +83,14 @@ window.collectionsState = {
                 this.loaded = true;
                 this.updateCache(userId);
                 this.notifyListeners();
-                console.log('[Collections] Updated from API');
             } else {
-                console.log('[Collections] API data matches cache, no update needed');
+
                 // Update timestamp in cache even if data hasn't changed
                 this.updateCache(userId);
             }
         } catch (error) {
             console.error('Failed to load collections:', error);
             if (retries > 0) {
-                console.log(`[Collections] Retrying fetch... (${retries} attempts left)`);
                 setTimeout(() => this.fetchAndCache(userId, retries - 1), 1000 * (4 - retries));
             }
         }
@@ -165,7 +160,6 @@ window.collectionsState = {
         this.objects.clear();
         this.loaded = false;
         localStorage.removeItem(this.CACHE_KEY);
-        console.log('[Collections] State cleared');
         this.notifyListeners({ action: 'clear' });
     }
 };
