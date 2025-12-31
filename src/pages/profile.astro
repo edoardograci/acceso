@@ -85,7 +85,7 @@ try {
           <div class="card-content">
             <div class="card-header">
               <h3>Designers</h3>
-              <span class="count-badge">{savedDesignersCount}</span>
+              <span class="count-badge">{savedDesignersCount >= 100 ? 'MAXED' : savedDesignersCount}</span>
             </div>
             <p class="card-description">Saved studios and designers</p>
           </div>
@@ -107,7 +107,7 @@ try {
           <div class="card-content">
             <div class="card-header">
               <h3>Moodboard</h3>
-              <span class="count-badge">{savedObjectsCount}</span>
+              <span class="count-badge">{savedObjectsCount >= 100 ? 'MAXED' : savedObjectsCount}</span>
             </div>
             <p class="card-description">Saved objects and inspiration</p>
           </div>

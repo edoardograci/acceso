@@ -16,6 +16,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
 
         const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+
+        // Check limit
+        const { getCollectionsCounts } = await import('../../../../lib/db');
+        const counts = await getCollectionsCounts(locals.user.id, env);
+
+        if (counts.objects >= 100) {
+            return new Response(JSON.stringify({ error: 'Collection limit reached (100)' }), { status: 403 });
+        }
+
         await saveObject(locals.user.id, product_id, env);
 
         return new Response(JSON.stringify({ success: true, saved: true }), {

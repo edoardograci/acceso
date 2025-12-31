@@ -47,7 +47,6 @@ const errorMessage = url.searchParams.get('message');
         </p>
       </main>
     </div>
-    <img src="/images/login.png" alt="Acceso Login" class="login-footer-image" />
   </div>
 
 </Layout>
@@ -237,22 +236,6 @@ const errorMessage = url.searchParams.get('message');
 
   .auth-disclaimer a:hover {
     color: var(--color-yellow);
-  }
-
-  .login-footer-image {
-    width: 100%;
-    height: auto;
-    max-height: 25vh; /* Ensure it doesn't take too much space */
-    object-fit: cover;
-    display: block;
-    margin-top: auto;
-  }
-
-  @media (max-width: 768px) {
-    .login-footer-image {
-      max-height: 35vh;
-      transform: scale(2);
-    }
   }
 </style>
 

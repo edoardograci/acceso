@@ -1,0 +1,393 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Pricing - Acceso">
+  <Navbar />
+  <main class="pricing-page">
+    {/* Hero Section */}
+    <section class="pricing-hero">
+      <h2 class="hero-title">Choose the plan that<br/>fits your workflow</h2>
+    </section>
+
+    {/* Pricing Cards */}
+    <section class="pricing-section">
+      <div class="pricing-container">
+        <div class="pricing-grid">
+          
+          {/* Free Access Card */}
+          <div class="pricing-card">
+            <div class="card-header">
+              <div class="card-title-wrapper">
+                <h3>Observer</h3>
+                <span class="tag tag--forever">Forever</span>
+              </div>
+              <div class="card-price">
+                <span class="price">Free</span>
+              </div>
+              <p class="card-description">Essential tools for discovery and collection.</p>
+              <a href="/login" class="btn-primary btn-full">Start collecting</a>
+            </div>
+            <div class="card-features">
+              <ul>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Unlimited browsing</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Max 2 collections per user</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Save up to 100 designers</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Save up to 100 moodboard projects</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Researcher Card */}
+          <div class="pricing-card pricing-card--researcher">
+            <div class="card-header">
+              <div class="card-title-wrapper">
+                <h3>Researcher</h3>
+                <span class="tag tag--unavailable">Unavailable</span>
+              </div>
+              <div class="card-price">
+                <div class="price-wrapper">
+                  <span class="currency">$</span>
+                  <span class="price">3</span>
+                  <span class="period">/month</span>
+                </div>
+                <span class="billing-note">or $2/month billed yearly</span>
+              </div>
+              <p class="card-description">Advanced tools for professional research.</p>
+              <button class="btn-secondary btn-full" disabled>Coming Soon</button>
+            </div>
+            <div class="card-features">
+              <ul>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Unlimited browsing</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Up to 10 collections per user</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Unlimited saves</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Export moodboards</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Collaborative Collections</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Additional search filters</span>
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>30-day money-back guarantee</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<style>
+  .pricing-page {
+    background: var(--color-black);
+    min-height: 100vh;
+  }
+
+  /* Hero Section */
+  .pricing-hero {
+    padding: 80px var(--spacing-page) 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .hero-title {
+    font-family: var(--font-mono);
+    font-size: 64px;
+    font-weight: 400;
+    color: var(--color-white);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  /* Pricing Grid */
+  .pricing-section {
+    padding: 0 var(--spacing-page) 120px;
+  }
+
+  .pricing-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+
+  /* Pricing Card */
+  .pricing-card {
+    border-radius: 6px;
+    border: 1px solid var(--color-stroke);
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    height: 100%;
+    position: relative;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .pricing-card:hover {
+    transform: translateY(-2px);
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-gray);
+  }
+
+  /* Card Header */
+  .card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .pricing-card h3 {
+    font-family: var(--font-sans);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--color-white);
+    margin: 0;
+  }
+
+  /* Tags */
+  .tag {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    line-height: 1;
+  }
+
+  .tag--forever {
+    background: var(--color-yellow);
+    color: var(--color-black);
+  }
+
+  .tag--unavailable {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-gray);
+    color: var(--color-gray);
+  }
+
+  /* Price */
+  .card-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    width: 100%;
+    color: var(--color-white);
+    font-family: var(--font-mono);
+    margin-bottom: 8px; /* Reduced for billing note */
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-price .currency {
+    font-size: 24px;
+    margin-right: 4px;
+  }
+
+  .card-price .price {
+    font-size: 48px;
+    line-height: 1;
+  }
+
+  .card-price .period {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    color: var(--color-gray);
+    margin-left: 8px;
+  }
+
+  .billing-note {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-gray);
+    margin: 0;
+    font-weight: 400;
+    text-align: right;
+  }
+
+  .card-description {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    color: var(--color-gray);
+    margin: 0 0 32px;
+    line-height: 1.5;
+  }
+
+  /* Buttons */
+  .btn-full {
+    width: 100%;
+    margin-top: auto;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 32px;
+    background: var(--color-yellow);
+    color: var(--color-black);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 32px;
+    background: transparent;
+    border: 1px solid var(--color-stroke);
+    color: var(--color-white);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary:not(:disabled):hover {
+    border-color: var(--color-white);
+    transform: translateY(-2px);
+  }
+
+  /* Features List */
+  .card-features {
+    border-top: 1px solid var(--color-stroke);
+    padding-top: 32px;
+  }
+
+  .card-features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .card-features li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .card-features svg {
+    color: var(--color-yellow);
+    flex-shrink: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 48px;
+    }
+
+    .pricing-grid {
+      grid-template-columns: 1fr;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .pricing-card {
+      padding: 32px 24px;
+    }
+  }
+</style>

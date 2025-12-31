@@ -258,6 +258,15 @@ try {
   </main>
   */}
 
+  {/* Join Community Section */}
+  <section class="community-section">
+    <div class="community-content">
+      <h2 class="community-title">Join the community</h2>
+      <p class="community-subtitle">Be part of a growing network of independent designers and design lovers.</p>
+      <a href="/login" class="btn-primary community-btn">Start collecting</a>
+    </div>
+  </section>
+
   <Footer />
 </Layout>
 
@@ -905,6 +914,56 @@ try {
 
     .placeholder-icon {
       font-size: 48px;
+    }
+  }
+  /* Community Section */
+  .community-section {
+    padding: 120px var(--spacing-page);
+    text-align: center;
+    background: var(--color-black);
+  }
+
+  .community-content {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .community-title {
+    font-family: var(--font-mono);
+    font-size: 56px;
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--color-white);
+    margin: 0 0 24px;
+    letter-spacing: -0.02em;
+  }
+
+  .community-subtitle {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    margin: 0 0 40px;
+  }
+
+  .community-btn {
+    min-width: 160px;
+  }
+
+  @media (max-width: 768px) {
+    .community-section {
+      padding: 80px var(--spacing-page);
+    }
+    
+    .community-title {
+      font-size: 36px;
+    }
+    
+    .community-subtitle {
+      font-size: 16px;
     }
   }
 </style>

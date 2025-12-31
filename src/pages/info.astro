@@ -9,8 +9,10 @@ import Footer from '../components/Footer.astro';
   <main class="info-page">
     {/* Hero Section */}
     <section class="info-hero">
-      <h1 class="hero-label">Info</h1>
       <h2 class="hero-title">A platform for<br/>discovery and reference</h2>
+      <div class="hero-cta">
+        <a href="/login" class="btn-primary">Start collecting</a>
+      </div>
     </section>
 
     {/* What We Are */}
@@ -35,16 +37,33 @@ import Footer from '../components/Footer.astro';
           <p class="mission-intro">Design is more than products: it is context, culture, and intent.</p>
           <div class="mission-grid">
             <div class="mission-item">
-              <span class="mission-number">01</span>
+              <span class="mission-marker"></span>
               <p>Reveal the local character of design in cities worldwide.</p>
             </div>
             <div class="mission-item">
-              <span class="mission-number">02</span>
+              <span class="mission-marker"></span>
               <p>Document studios and objects without filtering through trends.</p>
             </div>
             <div class="mission-item">
-              <span class="mission-number">03</span>
+              <span class="mission-marker"></span>
               <p>Give designers, brands, and enthusiasts a single reference to explore and understand design culture.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Contribute */}
+    <section class="info-section">
+      <div class="section-container">
+        <div class="contact-card">
+          <h2 class="section-title">Contribute</h2>
+          <div class="contact-content">
+            <p>
+              If you are a designer or studio and want to appear on Acceso, or if you want to reach out with questions, suggestions, or feedback, we'd love to hear from you.
+            </p>
+            <div class="contact-actions">
+              <a href="/request-studio" class="btn-primary">Request a Studio</a>
             </div>
           </div>
         </div>
@@ -80,23 +99,7 @@ import Footer from '../components/Footer.astro';
       </div>
     </section>
 
-    {/* Get in Touch */}
-    <section class="info-section">
-      <div class="section-container">
-        <div class="contact-card">
-          <h2 class="section-title">Join the network</h2>
-          <div class="contact-content">
-            <p>
-              If you are a designer or studio and want to appear on Acceso, or if you want to reach out with questions, suggestions, or feedback, we'd love to hear from you.
-            </p>
-            <div class="contact-actions">
-              <a href="mailto:hello@acceso.design" class="btn-secondary">Email us</a>
-              <a href="/request-studio" class="btn-primary">Request a Studio</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+
 
     {/* FAQ */}
     <section class="info-section info-section--faq">
@@ -105,13 +108,13 @@ import Footer from '../components/Footer.astro';
         <div class="faq-accordion">
           <details class="faq-item">
             <summary class="faq-question">
-              <span>Who owns the images and information on Acceso?</span>
+              <span>What is Acceso for?</span>
               <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </summary>
             <div class="faq-answer">
-              <p>All images and data belong to their original creators. We only curate and display them.</p>
+              <p>Acceso is a reference tool. It helps designers, brands and curious observers discover independent studios and understand how objects are shaped by local culture.</p>
             </div>
           </details>
           <details class="faq-item">
@@ -144,7 +147,7 @@ import Footer from '../components/Footer.astro';
               </svg>
             </summary>
             <div class="faq-answer">
-              <p>Studios are handpicked by the Acceso team based on their approach, values, and work.</p>
+              <p>Studios are handpicked by the Acceso team based on their aesthetics, values, and work.</p>
             </div>
           </details>
         </div>
@@ -163,31 +166,25 @@ import Footer from '../components/Footer.astro';
 
   /* Hero Section */
   .info-hero {
-    padding: 140px var(--spacing-page) 80px;
+    padding: 80px var(--spacing-page) 80px;
     max-width: 1200px;
     margin: 0 auto;
-  }
-
-  .hero-label {
-    text-align: center;
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-yellow);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 24px;
   }
 
   .hero-title {
     text-align: center;
     font-family: var(--font-mono);
-    font-size: 72px;
+    font-size: 64px;
     font-weight: 400;
     color: var(--color-white);
     line-height: 1.05;
     letter-spacing: -0.02em;
     margin: 0;
+  }
+
+  .hero-cta {
+    margin-top: 40px;
+    text-align: center;
   }
 
   /* Section Styles */
@@ -231,7 +228,7 @@ import Footer from '../components/Footer.astro';
   }
 
   .section-content--large {
-    font-size: 24px;
+    font-size: 20px;
     line-height: 1.6;
   }
 
@@ -267,10 +264,11 @@ import Footer from '../components/Footer.astro';
     align-items: flex-start;
   }
 
-  .mission-number {
-    font-family: var(--font-mono);
-    font-size: 18px;
-    color: var(--color-yellow);
+  .mission-marker {
+    width: 24px;
+    height: 1px;
+    background-color: var(--color-yellow);
+    margin-top: 15px; /* Visual alignment with text line-height */
     flex-shrink: 0;
   }
 
@@ -365,28 +363,6 @@ import Footer from '../components/Footer.astro';
   }
 
   .btn-primary:hover {
-    transform: translateY(-2px);
-  }
-
-  .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 56px;
-    padding: 0 40px;
-    background: transparent;
-    border: 1px solid var(--color-stroke);
-    color: var(--color-white);
-    border-radius: 999px;
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.2s ease;
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--color-white);
     transform: translateY(-2px);
   }
 
@@ -546,8 +522,7 @@ import Footer from '../components/Footer.astro';
       align-items: stretch;
     }
 
-    .btn-primary,
-    .btn-secondary {
+    .btn-primary{
       width: 100%;
     }
 
