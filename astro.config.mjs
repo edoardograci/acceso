@@ -9,7 +9,7 @@ export default defineConfig({
       enabled: true,  // Enables local emulation of Cloudflare env
     },
   }),
-  site: 'https://acceso.pages.dev',
+  site: 'https://acceso.design',
   image: {
     service: {
       entrypoint: 'astro/assets/services/sharp' // Use Sharp for local dev
