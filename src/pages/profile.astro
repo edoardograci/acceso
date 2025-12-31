@@ -498,12 +498,12 @@ try {
       }
     </style>
 
-    <script>
+    <script define:vars={{ userId: user.id, userEmail: user.email, emailVerified: user.emailVerified }}>
       // Identify user with PostHog when logged in
       if (typeof window !== 'undefined' && window.posthog && window.posthog.identify) {
-        window.posthog.identify('{user.id}', {
-          email: '{user.email}',
-          email_verified: {user.emailVerified ? 'true' : 'false'}
+        window.posthog.identify(userId, {
+          email: userEmail,
+          email_verified: emailVerified ? 'true' : 'false'
         });
       }
     </script>

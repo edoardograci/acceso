@@ -1,5 +1,5 @@
+---
 import PostHogLayout from '../../layouts/PostHogLayout.astro';
-import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import type { Studio } from '../../lib/types';
 
@@ -27,16 +27,16 @@ const cities = [...new Set(studios.map(s => s.city))].sort((a, b) => {
 
 // Get initial city filter from URL query parameter
 const initialCity = Astro.url.searchParams.get('city') || 'all';
+---
 
-<PostHogLayout>
-  <Layout 
-    title="Design Studios Directory | Acceso"
-    description="Browse 86+ independent industrial design studios from Milan, Seoul, Berlin, Copenhagen, London, Paris, and Tokyo. Curated directory of product designers."
-    keywords="design studios, industrial designers, product design firms, Milan designers, independent design studios"
-  >
-    <Navbar />
-    
-    <main class="designers-page">
+<PostHogLayout 
+  title="Design Studios Directory | Acceso"
+  description="Browse 86+ independent industrial design studios from Milan, Seoul, Berlin, Copenhagen, London, Paris, and Tokyo. Curated directory of product designers."
+  keywords="design studios, industrial designers, product design firms, Milan designers, independent design studios"
+>
+  <Navbar />
+  
+  <main class="designers-page">
       {!error && (
         <>
           <div class="filters-container">
@@ -93,7 +93,6 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
         </>
       )}
     </main>
-  </Layout>
 </PostHogLayout>
 
 <script>
@@ -155,11 +154,11 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
 
   // City filter handlers
   filterButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const selectedCity = button.dataset.city || 'all';
+    (button as HTMLElement).addEventListener('click', () => {
+      const selectedCity = (button as HTMLElement).dataset.city || 'all';
       
       // Update URL with query parameter
-      const url = new URL(window.location);
+      const url = new URL(window.location.href);
       if (selectedCity === 'all') {
         url.searchParams.delete('city');
       } else {
