@@ -7,19 +7,17 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
   }
 
   // Get Cloudflare bindings from context
-  const env = (locals.runtime?.env || (request as any).cf?.env || {}) as any;
-  
-  // Determine bucket and adjusted key
-  // Select bucket based on whether path starts with 'moodboard'
+  const env = (locals.runtime?.env || {}) as any;
+
+  // Route by type:
+  //   .json files  → JSON_BUCKET   (ALL event + studio JSON lives here)
+  //   moodboard/…  → MOODBOARD_BUCKET  (image subdirectory only)
+  //   everything else → INDEX_BUCKET  (studio covers, submissions)
   let bucket;
-  if (path.startsWith('moodboard')) {
-    bucket = env.MOODBOARD_BUCKET;
-  } else if (
-    path === 'metadata.json' || 
-    path.startsWith('test-') || 
-    path.startsWith('studios/')
-  ) {
+  if (path.endsWith('.json')) {
     bucket = env.JSON_BUCKET;
+  } else if (path.startsWith('moodboard/') || (path.startsWith('moodboard') && path.includes('/'))) {
+    bucket = env.MOODBOARD_BUCKET;
   } else {
     bucket = env.INDEX_BUCKET;
   }
@@ -27,21 +25,23 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
   const key = path;
 
   if (!bucket) {
-    console.error(`Bucket not found. Path: ${path}, Available bindings:`, Object.keys(env));
+    console.error(`Bucket not found. Path: ${path}`, Object.keys(env));
     return new Response('Internal Server Error - Bucket binding unavailable', { status: 500 });
   }
 
-  // Security Check for JSON
-  // JSON files contain the "intelligence" (coordinates, links, metadata)
+  // Only gate truly private enrichment files.
+  // All content JSON MUST be public — SSR pages fetch them server-side
+  // with no session cookie, so locals.user is always null there.
   if (path.endsWith('.json')) {
-    // Allow public access to studios and metadata JSONs as they are required for the public designers directory
-    const isPublicJson = path.startsWith('test-') || 
-                        path === 'metadata.json' || 
-                        path.startsWith('studios/') ||
-                        path === 'moodboard.json';
-    
-    if (!isPublicJson && !locals.user) {
-      return new Response('Unauthorized: Please log in to access this data.', { status: 403 });
+    const PRIVATE_JSON = [
+      'enrichment-metadata.json',
+      'moodboard-enrichment.json',
+      'moodboard-metadata.json',
+      'spotlight-metadata.json',
+      'studios-metadata.json',
+    ];
+    if (PRIVATE_JSON.includes(path) && !locals.user) {
+      return new Response('Unauthorized', { status: 403 });
     }
   }
 
