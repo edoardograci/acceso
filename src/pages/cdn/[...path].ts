@@ -22,7 +22,8 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     path.startsWith('events/') ||
     path.startsWith('fairs/') ||
     path.startsWith('museums/') ||
-    path.startsWith('awards/')
+    path.startsWith('awards/') ||
+    path.endsWith('-cover.webp')
   ) {
     bucket = env.EVENTS_BUCKET;                  // ← All event-related images
   } 
