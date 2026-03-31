@@ -10,22 +10,27 @@ export const GET: APIRoute = async ({ params, locals }) => {
   // Select bucket based on whether path starts with 'moodboard'
   let bucket;
   if (path.startsWith('moodboard')) {
-    bucket = locals.runtime?.env.MOODBOARD_BUCKET;
+    bucket = locals.runtime?.env?.MOODBOARD_BUCKET;
   } else if (
     path === 'metadata.json' || 
     path.startsWith('test-') || 
     path.startsWith('studios/')
   ) {
-    bucket = locals.runtime?.env.JSON_BUCKET;
+    bucket = locals.runtime?.env?.JSON_BUCKET;
   } else {
-    bucket = locals.runtime?.env.INDEX_BUCKET;
+    bucket = locals.runtime?.env?.INDEX_BUCKET;
   }
 
   const key = path;
 
-
+  // Debug: log bucket access
   if (!bucket) {
-    return new Response('Internal Server Error', { status: 500 });
+    console.error(`Bucket not found. Available in locals:`, {
+      hasRuntime: !!locals.runtime,
+      hasEnv: !!locals.runtime?.env,
+      path: path
+    });
+    return new Response('Internal Server Error - Bucket binding unavailable', { status: 500 });
   }
 
   // Security Check for JSON
