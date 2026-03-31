@@ -25,8 +25,16 @@ try {
   if (fairsRes.ok) {
     const rawData = await fairsRes.json();
     fairs = Array.isArray(rawData) ? rawData : (rawData.items || []);
+    console.log('[Fairs] Fetched', fairs.length, 'fairs');
+  } else {
+    console.warn('[Fairs] Failed to fetch fairs, status:', fairsRes.status);
   }
-  if (metaRes.ok) metadata = await metaRes.json();
+  if (metaRes.ok) {
+    metadata = await metaRes.json();
+    console.log('[Fairs] Fetched metadata');
+  } else {
+    console.warn('[Fairs] Failed to fetch metadata, status:', metaRes.status);
+  }
   
   if (citiesRes.ok) {
     const rawCities = await citiesRes.json();

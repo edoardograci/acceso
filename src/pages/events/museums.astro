@@ -25,8 +25,16 @@ try {
   if (musRes.ok) {
     const rawData = await musRes.json();
     museums = Array.isArray(rawData) ? rawData : (rawData.items || []);
+    console.log('[Museums] Fetched', museums.length, 'museums from', musRes.url);
+  } else {
+    console.warn('[Museums] Failed to fetch museums, status:', musRes.status);
   }
-  if (metaRes.ok) metadata = await metaRes.json();
+  if (metaRes.ok) {
+    metadata = await metaRes.json();
+    console.log('[Museums] Fetched metadata, byCity keys:', Object.keys(metadata?.museums?.byCity || {}).length);
+  } else {
+    console.warn('[Museums] Failed to fetch metadata, status:', metaRes.status);
+  }
   
   if (citiesRes.ok) {
     const rawCities = await citiesRes.json();
@@ -36,6 +44,9 @@ try {
       seenSlugs.add(city.slug);
       return true;
     });
+    console.log('[Museums] Fetched', citiesMapping.length, 'cities');
+  } else {
+    console.warn('[Museums] Failed to fetch cities, status:', citiesRes.status);
   }
   
   if (countriesRes.ok) {
@@ -46,6 +57,9 @@ try {
       seenSlugs.add(c.slug);
       return true;
     });
+    console.log('[Museums] Fetched', countriesMapping.length, 'countries');
+  } else {
+    console.warn('[Museums] Failed to fetch countries, status:', countriesRes.status);
   }
 } catch (e) {
   console.error('[Museums Page] Fail to fetch R2 data:', e);

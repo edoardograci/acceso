@@ -13,6 +13,9 @@ export default defineConfig({
   site: 'https://acceso.design',
   trailingSlash: 'never', // Prevent duplicate content SEO issues
   image: {
+    service: {
+      entrypoint: 'astro/assets/services/compile'
+    },
     domains: [],
     remotePatterns: [
       {

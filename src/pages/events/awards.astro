@@ -21,8 +21,16 @@ try {
   if (musRes.ok) {
     const rawData = await musRes.json();
     awards = Array.isArray(rawData) ? rawData : (rawData.items || []);
+    console.log('[Awards] Fetched', awards.length, 'awards');
+  } else {
+    console.warn('[Awards] Failed to fetch awards, status:', musRes.status);
   }
-  if (metaRes.ok) metadata = await metaRes.json();
+  if (metaRes.ok) {
+    metadata = await metaRes.json();
+    console.log('[Awards] Fetched metadata');
+  } else {
+    console.warn('[Awards] Failed to fetch metadata, status:', metaRes.status);
+  }
 } catch (e) {
   console.error('[Awards Page] Fail to fetch R2 data:', e);
 }
