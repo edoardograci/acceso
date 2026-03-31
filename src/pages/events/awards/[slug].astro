@@ -4,13 +4,13 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import SaveButton from '../../../components/SaveButton.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../../lib/images';
 
 const { slug } = Astro.params;
 
 // R2 URLs
 const isDev = import.meta.env.DEV;
 const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-const imageDomain = isDev ? 'https://img.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let award: any = null;
 let relatedAwards: any[] = [];
@@ -24,10 +24,8 @@ try {
     const rawData = await awardsRes.json();
     const allAwards = Array.isArray(rawData) ? rawData : (rawData.items || []);
     
-    // Process image URLs
     const processedAwards = allAwards.map(a => ({
       ...a,
-      image: a.image ? (a.image.startsWith('http') ? a.image : `${imageDomain}/${a.image}`) : null,
       website: a.url || a.website || null
     }));
 
@@ -100,10 +98,11 @@ const pageDesc = award.description || `Explore the ${award.name}, one of the mos
       <div class="hero-image-wrapper">
         {award.image ? (
           <img 
-            src={award.image} 
+            src={normalizeImage(award.image, Astro)} 
             alt={award.name} 
             class="hero-image" 
-            onerror={`if(!this.dataset.fallback){this.dataset.fallback='true';this.src=this.src.replace('img.acceso.design','events.acceso.design');}`}
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div class="hero-image-placeholder">No image available</div>
@@ -184,7 +183,7 @@ const pageDesc = award.description || `Explore the ${award.name}, one of the mos
                     slug={a.slug}
                     type="award"
                     date={formatDeadlinesShort(a.deadlines)}
-                    image={a.image ? (a.image.startsWith('http') ? a.image : `${imageDomain}/${a.image}`) : null}
+                    image={normalizeImage(a.image, Astro)}
                     pillText={getAwardStatus(a.deadlines) === 'status-open' ? 'OPEN' : 'CLOSED'}
                     pillType={getAwardStatus(a.deadlines)}
                   />

@@ -38,7 +38,13 @@ try {
   if (!response.ok) throw new Error('CDN Proxy Not Ready');
   moodboardItems = await response.json();
 } catch (e) {
-  error = e;
+  try {
+     const localUrl = new URL('/moodboard.json', Astro.url.origin);
+     const localRes = await fetch(localUrl.toString());
+     moodboardItems = await localRes.json();
+  } catch (localErr) {
+     error = localErr;
+  }
 }
 ---
 

@@ -3,11 +3,11 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import EventBasicCard from '../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../lib/images';
 
 // R2 URLs
 const isDev = import.meta.env.DEV;
 const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-const imageDomain = isDev ? 'https://img.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let awards: any[] = [];
 let metadata: any = null;
@@ -107,7 +107,7 @@ const pageSubtitle = "Prestigious recognitions celebrating excellence and innova
               slug={award.slug}
               type="award"
               location={award.deadlines ? `Deadline: ${new Date(Math.max(...award.deadlines.split(',').map(d => new Date(d.trim()).getTime()))).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ""}
-              image={award.image ? (award.image.startsWith('http') ? award.image : `${imageDomain}/${award.image}`) : null}
+              image={normalizeImage(award.image, Astro)}
               pillText={award.pillText}
               pillType={award.pillType}
             />

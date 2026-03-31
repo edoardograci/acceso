@@ -1,4 +1,6 @@
 ---
+import { normalizeImage } from '../lib/images';
+
 interface Props {
   name: string;
   slug?: string;
@@ -24,11 +26,11 @@ const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/even
     )}
     {image ? (
       <img 
-        src={image} 
+        src={normalizeImage(image, Astro)} 
         alt={name} 
         class="event-image" 
         loading="lazy" 
-        onerror="if (this.src.includes('img.acceso.design')) { this.src = this.src.replace('img.acceso.design', 'events.acceso.design'); this.onerror = null; }"
+        decoding="async"
       />
     ) : (
       <div class="image-placeholder"></div>

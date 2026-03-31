@@ -3,11 +3,11 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import EventBasicCard from '../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../lib/images';
 
 // R2 URLs
 const isDev = import.meta.env.DEV;
 const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-const imageDomain = isDev ? 'https://img.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let fairs = [];
 let museums = [];
@@ -95,7 +95,7 @@ const sections = [
     })), 
     slug: 'fairs',
     description: "Global design weeks, biennials, and furniture trade shows.",
-    coverImage: `${imageDomain}/fairs-cover.webp`
+    coverImage: normalizeImage('fairs-cover.webp', Astro)
   },
   { 
     title: 'Museums & Foundations', 
@@ -105,7 +105,7 @@ const sections = [
     })), 
     slug: 'museums',
     description: "Permanent collections and institutions preserving design history.",
-    coverImage: `${imageDomain}/museums-cover.webp`
+    coverImage: normalizeImage('museums-cover.webp', Astro)
   },
   { 
     title: 'Awards', 
@@ -121,7 +121,7 @@ const sections = [
     }), 
     slug: 'awards',
     description: "The most prestigious recognitions in industrial design worldwide.",
-    coverImage: `${imageDomain}/awards-cover.webp`
+    coverImage: normalizeImage('awards-cover.webp', Astro)
   }
 ];
 ---
@@ -147,7 +147,8 @@ const sections = [
               <img 
                 src={section.coverImage} 
                 alt="" 
-                onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src=this.src.replace('img.acceso.design','events.acceso.design');}"
+                loading="lazy"
+                decoding="async"
               />
               <div class="card-overlay"></div>
             </div>
@@ -191,7 +192,7 @@ const sections = [
                     slug={item.slug}
                     type={section.slug === 'fairs' ? 'fair' : section.slug === 'museums' ? 'museum' : 'award'}
                     location={item.location}
-                    image={item.image ? (item.image.startsWith('http') ? item.image : `${imageDomain}/${item.image}`) : null}
+                    image={normalizeImage(item.image, Astro)}
                     pillText={item.pillText}
                     pillType={item.pillType}
                   />

@@ -25,3 +25,8 @@ preview_bucket_name = "moodboard-preview"
 binding = "JSON_BUCKET"
 bucket_name = "json"
 preview_bucket_name = "json-preview"
+
+[[r2_buckets]]
+binding = "EVENTS_BUCKET"
+bucket_name = "events"
+remote = true

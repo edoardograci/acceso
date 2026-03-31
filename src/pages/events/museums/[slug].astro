@@ -4,13 +4,13 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import SaveButton from '../../../components/SaveButton.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../../lib/images';
 
 const { slug } = Astro.params;
 
 // R2 URLs
 const isDev = import.meta.env.DEV;
 const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-const imageDomain = isDev ? 'https://img.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let museum: any = null;
 let relatedMuseums: any[] = [];
@@ -28,11 +28,7 @@ try {
     const rawData = await musRes.json();
     const allMuseums = Array.isArray(rawData) ? rawData : (rawData.items || []);
     
-    // Process image URLs
-    const processedMuseums = allMuseums.map(m => ({
-      ...m,
-      image: m.image ? (m.image.startsWith('http') ? m.image : `${imageDomain}/${m.image}`) : null
-    }));
+    const processedMuseums = allMuseums;
 
     museum = processedMuseums.find(m => m.slug === slug) || null;
 
@@ -81,10 +77,11 @@ const pageDesc = museum.description || `Explore ${museum.name}, a prominent desi
       <div class="hero-image-wrapper">
         {museum.image ? (
           <img 
-            src={museum.image} 
+            src={normalizeImage(museum.image, Astro)} 
             alt={museum.name} 
             class="hero-image" 
-            onerror={`if(!this.dataset.fallback){this.dataset.fallback='true';this.src=this.src.replace('img.acceso.design','events.acceso.design');}`}
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div class="hero-image-placeholder">No image available</div>
@@ -214,7 +211,7 @@ const pageDesc = museum.description || `Explore ${museum.name}, a prominent desi
                     slug={m.slug}
                     type="museum"
                     location={m.city || cityName}
-                    image={m.image}
+                    image={normalizeImage(m.image, Astro)}
                   />
                 </div>
               ))}

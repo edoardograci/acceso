@@ -2,7 +2,7 @@
 import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
-import { Image } from 'astro:assets';
+import { normalizeImage } from '../lib/images';
 import type { Studio } from '../lib/types';
 
 // Fetch Data
@@ -16,21 +16,12 @@ let awards: any[] = [];
 try {
   const isDev = import.meta.env.DEV;
   const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  const imageDomain = 'https://img.acceso.design';
-  const normalizeCover = (cover: any) => {
-    if (!cover) return cover;
-    if (cover.startsWith('http')) return cover;
-    return `${imageDomain}/${cover.replace(/^\/+/, '')}`;
-  };
   const studiosUrl = `${domain}/test-studios.json`;
   
   const studiosRes = await fetch(studiosUrl);
   if (studiosRes.ok) {
     const rawStudios = await studiosRes.json();
-    studios = rawStudios.map((s: any) => ({
-      ...s,
-      cover: normalizeCover(s.cover)
-    }));
+    studios = rawStudios;
   } else {
     throw new Error('Failed to fetch studios');
   }
@@ -43,13 +34,6 @@ try {
 try {
   const isDev = import.meta.env.DEV;
   const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  const imageDomain = 'https://img.acceso.design';
-
-  const normalizeImage = (img: any) => {
-    if (!img) return null;
-    if (img.startsWith('http')) return img;
-    return `${imageDomain}/${img.replace(/^\/+/, '')}`;
-  };
 
   const [fRes, mRes, aRes] = await Promise.all([
     fetch(`${domain}/fairs.json`),
@@ -60,17 +44,17 @@ try {
   if (fRes.ok) {
     const data = await fRes.json();
     const all = (Array.isArray(data) ? data : data.items || []);
-    fairs = all.slice(0, 4).map((f: any) => ({ ...f, image: normalizeImage(f.image) }));
+    fairs = all.slice(0, 4);
   }
   if (mRes.ok) {
     const data = await mRes.json();
     const all = (Array.isArray(data) ? data : data.items || []);
-    museums = all.slice(0, 4).map((m: any) => ({ ...m, image: normalizeImage(m.image) }));
+    museums = all.slice(0, 4);
   }
   if (aRes.ok) {
     const data = await aRes.json();
     const all = (Array.isArray(data) ? data : data.items || []);
-    awards = all.slice(0, 4).map((aw: any) => ({ ...aw, image: normalizeImage(aw.image) }));
+    awards = all.slice(0, 4);
   }
 } catch (e) {
   console.error('[Landing] Failed to fetch events previews:', e);
@@ -155,7 +139,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
                   src={card.img} 
                   alt="" 
                   loading="lazy" 
-                  onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src=this.src.replace('img.acceso.design','events.acceso.design').replace('mood.acceso.design','events.acceso.design');}"
+                  decoding="async"
                 />
                 <div class="card-overlay"></div>
               </div>
@@ -196,7 +180,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
             <a href={`/designers/${studio.slug}`} class="simple-card">
               <div class="card-image-wrapper">
                 {studio.cover ? (
-                  <Image src={studio.cover} alt={studio.name} width={400} height={300} class="card-image" />
+                  <img src={normalizeImage(studio.cover, Astro)} alt={studio.name} width="400" height="300" class="card-image" loading="lazy" decoding="async" />
                 ) : (
                   <div class="image-placeholder with-pin"></div>
                 )}
@@ -239,11 +223,11 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
               <div class="card-image-wrapper">
                 {fair.image ? (
                   <img
-                    src={fair.image}
+                    src={normalizeImage(fair.image, Astro)}
                     alt={fair.name}
                     class="card-image"
                     loading="lazy"
-                    onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace('https://img.acceso.design','https://events.acceso.design').replace('http://img.acceso.design','https://events.acceso.design');}"
+                    decoding="async"
                   />
                 ) : (
                   <div class="image-placeholder with-pin"></div>
@@ -275,11 +259,11 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
               <div class="card-image-wrapper">
                 {m.image ? (
                   <img
-                    src={m.image}
+                    src={normalizeImage(m.image, Astro)}
                     alt={m.name}
                     class="card-image"
                     loading="lazy"
-                    onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace('https://img.acceso.design','https://events.acceso.design').replace('http://img.acceso.design','https://events.acceso.design');}"
+                    decoding="async"
                   />
                 ) : (
                   <div class="image-placeholder with-pin"></div>
@@ -311,11 +295,11 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
               <div class="card-image-wrapper">
                 {a.image ? (
                   <img
-                    src={a.image}
+                    src={normalizeImage(a.image, Astro)}
                     alt={a.name}
                     class="card-image"
                     loading="lazy"
-                    onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace('https://img.acceso.design','https://events.acceso.design').replace('http://img.acceso.design','https://events.acceso.design');}"
+                    decoding="async"
                   />
                 ) : (
                   <div class="image-placeholder with-pin"></div>

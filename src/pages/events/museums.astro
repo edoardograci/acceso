@@ -3,11 +3,11 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import EventBasicCard from '../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../lib/images';
 
 // R2 URLs
 const isDev = import.meta.env.DEV;
 const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-const imageDomain = isDev ? 'https://img.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let museums: any[] = [];
 let metadata: any = null;
@@ -190,7 +190,7 @@ const pageSubtitle = "A directory of permanent collections and institutions pres
               slug={museum.slug}
               type="museum"
               location={museum.city ? (museum.country ? `${museum.city}, ${museum.country}` : museum.city) : (museum.location || '')}
-              image={museum.image ? (museum.image.startsWith('http') ? museum.image : `${imageDomain}/${museum.image}`) : null}
+              image={normalizeImage(museum.image, Astro)}
             />
           </div>
         ))}

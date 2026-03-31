@@ -1,5 +1,6 @@
 ---
 import type { Studio } from '../lib/types';
+import { normalizeImage } from '../lib/images';
 
 interface Props {
   studio: Studio;
@@ -66,7 +67,7 @@ try {
           class="group relative block overflow-hidden no-underline bg-bg-secondary transition-transform duration-200 break-inside-avoid mb-4 hover:-translate-y-1"
         >
           <img 
-            src={item.cover} 
+            src={normalizeImage(item.cover, Astro)} 
             alt={item.name}
             class="w-full h-auto block object-cover skeleton"
             loading="lazy"

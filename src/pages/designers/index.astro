@@ -32,12 +32,6 @@ function distributeGroupsForColumns(groups: any[], columns = 3) {
 try {
   const isDev = import.meta.env.DEV;
   const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  const imageDomain = 'https://img.acceso.design';
-  const normalizeCover = (cover: any) => {
-    if (!cover) return cover;
-    if (cover.startsWith('http')) return cover;
-    return `${imageDomain}/${cover.replace(/^\/+/, '')}`;
-  };
   
   const metadataUrl = `${domain}/metadata.json`;
   const countriesUrl = `${domain}/test-countries.json`;
@@ -86,10 +80,7 @@ try {
   if (studiosRes.ok) {
     const rawAll = await studiosRes.json();
     if (!totalStudios) totalStudios = rawAll.length; // Fallback if metadata fails
-    studios = rawAll.slice(0, 20).map((s: any) => ({
-      ...s,
-      cover: normalizeCover(s.cover)
-    }));
+    studios = rawAll.slice(0, 20);
   }
 } catch (e) {
   error = e;
@@ -220,7 +211,6 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
                   alt="" 
                   class="studio-card-image" 
                   id="studio-card-image" 
-                  onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src=this.src.replace('img.acceso.design','events.acceso.design');}"
                 />
               </div>
               <div class="studio-card-info">
@@ -988,7 +978,6 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
       }
 
       const r2Domain = (window as any).isDev ? 'https://json.acceso.design' : `${window.location.origin}/cdn`;
-      const imageDomain = 'https://img.acceso.design';
 
       // In dev, route all R2 fetches through the local proxy to avoid CORS
       async function apiFetch(url: string): Promise<Response> {
@@ -1116,7 +1105,7 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
           const coverRaw = String(s?.cover ?? '');
           let coverUrl = coverRaw;
           if (coverUrl && !coverUrl.startsWith('http')) {
-            coverUrl = `${imageDomain}/${coverUrl.replace(/^\/+/, '')}`;
+            coverUrl = `${window.location.origin}/cdn/${coverUrl.replace(/^\/+/, '')}`;
           }
 
           if (coverUrl) {

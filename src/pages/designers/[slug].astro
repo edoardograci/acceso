@@ -5,6 +5,7 @@ import DesignerMoodboard from '../../components/DesignerMoodboard.astro';
 import Footer from '../../components/Footer.astro';
 import SaveButton from '../../components/SaveButton.astro';
 import EventBasicCard from '../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../lib/images';
 import type { Studio } from '../../lib/types';
 
 const { slug } = Astro.params;
@@ -33,17 +34,13 @@ let hasProjects = false;
 try {
   const isDev = import.meta.env.DEV;
   const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  const imageDomain = isDev ? 'https://img.acceso.design' : `${Astro.url.origin}/cdn`;
   const studiosUrl = `${domain}/test-studios.json`;
   const moodboardUrl = `${domain}/moodboard.json`;
   
   const response = await fetch(studiosUrl);
   if (response.ok) {
     const rawStudios: Studio[] = await response.json();
-    const mappedStudios = rawStudios.map(s => ({
-      ...s,
-      cover: s.cover && !s.cover.startsWith('http') && !s.cover.startsWith('/') ? `${imageDomain}/${s.cover}` : s.cover
-    }));
+    const mappedStudios = rawStudios;
     studio = mappedStudios.find(s => s.slug === slug) || null;
 
     if (studio) {
@@ -101,9 +98,11 @@ if (!studio && !error) {
           <div class="hero-image-wrapper">
             {studio.cover ? (
               <img 
-                src={studio.cover} 
+                src={normalizeImage(studio.cover, Astro)} 
                 alt={studio.name} 
                 class="hero-image"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div class="hero-image-placeholder">No image available</div>

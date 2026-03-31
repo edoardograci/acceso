@@ -42,7 +42,14 @@ try {
   const items: MoodboardItem[] = await response.json();
   item = items.find(i => i.slug === slug) || null;
 } catch (e) {
-  error = e;
+  try {
+     const localUrl = new URL('/moodboard.json', Astro.url.origin);
+     const localRes = await fetch(localUrl.toString());
+     const items: MoodboardItem[] = await localRes.json();
+     item = items.find(i => i.slug === slug) || null;
+  } catch (localErr) {
+     error = localErr;
+  }
 }
 
 if (!item && !error) {

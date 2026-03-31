@@ -4,6 +4,7 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import '../styles/map.css';
 import { initializeMap } from '../lib/map-init.ts';
+import { normalizeImage } from '../lib/images';
 import type { Studio } from '../lib/types';
 
 // Fetch studios from CDN (primary) or static JSON (fallback)
@@ -11,12 +12,6 @@ let studios: Studio[] = [];
 try {
   const isDev = import.meta.env.DEV;
   const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  const imageDomain = 'https://img.acceso.design';
-  const normalizeCover = (cover: any) => {
-    if (!cover) return cover;
-    if (cover.startsWith('http')) return cover;
-    return `${imageDomain}/${cover.replace(/^\/+/, '')}`;
-  };
   const studiosUrl = `${domain}/test-studios.json`;
   
   const response = await fetch(studiosUrl);
@@ -24,7 +19,7 @@ try {
     const rawStudios = await response.json();
     studios = rawStudios.map((s: any) => ({
       ...s,
-      cover: normalizeCover(s.cover)
+      cover: normalizeImage(s.cover, Astro)
     }));
   } else {
     throw new Error('Failed to fetch studios');

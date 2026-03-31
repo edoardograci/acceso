@@ -1,6 +1,6 @@
 ---
 import type { Studio } from '../lib/types';
-import { Image } from 'astro:assets';
+import { normalizeImage } from '../lib/images';
 
 interface Props {
   studio: Studio;
@@ -23,12 +23,13 @@ const { studio, products, index } = Astro.props;
   <div class="card-inner">
     <div class="studio-logo-wrapper">
       {studio.cover ? (
-        <Image 
-          src={studio.cover} 
+        <img 
+          src={normalizeImage(studio.cover, Astro)} 
           alt={studio.name} 
-          width={160} 
-          height={160} 
-          quality={80}
+          width="160" 
+          height="160" 
+          loading="lazy"
+          decoding="async"
           class="studio-logo-img"
         />
       ) : (

@@ -3,11 +3,11 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import EventBasicCard from '../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../lib/images';
 
 // R2 URLs
 const isDev = import.meta.env.DEV;
 const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-const imageDomain = isDev ? 'https://img.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let fairs = [];
 let metadata: any = null;
@@ -198,7 +198,7 @@ const pageSubtitle = "A curated index of the most influential furniture and indu
               slug={fair.slug}
               type="fair"
               location={fair.city ? (fair.country ? `${fair.city}, ${fair.country}` : fair.city) : (fair.location || '')}
-              image={fair.image ? (fair.image.startsWith('http') ? fair.image : `${imageDomain}/${fair.image}`) : null}
+              image={normalizeImage(fair.image, Astro)}
               pillText={fair.period}
             />
           </div>

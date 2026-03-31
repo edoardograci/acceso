@@ -4,13 +4,13 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import SaveButton from '../../../components/SaveButton.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../../lib/images';
 
 const { slug } = Astro.params;
 
 // R2 URLs
 const isDev = import.meta.env.DEV;
 const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-const imageDomain = isDev ? 'https://img.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let fair: any = null;
 let relatedFairs: any[] = [];
@@ -28,11 +28,7 @@ try {
     const rawFairs = await fairsRes.json();
     const allFairs = Array.isArray(rawFairs) ? rawFairs : (rawFairs.items || []);
     
-    // Process image URLs
-    const processedFairs = allFairs.map(f => ({
-      ...f,
-      image: f.image ? (f.image.startsWith('http') ? f.image : `${imageDomain}/${f.image}`) : null
-    }));
+    const processedFairs = allFairs;
 
     fair = processedFairs.find(f => f.slug === slug) || null;
 
@@ -95,10 +91,11 @@ const pageDesc = fair.description || `Explore ${fair.name}, a premier design eve
       <div class="hero-image-wrapper">
         {fair.image ? (
           <img 
-            src={fair.image} 
+            src={normalizeImage(fair.image, Astro)} 
             alt={fair.name} 
             class="hero-image" 
-            onerror={`if(!this.dataset.fallback){this.dataset.fallback='true';this.src=this.src.replace('img.acceso.design','events.acceso.design');}`}
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div class="hero-image-placeholder">No image available</div>
@@ -196,7 +193,7 @@ const pageDesc = fair.description || `Explore ${fair.name}, a premier design eve
                     type="fair"
                     location={f.city || cityName}
                     date={getPeriod(f.start_date, f.end_date)}
-                    image={f.image}
+                    image={normalizeImage(f.image, Astro)}
                   />
                 </div>
               ))}

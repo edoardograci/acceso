@@ -25,3 +25,8 @@ remote = true
 binding = "JSON_BUCKET"
 bucket_name = "json"
 remote = true
+
+[[r2_buckets]]
+binding = "EVENTS_BUCKET"
+bucket_name = "events"
+remote = true
