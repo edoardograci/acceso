@@ -3,6 +3,7 @@ import Layout from '../../../layouts/Layout.astro';
 import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import { breadcrumbList, itemList } from '../../../lib/seo/schema';
+import { normalizeImage } from '../../../lib/images';
 
 type Studio = { slug: string; name: string; cover?: string | null; city?: string | null; country_slug?: string | null };
 
@@ -12,7 +13,6 @@ const perPage = 20;
 const isDev = import.meta.env.DEV;
 const origin = Astro.url.origin;
 const dataOrigin = isDev ? 'https://json.acceso.design' : origin;
-const imageOrigin = isDev ? 'https://img.acceso.design' : `${origin}/cdn`;
 
 async function fetchJson<T>(path: string): Promise<T> {
   const u = new URL(path, dataOrigin).toString();
@@ -39,12 +39,7 @@ try {
 if (page > totalPages) return Astro.redirect('/404');
 
 const slice = all.slice((page - 1) * perPage, page * perPage).map((s) => {
-  const cover = s.cover;
-  const normalizedCover =
-    cover && typeof cover === 'string' && !cover.startsWith('http') && !cover.startsWith('/')
-      ? `${imageOrigin}/${cover}`
-      : cover;
-  return { ...s, cover: normalizedCover };
+  return { ...s, cover: normalizeImage(s.cover, Astro) as string | null };
 });
 
 const title = page === 1 ? 'Design studios directory | Acceso' : `Design studios directory (Page ${page}) | Acceso`;

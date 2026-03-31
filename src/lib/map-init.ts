@@ -14,8 +14,13 @@ interface MapInstance {
 
 function resolveStudioCover(cover?: string | null): string {
   if (!cover) return '/images/placeholder-studio.jpg';
-  if (cover.startsWith('http')) return cover;
-  return `https://img.acceso.design/${cover.replace(/^\/+/, '')}`;
+  if (cover.startsWith('http')) {
+    if (cover.includes('img.acceso.design')) {
+      return `${window.location.origin}/cdn/${new URL(cover).pathname.replace(/^\/+/, '')}`;
+    }
+    return cover;
+  }
+  return `${window.location.origin}/cdn/${cover.replace(/^\/+/, '')}`;
 }
 
 export function initializeMap(studiosData: Studio[], targetStudioSlug?: string | null): MapInstance | null {

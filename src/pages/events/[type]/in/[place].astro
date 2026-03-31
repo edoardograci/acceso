@@ -4,6 +4,7 @@ import Navbar from '../../../../components/Navbar.astro';
 import Footer from '../../../../components/Footer.astro';
 import EventBasicCard from '../../../../components/EventBasicCard.astro';
 import { breadcrumbList, itemList } from '../../../../lib/seo/schema';
+import { normalizeImage } from '../../../../lib/images';
 
 const { type, place } = Astro.params;
 const allowed = new Set(['fairs', 'museums', 'awards']);
@@ -12,7 +13,6 @@ if (!type || !allowed.has(type)) return Astro.redirect('/404');
 const isDev = import.meta.env.DEV;
 const origin = Astro.url.origin;
 const dataOrigin = isDev ? 'https://json.acceso.design' : origin;
-const imageOrigin = isDev ? 'https://img.acceso.design' : `${origin}/cdn`;
 
 async function fetchJson<T>(path: string): Promise<T> {
   const u = new URL(path, dataOrigin).toString();
@@ -56,7 +56,7 @@ try {
   items = (Array.isArray(all) ? all : [])
     .map((e: any) => ({
       ...e,
-      image: e.image ? (String(e.image).startsWith('http') ? e.image : `${imageOrigin}/${e.image}`) : null,
+      image: e.image
     }))
     .filter((e: any) => {
       if (isCity) return e.city_slug === place;
@@ -131,7 +131,7 @@ const schema = {
               slug={e.slug}
               type={type === 'fairs' ? 'fair' : type === 'museums' ? 'museum' : 'award'}
               location={e.city || e.location || ''}
-              image={e.image}
+              image={normalizeImage(e.image, Astro)}
             />
           ))}
         </div>

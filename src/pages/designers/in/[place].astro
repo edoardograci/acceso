@@ -4,6 +4,7 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import { locationTitle, locationDescription, locationIntro } from '../../../lib/seo/copy';
 import { breadcrumbList, itemList } from '../../../lib/seo/schema';
+import { normalizeImage } from '../../../lib/images';
 
 type Studio = {
   id: string;
@@ -23,7 +24,6 @@ const { place } = Astro.params;
 const isDev = import.meta.env.DEV;
 const origin = Astro.url.origin;
 const dataOrigin = isDev ? 'https://json.acceso.design' : origin;
-const imageOrigin = isDev ? 'https://img.acceso.design' : `${origin}/cdn`;
 
 async function fetchJson<T>(path: string): Promise<T> {
   const u = new URL(path, dataOrigin).toString();
@@ -89,12 +89,7 @@ try {
 
 // Normalize images (avoid mixed host duplicates)
 studios = studios.map((s) => {
-  const cover = s.cover;
-  const normalizedCover =
-    cover && typeof cover === 'string' && !cover.startsWith('http') && !cover.startsWith('/')
-      ? `${imageOrigin}/${cover}`
-      : cover;
-  return { ...s, cover: normalizedCover };
+  return { ...s, cover: normalizeImage(s.cover, Astro) as string | null };
 });
 
 const where =
