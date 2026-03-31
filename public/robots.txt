@@ -1,0 +1,21 @@
+# Robots.txt for acceso.design
+# https://acceso.design/
+
+User-agent: *
+Allow: /
+
+# Block private/auth + non-content routes
+Disallow: /api/
+Disallow: /auth/
+Disallow: /collections/
+Disallow: /login
+Disallow: /profile
+Disallow: /cdn/
+
+# Block parameterized duplicates (canonical is clean routes)
+Disallow: /*?*
+
+# Sitemap location
+Sitemap: https://acceso.design/sitemap.xml
+
+

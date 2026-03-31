@@ -1,0 +1,90 @@
+---
+import type { Studio } from '../lib/types';
+
+interface Props {
+  studio: Studio;
+}
+
+interface MoodboardItem {
+  id: string;
+  slug: string;
+  name: string;
+  designer: string | null;
+  cover: string | null;
+}
+
+const { studio } = Astro.props;
+
+let moodboardItems: MoodboardItem[] = [];
+let designerProducts: MoodboardItem[] = [];
+
+try {
+  // Fetch from Internal Proxy (Source of Truth)
+  const moodboardUrl = new URL('/cdn/moodboard.json', Astro.url.origin).toString();
+  let response = await fetch(moodboardUrl);
+  
+  // Fallback to local if remote fails
+  if (!response.ok) {
+     console.warn('Remote moodboard JSON failed, falling back to local');
+     const localUrl = new URL('/moodboard.json', Astro.url.origin);
+     response = await fetch(localUrl.toString());
+  }
+
+  if (response.ok) {
+    moodboardItems = await response.json();
+    // Filter products by designer name matching studio name
+    designerProducts = moodboardItems.filter(
+      item => item.designer && item.designer.toLowerCase() === studio.name.toLowerCase() && item.cover
+    );
+  } else {
+    console.error('Failed to load moodboard data from both remote and local sources');
+  }
+} catch (e) {
+  console.error('Failed to fetch moodboard:', e);
+  // Try local fallback one last time if the error was network related on the first fetch
+  try {
+    const localUrl = new URL('/moodboard.json', Astro.url.origin);
+    const response = await fetch(localUrl.toString());
+    if (response.ok) {
+        moodboardItems = await response.json();
+        designerProducts = moodboardItems.filter(
+          item => item.designer && item.designer === studio.name && item.cover
+        );
+    }
+  } catch (localErr) {
+    console.error('Double failure fetching moodboard:', localErr);
+  }
+}
+---
+
+<div class="pt-6">
+  {designerProducts.length > 0 ? (
+    <div class="columns-2 md:columns-3 gap-4 mt-0">
+      {designerProducts.map(item => (
+        <a 
+          href={`/projects/${item.slug}`} 
+          class="group relative block overflow-hidden no-underline bg-bg-secondary transition-transform duration-200 break-inside-avoid mb-4 hover:-translate-y-1"
+        >
+          <img 
+            src={item.cover} 
+            alt={item.name}
+            class="w-full h-auto block object-cover skeleton"
+            loading="lazy"
+            decoding="async"
+            data-skeleton
+            crossorigin="anonymous"
+            onload="this.classList.remove('skeleton', 'animate-pulse', 'bg-bg-secondary')"
+          />
+          <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <h3 class="font-sans text-sm font-medium mb-1 text-white">{item.name}</h3>
+            {item.designer && <p class="font-sans text-xs text-gray">{item.designer}</p>}
+          </div>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <div class="py-12 text-center text-gray font-sans text-sm">
+      <p>No products present in the Moodboard</p>
+    </div>
+  )}
+</div>

@@ -1,0 +1,906 @@
+---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { Image } from 'astro:assets';
+import type { Studio } from '../lib/types';
+
+// Fetch Data
+let studios: Studio[] = [];
+let moodboardItems: any[] = [];
+let error = null;
+let fairs: any[] = [];
+let museums: any[] = [];
+let awards: any[] = [];
+
+try {
+  const isDev = import.meta.env.DEV;
+  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+  const imageDomain = 'https://img.acceso.design';
+  const normalizeCover = (cover: any) => {
+    if (!cover) return cover;
+    if (cover.startsWith('http')) return cover;
+    return `${imageDomain}/${cover.replace(/^\/+/, '')}`;
+  };
+  const studiosUrl = `${domain}/test-studios.json`;
+  
+  const studiosRes = await fetch(studiosUrl);
+  if (studiosRes.ok) {
+    const rawStudios = await studiosRes.json();
+    studios = rawStudios.map((s: any) => ({
+      ...s,
+      cover: normalizeCover(s.cover)
+    }));
+  } else {
+    throw new Error('Failed to fetch studios');
+  }
+} catch (e) {
+  error = e;
+  console.error('Failure to fetch data:', e);
+}
+
+// Fetch a few event previews for the landing page (keep this light).
+try {
+  const isDev = import.meta.env.DEV;
+  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+  const imageDomain = 'https://img.acceso.design';
+
+  const normalizeImage = (img: any) => {
+    if (!img) return null;
+    if (img.startsWith('http')) return img;
+    return `${imageDomain}/${img.replace(/^\/+/, '')}`;
+  };
+
+  const [fRes, mRes, aRes] = await Promise.all([
+    fetch(`${domain}/fairs.json`),
+    fetch(`${domain}/museums.json`),
+    fetch(`${domain}/awards.json`),
+  ]);
+
+  if (fRes.ok) {
+    const data = await fRes.json();
+    const all = (Array.isArray(data) ? data : data.items || []);
+    fairs = all.slice(0, 4).map((f: any) => ({ ...f, image: normalizeImage(f.image) }));
+  }
+  if (mRes.ok) {
+    const data = await mRes.json();
+    const all = (Array.isArray(data) ? data : data.items || []);
+    museums = all.slice(0, 4).map((m: any) => ({ ...m, image: normalizeImage(m.image) }));
+  }
+  if (aRes.ok) {
+    const data = await aRes.json();
+    const all = (Array.isArray(data) ? data : data.items || []);
+    awards = all.slice(0, 4).map((aw: any) => ({ ...aw, image: normalizeImage(aw.image) }));
+  }
+} catch (e) {
+  console.error('[Landing] Failed to fetch events previews:', e);
+}
+
+
+
+// Get latest items (keep 4-up rows)
+const recentlyAddedStudios = studios.slice(-4).reverse();
+const latestProjects: any[] = []; // Moodboard on hold
+
+// Mock events for the banner
+const mockEvents = [
+  { id: 1, title: 'Milan Design Week', date: 'April 2026' },
+  { id: 2, title: 'London Design Festival', date: 'Sept 2026' },
+  { id: 3, title: 'Paris Design Week', date: 'Sept 2026' }
+];
+
+const totalCities = Array.from(new Set(studios.map(s => s.city))).length;
+const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(Boolean).length;
+
+---
+
+<PostHogLayout 
+  title="Discover Design Studios | Acceso"
+  description="Explore the world of independent industrial and furniture design studios."
+>
+  <Navbar />
+  
+  <main class="landing">
+    <div class="bg">
+      <div class="bg-noise"></div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="hero-kicker">
+            <span class="pill">300+ designers 8+ countries</span>
+          </div>
+
+          <h1 class="hero-title">Discover Design<br/>Studios</h1>
+          <p class="hero-sub">
+            A modern index of independent furniture & industrial design studios, with projects and events.
+            Built for browsing by city and finding your next collaboration.
+          </p>
+
+          <div class="hero-ctas">
+            <a class="btn btn-primary" href="/designers">
+              Explore studios
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <a class="btn btn-ghost" href="/events">
+              Browse events
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-quick-nav" aria-hidden="true">
+          {[
+            { 
+              title: 'Designers', 
+              href: '/designers', 
+              img: 'https://img.acceso.design/studios/kasper-friis-egelund.webp'
+            },
+            { 
+              title: 'Projects', 
+              href: '/projects', 
+              img: 'https://mood.acceso.design/moodboard/2070d7da-2e8c-8063-be37-de7de2f512d8/0-5b68dabf.webp'
+            },
+            { 
+              title: 'Events', 
+              href: '/events', 
+              img: 'https://img.acceso.design/museums/die-neue-sammlung.webp'
+            }
+          ].map(card => (
+            <a href={card.href} class="quick-nav-card">
+              <div class="card-image-bg">
+                <img 
+                  src={card.img} 
+                  alt="" 
+                  loading="lazy" 
+                  onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src=this.src.replace('img.acceso.design','events.acceso.design').replace('mood.acceso.design','events.acceso.design');}"
+                />
+                <div class="card-overlay"></div>
+              </div>
+              <div class="card-bg"></div>
+              <div class="card-content">
+                <div class="card-top"></div>
+                <div class="card-bottom">
+                  <h2 class="card-title">{card.title}</h2>
+                  <div class="card-link">
+                    <span>Explore</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="highlight-border"></div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-recent">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2 class="section-title">Recently added</h2>
+          <a class="link-pill" href="/designers">
+            See all
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="cards-grid">
+          {recentlyAddedStudios.slice(0, 4).map(studio => (
+            <a href={`/designers/${studio.slug}`} class="simple-card">
+              <div class="card-image-wrapper">
+                {studio.cover ? (
+                  <Image src={studio.cover} alt={studio.name} width={400} height={300} class="card-image" />
+                ) : (
+                  <div class="image-placeholder with-pin"></div>
+                )}
+              </div>
+              <h3 class="card-name">{studio.name}</h3>
+              <p class="card-location">{studio.city}{studio.country ? ` - ${studio.country}` : ''}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-cta section-cta-top">
+      <div class="section-inner">
+        <a href="/get-listed" class="cta-card cta-inline cta-getlisted">
+          <div class="cta-copy">
+            <div class="cta-title">Get listed</div>
+            <div class="cta-sub">Submit your studio. We’ll review and make it discoverable.</div>
+          </div>
+          <div class="cta-action">Submit for review</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section section-events">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2 class="section-title">Next fairs</h2>
+          <a class="link-pill" href="/events/fairs">
+            See fairs
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="cards-grid">
+          {fairs.map((fair: any) => (
+            <a href={`/events/fairs/${fair.slug}`} class="simple-card">
+              <div class="card-image-wrapper">
+                {fair.image ? (
+                  <img
+                    src={fair.image}
+                    alt={fair.name}
+                    class="card-image"
+                    loading="lazy"
+                    onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace('https://img.acceso.design','https://events.acceso.design').replace('http://img.acceso.design','https://events.acceso.design');}"
+                  />
+                ) : (
+                  <div class="image-placeholder with-pin"></div>
+                )}
+              </div>
+              <h3 class="card-name">{fair.name}</h3>
+              <p class="card-location">{fair.city || ''}{fair.country ? ` - ${fair.country}` : ''}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-events">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2 class="section-title">Museums & foundations</h2>
+          <a class="link-pill" href="/events/museums">
+            See museums
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="cards-grid">
+          {museums.map((m: any) => (
+            <a href={`/events/museums/${m.slug}`} class="simple-card">
+              <div class="card-image-wrapper">
+                {m.image ? (
+                  <img
+                    src={m.image}
+                    alt={m.name}
+                    class="card-image"
+                    loading="lazy"
+                    onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace('https://img.acceso.design','https://events.acceso.design').replace('http://img.acceso.design','https://events.acceso.design');}"
+                  />
+                ) : (
+                  <div class="image-placeholder with-pin"></div>
+                )}
+              </div>
+              <h3 class="card-name">{m.name}</h3>
+              <p class="card-location">{m.city || ''}{m.country ? ` - ${m.country}` : ''}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-events">
+      <div class="section-inner">
+        <div class="section-head">
+          <h2 class="section-title">Awards</h2>
+          <a class="link-pill" href="/events/awards">
+            See awards
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="cards-grid">
+          {awards.map((a: any) => (
+            <a href={`/events/awards/${a.slug}`} class="simple-card">
+              <div class="card-image-wrapper">
+                {a.image ? (
+                  <img
+                    src={a.image}
+                    alt={a.name}
+                    class="card-image"
+                    loading="lazy"
+                    onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src=this.src.replace('https://img.acceso.design','https://events.acceso.design').replace('http://img.acceso.design','https://events.acceso.design');}"
+                  />
+                ) : (
+                  <div class="image-placeholder with-pin"></div>
+                )}
+              </div>
+              <h3 class="card-name">{a.name}</h3>
+              <p class="card-location">{a.city || ''}{a.country ? ` - ${a.country}` : ''}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-cta">
+      <div class="section-inner">
+        <div class="cta-grid cta-grid-single">
+          <div class="cta-card cta-inline cta-login">
+            <div class="cta-copy">
+              <div class="cta-title">Save what you love</div>
+              <div class="cta-sub">Log in to save images, designers, and your moodboards.</div>
+            </div>
+            <a class="cta-action" href="/login">Log in</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</PostHogLayout>
+
+<style>
+  .landing {
+    position: relative;
+    min-height: 100vh;
+    color: var(--color-white);
+    background: #0b0d0f;
+    overflow: hidden;
+    padding-bottom: 120px;
+  }
+
+  .bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bg-noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+  .gridlines {
+    position: absolute;
+    inset: -2px;
+    background: transparent;
+    opacity: 0.45;
+  }
+  .orb { display: none; }
+  .orb-a { display: none; }
+  .orb-b { display: none; }
+  .orb-c { display: none; }
+
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: var(--page-top-spacing) 0 36px;
+  }
+  .hero-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .hero-kicker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pill {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 12px;
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+  }
+
+  .hero-title {
+    font-family: var(--font-mono);
+    font-size: clamp(48px, 5vw, 80px);
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.05em;
+    margin: 0 0 18px;
+  }
+
+  .hero-sub {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.62);
+    margin: 0 0 26px;
+    max-width: 52ch;
+  }
+
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 26px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 14px;
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 15px;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  }
+  .btn:hover { color: inherit; }
+  .btn-primary {
+    background: #ffffff;
+    color: #0b0d0f;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .btn-primary:hover {
+    background: #f3f4f6;
+    border-color: #f3f4f6;
+    color: #0b0d0f !important;
+  }
+  .btn-ghost {
+    background: rgba(255,255,255,0.06);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.10);
+    backdrop-filter: blur(10px);
+  }
+  .btn-ghost:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.16);
+  }
+
+  .hero-stats { display: none; }
+  .stat {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 14px 16px;
+    backdrop-filter: blur(10px);
+  }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+  .stat-label {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    margin-top: 4px;
+  }
+
+  /* Hero Section styles */
+  .hero-quick-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    height: 100%;
+    align-items: stretch;
+  }
+
+  .quick-nav-card {
+    position: relative;
+    height: 100%;
+    min-height: 480px;
+    background: #0F1113;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .quick-nav-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(255,255,255,0.15);
+    background: #191B1D;
+  }
+
+  .quick-nav-card .card-image-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .quick-nav-card .card-image-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .quick-nav-card:hover .card-image-bg img {
+    transform: scale(1.08);
+  }
+
+  .quick-nav-card .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, #0F1113 0%, rgba(15, 17, 19, 0.8) 40%, rgba(15, 17, 19, 0.2) 100%);
+    z-index: 1;
+  }
+
+  .quick-nav-card .card-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(237, 254, 68, 0.05), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 2;
+  }
+
+  .quick-nav-card:hover .card-bg {
+    opacity: 1;
+  }
+
+  .quick-nav-card .card-content {
+    position: relative;
+    z-index: 3;
+    height: 100%;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .quick-nav-card .card-title {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0 0 12px;
+    letter-spacing: -0.02em;
+  }
+
+  .quick-nav-card .card-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .quick-nav-card .card-link svg {
+    transition: transform 0.2s ease;
+  }
+
+  .quick-nav-card:hover .card-link svg {
+    transform: translateX(4px);
+  }
+
+  .highlight-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    border: 1px solid rgba(237, 254, 68, 0);
+    transition: border-color 0.3s ease;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .quick-nav-card:hover .highlight-border {
+    border-color: rgba(237, 254, 68, 0.3);
+  }
+
+  @media (max-width: 1024px) {
+    .quick-nav-card .card-title { font-size: 20px; }
+  }
+
+  @media (max-width: 860px) {
+    .hero-inner {
+      grid-template-columns: 1fr;
+    }
+    .hero-quick-nav {
+      display: none;
+    }
+  }
+
+  .section { position: relative; z-index: 1; padding: 46px 0; }
+  .section-inner { max-width: 1600px; margin: 0 auto; padding: 0 40px; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+  .section-title { font-family: var(--font-mono); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+  .section-sub { font-family: var(--font-sans); font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.55); margin: 0; }
+
+  .link-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    backdrop-filter: blur(10px);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .link-pill:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.18);
+    color: #fff;
+  }
+
+  .explore-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .explore-card {
+    text-decoration: none;
+    color: #fff;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px;
+    padding: 22px;
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    overflow: hidden;
+    position: relative;
+  }
+  .explore-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .explore-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); }
+  .explore-card.highlight::after {
+    background: transparent;
+  }
+  .ec-title { position: relative; z-index: 1; font-family: var(--font-mono); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
+  .ec-sub { position: relative; z-index: 1; font-family: var(--font-sans); font-weight: 500; font-size: 13px; color: rgba(255,255,255,0.58); margin-top: 8px; max-width: 34ch; }
+  .ec-cta { position: relative; z-index: 1; font-family: var(--font-sans); font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.65); margin-top: 20px; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .card {
+    text-decoration: none;
+    color: #fff;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px;
+    overflow: hidden;
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+  }
+  .card:hover { transform: translateY(-6px); background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); }
+  .card-img { aspect-ratio: 4 / 3; background: rgba(255,255,255,0.05); }
+  .card-img-el { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-ph { width: 100%; height: 100%; background: rgba(255,255,255,0.08); }
+  .card-bottom { padding: 14px 14px 16px; }
+  .card-name { font-family: var(--font-sans); font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+  .card-loc { font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.55); margin-top: 6px; }
+
+  /* Landing: simple card grid (matches your previous "recently added" style) */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 14px;
+  }
+
+  .simple-card {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.18s ease, filter 0.18s ease;
+  }
+
+  .simple-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .card-image-wrapper {
+    aspect-ratio: 4 / 3;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.04);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: saturate(1.02) contrast(1.02);
+    transform: scale(1.001);
+  }
+
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .image-placeholder.with-pin::before {
+    content: "";
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+  }
+
+  .image-placeholder.with-pin::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--color-yellow, #edfe44);
+    box-shadow: 0 0 0 6px rgba(237,254,68,0.10), 0 0 30px rgba(237,254,68,0.15);
+    top: 32%;
+  }
+
+  .card-name {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+  }
+
+  .card-location {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    margin: 0;
+  }
+
+  /* CTAs */
+  .section-cta { padding-top: 10px; }
+  .section-cta-top { padding-top: 8px; }
+  .cta-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 16px;
+    margin-top: 6px;
+  }
+  .cta-card {
+    text-decoration: none;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    padding: 22px;
+    overflow: hidden;
+    position: relative;
+  }
+  .cta-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+  }
+  .cta-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .cta-card::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    background: transparent;
+    pointer-events: none;
+  }
+  .cta-title, .cta-sub, .cta-action {
+    position: relative;
+    z-index: 1;
+  }
+  .cta-title {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .cta-sub {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: rgba(255,255,255,0.62);
+    line-height: 1.5;
+    margin-bottom: 0;
+    max-width: 50ch;
+  }
+  .cta-action {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #0b0d0f;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.18);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .cta-action:hover {
+    background: #f3f4f6;
+    border-color: #f3f4f6;
+  }
+
+  .cta-login .cta-action {
+    background: #ffffff;
+    color: #0b0d0f;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .cta-login .cta-action:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.2);
+  }
+  .cta-grid-single {
+    grid-template-columns: 1fr;
+  }
+
+  @media (max-width: 1200px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-showcase { grid-template-columns: 1fr 1fr; }
+    .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .explore-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cta-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 860px) {
+    .hero { padding-top: var(--page-top-spacing); }
+    .hero-inner, .section-inner { padding: 0 20px; }
+    .hero-showcase { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cta-inline {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  @media (max-width: 640px) {
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+</style>

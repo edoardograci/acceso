@@ -1,0 +1,216 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Navbar from '../../../components/Navbar.astro';
+import Footer from '../../../components/Footer.astro';
+import { locationTitle, locationDescription, locationIntro } from '../../../lib/seo/copy';
+import { breadcrumbList, itemList } from '../../../lib/seo/schema';
+
+type Studio = {
+  id: string;
+  slug: string;
+  name: string;
+  city?: string | null;
+  city_slug?: string | null;
+  country_slug?: string | null;
+  cover?: string | null;
+};
+
+type City = { slug: string; name: string; country?: string };
+type Country = { slug: string; name: string };
+
+const { place } = Astro.params;
+
+const isDev = import.meta.env.DEV;
+const origin = Astro.url.origin;
+const dataOrigin = isDev ? 'https://json.acceso.design' : origin;
+const imageOrigin = isDev ? 'https://img.acceso.design' : `${origin}/cdn`;
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const u = new URL(path, dataOrigin).toString();
+  const r = await fetch(u);
+  if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`);
+  return (await r.json()) as T;
+}
+
+let cities: City[] = [];
+let countries: Country[] = [];
+let studios: Studio[] = [];
+let mode: 'city' | 'country' | 'unknown' = 'unknown';
+let cityName: string | null = null;
+let countryName: string | null = null;
+let totalStudios: number | null = null;
+
+try {
+  [cities, countries] = await Promise.all([
+    fetchJson<City[]>('/cdn/test-cities.json'),
+    fetchJson<Country[]>('/cdn/test-countries.json'),
+  ]);
+} catch {
+  cities = [];
+  countries = [];
+}
+
+const city = cities.find((c) => c.slug === place) ?? null;
+const country = countries.find((c) => c.slug === place) ?? null;
+
+if (city) {
+  mode = 'city';
+  cityName = city.name;
+  // Find country display name if possible (test-cities uses country slug)
+  const c = countries.find((x) => x.slug === (city.country ?? '')) ?? null;
+  countryName = c?.name ?? null;
+  try {
+    const page1 = await fetchJson<Studio[]>(`/cdn/studios/city/${encodeURIComponent(place)}/page-1.json`);
+    studios = Array.isArray(page1) ? page1 : [];
+  } catch {
+    studios = [];
+  }
+} else if (country) {
+  mode = 'country';
+  countryName = country.name;
+  try {
+    const page1 = await fetchJson<Studio[]>(`/cdn/studios/country/${encodeURIComponent(place)}/page-1.json`);
+    studios = Array.isArray(page1) ? page1 : [];
+  } catch {
+    studios = [];
+  }
+} else {
+  return Astro.redirect('/404');
+}
+
+// Best-effort counts from metadata.json (if present)
+try {
+  const meta = await fetchJson<any>('/cdn/metadata.json');
+  if (mode === 'city') totalStudios = meta?.cities?.[place]?.total ?? null;
+  if (mode === 'country') totalStudios = meta?.countries?.[place]?.total ?? null;
+} catch {
+  totalStudios = null;
+}
+
+// Normalize images (avoid mixed host duplicates)
+studios = studios.map((s) => {
+  const cover = s.cover;
+  const normalizedCover =
+    cover && typeof cover === 'string' && !cover.startsWith('http') && !cover.startsWith('/')
+      ? `${imageOrigin}/${cover}`
+      : cover;
+  return { ...s, cover: normalizedCover };
+});
+
+const where =
+  mode === 'city'
+    ? { cityName: cityName!, countryName, totalStudios, exampleStudios: studios.slice(0, 6).map((s) => s.name) }
+    : { cityName: countryName!, countryName: null, totalStudios, exampleStudios: studios.slice(0, 6).map((s) => s.name) };
+
+const pageTitle = locationTitle(where);
+const pageDesc = locationDescription(where);
+const { paragraphs, h2s } = locationIntro(where);
+
+const canonical = new URL(`/designers/in/${place}`, Astro.site);
+
+const crumbs =
+  mode === 'city'
+    ? [
+        { name: 'Home', url: new URL('/', Astro.site).toString() },
+        { name: 'Designers', url: new URL('/designers', Astro.site).toString() },
+        { name: `Design studios in ${cityName}`, url: canonical.toString() },
+      ]
+    : [
+        { name: 'Home', url: new URL('/', Astro.site).toString() },
+        { name: 'Designers', url: new URL('/designers', Astro.site).toString() },
+        { name: `Design studios in ${countryName}`, url: canonical.toString() },
+      ];
+
+const listSchema = itemList({
+  url: canonical.toString(),
+  name: mode === 'city' ? `Studios in ${cityName}${countryName ? `, ${countryName}` : ''}` : `Studios in ${countryName}`,
+  items: studios.slice(0, 50).map((s) => ({
+    name: s.name,
+    url: new URL(`/designers/${encodeURIComponent(s.slug)}`, Astro.site).toString(),
+  })),
+});
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [breadcrumbList(crumbs), listSchema],
+};
+---
+
+<Layout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
+  <Navbar />
+
+  <main class="bg-black">
+    <section class="max-w-[1600px] mx-auto px-10 pt-14 pb-10">
+      <header class="max-w-[80ch]">
+        <h1 class="font-mono text-white font-extrabold tracking-[-0.04em] leading-[0.98] text-[clamp(36px,4.2vw,68px)]">
+          {mode === 'city'
+            ? <>Design studios in <span class="text-yellow">{cityName}</span>{countryName ? <> <span class="text-gray">({countryName})</span></> : null}</>
+            : <>Design studios in <span class="text-yellow">{countryName}</span></>}
+        </h1>
+        <p class="font-sans text-[15px] leading-[1.6] text-gray mt-5">
+          {pageDesc}
+        </p>
+      </header>
+
+      <div class="mt-10 max-w-[85ch] space-y-4">
+        {paragraphs.map((p) => (
+          <p class="font-sans text-[15px] leading-[1.7] text-[rgba(255,255,255,0.75)]">{p}</p>
+        ))}
+      </div>
+    </section>
+
+    <section class="max-w-[1600px] mx-auto px-10 pb-14">
+      <h2 class="font-mono text-white font-extrabold tracking-[-0.03em] text-[26px] mb-5">{h2s[0] ?? 'Studios'}</h2>
+      {studios.length === 0 ? (
+        <div class="py-10 text-gray font-sans">No studios found for this location yet.</div>
+      ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {studios.slice(0, 60).map((s) => (
+            <a
+              href={`/designers/${s.slug}`}
+              class="block rounded-2xl bg-[#111315] border border-white/5 overflow-hidden no-underline hover:-translate-y-1 transition-transform duration-200"
+            >
+              <div class="p-6 flex items-center gap-4">
+                <div class="w-14 h-14 rounded-xl bg-[#1C1E20] overflow-hidden flex-shrink-0">
+                  {s.cover ? (
+                    <img src={s.cover} alt={s.name} loading="lazy" class="w-full h-full object-cover" />
+                  ) : (
+                    <div class="w-full h-full bg-[#1C1E20]" />
+                  )}
+                </div>
+                <div class="min-w-0">
+                  <div class="font-mono text-white font-bold text-[18px] leading-[1.15] truncate">{s.name}</div>
+                  <div class="font-sans text-gray text-[13px] mt-1 truncate">
+                    {s.city ?? ''}{s.city && s.country_slug ? ' · ' : ''}{s.country_slug ?? ''}
+                  </div>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </section>
+
+    <section class="max-w-[1600px] mx-auto px-10 pb-24">
+      <h2 class="font-mono text-white font-extrabold tracking-[-0.03em] text-[26px] mb-5">{h2s[1] ?? 'Related locations'}</h2>
+      <div class="flex flex-wrap gap-2">
+        {mode === 'city' && countryName ? (
+          <a href={`/designers/in/${place}`} class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
+            {cityName}
+          </a>
+        ) : null}
+        {mode === 'city' && city?.country ? (
+          <a href={`/designers/in/${city.country}`} class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
+            {countryName ?? city.country}
+          </a>
+        ) : null}
+        <a href="/designers" class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
+          All designers
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+

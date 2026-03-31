@@ -1,0 +1,203 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  r2_key: string;
+  position: number;
+  created_at: string;
+}
+
+interface MoodboardItem {
+  id: string;
+  slug: string;
+  name: string;
+  designer: string | null;
+  year: string | null;
+  client: string | null;
+  link: string | null;
+  city: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  images: ProductImage[];
+  cover: string | null;
+}
+
+// Fetch from Live R2 JSON
+let moodboardItems: MoodboardItem[] = [];
+let error = null;
+
+try {
+  const moodboardUrl = new URL('/cdn/moodboard.json', Astro.url.origin).toString();
+  const response = await fetch(moodboardUrl);
+  if (!response.ok) throw new Error('CDN Proxy Not Ready');
+  moodboardItems = await response.json();
+} catch (e) {
+  error = e;
+}
+---
+
+<Layout 
+    title="Projects - Design References | Acceso"
+    description="A curated gallery of industrial design projects and product photography."
+  >
+    <Navbar />
+    
+    <main class="projects-page">
+      <div class="projects-container">
+        <!-- Header copied style from discover -->
+        <header class="projects-header">
+          <h1 class="hero-title">Selected Industrial <br/>Design Projects</h1>
+          <p class="hero-description">
+            A curated collection of design objects and experiments<br/>
+            from our community of independent studios.
+          </p>
+        </header>
+
+        {error ? (
+          <div class="py-20 text-center text-gray">
+            <p>Failed to load projects. Please try again later.</p>
+          </div>
+        ) : (
+          <div class="projects-grid" id="projects-grid">
+            {moodboardItems.map(item => (
+              item.cover && (
+                <a 
+                  href={`/projects/${item.slug}`} 
+                  class="project-item group relative block overflow-hidden no-underline bg-bg-secondary transition-transform duration-200 break-inside-avoid mb-4 hover:-translate-y-1"
+                >
+                  <img 
+                    src={item.cover} 
+                    alt={item.name}
+                    class="w-full h-auto block object-cover"
+                    loading="lazy"
+                  />
+                  <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    <h3 class="font-sans text-lg font-medium mb-1 text-white">{item.name}</h3>
+                    {item.designer && <p class="font-sans text-sm text-gray">{item.designer}</p>}
+                  </div>
+                </a>
+              )
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
+
+    <Footer />
+  </Layout>
+
+  <style>
+    .projects-page {
+      background: var(--color-black);
+      min-height: 100vh;
+      padding-top: var(--page-top-spacing);
+    }
+
+    .projects-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    .projects-header {
+      margin-bottom: 60px;
+    }
+
+    .hero-title {
+      font-family: var(--font-mono);
+      font-size: 64px;
+      font-weight: 700;
+      line-height: 1.05;
+      margin-bottom: 24px;
+      letter-spacing: -0.04em;
+      color: var(--color-white);
+    }
+
+    .hero-description {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      color: var(--color-gray);
+      line-height: 1.5;
+    }
+
+    .projects-grid {
+      columns: 2;
+      column-gap: 16px;
+      padding-bottom: 80px;
+    }
+
+    .project-item {
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* ── Tablet: 641px – 1024px ────────────────────────────── */
+    @media (min-width: 768px) {
+      .projects-grid {
+        columns: 3;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .projects-grid {
+        columns: 4;
+      }
+    }
+
+    /* ── Intermediate: 1025px – 1279px ────────────────────────── */
+    @media (max-width: 1279px) and (min-width: 1025px) {
+      .projects-container {
+        padding: 0 24px;
+      }
+      .hero-title {
+        font-size: 56px;
+      }
+    }
+
+    /* ── Mobile ≤ 768px ────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .projects-container {
+        padding: 0 16px;
+      }
+      .projects-header {
+        margin-bottom: 40px;
+      }
+      .hero-title {
+        /* Fluid scaling: 32px at 320px viewport → 48px at 768px */
+        font-size: clamp(32px, 8vw, 48px);
+        margin-bottom: 16px;
+      }
+      .hero-description {
+        font-size: 14px;
+      }
+      /* 2 columns on mobile portrait */
+      .projects-grid {
+        columns: 2;
+        column-gap: 10px;
+      }
+      .project-item {
+        margin-bottom: 8px;
+      }
+    }
+
+    /* ── Small mobile ≤ 480px ────────────────────────────────── */
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: clamp(28px, 7.5vw, 36px);
+      }
+      /* Suppress line-breaks in hero title on small screens */
+      .hero-title br {
+        display: none;
+      }
+      /* Keep minimum 2 columns */
+      .projects-grid {
+        columns: 2;
+      }
+    }
+  </style>

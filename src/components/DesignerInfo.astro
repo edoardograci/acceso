@@ -1,0 +1,68 @@
+---
+import type { Studio } from '../lib/types';
+
+interface Props {
+  studio: Studio;
+}
+
+const { studio } = Astro.props;
+---
+
+<div class="pt-6">
+  {studio.name && (
+    <div class="mb-6">
+      <div class="font-mono text-sm font-light tracking-[0.56px] text-white mb-1">Name</div>
+      <div class="font-sans text-base font-[450] leading-[1.4] underline">{studio.name}</div>
+    </div>
+  )}
+
+  {studio.city && (
+    <div class="mb-6">
+      <div class="font-mono text-sm font-light tracking-[0.56px] text-white mb-1">Location</div>
+      <a href="/designers" class="font-sans text-base font-[450] leading-[1.4] underline inline hover:no-underline">
+        {studio.city}
+      </a>
+    </div>
+  )}
+
+  {studio.address && (
+    <div class="mb-6">
+      <div class="font-mono text-sm font-light tracking-[0.56px] text-white mb-1">Address</div>
+      <a href={`/map?studio=${studio.slug}`} class="font-sans text-base font-[450] leading-[1.4] underline inline hover:no-underline">
+        {studio.address}
+      </a>
+    </div>
+  )}
+
+  {(studio.email || studio.email2) && (
+    <div class="mb-6">
+      <div class="font-mono text-sm font-light tracking-[0.56px] text-white mb-1">Email</div>
+      <div class="font-sans text-base font-[450] leading-[1.4] underline">
+        {studio.email && (
+          <a href={`mailto:${studio.email}`} rel="nofollow" class="inline hover:no-underline">{studio.email}</a>
+        )}
+        {studio.email2 && (
+          <>
+            <br />
+            <a href={`mailto:${studio.email2}`} rel="nofollow" class="inline hover:no-underline">{studio.email2}</a>
+          </>
+        )}
+      </div>
+    </div>
+  )}
+
+  <div class="flex gap-3 mt-8">
+    {studio.website && (
+      <a href={studio.website} target="_blank" rel="noopener noreferrer" class="btn-pill inline-flex gap-2">
+        <img src="/icons/source.svg" alt="" class="h-3.5 w-auto" />
+        Source
+      </a>
+    )}
+    {studio.instagram && (
+      <a href={studio.instagram} target="_blank" rel="noopener noreferrer" class="btn-pill inline-flex gap-2">
+        <img src="/icons/instagram.svg" alt="" class="h-3.5 w-auto" />
+        Instagram
+      </a>
+    )}
+  </div>
+</div>

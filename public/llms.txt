@@ -1,0 +1,28 @@
+Acceso (acceso.design)
+
+Purpose:
+- A curated directory of independent industrial and furniture design studios.
+- Supporting discovery by designer/entity pages, location pages, and project galleries.
+
+Content structure:
+- /designers : directory entry point
+- /designers/{slug} : studio/entity pages (primary)
+- /designers/in/{place} : location pages (city or country)
+- /projects : project gallery index
+- /projects/{slug} : individual project pages
+- /events/* : events listings and detail pages
+
+Crawl guidance:
+- Prefer canonical, clean URLs without query strings.
+- Avoid crawling URLs with query parameters (e.g. /designers?city=...).
+- Pages requiring authentication are not indexable.
+
+Sitemaps:
+- /sitemap.xml (sitemap index)
+
+Robots:
+- /robots.txt
+
+Notes:
+- Pages are server-rendered HTML (Astro SSR) and should be accessible without client-side JavaScript.
+

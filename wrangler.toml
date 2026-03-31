@@ -1,0 +1,27 @@
+# wrangler.toml
+name = "acceso"
+compatibility_date = "2024-12-10"
+pages_build_output_dir = "dist"
+
+[vars]
+TURSO_DATABASE_URL = "libsql://acceso-edoardograci.aws-eu-west-1.turso.io"
+GOOGLE_CLIENT_ID = "166684899952-6je6cp48ohlv8d8gkg01vaigobnt2tm0.apps.googleusercontent.com"
+PUBLIC_SITE_URL = "https://acceso.design"
+PUBLIC_POSTHOG_KEY = "phc_WQx9M4lXjH8NfAcZNSj6XBYOpL4ytt4PyzTCsnVRDfY"
+
+
+
+[[r2_buckets]]
+binding = "INDEX_BUCKET"
+bucket_name = "index"
+preview_bucket_name = "index-preview"
+
+[[r2_buckets]]
+binding = "MOODBOARD_BUCKET"
+bucket_name = "moodboard"
+preview_bucket_name = "moodboard-preview"
+
+[[r2_buckets]]
+binding = "JSON_BUCKET"
+bucket_name = "json"
+preview_bucket_name = "json-preview"

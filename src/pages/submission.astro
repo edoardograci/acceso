@@ -1,0 +1,856 @@
+---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const user = Astro.locals.user;
+
+// Redirect to login if user is not authenticated
+if (!user) {
+  return Astro.redirect('/login?redirect=/submission');
+}
+---
+
+<PostHogLayout 
+  title="Submission - Acceso"
+  description="Submit your studio to Acceso. One-time payment. Permanent presence."
+>
+  <Layout title="Submission - Acceso">
+    <Navbar />
+    
+    <main class="submission-page">
+      {/* Background Atmosphere */}
+      <div class="mesh-canvas">
+        <div class="noise-grain"></div>
+      </div>
+      
+      <div class="form-outer-container">
+        <!-- Visual Progress Path -->
+        <div class="step-path-container">
+          <div class="step-nodes" id="step-track">
+            <!-- Progress Fill (handled via JS for the yellow part) -->
+            <div class="step-line-progress" id="progress-line" style="width: 0%;"></div>
+            
+            <div class="step-node active" data-step="1">
+              <div class="node-circle">1</div>
+              <span class="node-label">Info</span>
+            </div>
+            <div class="step-node" data-step="2">
+              <div class="node-circle">2</div>
+              <span class="node-label">Details</span>
+            </div>
+            <div class="step-node" data-step="3">
+              <div class="node-circle">3</div>
+              <span class="node-label">Review</span>
+            </div>
+          </div>
+        </div>
+
+        <form id="multi-step-form" class="submission-form">
+          <!-- STEP 1: STUDIO INFO -->
+          <div class="form-step active" data-step="1">
+            <div class="step-header">
+              <h1>Studio Info</h1>
+              <p>Basic details to identify your practice.</p>
+            </div>
+            
+            <div class="fields-grid split">
+              <div class="input-group">
+                <label>Studio Name</label>
+                <input type="text" name="name" required placeholder="Name" />
+              </div>
+              <div class="input-group">
+                <label>Website</label>
+                <input type="url" name="website" required placeholder="https://..." />
+              </div>
+            </div>
+
+            <div class="fields-grid split">
+              <div class="input-group">
+                <label>City</label>
+                <input type="text" name="city" required placeholder="e.g. Milan" />
+              </div>
+              <div class="input-group">
+                <label>Country</label>
+                <input type="text" name="country" required placeholder="e.g. Italy" />
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label>Full Address <span class="opt">(Optional)</span></label>
+              <input type="text" name="address" placeholder="e.g. Via Tortona 31, 20144 Milan" />
+              <p class="field-help">Note: If you don't provide an address, your studio won't be displayed on our map.</p>
+            </div>
+
+            <div class="input-group">
+              <label>Instagram <span class="opt">(optional)</span></label>
+              <input type="text" name="instagram" placeholder="@studio" />
+            </div>
+
+            <div class="step-actions">
+              <button type="button" class="btn-continue" data-next="2">
+                Continue
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: DETAILS -->
+          <div class="form-step" data-step="2">
+            <div class="step-header">
+              <h1>Details</h1>
+              <p>Add context and visual personality.</p>
+            </div>
+
+            <div class="input-group">
+              <label>Description</label>
+              <textarea name="description" rows="5" maxlength="1200" required placeholder="Tell us about the studio..."></textarea>
+              <p class="field-help"><span id="desc-count">0</span>/1200 characters</p>
+            </div>
+
+            <div class="input-group">
+              <label>Cover Image <span class="opt">(Max 1MB: PNG, JPG, WEBP)</span></label>
+              <div class="upload-zone" id="upload-zone">
+                <input type="file" id="cover-upload" name="cover_file" accept=".png, .jpg, .jpeg, .webp" hidden />
+                <div class="upload-ui" id="upload-ui">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" /></svg>
+                  <span>Click to upload image</span>
+                </div>
+                <div class="upload-preview hidden" id="upload-preview">
+                  <div class="preview-thumb"></div>
+                  <div class="preview-info">
+                    <span class="file-name">filename.jpg</span>
+                    <button type="button" class="btn-remove-file">Remove</button>
+                  </div>
+                </div>
+              </div>
+              <div id="upload-error" class="error-msg hidden">File is too large (max 1MB) or invalid format.</div>
+            </div>
+
+            <div class="step-actions split">
+              <button type="button" class="btn-back" data-prev="1">Back</button>
+              <button type="button" class="btn-continue" data-next="3" id="build-review">
+                Continue
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 3: REVIEW & PAYMENT -->
+          <div class="form-step" data-step="3">
+            <div class="step-header">
+              <h1>Review & Payment</h1>
+              <p>Verify your information before proceeding to payment.</p>
+            </div>
+
+            <div class="review-preview-card">
+              <div class="preview-label">Preview of your listing</div>
+              <div class="listing-mockup" id="listing-preview">
+                <div class="mockup-img-placeholder"></div>
+                <div class="mockup-content">
+                  <div class="mockup-title">Studio Name</div>
+                  <div class="mockup-meta">City, Country</div>
+                  <div class="mockup-desc">Description will appear here...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="payment-block-card">
+              <div class="payment-info">
+                <div class="payment-row">
+                  <span class="p-label">One-time payment</span>
+                  <span class="p-value">€120</span>
+                </div>
+                <div class="payment-perks">
+                  <div class="perk">✦ Permanent listing on Acceso</div>
+                  <div class="perk">✦ No recurring fees</div>
+                </div>
+              </div>
+
+              <div class="input-group">
+                <label style="text-align: center;">Contact Email</label>
+                <input type="email" name="contact_email" required placeholder="your@email.com" />
+                <p class="field-help" style="text-align: center;">We'll send the review result and payment link here.</p>
+              </div>
+
+              <div class="payment-notice">
+                Your submission will be reviewed. It may take up to 24 hours to see your studio online.
+              </div>
+
+              <!-- Captcha Gate (anti-spam) -->
+              <div class="captcha-block">
+                <input type="hidden" name="captcha_token" id="captcha-token" />
+                <div
+                  id="turnstile-container"
+                  class="turnstile-container"
+                  data-sitekey={import.meta.env.TURNSTILE_SITE_KEY || ''}
+                ></div>
+                <p class="captcha-error hidden" id="captcha-error">Please complete the captcha.</p>
+                {!import.meta.env.TURNSTILE_SITE_KEY && (
+                  <p class="captcha-hint">
+                    Captcha is not configured. Set <code>TURNSTILE_SITE_KEY</code> and <code>TURNSTILE_SECRET_KEY</code>.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div class="step-actions split">
+              <button type="button" class="btn-back" data-prev="2">Back</button>
+              <button type="submit" class="btn-continue final-cta">
+                Submit for Review
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 4: SUCCESS -->
+          <div class="form-step" data-step="4">
+            <div class="success-screen">
+              <div class="success-icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--color-yellow)" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+              </div>
+              <h1 class="success-title">Submission Received</h1>
+              <p class="success-p">Thank you! We've received your data. Our team will review it and send a payment link to your email within 24 hours.</p>
+              
+              <div class="success-actions">
+                <a href="/" class="btn-continue">
+                  Go to Homepage
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <svg style="display: none;">
+        <filter id="grainyNoise">
+          <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+      </svg>
+    </main>
+
+    <Footer />
+  </Layout>
+
+  <style>
+    .submission-page {
+      background: #0F1113;
+      color: #FFFFFF;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      font-family: var(--font-sans);
+    }
+
+    /* Consistent Background */
+    .mesh-canvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background: #0F1113;
+      background-image: 
+        linear-gradient(to top, #0F1113 0%, transparent 40%),
+        radial-gradient(
+          ellipse 150% 160% at 50% 165%,
+          #F3E8FF 0%,
+          rgba(243, 232, 255, 0.4) 30%,
+          rgba(243, 232, 255, 0.1) 60%,
+          transparent 90%
+        );
+    }
+    .noise-grain { position: absolute; inset: 0; opacity: 0.02; filter: url(#grainyNoise); mix-blend-mode: overlay; }
+
+    .form-outer-container {
+      position: relative;
+      z-index: 10;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: var(--page-top-spacing) 24px 140px;
+    }
+
+    /* VISUAL STEP PATH - INVINCIBLE VERSION */
+    .step-path-container {
+      position: relative;
+      margin-bottom: 64px;
+      padding: 0 20px;
+    }
+    
+    .step-nodes { 
+      position: relative; 
+      z-index: 10; 
+      display: flex; 
+      justify-content: space-between; 
+      width: 100%;
+    }
+
+    /* THE BACKGROUND LINE: now a pseudo-element of the node container itself */
+    /* This ensures it EXACTLY matching the bounds of Node 1 center to Node 3 center */
+    .step-nodes::before {
+      content: "";
+      position: absolute;
+      top: 20px;
+      left: 21px; /* Center of first node circle */
+      right: 21px; /* Center of last node circle */
+      height: 2px;
+      background: rgba(255,255,255,0.08);
+      z-index: -1; /* Behind circles */
+    }
+
+    .step-line-progress { 
+      position: absolute; 
+      top: 20px; 
+      left: 21px; 
+      /* width is handled by JS but will be relative to this container now */
+      height: 2px; 
+      background: var(--color-yellow); 
+      z-index: 0; /* Above bg line, behind nodes */
+      transition: width 0.5s ease; 
+    }
+    
+    .step-node { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      gap: 12px; 
+      width: 42px; /* Fixed width prevents label overflow from shifting circle position */
+      flex-shrink: 0;
+      position: relative;
+    }
+    
+    .node-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #1A1D20;
+      border: 2px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.3);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .node-label { 
+      font-size: 11px; 
+      font-weight: 800; 
+      text-transform: uppercase; 
+      color: rgba(255,255,255,0.3); 
+      letter-spacing: 0.1em; 
+      white-space: nowrap; 
+      position: absolute;
+      top: 54px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .step-node.active .node-circle { border-color: var(--color-yellow); background: var(--color-yellow); color: #000; transform: scale(1.1); box-shadow: 0 0 20px rgba(237, 254, 68, 0.3); }
+    .step-node.active .node-label { color: #FFF; }
+    .step-node.completed .node-circle { border-color: var(--color-yellow); background: #1A1D20; color: var(--color-yellow); }
+
+    /* FORM STEPS */
+    .form-step { display: none; flex-direction: column; gap: 40px; }
+    .form-step.active { display: flex; animation: stepFadeIn 0.5s ease-out; }
+
+    @keyframes stepFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-header h1 { font-family: var(--font-mono); font-size: 40px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.04em; }
+    .step-header p { color: rgba(255,255,255,0.6); font-size: 16px; }
+
+    .fields-grid { display: flex; flex-direction: column; gap: 24px; }
+    .fields-grid.split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .input-group { display: flex; flex-direction: column; gap: 10px; }
+    .input-group label { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; }
+    .input-group label .opt { font-weight: 400; text-transform: lowercase; }
+    
+    .input-group input, .input-group textarea {
+      background: #121417;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px 20px;
+      color: #FFF;
+      font-size: 16px;
+      font-family: var(--font-sans);
+      transition: all 0.3s ease;
+    }
+    .input-group input:focus, .input-group textarea:focus { border-color: var(--color-yellow); outline: none; background: #1A1D20; }
+    
+    .field-help {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-top: -2px;
+      line-height: 1.4;
+    }
+
+    /* UPLOAD ZONE */
+    .upload-zone {
+      position: relative;
+      background: #121417;
+      border: 2px dashed rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-zone:hover { border-color: var(--color-yellow); background: #1A1D20; }
+    
+    .upload-ui { display: flex; flex-direction: column; align-items: center; gap: 12px; color: rgba(255,255,255,0.5); }
+    .upload-ui svg { color: var(--color-yellow); }
+    .upload-ui span { font-weight: 600; font-size: 14px; }
+
+    .upload-preview { display: flex; align-items: center; gap: 16px; text-align: left; }
+    .preview-thumb { width: 64px; height: 64px; border-radius: 8px; background-size: cover; background-position: center; flex-shrink: 0; }
+    .preview-info { flex: 1; min-width: 0; }
+    .file-name { display: block; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
+    .btn-remove-file { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--color-error); background: transparent; border: none; cursor: pointer; padding: 0; }
+
+    .error-msg { font-size: 13px; color: var(--color-error); font-weight: 600; margin-top: 4px; }
+
+    .step-actions { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
+    .step-actions.split { justify-content: space-between; }
+
+    .btn-continue {
+      height: 52px;
+      padding: 0 32px;
+      background: #FFFFFF;
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .btn-continue:hover { background: var(--color-yellow); }
+
+    .btn-back {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.5);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 10px 0;
+      border-bottom: 1px solid transparent;
+      transition: all 0.3s;
+    }
+    .btn-back:hover { color: #FFF; border-color: #FFF; }
+
+    .review-preview-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 24px;
+    }
+    .preview-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); margin-bottom: 20px; }
+    
+    .listing-mockup {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      background: #111315;
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .mockup-img-placeholder { width: 80px; height: 80px; background: #1C1E20; border-radius: 12px; flex-shrink: 0; background-size: cover; background-position: center; }
+    .mockup-content { flex: 1; }
+    .mockup-title { font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+    .mockup-meta { font-size: 13px; color: var(--color-yellow); margin-bottom: 8px; font-weight: 600; }
+    .mockup-desc { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .payment-block-card {
+      background: rgba(243, 232, 255, 0.04);
+      border: 1px solid rgba(243, 232, 255, 0.1);
+      border-radius: 20px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .payment-row { display: flex; justify-content: space-between; align-items: baseline; }
+    .payment-row .p-label { font-weight: 700; font-size: 18px; }
+    .payment-row .p-value { font-family: var(--font-sans); font-size: 32px; font-weight: 800; color: #FFF; }
+    
+    .payment-perks { display: flex; flex-direction: column; gap: 8px; }
+    .perk { font-size: 14px; font-weight: 600; color: var(--color-yellow); }
+
+    .payment-notice { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.5); text-align: center; font-style: italic; }
+
+    @media (max-width: 640px) {
+      .fields-grid.split { grid-template-columns: 1fr; }
+      .step-header h1 { font-size: 32px; }
+      .payment-row .p-value { font-size: 24px; }
+    }
+
+    .success-screen {
+      text-align: center;
+      padding: 40px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    .success-icon {
+      background: rgba(237, 254, 68, 0.1);
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      border: 1px solid rgba(237, 254, 68, 0.2);
+    }
+    .success-title { font-family: var(--font-mono); font-size: 36px; font-weight: 700; color: #FFF; }
+    .success-p { color: rgba(255,255,255,0.6); font-size: 18px; line-height: 1.6; max-width: 480px; }
+    .success-actions { margin-top: 20px; }
+
+    .hidden { display: none !important; }
+
+    .captcha-block {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .captcha-error {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-error, #ff6b6b);
+      text-align: center;
+      margin: 0;
+    }
+
+    .turnstile-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      min-height: 65px; /* reserve space so it never "disappears" */
+    }
+
+    .captcha-hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      text-align: center;
+      margin: 0;
+      line-height: 1.4;
+    }
+    .captcha-hint code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+    }
+  </style>
+
+  <!-- Turnstile (explicit render) -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+
+  <script>
+    const steps = document.querySelectorAll('.form-step');
+    const nodes = document.querySelectorAll('.step-node');
+    const progressLine = document.getElementById('progress-line');
+    const form = document.getElementById('multi-step-form') as HTMLFormElement;
+
+    const captchaTokenInput = document.getElementById('captcha-token') as HTMLInputElement | null;
+    const captchaError = document.getElementById('captcha-error') as HTMLElement | null;
+    const turnstileContainer = document.getElementById('turnstile-container') as HTMLElement | null;
+    const turnstileSiteKey = turnstileContainer?.dataset.sitekey || '';
+    let turnstileWidgetId: string | null = null;
+
+    // Turnstile callbacks (referenced by `data-callback` / `data-expired-callback`)
+    (window as any).onTurnstileVerified = (token: string) => {
+      if (captchaTokenInput) captchaTokenInput.value = token;
+      captchaError?.classList.add('hidden');
+    };
+    (window as any).onTurnstileExpired = () => {
+      if (captchaTokenInput) captchaTokenInput.value = '';
+      // Keep error state visible only when the user attempts to submit.
+    };
+    
+    // File Upload Refs
+    const fileInput = document.getElementById('cover-upload') as HTMLInputElement;
+    const uploadZone = document.getElementById('upload-zone');
+    const uploadUI = document.getElementById('upload-ui');
+    const uploadPreview = document.getElementById('upload-preview');
+    const thumb = uploadPreview?.querySelector('.preview-thumb') as HTMLElement;
+    const fileNameDisplay = uploadPreview?.querySelector('.file-name');
+    const removeBtn = uploadPreview?.querySelector('.btn-remove-file');
+    const uploadError = document.getElementById('upload-error');
+
+    let currentStep = 1;
+    let uploadedFile: File | null = null;
+
+    function updateStepUI(step) {
+      currentStep = step;
+      steps.forEach(s => {
+        (s as HTMLElement).classList.remove('active');
+        if ((s as HTMLElement).dataset.step === step.toString()) {
+          (s as HTMLElement).classList.add('active');
+        }
+      });
+
+      // Render Turnstile only when step 3 is visible (it won't render correctly in display:none).
+      if (step === 3) {
+        ensureTurnstileRendered();
+      }
+
+      // Update Path
+      // Now using relative width inside the flex container
+      const totalSteps = 3;
+      const progressPercent = ((step - 1) / (totalSteps - 1)) * 100;
+      
+      if (progressLine) {
+        // Track width is TotalWidth - 42px (radius on both ends)
+        // We set the progress line width based on that ratio
+        progressLine.style.width = `calc(${progressPercent}% - ${(progressPercent/100) * 42}px)`;
+      }
+
+      nodes.forEach((n, idx) => {
+        const nodeStep = idx + 1;
+        n.classList.remove('active', 'completed');
+        if (nodeStep === step) n.classList.add('active');
+        if (nodeStep < step) n.classList.add('completed');
+      });
+
+      window.scrollTo(0, 0);
+    }
+
+    function ensureTurnstileRendered() {
+      if (!turnstileContainer) return;
+      if (!turnstileSiteKey) return;
+      // If a previous attempt failed, allow retry when step 3 is entered again.
+      if (turnstileWidgetId) return;
+
+      const start = Date.now();
+      const tryRender = () => {
+        const t = (window as any).turnstile;
+        if (t && typeof t.render === 'function') {
+          turnstileContainer.innerHTML = '';
+          try {
+            turnstileWidgetId = t.render(turnstileContainer, {
+              sitekey: turnstileSiteKey,
+              theme: 'dark',
+              callback: (token: string) => (window as any).onTurnstileVerified(token),
+              'expired-callback': () => (window as any).onTurnstileExpired(),
+              'error-callback': (err: any) => {
+                // Allow a retry if user stays on step 3.
+                turnstileWidgetId = null;
+                const code =
+                  typeof err === 'string'
+                    ? err
+                    : (err?.code || err?.errorCode || err?.message || null);
+
+                if (captchaError) {
+                  captchaError.textContent = code
+                    ? `Captcha failed to load (${code}). Check Turnstile domain/site configuration and refresh.`
+                    : 'Captcha failed to load. Check Turnstile domain/site configuration and refresh.';
+                  captchaError.classList.remove('hidden');
+                }
+              },
+            });
+          } catch {
+            turnstileWidgetId = null;
+            if (captchaError) {
+              captchaError.textContent = 'Captcha failed to render. Check Turnstile domain/site configuration and refresh.';
+              captchaError.classList.remove('hidden');
+            }
+          }
+          return;
+        }
+
+        if (Date.now() - start > 6000) {
+          // If script is blocked (adblock/CSP), we show a clear message.
+          turnstileWidgetId = null;
+          if (captchaError) {
+            captchaError.textContent = 'Captcha did not load. If this continues, check Turnstile domain/site configuration and ensure requests to challenges.cloudflare.com are allowed.';
+            captchaError.classList.remove('hidden');
+          }
+          return;
+        }
+        requestAnimationFrame(tryRender);
+      };
+
+      requestAnimationFrame(tryRender);
+    }
+
+    // Navigation
+    document.querySelectorAll('.btn-continue[data-next]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const step = (e.currentTarget as HTMLElement).closest('.form-step');
+        if (step) {
+          const stepNumber = Number((step as HTMLElement).dataset.step || '1');
+          const requiredFields = step.querySelectorAll('input[required], textarea[required]');
+          let allValid = true;
+          requiredFields.forEach((field: any) => {
+            if (!field.checkValidity()) {
+              field.reportValidity();
+              allValid = false;
+            }
+          });
+          if (stepNumber === 2 && !uploadedFile) {
+            uploadError?.classList.remove('hidden');
+            if (uploadError) uploadError.textContent = 'Please upload a cover image before continuing.';
+            allValid = false;
+          }
+          if (!allValid) return;
+        }
+
+        const next = (e.currentTarget as HTMLElement).dataset.next;
+        if (next) updateStepUI(parseInt(next));
+      });
+    });
+
+    document.querySelectorAll('.btn-back').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const prev = (e.currentTarget as HTMLElement).dataset.prev;
+        if (prev) updateStepUI(parseInt(prev));
+      });
+    });
+
+    // File Upload Logic
+    uploadZone?.addEventListener('click', () => fileInput?.click());
+
+    fileInput?.addEventListener('change', (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      // Validation
+      const maxSize = 1024 * 1024; // 1MB
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+
+      if (file.size > maxSize || !allowedTypes.includes(file.type)) {
+        uploadError?.classList.remove('hidden');
+        return;
+      }
+
+      uploadError?.classList.add('hidden');
+      if (uploadError) uploadError.textContent = 'File is too large (max 1MB) or invalid format.';
+      uploadedFile = file;
+
+      // UI Switch
+      uploadUI?.classList.add('hidden');
+      uploadPreview?.classList.remove('hidden');
+      if (fileNameDisplay) fileNameDisplay.textContent = file.name;
+
+      const reader = new FileReader();
+      reader.onload = (re) => {
+        if (thumb) thumb.style.backgroundImage = `url(${re.target?.result})`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    removeBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      uploadedFile = null;
+      if (fileInput) fileInput.value = '';
+      uploadUI?.classList.remove('hidden');
+      uploadPreview?.classList.add('hidden');
+    });
+
+    // Preview Logic
+    const buildPreviewBtn = document.getElementById('build-review');
+    buildPreviewBtn?.addEventListener('click', () => {
+      const formData = new FormData(form);
+      const preview = document.getElementById('listing-preview');
+      if (preview) {
+        preview.querySelector('.mockup-title')!.textContent = (formData.get('name') as string) || 'Studio Name';
+        preview.querySelector('.mockup-meta')!.textContent = `${formData.get('city')}, ${formData.get('country')}`;
+        preview.querySelector('.mockup-desc')!.textContent = (formData.get('description') as string) || 'Description will appear here...';
+        
+        const previewIcon = preview.querySelector('.mockup-img-placeholder') as HTMLElement;
+        if (uploadedFile) {
+          const reader = new FileReader();
+          reader.onload = (re) => {
+             previewIcon.style.backgroundImage = `url(${re.target?.result})`;
+          };
+          reader.readAsDataURL(uploadedFile);
+        }
+      }
+    });
+
+    // Final Submission
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const token = captchaTokenInput?.value || '';
+      if (!token) {
+        captchaError?.classList.remove('hidden');
+        return;
+      }
+      captchaError?.classList.add('hidden');
+
+      const descriptionValue = String((new FormData(form).get('description') || '')).trim();
+      if (!uploadedFile) {
+        uploadError?.classList.remove('hidden');
+        uploadError && (uploadError.textContent = 'Please upload a cover image before submitting.');
+        updateStepUI(2);
+        return;
+      }
+      if (!descriptionValue || descriptionValue.length > 1200) {
+        alert('Description is required and must be 1200 characters or fewer.');
+        updateStepUI(2);
+        return;
+      }
+
+      const btn = form.querySelector('.final-cta') as HTMLButtonElement;
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = 'Submitting...';
+      btn.disabled = true;
+
+      (async () => {
+        let uiFailsafeId: number | null = null;
+        try {
+          const payload = new FormData(form);
+          if (uploadedFile) payload.set('cover_file', uploadedFile);
+          uiFailsafeId = window.setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+          }, 65000);
+          const res = await fetch('/api/submissions', {
+            method: 'POST',
+            body: payload,
+            credentials: 'include'
+          });
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(json?.error || 'Submission failed');
+          }
+          updateStepUI(4);
+          const stepsCount = document.querySelector('.step-path-container') as HTMLElement;
+          if (stepsCount) stepsCount.style.opacity = '0';
+        } catch (err: any) {
+          alert(err?.message || 'Submission failed. Please try again.');
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+        } finally {
+          if (uiFailsafeId) window.clearTimeout(uiFailsafeId);
+        }
+      })();
+    });
+
+    const descriptionField = form?.querySelector('textarea[name="description"]') as HTMLTextAreaElement | null;
+    const descCount = document.getElementById('desc-count');
+    const syncDescCount = () => {
+      if (!descriptionField || !descCount) return;
+      descCount.textContent = String(descriptionField.value.length);
+    };
+    descriptionField?.addEventListener('input', syncDescCount);
+    syncDescCount();
+  </script>
+</PostHogLayout>

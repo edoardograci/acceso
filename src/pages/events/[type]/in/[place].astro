@@ -1,0 +1,144 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import Navbar from '../../../../components/Navbar.astro';
+import Footer from '../../../../components/Footer.astro';
+import EventBasicCard from '../../../../components/EventBasicCard.astro';
+import { breadcrumbList, itemList } from '../../../../lib/seo/schema';
+
+const { type, place } = Astro.params;
+const allowed = new Set(['fairs', 'museums', 'awards']);
+if (!type || !allowed.has(type)) return Astro.redirect('/404');
+
+const isDev = import.meta.env.DEV;
+const origin = Astro.url.origin;
+const dataOrigin = isDev ? 'https://json.acceso.design' : origin;
+const imageOrigin = isDev ? 'https://img.acceso.design' : `${origin}/cdn`;
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const u = new URL(path, dataOrigin).toString();
+  const r = await fetch(u);
+  if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`);
+  return (await r.json()) as T;
+}
+
+type City = { slug: string; name: string; country?: string };
+type Country = { slug: string; name: string };
+
+let cities: City[] = [];
+let countries: Country[] = [];
+try {
+  [cities, countries] = await Promise.all([
+    fetchJson<City[]>('/cdn/test-cities.json'),
+    fetchJson<Country[]>('/cdn/test-countries.json'),
+  ]);
+} catch {
+  cities = [];
+  countries = [];
+}
+
+const city = cities.find((c) => c.slug === place) ?? null;
+const country = countries.find((c) => c.slug === place) ?? null;
+
+const isCity = !!city;
+const cityName = city?.name ?? null;
+const countryName =
+  country?.name ??
+  (city?.country ? (countries.find((c) => c.slug === city.country)?.name ?? city.country) : null) ??
+  null;
+
+const dataPath =
+  type === 'fairs' ? '/cdn/fairs.json' : type === 'museums' ? '/cdn/museums.json' : '/cdn/awards.json';
+
+let items: any[] = [];
+try {
+  const raw = await fetchJson<any>(dataPath);
+  const all = Array.isArray(raw) ? raw : raw?.items || [];
+  items = (Array.isArray(all) ? all : [])
+    .map((e: any) => ({
+      ...e,
+      image: e.image ? (String(e.image).startsWith('http') ? e.image : `${imageOrigin}/${e.image}`) : null,
+    }))
+    .filter((e: any) => {
+      if (isCity) return e.city_slug === place;
+      if (country) return e.country_slug === place;
+      return false;
+    });
+} catch {
+  items = [];
+}
+
+if (!isCity && !country) return Astro.redirect('/404');
+
+const placeLabel = isCity ? `${cityName}${countryName ? `, ${countryName}` : ''}` : `${countryName}`;
+const typeLabel = type === 'fairs' ? 'Design fairs' : type === 'museums' ? 'Design museums' : 'Design awards';
+
+const title = `${typeLabel} in ${placeLabel} | Acceso`;
+const description = `Browse ${typeLabel.toLowerCase()} in ${placeLabel}. Curated listings with links and related events for continued discovery.`;
+
+const canonical = new URL(`/events/${type}/in/${place}`, Astro.site);
+
+const crumbs = [
+  { name: 'Home', url: new URL('/', Astro.site).toString() },
+  { name: 'Events', url: new URL('/events', Astro.site).toString() },
+  { name: typeLabel, url: new URL(`/events/${type}`, Astro.site).toString() },
+  { name: placeLabel, url: canonical.toString() },
+];
+
+const schema = {
+  '@graph': [
+    breadcrumbList(crumbs),
+    itemList({
+      url: canonical.toString(),
+      name: `${typeLabel} in ${placeLabel}`,
+      items: items.slice(0, 50).map((e: any) => ({
+        name: String(e.name ?? ''),
+        url: new URL(`/events/${type}/${encodeURIComponent(e.slug)}`, Astro.site).toString(),
+      })),
+    }),
+  ],
+};
+---
+
+<Layout title={title} description={description} canonical={canonical} schema={schema}>
+  <Navbar />
+
+  <main class="bg-black">
+    <section class="max-w-[1600px] mx-auto px-10 pt-14 pb-10">
+      <h1 class="font-mono text-white font-extrabold tracking-[-0.04em] leading-[0.98] text-[clamp(34px,4vw,56px)]">
+        {typeLabel} in <span class="text-yellow">{placeLabel}</span>
+      </h1>
+      <p class="font-sans text-[15px] leading-[1.6] text-gray mt-4 max-w-[78ch]">
+        {description}
+      </p>
+      <div class="mt-5 flex gap-2 flex-wrap">
+        <a href={`/events/${type}`} class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
+          All {typeLabel.toLowerCase()}
+        </a>
+        <a href="/events" class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
+          All events
+        </a>
+      </div>
+    </section>
+
+    <section class="max-w-[1600px] mx-auto px-10 pb-24">
+      {items.length === 0 ? (
+        <div class="py-10 text-gray font-sans">No results for this location yet.</div>
+      ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {items.map((e: any) => (
+            <EventBasicCard
+              name={e.name}
+              slug={e.slug}
+              type={type === 'fairs' ? 'fair' : type === 'museums' ? 'museum' : 'award'}
+              location={e.city || e.location || ''}
+              image={e.image}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+

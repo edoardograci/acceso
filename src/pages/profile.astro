@@ -1,0 +1,257 @@
+---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import type { Env } from '../env.d';
+import { getProfileSummary } from '../lib/db';
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+let savedDesignersCount = 0;
+let savedObjectsCount = 0;
+let designerCover = null;
+let objectCover = null;
+
+try {
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  
+  const summary = await getProfileSummary(user.id, env);
+  
+  savedDesignersCount = summary.designers.count;
+  savedObjectsCount = summary.objects.count;
+
+  if (summary.designers.recentId) {
+    try {
+      const resp = await fetch(new URL("/cdn/test-studios.json", Astro.url.origin).toString());
+      if (resp.ok) {
+        const studios = await resp.json();
+        const recentStudio = studios.find((s: any) => String(s.id) === String(summary.designers.recentId));
+        designerCover = recentStudio?.cover || null;
+      }
+    } catch {
+      // CDN unavailable, designer cover will remain null
+    }
+  }
+
+  if (summary.objects.recentId) {
+    try {
+      const resp = await fetch(new URL("/cdn/moodboard.json", Astro.url.origin).toString());
+      if (!resp.ok) throw new Error('Proxy failed');
+      const moodboard = await resp.json();
+      const recentItem = moodboard.find((i: any) => String(i.id) === String(summary.objects.recentId));
+      objectCover = recentItem?.cover || null;
+    } catch {
+      // CDN unavailable, object cover will remain null
+    }
+  }
+} catch (e) {
+  console.error('Error fetching profile data:', e);
+}
+---
+
+<PostHogLayout>
+  <Layout title="Your Profile | Acceso"
+  description="Manage your saved studios, objects, and collections on Acceso."
+  keywords="profile acceso, profile, profile acceso">
+    <Navbar />
+    <main class="max-w-[1000px] mx-auto px-6 pt-12 pb-15 font-sans">
+      <div class="mb-12">
+        <div class="flex justify-between items-center mb-8">
+          <h1 class="text-[32px] font-normal text-white font-mono">Profile</h1>
+          <form action="/auth/logout" method="POST">
+            <button type="submit" class="btn-danger">
+              Sign Out
+            </button>
+          </form>
+        </div>
+        
+        <div class="card p-6 mb-12">
+          <p class="text-white text-lg mb-3">
+            Welcome back, <strong>{user.email}</strong>
+          </p>
+          <div class="flex items-center">
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-[rgba(46,204,113,0.1)] border border-[rgba(46,204,113,0.2)] rounded-full text-success text-[13px] font-mono">
+              <span class="w-1.5 h-1.5 bg-current rounded-full"></span>
+              {user.emailVerified ? 'Verified Account' : 'Unverified'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-normal text-white mb-6 font-mono">My Collections</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+          <a href="/collections/designers" class="card card-interactive block overflow-hidden no-underline">
+            <div class="h-[200px] relative bg-bg-secondary">
+              {designerCover ? (
+                <img src={designerCover} alt="Designers" class="w-full h-full object-cover" />
+              ) : (
+                <div class="w-full h-full flex items-center justify-center text-gray">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              )}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            </div>
+            <div class="p-5">
+              <div class="flex justify-between items-center mb-1">
+                <h3 class="text-white text-lg font-medium font-sans">Designers</h3>
+                <span id="saved-designers-count" class="bg-black text-gray px-2 py-0.5 rounded-full text-xs font-mono border border-stroke">{savedDesignersCount >= 100 ? 'MAXED' : savedDesignersCount}</span>
+              </div>
+              <p class="text-gray text-sm">Saved studios and designers</p>
+            </div>
+          </a>
+
+          <a href="/collections/moodboard" class="card card-interactive block overflow-hidden no-underline">
+            <div class="h-[200px] relative bg-bg-secondary">
+              {objectCover ? (
+                <img src={objectCover} alt="Moodboard" class="w-full h-full object-cover" />
+              ) : (
+                <div class="w-full h-full flex items-center justify-center text-gray">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              )}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            </div>
+            <div class="p-5">
+              <div class="flex justify-between items-center mb-1">
+                <h3 class="text-white text-lg font-medium font-sans">Moodboard</h3>
+                <span id="saved-objects-count" class="bg-black text-gray px-2 py-0.5 rounded-full text-xs font-mono border border-stroke">{savedObjectsCount >= 100 ? 'MAXED' : savedObjectsCount}</span>
+              </div>
+              <p class="text-gray text-sm">Saved objects and inspiration</p>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-15 border-t border-stroke pt-10 flex flex-col items-start">
+        <p class="text-base text-white mb-4 font-medium">Do you want to delete your account?</p>
+        <button type="button" class="btn-danger w-full md:w-auto mb-2" id="init-delete-btn">
+          Delete Account
+        </button>
+        <p class="text-danger text-[13px]">This action is irreversible</p>
+      </div>
+
+      <!-- Delete Modal -->
+      <div class="modal-backdrop hidden" id="delete-modal">
+        <div class="modal-panel">
+          <h3 class="mt-0 text-white font-mono text-xl">Are you sure?</h3>
+          <p class="text-gray mb-6 text-sm leading-relaxed">This will permanently delete your account and all saved collections. This action cannot be undone.</p>
+          <div class="flex gap-3 justify-center">
+            <button type="button" class="h-10 px-6 rounded-md text-sm cursor-pointer font-sans border border-stroke bg-transparent text-gray hover:border-white hover:text-white" id="cancel-delete">Cancel</button>
+            <button type="button" class="h-10 px-6 rounded-md text-sm cursor-pointer font-sans border-none bg-danger text-white hover:bg-danger-hover disabled:opacity-70 disabled:cursor-not-allowed" id="confirm-delete">Delete</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const deleteBtn = document.getElementById('init-delete-btn');
+      const modal = document.getElementById('delete-modal');
+      const cancelBtn = document.getElementById('cancel-delete');
+      const confirmBtn = document.getElementById('confirm-delete');
+
+      // Real-time count updates
+      const updateCounts = () => {
+        if (!window.collectionsState || !window.collectionsState.loaded) return;
+
+        const dCount = window.collectionsState.getCount('designer');
+        const oCount = window.collectionsState.getCount('object');
+        
+        const dEl = document.getElementById('saved-designers-count');
+        const oEl = document.getElementById('saved-objects-count');
+
+        if (dEl) dEl.textContent = dCount >= 100 ? 'MAXED' : dCount;
+        if (oEl) oEl.textContent = oCount >= 100 ? 'MAXED' : oCount;
+      };
+
+      // Wait for state
+      const checkState = setInterval(() => {
+        if (window.collectionsState?.loaded) {
+          updateCounts();
+          clearInterval(checkState);
+        }
+      }, 50);
+
+      // Listen for changes
+      window.addEventListener('collections-changed', updateCounts);
+
+      if (deleteBtn && modal && cancelBtn && confirmBtn) {
+        deleteBtn.addEventListener('click', () => {
+          modal.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+        });
+
+        const closeModal = () => {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        };
+
+        cancelBtn.addEventListener('click', closeModal);
+        
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+
+        confirmBtn.addEventListener('click', async () => {
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = 'Deleting...';
+          
+          try {
+            if (window.collectionsState) {
+               window.collectionsState.clear();
+            }
+            sessionStorage.removeItem('collections_state');
+
+            const res = await fetch('/api/auth/delete-account', {
+              method: 'POST',
+            });
+            
+            if (res.ok) {
+              window.location.href = '/';
+            } else {
+              alert('Failed to delete account. Please try again.');
+              confirmBtn.disabled = false;
+              confirmBtn.textContent = 'Delete';
+            }
+          } catch (e) {
+            alert('An error occurred.');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Delete';
+          }
+        });
+      }
+    </script>
+
+    <script define:vars={{ 
+      user: {
+        id: user.id,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        savedDesignersCount: savedDesignersCount,
+        savedObjectsCount: savedObjectsCount,
+      }
+    }}>
+      // Identify user with PostHog when logged in
+      if (typeof window !== 'undefined' && window.posthog && window.posthog.identify) {
+        window.posthog.identify(user.id, {
+          email: user.email,
+          email_verified: user.emailVerified,
+          saved_designers_count: user.savedDesignersCount || 0,
+          saved_moodboards_count: user.savedObjectsCount || 0,
+          last_login_at: new Date().toISOString(),
+          is_power_user: (user.savedDesignersCount || 0) > 10,
+        });
+
+        if (window.posthog.set_config) {
+            window.posthog.set_config({ persistence: 'localStorage+cookie' });
+        }
+      }
+    </script>
+  </Layout>
+</PostHogLayout>

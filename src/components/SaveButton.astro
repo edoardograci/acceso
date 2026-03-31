@@ -1,0 +1,203 @@
+---
+interface Props {
+  type: 'designer' | 'object';
+  itemId: string;
+  itemName?: string;
+  buttonClass?: string;
+}
+
+const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
+const isLoggedIn = !!Astro.locals.user;
+---
+
+<save-button
+  data-type={type}
+  data-id={itemId}
+  data-name={itemName}
+  data-logged-in={isLoggedIn.toString()}
+>
+  <button class={buttonClass}>
+    {isLoggedIn ? 'Loading...' : 'Login to save'}
+  </button>
+</save-button>
+
+<script>
+  customElements.define('save-button', class SaveButton extends HTMLElement {
+    private boundHandleClick = this.handleClick.bind(this);
+    private isProcessing = false;
+
+    constructor() {
+      super();
+    }
+
+    connectedCallback() {
+      this.btn = this.querySelector('button');
+      this.type = this.dataset.type || '';
+      this.id = this.dataset.id || '';
+      this.name = this.dataset.name || '';
+      this.isLoggedIn = this.dataset.loggedIn === 'true';
+
+      if (!this.btn || !this.isLoggedIn) {
+        if (this.btn && !this.isLoggedIn) {
+          this.btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = '/login';
+          });
+        }
+        return;
+      }
+
+      this.initialize();
+    }
+
+    private async initialize() {
+      await this.waitForCollectionsState();
+      if (!this.isConnected) return;
+
+      this.updateButton();
+
+      if (typeof window.collectionsState?.subscribe === 'function') {
+        this.unsubscribe = window.collectionsState.subscribe(() => {
+          this.updateButton();
+        });
+      }
+
+      this.btn!.removeEventListener('click', this.boundHandleClick);
+      this.btn!.addEventListener('click', this.boundHandleClick);
+    }
+
+    private async waitForCollectionsState(): Promise<void> {
+      return new Promise((resolve) => {
+        // Check if already loaded
+        // @ts-ignore
+        if (window.collectionsState?.loaded) {
+          resolve();
+          return;
+        }
+
+        // Wait for it to load
+        const checkInterval = setInterval(() => {
+          // @ts-ignore
+          if (window.collectionsState?.loaded) {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 50);
+
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve();
+        }, 10000);
+      });
+    }
+
+    private updateButton() {
+      if (!this.btn) return;
+
+      // Clear any pending updates
+      if (this.updateTimeout) {
+        clearTimeout(this.updateTimeout);
+      }
+
+      // Debounce rapid updates
+      this.updateTimeout = window.setTimeout(() => {
+        // @ts-ignore
+        if (!window.collectionsState?.loaded) {
+          this.btn!.textContent = 'Loading...';
+          this.btn!.disabled = true;
+          return;
+        }
+
+        // @ts-ignore
+        const isSaved = window.collectionsState.isSaved(this.type, this.id);
+        this.btn!.textContent = isSaved ? 'Remove' : 'Save';
+        this.btn!.disabled = false;
+      }, 16); // Single frame delay
+    }
+
+
+
+    private async handleClick(e: Event) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!this.btn || this.isProcessing) return;
+      // @ts-ignore
+      if (!window.collectionsState?.loaded) return;
+
+      this.isProcessing = true;
+      this.btn.disabled = true;
+
+      try {
+        // @ts-ignore
+        const isSaved = window.collectionsState.isSaved(this.type, this.id);
+        const count = window.collectionsState.getCount(this.type);
+        const limitType = this.type === 'designer' ? 'designers' : 'moodboards';
+
+        if (!isSaved) {
+          if (count >= 100) {
+            alert(`Limit of 100 ${this.type}s reached.`);
+            
+            // Track limit reached
+            if (window.posthog && typeof window.posthog.capture === 'function') {
+              window.posthog.capture('collection_limit_reached', {
+                limit_type: limitType,
+                current_count: count,
+                max_count: 100,
+              });
+            }
+            return;
+          }
+        }
+
+        if (isSaved) {
+          // @ts-ignore
+          await window.collectionsState.removeItem(this.type, this.id);
+          
+          // Track unsave
+          if (window.posthog && typeof window.posthog.capture === 'function') {
+            const eventName = this.type === 'designer' ? 'designer_unsaved' : 'moodboard_unsaved';
+            const props = {
+              [`${this.type}_id`]: this.id,
+              [`${this.type}_name`]: this.name || this.id,
+              collection_count: count - 1,
+            };
+            window.posthog.capture(eventName, props);
+          }
+        } else {
+          // @ts-ignore
+          await window.collectionsState.addItem(this.type, this.id);
+          
+          // Track save
+          if (window.posthog && typeof window.posthog.capture === 'function') {
+            const eventName = this.type === 'designer' ? 'designer_saved' : 'moodboard_saved';
+            const props = {
+              [`${this.type}_id`]: this.id,
+              [`${this.type}_name`]: this.name || this.id,
+              collection_count: count + 1,
+            };
+            window.posthog.capture(eventName, props);
+          }
+        }
+      } catch (error: any) {
+        alert('Failed to update collection.');
+      } finally {
+        this.isProcessing = false;
+        if (this.btn) this.btn.disabled = false;
+        this.updateButton();
+      }
+    }
+
+    disconnectedCallback() {
+      if (this.unsubscribe) {
+        this.unsubscribe();
+        this.unsubscribe = null;
+      }
+      if (this.btn) {
+        this.btn.removeEventListener('click', this.boundHandleClick);
+      }
+    }
+  });
+</script>

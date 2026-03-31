@@ -1,0 +1,149 @@
+---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+
+const url = Astro.url;
+const error = url.searchParams.get('error');
+const errorMessage = url.searchParams.get('message');
+---
+
+<PostHogLayout>
+  <Layout title="Log In | Acceso"
+    description="Log in to Acceso to save studios, objects, and collections across independent design scenes worldwide."
+    keywords="login acceso, log in acceso, log in, login, log in to acceso">
+    <div class="h-screen flex flex-col overflow-hidden">
+      <Navbar />
+      <div class="flex-1 flex items-center justify-center pb-10">
+        <main class="w-full max-w-[400px] px-6 flex flex-col items-center gap-6">
+          <h1 class="text-2xl font-normal text-white text-center font-mono">Welcome to Acceso</h1>
+          {error && (
+            <div class="w-full p-3 bg-[rgba(255,0,0,0.1)] border border-[rgba(255,0,0,0.3)] rounded text-[#ff6b6b] text-sm text-center">
+              {error === 'invalid_token' && 'Invalid or expired magic link'}
+              {error === 'oauth_init_failed' && 'Failed to initialize OAuth'}
+              {error === 'oauth_error' && errorMessage ? decodeURIComponent(errorMessage) : 'OAuth error occurred'}
+              {error === 'oauth_failed' && 'OAuth authentication failed'}
+              {error === 'no_email' && 'No email found in Google account'}
+              {error === 'invalid_state' && 'Invalid OAuth state'}
+              {!['invalid_token', 'oauth_init_failed', 'oauth_error', 'oauth_failed', 'no_email', 'invalid_state'].includes(error) && 'An error occurred'}
+            </div>
+          )}
+          
+          <a href="/auth/google" class="w-full h-12 flex items-center justify-center gap-3 bg-white text-black rounded-lg text-base font-medium no-underline transition-opacity hover:opacity-90">
+            <img src="/icons/google.svg" alt="Google" class="w-5 h-5" />
+            Continue with Google
+          </a>
+          
+          <div class="w-full flex items-center gap-4 text-gray text-sm">
+            <span class="flex-1 h-px bg-stroke"></span>
+            <span>or</span>
+            <span class="flex-1 h-px bg-stroke"></span>
+          </div>
+          
+          <form id="magic-link-form" class="w-full flex flex-col gap-3">
+            <label for="email" class="label">Email Address</label>
+            <input type="email" id="email" name="email" required placeholder="your@email.com" class="input" />
+            <button type="submit" class="w-full h-12 bg-white text-black border-none rounded-lg text-base font-medium cursor-pointer transition-opacity font-sans hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">Send Magic Link</button>
+          </form>
+          
+          <div id="magic-link-result" class="magic-link-result"></div>
+
+          <p class="text-gray text-[13px] text-center leading-relaxed mt-4">
+            By continuing, you agree to our <a href="/terms" target="_blank" class="text-white underline underline-offset-2 hover:text-yellow">Terms of Service</a> and <a href="/privacy" target="_blank" class="text-white underline underline-offset-2 hover:text-yellow">Privacy Policy</a>.
+          </p>
+        </main>
+      </div>
+    </div>
+
+  </Layout>
+</PostHogLayout>
+
+<style>
+  .magic-link-result {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--color-white);
+    word-break: break-all;
+    display: none;
+  }
+
+  .magic-link-result.show {
+    display: block;
+  }
+
+  .magic-link-result.success {
+    background-color: rgba(0, 255, 0, 0.1);
+    border-color: rgba(0, 255, 0, 0.3);
+    color: #90ee90;
+  }
+
+  .magic-link-result.error {
+    background-color: rgba(255, 0, 0, 0.1);
+    border-color: rgba(255, 0, 0, 0.3);
+    color: #ff6b6b;
+  }
+</style>
+
+<script>
+  const form = document.getElementById('magic-link-form') as HTMLFormElement;
+  const resultDiv = document.getElementById('magic-link-result') as HTMLDivElement;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const email = formData.get('email') as string;
+    const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+    
+    if (!email) return;
+    
+    submitButton.disabled = true;
+    submitButton.textContent = 'Sending...';
+    resultDiv.className = 'magic-link-result';
+    resultDiv.textContent = '';
+    
+    try {
+      const response = await fetch('/auth/magic-link/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.status === 429) {
+        resultDiv.className = 'magic-link-result show error';
+        resultDiv.textContent = data.error || 'Too many requests. Please try again later.';
+        return;
+      }
+
+      if (data.success) {
+        resultDiv.className = 'magic-link-result show success';
+
+        // Avoid XSS: never inject user-provided values via innerHTML
+        resultDiv.replaceChildren();
+        const strong = document.createElement('strong');
+        strong.textContent = 'Check your email!';
+        const br = document.createElement('br');
+        const small = document.createElement('small');
+        small.textContent = `We've sent a login link to ${email}. Check your inbox and spam folder.`;
+        resultDiv.append(strong, br, small);
+      } else {
+        resultDiv.className = 'magic-link-result show error';
+        resultDiv.textContent = data.error || 'Failed to send magic link';
+      }
+    } catch (error) {
+      resultDiv.className = 'magic-link-result show error';
+      resultDiv.textContent = 'Failed to send magic link. Please try again.';
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Send Magic Link';
+    }
+  });
+</script>

@@ -1,0 +1,128 @@
+---
+// Component for the three-dots menu modal
+interface Props {
+  imageUrl?: string; // For moodboard pages - the current image URL
+  downloadFileName?: string; // Optional custom filename
+}
+
+const { imageUrl, downloadFileName } = Astro.props;
+---
+
+<div class="relative inline-block" data-image-url={imageUrl} data-filename={downloadFileName}>
+  <button class="btn-icon three-dots-btn" aria-label="More options">
+    <img src="/icons/three-dots.svg" alt="" />
+  </button>
+  
+  <div class="dropdown-menu hidden three-dots-modal">
+    <button class="dropdown-item copy-link-btn">
+      Copy Link
+    </button>
+    <button class="dropdown-item download-image-btn">
+      Download Image
+    </button>
+  </div>
+</div>
+
+<script>
+  // Handle three-dots menu functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const menus = document.querySelectorAll('.three-dots-btn');
+    
+    menus.forEach(btn => {
+      const menu = btn.closest('.relative') as HTMLElement;
+      const modal = menu?.querySelector('.three-dots-modal') as HTMLElement;
+      const copyLinkBtn = menu?.querySelector('.copy-link-btn') as HTMLButtonElement;
+      const downloadImageBtn = menu?.querySelector('.download-image-btn') as HTMLButtonElement;
+      
+      if (!btn || !modal) return;
+      
+      // Toggle modal
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = modal.classList.contains('hidden');
+        
+        // Close all other modals first
+        document.querySelectorAll('.three-dots-modal').forEach(m => {
+          m.classList.add('hidden');
+        });
+        
+        if (isHidden) {
+          modal.classList.remove('hidden');
+        } else {
+          modal.classList.add('hidden');
+        }
+      });
+      
+      // Copy link functionality
+      if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            
+            // Visual feedback
+            const originalText = copyLinkBtn.textContent;
+            copyLinkBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyLinkBtn.textContent = originalText;
+              modal.classList.add('hidden');
+            }, 1000);
+          } catch (err) {
+            alert('Failed to copy link');
+          }
+        });
+      }
+      
+      // Download image functionality
+      if (downloadImageBtn) {
+        downloadImageBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          
+          const imageUrl = menu.dataset.imageUrl;
+          if (!imageUrl) {
+            return;
+          }
+          
+          try {
+            // Fetch the image
+            const response = await fetch(imageUrl, { mode: 'cors' });
+            const blob = await response.blob();
+            
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Use custom filename or extract from URL
+            const filename = menu.dataset.filename || 
+              imageUrl.split('/').pop()?.split('?')[0] || 
+              'image.jpg';
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Visual feedback
+            const originalText = downloadImageBtn.textContent;
+            downloadImageBtn.textContent = 'Downloaded!';
+            setTimeout(() => {
+              downloadImageBtn.textContent = originalText;
+              modal.classList.add('hidden');
+            }, 1000);
+          } catch (err) {
+            alert('Failed to download image');
+          }
+        });
+      }
+    });
+    
+    // Close modal when clicking outside
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.three-dots-modal').forEach(modal => {
+        modal.classList.add('hidden');
+      });
+    });
+  });
+</script>

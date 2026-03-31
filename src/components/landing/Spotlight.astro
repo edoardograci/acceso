@@ -1,0 +1,417 @@
+---
+interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  r2_key: string;
+  position: number;
+  created_at: string;
+}
+
+interface SpotlightItem {
+  id: string;
+  product_id: string;
+  start_date: string;
+  end_date: string | null;
+  created_at: string;
+  updated_at: string;
+  product: {
+    id: string;
+    slug: string;
+    name: string;
+    designer: string | null;
+    year: string | null;
+    client: string | null;
+    link: string | null;
+    city: string | null;
+    cover: string | null;
+  } | null;
+}
+
+interface Studio {
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  cover: string | null;
+}
+
+interface Props {
+  activeSpotlight: SpotlightItem | null;
+  spotlightImages: ProductImage[];
+  designerStudio: Studio | null;
+}
+
+const { activeSpotlight, spotlightImages, designerStudio } = Astro.props;
+---
+
+<div class="spotlight-page-content">
+  {activeSpotlight?.product && spotlightImages.length > 0 ? (
+    <div class="spotlight-container">
+      {/* Radial Gradient Background */}
+      <div class="radial-gradient"></div>
+      
+      {/* Header Section */}
+      <div class="spotlight-header">
+        <h2 class="spotlight-heading">SPOTLIGHT OF<br/>THE WEEK</h2>
+        <div class="week-badge">#1 week</div>
+      </div>
+
+      {/* Year and City */}
+      <div class="spotlight-meta">
+        {activeSpotlight.product.year && <span>{activeSpotlight.product.year}</span>}
+        {activeSpotlight.product.city && (
+          <>
+            <svg width="4" height="4" viewBox="0 0 4 4" fill="currentColor">
+              <circle cx="2" cy="2" r="2"/>
+            </svg>
+            <span>{activeSpotlight.product.city}</span>
+          </>
+        )}
+      </div>
+
+      {/* Product Name */}
+      <h2 class="product-name">{activeSpotlight.product.name}</h2>
+
+      {/* Cover Image */}
+      <div class="cover-image-container">
+        <img 
+          src={spotlightImages[0].image_url} 
+          srcset={`/cdn-cgi/image/width=600,format=auto,quality=85/${spotlightImages[0].image_url} 600w, ${spotlightImages[0].image_url} 1200w`}
+          sizes="(max-width: 600px) 100vw, 600px"
+          alt={activeSpotlight.product.name}
+          class="cover-image"
+          loading="lazy"
+          fetchpriority="auto"
+          decoding="async"
+          data-skeleton
+          crossorigin="anonymous"
+          width="800"
+          height="800"
+        />
+      </div>
+
+      {/* See Other Photos Button */}
+      <a href={`/moodboard/${activeSpotlight.product.slug}`} class="see-photos-btn">
+        See other photos
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+
+      {/* Designer Section */}
+      {activeSpotlight.product.designer && (
+        <div class="designer-section">
+          <div class="designer-label">Designer</div>
+          
+          {designerStudio ? (
+            <a href={`/designers/${designerStudio.slug}`} class="designer-card">
+              <div class="designer-card-inner">
+                {designerStudio.cover && (
+                  <img 
+                    src={designerStudio.cover} 
+                    srcset={`/cdn-cgi/image/width=200,format=auto,quality=80/${designerStudio.cover} 200w, ${designerStudio.cover} 400w`}
+                    sizes="100px"
+                    alt={designerStudio.name}
+                    class="designer-card-image"
+                    loading="lazy"
+                    decoding="async"
+                    data-skeleton
+                    width="100"
+                    height="100"
+                  />
+                )}
+                <div class="designer-card-content">
+                  <div class="designer-card-title">{designerStudio.name}</div>
+                  <div class="designer-card-address">Via Massimo Gorki 2</div>
+                </div>
+                <div class="designer-card-arrow">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </a>
+          ) : (
+            <div class="designer-name-only">{activeSpotlight.product.designer}</div>
+          )}
+        </div>
+      )}
+    </div>
+    ) : (
+      <div class="no-spotlight">
+        <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 32px;">
+          Discover Milan's independent design studios
+        </p>
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+          <a href="/designers" style="background: var(--accent-yellow); color: #000; padding: 16px 32px; text-decoration: none; font-weight: 600;">
+            Browse Designers
+          </a>
+          <a href="/moodboard" style="background: var(--gray-dark); color: #fff; padding: 16px 32px; text-decoration: none; font-weight: 600;">
+            View Moodboard
+          </a>
+        </div>
+      </div>
+    )}
+</div>
+
+<style>
+  .spotlight-page-content {
+    /* Main container styling if needed, otherwise this is just a wrapper */
+    width: 100%;
+  }
+
+  .spotlight-container {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-page) 80px;
+    text-align: center;
+  }
+
+  /* Radial Gradient */
+  .radial-gradient {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 800px;
+    height: 400px;
+    background: radial-gradient(ellipse at center top, rgba(255, 224, 0, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header Section */
+  .spotlight-header {
+    position: relative;
+    z-index: 1;
+    padding-top: 48px;
+    margin-bottom: 24px;
+  }
+
+  .spotlight-heading {
+    font-family: var(--font-mono);
+    font-size: 36px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    margin: 0 0 16px 0;
+    color: var(--color-white);
+  }
+
+  .week-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: rgba(255, 224, 0, 0.1);
+    border: 1px solid var(--color-yellow);
+    color: var(--color-yellow);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  /* Meta Info */
+  .spotlight-meta {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-gray);
+  }
+
+  .spotlight-meta svg {
+    opacity: 0.5;
+  }
+
+  /* Product Name */
+  .product-name {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    margin: 0 0 32px 0;
+    color: var(--color-white);
+  }
+
+  /* Cover Image */
+  .cover-image-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .cover-image {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* See Photos Button */
+  .see-photos-btn {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 8px;
+    padding: 14px 24px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 6px;
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 450;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-bottom: 48px;
+  }
+
+  .see-photos-btn:hover {
+    border-color: var(--color-white);
+    transform: translateY(-2px);
+  }
+
+  .see-photos-btn svg {
+    flex-shrink: 0;
+  }
+
+  /* Designer Section */
+  .designer-section {
+    position: relative;
+    z-index: 1;
+    text-align: left;
+  }
+
+  .designer-label {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 200;
+    letter-spacing: 0.56px;
+    color: var(--color-white);
+    margin-bottom: 16px;
+  }
+
+  /* Designer Card - Map Style */
+  .designer-card {
+    display: block;
+    background: var(--color-black);
+    border: 1px solid var(--color-stroke);
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .designer-card:hover {
+    border-color: var(--color-white);
+  }
+
+  .designer-card-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .designer-card-image {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+    object-fit: cover;
+    background-color: var(--color-bg-secondary);
+  }
+
+  .designer-card-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .designer-card-title {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-white);
+    margin-bottom: 6px;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+  }
+
+  .designer-card-address {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-gray);
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .designer-card-arrow {
+    flex-shrink: 0;
+    padding-left: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+  }
+
+  .designer-card-arrow svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .designer-name-only {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 450;
+    color: var(--text-primary);
+  }
+
+  /* No Spotlight State */
+  .no-spotlight {
+    padding: 48px var(--spacing-page);
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .spotlight-heading {
+      font-size: 28px;
+    }
+
+    .product-name {
+      font-size: 24px;
+    }
+
+    .designer-card-inner {
+      padding: 12px;
+    }
+
+    .designer-card-image {
+      width: 80px;
+      height: 80px;
+    }
+
+    .designer-card-title {
+      font-size: 14px;
+    }
+
+    .designer-card-address {
+      font-size: 12px;
+    }
+  }
+</style>

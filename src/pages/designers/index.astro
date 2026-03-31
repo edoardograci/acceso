@@ -1,0 +1,1398 @@
+---
+import PostHogLayout from '../../layouts/PostHogLayout.astro';
+import Navbar from '../../components/Navbar.astro';
+import DesignerCard from '../../components/DesignerCard.astro';
+import Footer from '../../components/Footer.astro';
+import type { Studio } from '../../lib/types';
+
+// Fetch Data
+let studios: Studio[] = [];
+let metadata: any = null;
+let error = null;
+let filterData: any[] = [];
+let cities: string[] = [];
+let totalStudios = 0;
+let orderedFilterData: any[] = [];
+
+function distributeGroupsForColumns(groups: any[], columns = 3) {
+  const colHeights = Array(columns).fill(0);
+  const cols: any[][] = Array.from({ length: columns }, () => []);
+  for (const g of groups) {
+    const weight = 1 + (g.cities?.length || 0);
+    let target = 0;
+    for (let i = 1; i < columns; i++) {
+      if (colHeights[i] < colHeights[target]) target = i;
+    }
+    cols[target].push(g);
+    colHeights[target] += weight;
+  }
+  return cols.flat();
+}
+
+try {
+  const isDev = import.meta.env.DEV;
+  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+  const imageDomain = 'https://img.acceso.design';
+  const normalizeCover = (cover: any) => {
+    if (!cover) return cover;
+    if (cover.startsWith('http')) return cover;
+    return `${imageDomain}/${cover.replace(/^\/+/, '')}`;
+  };
+  
+  const metadataUrl = `${domain}/metadata.json`;
+  const countriesUrl = `${domain}/test-countries.json`;
+  const citiesUrl = `${domain}/test-cities.json`;
+  
+  const [metaRes, cRes, ciRes] = await Promise.all([
+    fetch(metadataUrl),
+    fetch(countriesUrl),
+    fetch(citiesUrl)
+  ]);
+
+  if (metaRes.ok && cRes.ok && ciRes.ok) {
+    metadata = await metaRes.json();
+    totalStudios = metadata.totalStudios || 0;
+    const countriesList = await cRes.json();
+    const citiesList = await ciRes.json();
+    
+    cities = ['Milan', 'Berlin', 'Copenhagen', 'London', 'Paris', 'Seoul', 'Stockholm', 'Tokyo'];
+
+    filterData = countriesList.map((c: any) => {
+      const metaC = metadata.countries?.[c.slug];
+      if (!metaC) return null;
+      const seenCitySlugs = new Set<string>();
+      const cCities = citiesList
+        .filter((ct: any) => ct.country === c.slug)
+        .map((ct: any) => {
+          const metaCity = metadata.cities?.[ct.slug];
+          if (!metaCity || seenCitySlugs.has(ct.slug)) return null;
+          seenCitySlugs.add(ct.slug);
+          return { name: ct.name, slug: ct.slug, count: metaCity.total };
+        }).filter(Boolean);
+      
+      return { name: c.name, slug: c.slug, count: metaC.total, cities: cCities };
+    }).filter(Boolean);
+    const sortedGroups = [...filterData].sort((a: any, b: any) => {
+      const aWeight = (a.cities?.length || 0);
+      const bWeight = (b.cities?.length || 0);
+      if (bWeight !== aWeight) return bWeight - aWeight;
+      return (b.count || 0) - (a.count || 0);
+    });
+    orderedFilterData = distributeGroupsForColumns(sortedGroups, 3);
+  }
+
+  // Load page-1 of ALL studios natively from test-studios.json (since no all/page-1 exists)
+  const studiosRes = await fetch(`${domain}/test-studios.json`);
+  if (studiosRes.ok) {
+    const rawAll = await studiosRes.json();
+    if (!totalStudios) totalStudios = rawAll.length; // Fallback if metadata fails
+    studios = rawAll.slice(0, 20).map((s: any) => ({
+      ...s,
+      cover: normalizeCover(s.cover)
+    }));
+  }
+} catch (e) {
+  error = e;
+  console.error('[SSR] Failure to fetch data:', e);
+}
+
+const studioProductsMap: Record<string, any[]> = {};
+const studiosWithCoords = studios.filter(s => s.latitude && s.longitude);
+
+const initialCity = Astro.url.searchParams.get('city') || 'all';
+
+---
+
+<PostHogLayout 
+  title="Independent Design Studios Directory | Acceso"
+  description="Browse independent industrial and furniture design studios. Explore local design scenes across global cities."
+>
+  <Navbar />
+  
+  <main class="designers-page">
+    <div class="split-container">
+      <!-- Left Column: Results Panel -->
+      <aside class="results-panel">
+        <div class="results-panel-content">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <span class="breadcrumb-item">Designers</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">Search</span>
+          </nav>
+
+          <header class="panel-header">
+            <div class="search-wrapper">
+              <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Search designers..."
+                aria-label="Search designers"
+                class="search-input"
+              />
+            </div>
+
+            <div class="city-filter-row">
+              <!-- Filter Popover (Fixed on left) -->
+              <div class="filter-popover-wrapper">
+                <button class="filter-trigger-btn" id="filter-trigger">
+                  Filter
+                </button>
+                <div class="filter-popover" id="filter-popover">
+                  <div class="filter-popover-header">
+                    <span>Filter by location</span>
+                    <div class="filter-header-actions">
+                      <button class="filter-clear-all" id="filter-clear-all">Clear all</button>
+                      <button class="filter-close-btn" id="filter-close-btn" aria-label="Close filters">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                           <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="filter-popover-content">
+                    {orderedFilterData.map((group: any) => (
+                      <div class="filter-group">
+                        <label class="filter-item country-item">
+                          <input type="checkbox" class="country-checkbox" data-country={group.name} data-slug={group.slug} />
+                          <span class="filter-name">{group.name}</span>
+                          <span class="filter-count">({group.count})</span>
+                        </label>
+                        <div class="city-items">
+                          {group.cities.map((city: any) => (
+                            <label class="filter-item city-item">
+                              <input type="checkbox" class="city-checkbox" data-city={city.name} data-slug={city.slug} data-country={group.name} />
+                              <span class="filter-name">{city.name}</span>
+                              <span class="filter-count">({city.count})</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Scrolling City Pills (Right) -->
+              <div class="city-filter-bar">
+                <div class="city-filter-scroll" id="city-filters">
+                  <button class:list={['city-pill', { active: initialCity === 'all' }]} data-city="all">All</button>
+                  {cities.map(city => (
+                    <button class:list={['city-pill', { active: initialCity === city }]} data-city={city}>{city}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+          </header>
+
+          <div class="results-meta">
+            <h2 class="results-count" id="studio-count">
+              {totalStudios} results
+            </h2>
+          </div>
+
+          <div class="studios-grid" id="studios-grid">
+            {studios.map((studio, index) => (
+              <DesignerCard studio={studio} products={[]} index={index} />
+            ))}
+          </div>
+
+          <div class="hidden py-12 text-center text-gray" id="empty-result">
+            <p>No designers found matching your criteria.</p>
+          </div>
+
+          <div id="pagination-container" class="pagination-wrapper"></div>
+        </div>
+      </aside>
+
+      <!-- Right Column: Map Panel -->
+      <section class="map-panel">
+        <div id="map"></div>
+        
+        <!-- Studio UI Card (Reused from map.astro) -->
+        <div class="studio-ui-container" id="studio-ui-container">
+          <div class="studio-card" id="studio-card">
+            <a href="#" class="studio-card-inner" id="studio-card-link">
+              <div class="studio-card-media">
+                <img 
+                  src="" 
+                  alt="" 
+                  class="studio-card-image" 
+                  id="studio-card-image" 
+                  onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src=this.src.replace('img.acceso.design','events.acceso.design');}"
+                />
+              </div>
+              <div class="studio-card-info">
+                <h3 class="studio-card-title" id="studio-card-title"></h3>
+                <div class="studio-card-address-row">
+                   <p class="studio-card-address" id="studio-card-address"></p>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  
+  <style>
+    .designers-page {
+      background: var(--color-black);
+    }
+
+    .split-container {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: flex-start;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Left Column */
+    .results-panel {
+      border-right: 1px solid var(--color-stroke);
+      position: relative;
+      background: var(--color-black);
+      z-index: 1000; /* Must be higher than Leaflet markers (600) */
+    }
+
+    .results-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+    .results-panel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .results-panel::-webkit-scrollbar-thumb {
+      background-color: var(--color-stroke);
+      border-radius: 20px;
+    }
+
+    .results-panel-content {
+      padding: var(--page-top-spacing) 40px 60px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .breadcrumb-item {
+      color: var(--color-white);
+    }
+
+    .breadcrumb-separator {
+      color: var(--color-gray);
+    }
+
+    .breadcrumb-current {
+      color: var(--color-gray);
+    }
+
+    .panel-header {
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .city-filter-row {
+      display: flex;
+      align-items: center;
+      position: relative;
+      z-index: 200; /* high enough so popover clears studios grid */
+    }
+
+    .city-filter-bar {
+      flex: 1;
+      min-width: 0; /* CRITICAL: prevents flex blowout on mobile */
+      overflow-x: auto;
+      scrollbar-width: none;
+      /* Only fade when there is actually more to scroll (handled better by subtle shadows or arrows, but let's stick to a cleaner gradient) */
+      mask-image: linear-gradient(to right, black 85%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+      cursor: grab;
+      user-select: none;
+      scroll-behavior: auto;
+      scroll-snap-type: x mandatory;
+    }
+
+    .city-filter-bar:active {
+      cursor: grabbing;
+    }
+
+    .city-filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .city-filter-scroll {
+      display: flex;
+      gap: 8px;
+      padding: 4px 20px;
+      align-items: center;
+      width: max-content;
+    }
+
+    .filter-popover-wrapper {
+      position: relative;
+      flex-shrink: 0;
+      z-index: 400; 
+      margin-right: 12px;
+    }
+
+    .filter-trigger-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 999px;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 700;
+      transition: opacity 0.2s ease;
+      background: var(--color-yellow);
+      color: var(--color-black);
+      border: none;
+      cursor: pointer;
+    }
+
+    .filter-trigger-btn:hover {
+      opacity: 0.9;
+    }
+
+    .filter-popover {
+      position: absolute;
+      top: calc(100% + 12px);
+      left: 0;
+      width: 600px;
+      background: #1C1E20;
+      border: 1px solid var(--color-stroke);
+      border-radius: 16px;
+      padding: 24px;
+      z-index: 1500;
+      display: none;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .filter-popover.show {
+      display: block !important;
+    }
+
+    /* Backdrop removed for desktop clickability */
+
+    .filter-popover-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-family: var(--font-sans);
+      font-size: 16px;
+      color: var(--color-white);
+      font-weight: 600;
+    }
+
+    .filter-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .filter-clear-all {
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: var(--color-white);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .filter-clear-all:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .filter-close-btn {
+      display: none; /* Hidden on desktop */
+      background: transparent;
+      border: none;
+      color: var(--color-white);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .filter-popover-content {
+      column-count: 3;
+      column-gap: 20px;
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+
+    .filter-popover-content::-webkit-scrollbar {
+      width: 4px;
+    }
+    .filter-popover-content::-webkit-scrollbar-thumb {
+      background: var(--color-stroke);
+      border-radius: 10px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      break-inside: avoid;
+      margin: 0 0 18px;
+      padding: 0;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      pointer-events: auto !important;
+    }
+
+    .filter-name {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-white) !important;
+      font-weight: 600;
+    }
+
+    .filter-count {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--color-gray);
+    }
+
+    .filter-item input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--color-stroke);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .filter-item input[type="checkbox"]:checked {
+      background: var(--color-yellow);
+      border-color: var(--color-yellow);
+    }
+
+    .filter-item input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 4px;
+      height: 8px;
+      border: solid var(--color-black);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .country-item {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .city-items {
+      margin-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+
+    .city-item .filter-name {
+      color: var(--color-white);
+      opacity: 0.8;
+    }
+
+    .filter-count {
+      color: var(--color-gray);
+      font-size: 10px;
+      opacity: 0.8;
+    }
+
+    .city-pill {
+      flex-shrink: 0;
+      height: 36px;
+      padding: 0 16px;
+      background: transparent;
+      border: 1px solid var(--color-stroke);
+      border-radius: 999px;
+      color: var(--color-gray);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      scroll-snap-align: start;
+    }
+
+    .city-pill:hover {
+      border-color: var(--color-gray);
+      color: var(--color-white);
+    }
+
+    .city-pill.active {
+      background: var(--color-white);
+      border-color: var(--color-white);
+      color: var(--color-black);
+    }
+
+    .search-input {
+      width: 100%;
+      height: 56px;
+      background: var(--color-btn-bg);
+      border: 1px solid var(--color-stroke);
+      border-radius: 12px;
+      padding: 0 20px;
+      color: var(--color-white);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--color-yellow);
+    }
+
+    .results-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .results-count {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--color-white);
+      margin: 0;
+    }
+
+    .studios-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 1300px) {
+      .studios-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Pagination (Client-side rendered, use :global) */
+    :global(.pagination-wrapper) {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      padding: 48px 0;
+      border-top: 1px solid var(--color-stroke);
+      margin-top: 40px;
+    }
+
+    :global(.pagination-btn) {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: 50%;
+      color: var(--color-nav-inactive);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    :global(.pagination-btn:hover:not(:disabled)) {
+      opacity: 0.8;
+      color: var(--color-white);
+    }
+
+    :global(.pagination-btn.active) {
+      color: var(--color-white);
+      cursor: default;
+    }
+
+    :global(.pagination-btn.active:hover) {
+      opacity: 1;
+    }
+
+    :global(.pagination-btn:disabled) {
+      opacity: 0.2;
+      cursor: not-allowed;
+    }
+
+    :global(.pagination-arrow) {
+      background: #15181A !important;
+      border: 1px solid var(--color-stroke) !important;
+      color: var(--color-white);
+    }
+
+    :global(.pagination-arrow:hover:not(:disabled)) {
+      background: #1C1E20 !important;
+      border-color: var(--color-gray) !important;
+      opacity: 1;
+    }
+
+    :global(.pagination-ellipsis) {
+      color: var(--color-nav-inactive);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      padding: 0 4px;
+    }
+
+    /* Right Column */
+    .map-panel {
+      position: sticky;
+      top: var(--navbar-height);
+      height: calc(100vh - var(--navbar-height));
+      background: var(--color-black);
+      padding: 24px 40px 24px 24px; /* 40px right padding to match footer/navbar */
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--color-stroke);
+    }
+
+    /* Map Card UI */
+    .studio-ui-container {
+      position: absolute;
+      bottom: 48px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      padding: 0 24px;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .studio-ui-container.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .studio-card {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-stroke);
+      border-radius: 16px;
+      overflow: hidden;
+      pointer-events: auto;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .studio-card-inner {
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+    }
+
+    .studio-card-media {
+      height: 180px;
+      background: var(--color-btn-bg);
+    }
+
+    .studio-card-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .studio-card-info {
+      padding: 16px;
+    }
+
+    .studio-card-title {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--color-white);
+      margin: 0 0 8px;
+    }
+
+    .studio-card-address-row {
+      background: var(--color-btn-bg);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .studio-card-address {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--color-gray);
+      margin: 0;
+    }
+
+    /* ── Tablet: 641px – 1024px ────────────────────────────── */
+    @media (max-width: 1024px) {
+      .split-container {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: none;
+      }
+      .map-panel {
+        display: none;
+      }
+      .results-panel {
+        border-right: none;
+      }
+      .results-panel-content {
+        padding: 24px 24px 60px;
+      }
+      .studios-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+      .city-filter-scroll {
+        padding: 4px 0;
+      }
+      .city-filter-bar {
+        mask-image: linear-gradient(to right, black 90%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+      }
+      /* Filter popover: cap width on tablet so it doesn't overflow */
+      .filter-popover {
+        width: clamp(320px, 80vw, 600px);
+      }
+    }
+
+    /* ── Mobile: ≤640px ─────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .results-panel-content {
+        padding: 16px 16px 48px;
+      }
+      .breadcrumbs {
+        margin-bottom: 16px;
+        font-size: 13px;
+      }
+      /* Search input: taller touch target, larger font prevents iOS zoom */
+      .search-input {
+        height: 52px;
+        font-size: 16px;
+      }
+      /* City filter row wraps when Filter btn + pills exceed width */
+      .city-filter-row {
+        gap: 8px;
+      }
+      .city-pill {
+        height: 40px;
+        font-size: 14px;
+        padding: 0 14px;
+      }
+      .filter-trigger-btn {
+        height: 40px;
+        font-size: 14px;
+        padding: 0 14px;
+      }
+      /* Filter Popover Full Screen */
+      .filter-popover {
+        position: fixed;
+        top: var(--navbar-height);
+        left: 0;
+        width: 100vw;
+        height: calc(100vh - var(--navbar-height));
+        max-width: none;
+        max-height: none;
+        border-radius: 0;
+        padding: 24px 20px;
+        z-index: 9001;
+        background: var(--color-black); 
+      }
+      .filter-popover.show {
+        animation: popoverFadeInCenter 0.2s ease-out;
+      }
+      @keyframes popoverFadeInCenter {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .filter-popover-header {
+        margin-top: 8px;
+      }
+      .filter-close-btn {
+        display: flex; /* Show natively on mobile */
+        align-items: center;
+        justify-content: center;
+      }
+      /* Backdrop for the centered modal popover on mobile */
+      .filter-popover-backdrop {
+        display: none !important; /* Disabled entirely, full screen popover does not need an external tap-background */
+      }
+      .filter-popover-content {
+        column-count: 2;
+        column-gap: 16px;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+      }
+
+      /* Results meta */
+      .results-meta {
+        margin-bottom: 16px;
+      }
+      .results-count {
+        font-size: 14px;
+      }
+      /* Grid: single column on mobile */
+      .studios-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      /* Pagination: smaller buttons */
+      :global(.pagination-wrapper) {
+        gap: 8px;
+        padding: 32px 0;
+      }
+      :global(.pagination-btn) {
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
+      }
+    }
+
+    /* ── Extra-small: ≤400px ────────────────────────────────── */
+    @media (max-width: 400px) {
+      .filter-popover-content {
+        column-count: 1;
+      }
+      .city-filter-row {
+        flex-wrap: nowrap; /* Keep filter btn visible, pills scroll */
+      }
+    }
+    /* Custom Cluster Styles */
+    :global(.cluster-icon) {
+      background: #EDFE44 !important;
+      color: #000000 !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-family: 'PP Supply Sans', 'Supply', var(--font-mono) !important;
+      font-weight: 700 !important;
+      font-size: 15px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.1);
+      border: 2px solid rgba(0,0,0,0.05);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-shadow: 0 0 1px rgba(0,0,0,0.1);
+    }
+    :global(.cluster-icon:hover) {
+      transform: scale(1.1);
+    }
+  </style>
+
+  <!-- JS Dependencies -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" is:inline></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" is:inline></script>
+  <script src="/js/map-icons.js" is:inline></script>
+  
+  <script define:vars={{ 
+    initialStudios: studiosWithCoords, 
+    totalAllStudios: totalStudios, 
+    metadataGlobal: metadata,
+    isDev: import.meta.env.DEV 
+  }}>
+    window.initialStudiosMap = initialStudios;
+    window.totalAllStudios = totalAllStudios;
+    window.metadataGlobal = metadataGlobal;
+    window.isDev = isDev;
+  </script>
+
+  <script>
+    import { initializeMap } from '../../lib/map-init';
+
+    let mapInstance: any = null;
+
+    function init() {
+      // Draggable Filter Bar
+      const slider = document.querySelector('.city-filter-bar') as HTMLElement;
+      let isDown = false;
+      let startX: number;
+      let scrollLeft: number;
+      let moved = false;
+
+      slider?.addEventListener('mousedown', (e) => {
+        isDown = true;
+        moved = false;
+        startX = e.pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+        slider.style.scrollSnapType = 'none';
+      });
+      slider?.addEventListener('mouseleave', () => {
+        isDown = false;
+        slider.style.scrollSnapType = 'x mandatory';
+      });
+      slider?.addEventListener('mouseup', () => {
+        isDown = false;
+        slider.style.scrollSnapType = 'x mandatory';
+      });
+      slider?.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        const x = e.pageX - slider.offsetLeft;
+        const walk = (x - startX) * 2;
+        if (Math.abs(walk) > 5) moved = true;
+        slider.scrollLeft = scrollLeft - walk;
+      });
+
+      slider?.addEventListener('click', (e) => {
+        if (moved) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, true);
+
+      if ((window as any).initialStudiosMap?.length > 0) {
+        mapInstance = initializeMap((window as any).initialStudiosMap);
+      }
+
+      const r2Domain = (window as any).isDev ? 'https://json.acceso.design' : `${window.location.origin}/cdn`;
+      const imageDomain = 'https://img.acceso.design';
+
+      // In dev, route all R2 fetches through the local proxy to avoid CORS
+      async function apiFetch(url: string): Promise<Response> {
+        if ((window as any).isDev) {
+          return fetch(`/api/dev-proxy?url=${encodeURIComponent(url)}`);
+        }
+        return fetch(url);
+      }
+      
+      let currentCity = 'all';
+      let currentQuery = '';
+      let currentPage = 1;
+      
+      const searchInput = document.getElementById('search-input') as HTMLInputElement;
+      const studioCount = document.getElementById('studio-count');
+      const cityPills = document.querySelectorAll('.city-pill');
+      const emptyResult = document.getElementById('empty-result');
+      const studiosGrid = document.getElementById('studios-grid');
+      const paginationContainer = document.getElementById('pagination-container');
+      
+      const filterTrigger = document.getElementById('filter-trigger');
+      const filterPopover = document.getElementById('filter-popover');
+      const filterBackdrop = document.getElementById('filter-popover-backdrop');
+      const countryCheckboxes = document.querySelectorAll('.country-checkbox') as NodeListOf<HTMLInputElement>;
+      const cityCheckboxes = document.querySelectorAll('.city-checkbox') as NodeListOf<HTMLInputElement>;
+      const clearAllBtn = document.getElementById('filter-clear-all');
+
+
+      // 1. ATTACH LISTENERS IMMEDIATELY (Top of init)
+      filterTrigger?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isShow = filterPopover?.classList.contains('show');
+        if (isShow) {
+          filterPopover?.classList.remove('show');
+        } else {
+          filterPopover?.classList.add('show');
+        }
+      });
+
+      document.getElementById('filter-close-btn')?.addEventListener('click', () => {
+        filterPopover?.classList.remove('show');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (filterPopover?.classList.contains('show')) {
+          if (!filterPopover.contains(e.target as Node) && e.target !== filterTrigger) {
+            filterPopover.classList.remove('show');
+          }
+        }
+      });
+
+      countryCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+          currentCity = 'all';
+          cityPills.forEach(p => p.classList.remove('active'));
+          currentPage = 1;
+          execFetch(true);
+        });
+      });
+
+      cityCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+          currentCity = 'all';
+          cityPills.forEach(p => p.classList.remove('active'));
+          currentPage = 1;
+          execFetch(true);
+        });
+      });
+
+      clearAllBtn?.addEventListener('click', () => {
+        countryCheckboxes.forEach(cb => cb.checked = false);
+        cityCheckboxes.forEach(cb => cb.checked = false);
+        currentCity = 'all';
+        cityPills.forEach(p => p.classList.remove('active'));
+        currentPage = 1;
+        execFetch(true);
+      });
+
+      cityPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          cityPills.forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          currentCity = (pill as HTMLElement).dataset.city || 'all';
+          countryCheckboxes.forEach(cb => cb.checked = false);
+          cityCheckboxes.forEach(cb => cb.checked = false);
+          currentPage = 1;
+          execFetch(true);
+        });
+      });
+
+      if (searchInput) {
+        searchInput.addEventListener('change', (e) => {
+           currentQuery = (e.target as HTMLInputElement).value;
+           currentPage = 1;
+           execFetch(true);
+        });
+      }
+
+      // 2. CONTINUE WITH REST OF INIT
+      let globalSearchCache: any[] | null = null;
+      let isFirstLoad = true;
+
+      async function buildCards(data: any[]) {
+        if (!studiosGrid) return;
+        // Avoid XSS: build DOM nodes instead of injecting HTML strings.
+        const frag = document.createDocumentFragment();
+
+        for (const s of data) {
+          const a = document.createElement('a');
+          a.className = 'designer-card block no-underline text-inherit transition-all duration-200 hover:-translate-y-1';
+          a.style.cssText = 'background:#111315;border-radius:20px;border:1px solid rgba(255,255,255,0.03);overflow:hidden;display:block;';
+          a.dataset.id = String(s?.id ?? '');
+
+          const slug = String(s?.slug ?? '');
+          a.href = `/designers/${encodeURIComponent(slug)}`;
+
+          const inner = document.createElement('div');
+          inner.className = 'card-inner';
+          inner.style.cssText = 'padding:24px; display:flex; align-items:center; gap:20px;';
+
+          const logoWrap = document.createElement('div');
+          logoWrap.className = 'studio-logo-wrapper';
+          logoWrap.style.cssText = 'width:64px;height:64px;background:#1C1E20;border-radius:10px;overflow:hidden;flex-shrink:0;';
+
+          const coverRaw = String(s?.cover ?? '');
+          let coverUrl = coverRaw;
+          if (coverUrl && !coverUrl.startsWith('http')) {
+            coverUrl = `${imageDomain}/${coverUrl.replace(/^\/+/, '')}`;
+          }
+
+          if (coverUrl) {
+            const img = document.createElement('img');
+            img.className = 'studio-logo-img';
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+            img.src = coverUrl;
+            img.alt = String(s?.name ?? '');
+            logoWrap.appendChild(img);
+          } else {
+            const ph = document.createElement('div');
+            ph.className = 'studio-logo-placeholder';
+            ph.style.cssText = 'width:100%;height:100%;background:#1C1E20;';
+            logoWrap.appendChild(ph);
+          }
+
+          const info = document.createElement('div');
+          info.className = 'header-info';
+          info.style.minWidth = '0';
+
+          const h3 = document.createElement('h3');
+          h3.className = 'studio-name';
+          h3.style.cssText = 'font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--color-white);margin:0;line-height:1.2;letter-spacing:-0.02em;';
+          h3.textContent = String(s?.name ?? '');
+
+          const p = document.createElement('p');
+          p.className = 'studio-location';
+          p.style.cssText = 'font-family:var(--font-sans);font-size:14px;color:var(--color-gray);margin:4px 0 0;';
+          p.textContent = String(s?.city ?? '');
+
+          info.append(h3, p);
+          inner.append(logoWrap, info);
+          a.appendChild(inner);
+          frag.appendChild(a);
+        }
+
+        studiosGrid.replaceChildren(frag);
+      }
+
+      const slugifyValue = (v: string) => (v || '').toLowerCase().trim().replace(/\s+/g, '-');
+
+      async function execFetch(filterChanged = false) {
+        if (isFirstLoad) {
+           isFirstLoad = false;
+           renderPagination(Math.ceil((window as any).totalAllStudios / 20));
+           return;
+        }
+
+        try {
+          let visibleData: any[] = [];
+          let totalVisibleCount = 0;
+          let calculatedTotalPages = 1;
+
+          const q = currentQuery.toLowerCase().trim();
+          
+          if (q) {
+             if (!globalSearchCache) {
+               const res = await apiFetch(`${r2Domain}/test-studios.json`);
+               if (res.ok) globalSearchCache = await res.json();
+               else globalSearchCache = [];
+             }
+             const matched = globalSearchCache!.filter((s: any) => 
+               s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q)
+             );
+             totalVisibleCount = matched.length;
+             calculatedTotalPages = Math.ceil(totalVisibleCount / 20);
+             if (currentPage > calculatedTotalPages) currentPage = Math.max(1, calculatedTotalPages);
+             visibleData = matched.slice((currentPage - 1) * 20, currentPage * 20);
+
+             if (filterChanged && mapInstance?.updateStudios) {
+               mapInstance.updateStudios(matched.filter(s => s.latitude && s.longitude), true, true);
+             }
+          } else {
+             let endpoint = '';
+             const checkedCities = Array.from(document.querySelectorAll('.city-checkbox:checked')) as HTMLInputElement[];
+             const checkedCountries = Array.from(document.querySelectorAll('.country-checkbox:checked')) as HTMLInputElement[];
+             
+             const mData = (window as any).metadataGlobal || {};
+
+             // Multi-select mode: evaluate in-memory for true OR filtering across selections.
+             if (checkedCities.length + checkedCountries.length > 1) {
+               if (!globalSearchCache) {
+                 const rAll = await apiFetch(`${r2Domain}/test-studios.json`);
+                 if (rAll.ok) globalSearchCache = await rAll.json();
+                 else globalSearchCache = [];
+               }
+
+               const selectedCitySlugs = new Set(checkedCities.map(c => String(c.dataset.slug || '')));
+               const selectedCountrySlugs = new Set(checkedCountries.map(c => String(c.dataset.slug || '')));
+               const matched = (globalSearchCache || []).filter((s: any) => {
+                 const sCitySlug = String(s.city_slug || slugifyValue(s.city || ''));
+                 const sCountrySlug = String(s.country_slug || slugifyValue(s.country || ''));
+                 return selectedCitySlugs.has(sCitySlug) || selectedCountrySlugs.has(sCountrySlug);
+               });
+
+               totalVisibleCount = matched.length;
+               calculatedTotalPages = Math.ceil(totalVisibleCount / 20) || 1;
+               if (currentPage > calculatedTotalPages) currentPage = Math.max(1, calculatedTotalPages);
+               visibleData = matched.slice((currentPage - 1) * 20, currentPage * 20);
+
+               if (filterChanged && mapInstance?.updateStudios) {
+                 mapInstance.updateStudios(matched.filter((s: any) => s.latitude && s.longitude), true, true);
+               }
+             } else
+
+             if (checkedCities.length > 0) {
+                const forcedCity = checkedCities[0].dataset.slug;
+                endpoint = `${r2Domain}/studios/city/${forcedCity}/page-${currentPage}.json`;
+                calculatedTotalPages = mData.cities?.[forcedCity!]?.pages || 1;
+                totalVisibleCount = mData.cities?.[forcedCity!]?.total || 0;
+                if (filterChanged) fetchMapData('city', forcedCity!, calculatedTotalPages, false);
+             } else if (checkedCountries.length > 0) {
+                const forcedCountry = checkedCountries[0].dataset.slug;
+                endpoint = `${r2Domain}/studios/country/${forcedCountry}/page-${currentPage}.json`;
+                calculatedTotalPages = mData.countries?.[forcedCountry!]?.pages || 1;
+                totalVisibleCount = mData.countries?.[forcedCountry!]?.total || 0;
+                if (filterChanged) fetchMapData('country', forcedCountry!, calculatedTotalPages, false);
+             } else if (currentCity !== 'all') {
+                const slugifiedPill = currentCity.toLowerCase().replace(/\s+/g, '-');
+                endpoint = `${r2Domain}/studios/city/${slugifiedPill}/page-${currentPage}.json`;
+                calculatedTotalPages = mData.cities?.[slugifiedPill]?.pages || 1;
+                totalVisibleCount = mData.cities?.[slugifiedPill]?.total || 0;
+                if (filterChanged) fetchMapData('city', slugifiedPill, calculatedTotalPages, false);
+             } else {
+                if (!globalSearchCache) {
+                   const rAll = await apiFetch(`${r2Domain}/test-studios.json`);
+                   if (rAll.ok) globalSearchCache = await rAll.json();
+                }
+                totalVisibleCount = (window as any).totalAllStudios;
+                calculatedTotalPages = Math.ceil(totalVisibleCount / 20);
+                visibleData = globalSearchCache!.slice((currentPage - 1) * 20, currentPage * 20);
+
+                if (filterChanged && mapInstance?.updateStudios) {
+                  mapInstance.updateStudios(globalSearchCache!.filter(s => s.latitude && s.longitude), true, true);
+                }
+             }
+
+             if (endpoint) {
+                const chunkRes = await apiFetch(endpoint);
+                if (chunkRes.ok) visibleData = await chunkRes.json();
+             }
+          }
+
+          if (studioCount) studioCount.textContent = totalVisibleCount > 0 ? `${totalVisibleCount} results` : '0 results';
+          
+          if (visibleData.length === 0) {
+            studiosGrid?.classList.add('hidden');
+            emptyResult?.classList.remove('hidden');
+          } else {
+            studiosGrid?.classList.remove('hidden');
+            emptyResult?.classList.add('hidden');
+            await buildCards(visibleData);
+          }
+          renderPagination(calculatedTotalPages);
+        } catch(err) {
+        }
+      }
+
+      const mapDataCache: Record<string, any[]> = {};
+      async function fetchMapData(type: 'city' | 'country', filterSlug: string, totalPages: number, shouldCluster = true) {
+        const cacheKey = `${type}:${filterSlug}`;
+        if (mapDataCache[cacheKey]) {
+          if (mapInstance?.updateStudios) mapInstance.updateStudios(mapDataCache[cacheKey], true, shouldCluster);
+          return;
+        }
+        try {
+          const pagePromises = [];
+          for (let p = 1; p <= totalPages; p++) {
+            pagePromises.push(apiFetch(`${r2Domain}/studios/${type}/${filterSlug}/page-${p}.json`));
+          }
+          const responses = await Promise.all(pagePromises);
+          const allPages = await Promise.all(responses.filter(r => r.ok).map(r => r.json()));
+          const allStudios = allPages.flat().filter((s: any) => s.latitude && s.longitude);
+          mapDataCache[cacheKey] = allStudios;
+          if (mapInstance?.updateStudios) mapInstance.updateStudios(allStudios, true, shouldCluster);
+        } catch (e) {
+        }
+      }
+
+      const renderPagination = (totalPages: number) => {
+        if (!paginationContainer) return;
+        if (totalPages <= 1) {
+          paginationContainer.innerHTML = '';
+          return;
+        }
+        let html = '';
+        html += `<button class="pagination-btn pagination-arrow" ${currentPage === 1 ? 'disabled' : ''} data-page="prev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+        
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+        if (startPage > 1) {
+          html += `<button class="pagination-btn" data-page="1">1</button><span class="pagination-ellipsis">...</span>`;
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+          html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+        }
+
+        if (endPage < totalPages) {
+          html += `<span class="pagination-ellipsis">...</span><button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+        }
+
+        html += `<button class="pagination-btn pagination-arrow" ${currentPage === totalPages ? 'disabled' : ''} data-page="next"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+        paginationContainer.innerHTML = html;
+
+        paginationContainer.querySelectorAll('.pagination-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const page = (e.currentTarget as HTMLElement).dataset.page;
+            if (page === 'prev') currentPage--;
+            else if (page === 'next') currentPage++;
+            else currentPage = parseInt(page!);
+            execFetch();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+        });
+      };
+
+      // Read URL query params and pre-apply filter (e.g. from designer slug links)
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramCity = urlParams.get('city');
+      const paramCountry = urlParams.get('country');
+
+      if (paramCity) {
+        // Bypass first-load guard so the filter fetch actually runs
+        isFirstLoad = false;
+        // Try to activate a city pill first
+        let pillActivated = false;
+        cityPills.forEach(pill => {
+          const pillCity = (pill as HTMLElement).dataset.city || '';
+          if (pillCity.toLowerCase().replace(/\s+/g, '-') === paramCity) {
+            cityPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentCity = pillCity;
+            pillActivated = true;
+          }
+        });
+        // Fall back to checkbox
+        if (!pillActivated) {
+          cityCheckboxes.forEach(cb => {
+            if (cb.dataset.slug === paramCity) cb.checked = true;
+          });
+        }
+        // Clean URL
+        history.replaceState(null, '', '/designers');
+        execFetch(true);
+      } else if (paramCountry) {
+        // Bypass first-load guard
+        isFirstLoad = false;
+        countryCheckboxes.forEach(cb => {
+          if (cb.dataset.slug === paramCountry) cb.checked = true;
+        });
+        // Clean URL
+        history.replaceState(null, '', '/designers');
+        execFetch(true);
+      } else {
+        // First load with no filters: fetch the full list for the map so clusters are complete
+        (async () => {
+          if (!globalSearchCache) {
+            const rAll = await apiFetch(`${r2Domain}/test-studios.json`);
+            if (rAll.ok) {
+              globalSearchCache = await rAll.json();
+              if (mapInstance) {
+                const mapData = globalSearchCache!.filter((s: any) => s.latitude && s.longitude);
+                mapInstance.updateStudios(mapData, false, true); // Don't auto-center (keep Europe), but cluster
+              }
+            }
+          }
+          execFetch(); 
+        })();
+      }
+    }
+
+    // Initialize on load
+    init();
+  </script>
+  <Footer />
+</PostHogLayout>

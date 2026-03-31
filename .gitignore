@@ -1,0 +1,27 @@
+node_modules
+package-lock.json
+.env
+.dev.vars
+dist/
+.astro/
+.wrangler/
+
+# Generated files
+public/studios.json
+public/moodboard.json
+public/spotlight.json
+public/enrichment-metadata.json
+public/moodboard-enrichment.json
+public/moodboard-metadata.json
+public/spotlight-metadata.json
+public/studios-metadata.json
+public/test-studios.json
+
+# Utility/debug scripts
+localhost_*.json
+# System Files
+desktop.ini
+Thumbs.db
+.DS_Store
+
+localhost_*.json

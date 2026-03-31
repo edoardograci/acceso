@@ -1,0 +1,149 @@
+---
+import PostHogLayout from '../layouts/PostHogLayout.astro';
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import '../styles/map.css';
+import { initializeMap } from '../lib/map-init.ts';
+import type { Studio } from '../lib/types';
+
+// Fetch studios from CDN (primary) or static JSON (fallback)
+let studios: Studio[] = [];
+try {
+  const isDev = import.meta.env.DEV;
+  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+  const imageDomain = 'https://img.acceso.design';
+  const normalizeCover = (cover: any) => {
+    if (!cover) return cover;
+    if (cover.startsWith('http')) return cover;
+    return `${imageDomain}/${cover.replace(/^\/+/, '')}`;
+  };
+  const studiosUrl = `${domain}/test-studios.json`;
+  
+  const response = await fetch(studiosUrl);
+  if (response.ok) {
+    const rawStudios = await response.json();
+    studios = rawStudios.map((s: any) => ({
+      ...s,
+      cover: normalizeCover(s.cover)
+    }));
+  } else {
+    throw new Error('Failed to fetch studios');
+  }
+} catch (e) {
+  console.error('Failure to fetch data:', e);
+}
+
+
+
+// Filter studios with valid coordinates
+const studiosWithCoords = studios.filter(s => s.latitude && s.longitude);
+
+// Get unique cities for filter buttons, ensuring Milan is first
+const cities = [...new Set(studiosWithCoords.map(s => s.city))].sort((a, b) => {
+  if (a === 'Milan') return -1;
+  if (b === 'Milan') return 1;
+  return a.localeCompare(b);
+});
+
+// Get studio slug from URL query parameter
+const studioSlug = Astro.url.searchParams.get('studio') || null;
+
+// Determine active city (default to Milan if no studio specified or not found)
+let activeCity = 'Milan';
+if (studioSlug) {
+  const targetStudio = studios.find(s => s.slug === studioSlug);
+  if (targetStudio) {
+    activeCity = targetStudio.city;
+  }
+}
+---
+
+<PostHogLayout>
+  <Layout 
+    title="Design Studio Map by City | Acceso"
+    description="Interactive map of independent design studios across Milan, Seoul, Berlin, London, Paris, Copenhagen, and Tokyo. Explore local design scenes."
+    keywords="design studio map, Milan design studios, Seoul designers, Berlin design scene, design studio locations"
+  >
+    <Navbar />
+    
+    <main class="map-page">
+      <h1 class="visually-hidden">Independent Design Studios Map</h1>
+      <!-- City Selector - Top Center -->
+      <div class="city-selector">
+        <div class="filter-buttons" id="city-filters">
+          {cities.map(city => (
+            <button 
+              type="button" 
+              class:list={['filter-btn', { active: city === activeCity }]} 
+              data-city={city}
+            >
+              {city}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <!-- Studio Card Wrapper with Navigation -->
+      <div class="studio-ui-container" id="studio-ui-container">
+        <!-- Navigation Buttons -->
+        <div class="map-navigation">
+          <button type="button" id="nav-btn-back" class="map-nav-btn prev" aria-label="Previous studio">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Back
+          </button>
+          <button type="button" id="nav-btn-next" class="map-nav-btn next" aria-label="Next studio">
+            Next
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="studio-card" id="studio-card">
+          <a href="#" class="studio-card-inner" id="studio-card-link">
+            <img 
+              src="" 
+              alt="" 
+              class="studio-card-image" 
+              id="studio-card-image" 
+              loading="lazy" 
+              decoding="async"
+              data-skeleton
+            />
+            <div class="studio-card-content">
+              <h3 class="studio-card-title" id="studio-card-title"></h3>
+              <p class="studio-card-address" id="studio-card-address"></p>
+            </div>
+            <span class="studio-card-arrow">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </a>
+        </div>
+      </div>
+
+      <div id="map"></div>
+    </main>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet JS -->
+
+
+    <!-- Icon map (defines window.iconMap) -->
+    <script src="/js/map-icons.js" is:inline></script>
+
+    <!-- Pass studio data to client script -->
+    <script define:vars={{ studios: studiosWithCoords, studioSlug }}>
+      window.studiosData = studios;
+      window.studioSlug = studioSlug;
+    </script>
+
+    <!-- Initialize map (properly bundled by Astro) -->
+    <script src="../scripts/map-init-client.ts"></script>
+  </Layout>
+</PostHogLayout>

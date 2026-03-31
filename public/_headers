@@ -1,0 +1,63 @@
+/*
+  X-Robots-Tag: index, follow
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' eu.i.posthog.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://eu.i.posthog.com https://*.acceso.design https://*.turso.io; frame-ancestors 'none';
+
+/api/*
+  X-Robots-Tag: noindex
+
+/collections/*
+  X-Robots-Tag: noindex, nofollow
+
+/submission
+  X-Robots-Tag: noindex, nofollow
+
+/designers
+  # Prevent indexing of filtered/query-string variants; clean routes are indexable
+  X-Robots-Tag: index, follow
+
+# API endpoints - cache for logged-in users
+/api/collections/status
+  Cache-Control: private, max-age=300
+
+# Static JSON files - balanced caching (1 hour edge, 7 days stale-while-revalidate)
+/test-studios.json
+  Cache-Control: public, max-age=3600, s-maxage=3600, stale-while-revalidate=604800
+  
+/moodboard.json
+  Cache-Control: public, max-age=3600, s-maxage=3600, stale-while-revalidate=604800
+
+/spotlight.json
+  Cache-Control: public, max-age=3600, s-maxage=3600, stale-while-revalidate=604800
+
+# JavaScript state manager
+/js/collections-state.js
+  Cache-Control: public, max-age=3600, immutable
+
+# Images - with Cloudflare resizing
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
+  
+/*.jpeg
+  Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
+  
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
+  
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
+  
+/*.avif
+  Cache-Control: public, max-age=31536000, immutable
+  Vary: Accept
+
+# Cloudflare Image Resizing
+/cdn-cgi/image/*
+  Cache-Control: public, max-age=31536000, immutable

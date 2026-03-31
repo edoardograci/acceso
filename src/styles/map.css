@@ -1,0 +1,264 @@
+/* Map page styles */
+.map-page {
+  position: relative;
+  /* padding-top removed - content follows sticky navbar */
+  height: calc(100vh - var(--navbar-height));
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+}
+
+/* City Selector - Top Center */
+/* City Selector - Top Center */
+/* City Selector - Top Center */
+.city-selector {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  pointer-events: none;
+  /* Let clicks pass through container */
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 12px;
+  padding: 0 16px;
+  /* Left/Right padding */
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE 10+ */
+  pointer-events: auto;
+  justify-content: flex-start;
+  /* Default left align for scroll */
+}
+
+.filter-buttons::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari/Webkit */
+}
+
+.filter-btn {
+  flex-shrink: 0;
+  /* Prevent shrinking */
+  text-transform: uppercase;
+  padding: 8px 24px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-stroke);
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: normal;
+  /* Ensure proper vertical alignment */
+}
+
+.filter-btn:hover {
+  border-color: var(--color-white);
+}
+
+.filter-btn.active {
+  background: var(--color-yellow);
+  color: var(--color-black);
+  border-color: var(--color-yellow);
+}
+
+/* Studio Card - Bottom Center */
+/* Studio UI Container - Handles Position & Visibility */
+.studio-ui-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120%);
+  z-index: 1000;
+  width: calc(100% - 32px);
+  max-width: 400px;
+  pointer-events: none;
+  /* Let clicks pass through gaps */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+}
+
+.studio-ui-container.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Navigation Buttons */
+.map-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  pointer-events: none;
+  /* Container itself usually transparent but just in case */
+}
+
+.map-nav-btn {
+  pointer-events: auto;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-stroke);
+  border-radius: 9999px;
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1;
+  /* Ensure text creates no extra height */
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.map-nav-btn:hover {
+  border-color: var(--color-white);
+}
+
+.map-nav-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.5px;
+  /* Slightly thicker for visibility at small size */
+}
+
+/* Studio Card - Visual Box */
+.studio-card {
+  position: relative;
+  width: 100%;
+  pointer-events: auto;
+  background: var(--color-black);
+  border: 1px solid var(--color-stroke);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.studio-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.studio-card-image {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background-color: var(--color-bg-secondary);
+}
+
+.studio-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.studio-card-title {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-white);
+  margin-bottom: 6px;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
+.studio-card-address {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-gray);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.studio-card-arrow {
+  flex-shrink: 0;
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+.studio-card-arrow svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (min-width: 768px) {
+  .city-selector {
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    max-width: 90%;
+    /* Safety limit */
+    display: flex;
+    justify-content: center;
+  }
+
+  .filter-buttons {
+    justify-content: center;
+    padding: 0;
+    overflow-x: visible;
+  }
+
+  .studio-ui-container {
+    bottom: 32px;
+    max-width: 440px;
+  }
+
+  .studio-card-inner {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .studio-card-image {
+    width: 120px;
+    height: 120px;
+  }
+
+  .studio-card-title {
+    font-size: 18px;
+  }
+
+  .studio-card-address {
+    font-size: 14px;
+  }
+}
+
+/* Custom Leaflet icon styling */
+:global(.custom-div-icon) {
+  background: none !important;
+  border: none !important;
+}
+
+/* Hide default Leaflet popups */
+.leaflet-popup {
+  display: none !important;
+}
+
+/* Move zoom controls down on mobile to avoid filter overlap */
+@media (max-width: 767px) {
+  .leaflet-control-zoom {
+    margin-top: 80px !important;
+  }
+}

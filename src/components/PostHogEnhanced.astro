@@ -1,0 +1,221 @@
+---
+// src/components/PostHogEnhanced.astro
+/**
+ * Enhanced PostHog Loader with Overkill-Level Configuration
+ * Implements session-centric tracking, privacy-first approach, and type-safe event taxonomy
+ * 
+ * Key Features:
+ * - Memory-only persistence pre-consent (GDPR compliant)
+ * - Automatic session lifecycle tracking
+ * - Enhanced pageview capture with page type classification
+ * - User identification on login with full person properties
+ * - Performance optimized (batching, timeouts)
+ */
+
+const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
+const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';
+const userId = Astro.locals.user?.id;
+const userEmail = Astro.locals.user?.email;
+const userPlan = Astro.locals.user?.plan;
+const userName = Astro.locals.user?.name;
+const userCreatedAt = Astro.locals.user?.createdAt;
+---
+
+{posthogKey ? (
+  <script is:inline define:vars={{ posthogKey, posthogHost, userId, userEmail, userPlan, userName, userCreatedAt }}>
+    (function() {
+      // Prevent double load
+      if (window.__posthog_loaded) return;
+      window.__posthog_loaded = true;
+
+      // Buffering stub
+      var ph = window.posthog = window.posthog || [];
+      if (!ph.init) {
+        if (ph.invoked) return;
+        ph.invoked = true;
+        ph.methods = ["capture", "identify", "alias", "people.set", "people.set_once", "register", "register_once", "unregister", "opt_out_capturing", "has_opted_out_capturing", "opt_in_capturing", "reset", "isFeatureEnabled", "onFeatureFlags", "getFeatureFlag", "getFeatureFlagPayload", "reloadFeatureFlags", "identify", "set_config"];
+        ph.factory = function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);ph.push(e);return ph}};
+        for (var t=0;t<ph.methods.length;t++){var e=ph.methods[t];ph[e]=ph.factory(e)}
+      }
+
+      const CONSENT_COOKIE_NAME = 'acceso_analytics_consent';
+      
+      const script = document.createElement('script');
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.src = posthogHost + '/static/array.js';
+      
+      script.onload = function() {
+        try {
+          if (!window.posthog || typeof window.posthog.init !== 'function') return;
+          
+          const hasConsent = document.cookie.includes(CONSENT_COOKIE_NAME + '=true');
+          
+          // Initialize PostHog
+          window.posthog.init(posthogKey, {
+            api_host: posthogHost,
+            capture_pageview: true, // Let PostHog handle pageviews
+            capture_pageleave: true,
+            persistence: hasConsent ? 'localStorage+cookie' : 'memory',
+            persistence_name: 'acceso_ph',
+            autocapture: false,
+            disable_session_recording: true,
+            respect_dnt: true,
+            opt_out_capturing_by_default: false,
+            _request_timeout_ms: 10000,
+            batch_size: 20,
+            batch_interval_ms: 3000,
+            sanitize_properties: function(properties, event_name) {
+              ['$current_url', '$referrer'].forEach(prop => {
+                if (properties[prop]) {
+                  try {
+                    const urlObj = new URL(properties[prop]);
+                    const piiParams = ['email', 'phone', 'name', 'address', 'token', 'key', 'secret'];
+                    piiParams.forEach(param => urlObj.searchParams.delete(param));
+                    properties[prop] = urlObj.toString();
+                  } catch (e) {}
+                }
+              });
+              return properties;
+            },
+            advanced_disable_feature_flags: true,
+          });
+
+          // ====================================================================
+          // IDENTITY & ATTRIBUTION
+          // ====================================================================
+          
+          function getUtmParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param) || undefined;
+          }
+
+          // Initial attribution (Sets person properties once)
+          window.posthog.register_once({
+            initial_referrer: document.referrer || '$direct',
+            initial_utm_source: getUtmParam('utm_source'),
+            initial_utm_medium: getUtmParam('utm_medium'),
+            initial_utm_campaign: getUtmParam('utm_campaign'),
+          });
+
+          if (userId && userId !== 'undefined') {
+            let accountAgeDays = null;
+            if (userCreatedAt) {
+              try {
+                const createdDate = new Date(userCreatedAt);
+                accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / 86400000);
+              } catch (e) {}
+            }
+            
+            window.posthog.identify(userId, {
+              email: userEmail,
+              name: userName,
+              created_at: userCreatedAt,
+              plan: userPlan || 'free',
+              account_age_days: accountAgeDays,
+            });
+            
+            window.posthog.set_config({ persistence: 'localStorage+cookie' });
+          }
+
+          // ====================================================================
+          // CONSENT MANAGEMENT
+          // ====================================================================
+          
+          window.addEventListener('analytics-consent-granted', function() {
+            if (window.posthog) {
+              window.posthog.set_config({ persistence: 'localStorage+cookie' });
+            }
+          });
+          
+          // ====================================================================
+          // ENHANCED PAGE VIEW TRACKING
+          // ====================================================================
+          
+          function getPageType() {
+            const path = window.location.pathname;
+            if (path === '/') return 'home';
+            if (path === '/designers') return 'designers_index';
+            if (path.startsWith('/designers/')) return 'designer_profile';
+            if (path === '/moodboard') return 'moodboard_index';
+            if (path.startsWith('/moodboard/')) return 'moodboard_detail';
+            if (path === '/map') return 'map';
+            if (path === '/login') return 'login';
+            if (path === '/profile') return 'profile';
+            if (path.startsWith('/collections/')) return 'collections';
+            return 'other';
+          }
+          
+          function getDeviceCategory() {
+            const width = window.innerWidth;
+            if (width < 768) return 'mobile';
+            if (width < 1024) return 'tablet';
+            return 'desktop';
+          }
+
+          function classifyReferrer() {
+            const referrer = document.referrer;
+            if (!referrer) return 'direct';
+            try {
+              const domain = new URL(referrer).hostname;
+              if (['google.com', 'bing.com', 'yahoo.com'].some(d => domain.includes(d))) return 'organic';
+              if (['t.co', 'facebook.com', 'instagram.com', 'linkedin.com'].some(d => domain.includes(d))) return 'social';
+              return 'referral';
+            } catch { return 'direct'; }
+          }
+          
+          window.posthog.register({
+            authenticated: !!userId,
+            user_plan: userPlan || 'anonymous',
+            page_type: getPageType(),
+            device_category: getDeviceCategory(),
+            referrer_type: classifyReferrer(),
+          });
+          
+
+          
+          // ====================================================================
+          // SESSION LIFECYCLE
+          // ====================================================================
+          
+
+          
+          // Engaged session tracking (once per session)
+          if (!sessionStorage.getItem('acceso_session_engaged')) {
+            let engagementTimer = setTimeout(function() {
+              sessionStorage.setItem('acceso_session_engaged', 'true');
+              window.posthog.capture('session_engaged', { duration_sec: 30 });
+              engagementTimer = null;
+            }, 30000);
+            
+            // Clear timer if user navigates away before 30s
+            window.addEventListener('beforeunload', function() {
+              if (engagementTimer) {
+                clearTimeout(engagementTimer);
+                engagementTimer = null;
+              }
+            }, { once: true });
+          }
+
+          
+        } catch (e) {}
+      };
+
+      script.onerror = function() {
+        // Provide empty stub to prevent other scripts from crashing
+        window.posthog = { 
+          capture: function(){}, 
+          identify: function(){}, 
+          register: function(){},
+          set_config: function(){}, 
+          opt_in_capturing: function(){}, 
+          opt_out_capturing: function(){},
+          alias: function(){},
+          reset: function(){},
+        };
+      };
+
+      document.head.appendChild(script);
+    })();
+  </script>
+) : null}

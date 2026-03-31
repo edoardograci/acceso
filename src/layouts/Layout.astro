@@ -1,0 +1,242 @@
+---
+import '../styles/global.css';
+import CookieBanner from '../components/CookieBanner.astro';
+import PostHogEnhanced from '../components/PostHogEnhanced.astro';
+import { organization, website } from '../lib/seo/schema';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  canonical?: URL;
+  ogType?: 'website' | 'article';
+  schema?: Record<string, any>;
+  keywords?: string;
+}
+
+const {
+  title,
+  description,
+  image = '/social-card.png',
+  canonical = new URL(Astro.url.pathname, Astro.site),
+  ogType = 'website',
+  schema,
+  keywords
+} = Astro.props;
+
+// Pass user ID to client-side for collections state
+const userId = Astro.locals.user?.id || null;
+
+const siteUrl = Astro.site ? new URL('/', Astro.site).toString() : '';
+const baseGraph: any[] = siteUrl
+  ? [
+      organization({
+        url: siteUrl,
+        name: 'Acceso',
+        logo: new URL('/icon.svg', Astro.site).toString(),
+      }),
+      website({ url: siteUrl, name: 'Acceso' }),
+    ]
+  : [];
+
+const extraGraph: any[] = (() => {
+  if (!schema) return [];
+  if (Array.isArray((schema as any)['@graph'])) return (schema as any)['@graph'];
+  return [schema];
+})();
+
+const mergedSchema =
+  baseGraph.length || extraGraph.length
+    ? { '@context': 'https://schema.org', '@graph': [...baseGraph, ...extraGraph] }
+    : null;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <PostHogEnhanced />
+    <slot name="head" />
+
+    <!-- EMERGENCY STABILITY GUARD: Stops adblocker-induced loops -->
+    <script is:inline>
+      (function() {
+        // 1. Silence repetitive external crashes (Cloudflare/PostHog stubs)
+        window.addEventListener('error', function(e) {
+          if (e.message && (e.message.includes('iterable') || e.message.includes('Cloudflare'))) {
+            e.stopImmediatePropagation();
+          }
+        }, true);
+
+        // 2. Kill Cloudflare Analytics before it crashes Brave
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+              if (node.tagName === 'SCRIPT' && node.src && node.src.includes('cloudflareinsights')) {
+                if (node.remove) node.remove();
+                else if (node.parentNode) node.parentNode.removeChild(node);
+              }
+            });
+          });
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+
+        // 3. Kill ghost Service Workers
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(rs) {
+            for (var r of rs) r.unregister();
+          });
+        }
+      })();
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Performance -->
+    <link rel="preconnect" href="https://img.acceso.design" crossorigin />
+    <link rel="preconnect" href="https://mood.acceso.design" crossorigin />
+
+    <link
+      rel="preload"
+      href="/fonts/PPSupplySans-Variable.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/PPFraktionSans-Variable.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+
+    <!-- CRITICAL: Set user ID BEFORE loading collections state -->
+    {userId && (
+      <script is:inline define:vars={{ userId }}>
+        window.currentUserId = userId;
+      </script>
+    )}
+
+    <script>
+      /**
+       * Collections Engine v6.0 (High Priority)
+       */
+      (function() {
+        const state = { designers: new Set(), objects: new Set(), loaded: false, subs: new Set() };
+
+        const notify = () => {
+          state.subs.forEach(fn => { try { fn(); } catch(e) {} });
+          window.dispatchEvent(new CustomEvent('collections-changed', { detail: { designers: Array.from(state.designers), objects: Array.from(state.objects) } }));
+        };
+
+        const sync = async () => {
+          try {
+            const res = await fetch('/api/collections/status', { credentials: 'include', cache: 'no-store' });
+            if (!res.ok) return;
+            const data = await res.json();
+            
+            // Only update if we aren't currently waiting for a mutation to finish
+            if (Array.isArray(data.designers)) state.designers = new Set(data.designers);
+            if (Array.isArray(data.objects)) state.objects = new Set(data.objects);
+          } catch (e) {} finally {
+            state.loaded = true;
+            notify();
+          }
+        };
+
+        // @ts-ignore
+        window.collectionsState = {
+          get loaded() { return state.loaded; },
+          get designers() { return state.designers; },
+          get objects() { return state.objects; },
+          isSaved: (t: any, i: any) => (t === 'designer' ? state.designers : state.objects).has(i),
+          getCount: (t: any) => (t === 'designer' ? state.designers : state.objects).size,
+          subscribe: (fn: any) => { state.subs.add(fn); return () => state.subs.delete(fn); },
+          addItem: async (type: 'designer'|'object', id: string) => {
+            const col = type === 'designer' ? state.designers : state.objects;
+            if (col.has(id)) return;
+            col.add(id); notify();
+            try {
+              const res = await fetch(`/api/collections/${type === 'designer' ? 'designers' : 'objects'}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', body: JSON.stringify({ [type === 'designer' ? 'studio_id' : 'product_id']: id })
+              });
+              if (!res.ok) throw new Error('Add failed');
+            } catch (e) {
+              col.delete(id); notify();
+              throw e;
+            }
+          },
+          removeItem: async (type: 'designer'|'object', id: string) => {
+            const col = type === 'designer' ? state.designers : state.objects;
+            if (!col.has(id)) return;
+            col.delete(id); notify();
+            try {
+              const res = await fetch(`/api/collections/${type === 'designer' ? 'designers' : 'objects'}/${encodeURIComponent(id)}`, {
+                method: 'DELETE', credentials: 'include'
+              });
+              if (!res.ok) throw new Error('Remove failed');
+            } catch (e) {
+              col.add(id); notify();
+              throw e;
+            }
+          },
+          init: sync
+        };
+        window.collectionsState.init();
+      })();
+    </script>
+
+    <title>{title}</title>
+
+    {description && (
+      <meta name="description" content={description} />
+    )}
+    {keywords && (
+      <meta name="keywords" content={keywords} />
+    )}
+
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    {description && (
+      <meta property="og:description" content={description} />
+    )}
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    {description && (
+      <meta name="twitter:description" content={description} />
+    )}
+    <meta name="twitter:image" content={new URL(image, Astro.site)} />
+
+    <!-- JSON-LD (explicit only) -->
+    {mergedSchema && (
+      <script
+        type="application/ld+json"
+        set:html={JSON.stringify(mergedSchema).replace(/</g, '\\u003c')}
+      />
+    )}
+  </head>
+
+  <body>
+    <slot />
+    <CookieBanner />
+  </body>
+</html>

@@ -1,0 +1,344 @@
+---
+import PostHogLayout from '../../layouts/PostHogLayout.astro';
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import SaveButton from '../../components/SaveButton.astro';
+import type { Env } from '../../env.d';
+
+// Protected
+if (!Astro.locals.user) {
+  return Astro.redirect('/login');
+}
+
+const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+
+let objects: any[] = [];
+let error = null;
+
+try {
+  const moodboardUrl = new URL('/cdn/moodboard.json', Astro.url.origin).toString();
+  const response = await fetch(moodboardUrl);
+  if (!response.ok) throw new Error('CDN Proxy Not Ready');
+  objects = await response.json();
+} catch (e) {
+  console.warn('Falling back to local moodboard.json:', e.message);
+  try {
+     const localUrl = new URL('/moodboard.json', Astro.url.origin);
+     const localRes = await fetch(localUrl.toString());
+     objects = await localRes.json();
+  } catch (localErr) {
+     error = localErr;
+     console.error('Total failure to load moodboard collection:', localErr);
+  }
+}
+---
+
+<PostHogLayout>
+  <Layout title="My Moodboard - Acceso">
+    <Navbar />
+    
+    <main class="objects-page">
+      <div class="header">
+        <h1 class="page-title">Moodboard</h1>
+        <p id="count" class="count">Loading moodboard...</p>
+        
+        <div class="search-bar-container">
+          <div class="search-bar">
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Search by name or designer..."
+              aria-label="Search moodboard"
+            />
+          </div>
+        </div>
+      </div>
+
+      {!error && (
+        <div id="objects-grid" class="objects-grid" style="opacity: 0; transition: opacity 0.3s ease;">
+          {objects.map(item => (
+            <div class="object-card-wrapper" data-id={item.id} style="display: none;">
+              <a 
+                href={`/moodboard/${item.slug}`} 
+                class="object-card"
+              >
+                {item.cover && (
+                  <img 
+                    src={item.cover} 
+                    alt={item.name}
+                    loading="lazy"
+                    data-skeleton
+                  />
+                )}
+                <div class="item-overlay">
+                  <h3>{item.name}</h3>
+                  {item.designer && <p>{item.designer}</p>}
+                </div>
+              </a>
+              
+              <div class="save-btn-container">
+                <SaveButton 
+                  type="object" 
+                  itemId={item.id} 
+                />
+              </div>
+            </div>
+          ))}
+          <div id="empty-state" class="empty-state" style="display: none;">
+             <p>No saved objects.</p>
+             <a href="/moodboard" class="browse-link">Explore Moodboard</a>
+          </div>
+        </div>
+      )}
+    </main>
+  </Layout>
+</PostHogLayout>
+
+<style>
+  .objects-page {
+    min-height: 100vh;
+    padding-top: var(--page-top-spacing);
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .page-title {
+    font-size: 48px;
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+
+  .count {
+    color: var(--color-gray);
+  }
+
+  .objects-grid {
+    column-count: 4;
+    column-gap: 16px;
+    padding: 0 40px 48px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 1024px) {
+    .objects-grid {
+      column-count: 3;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .objects-grid {
+      column-count: 2;
+      padding: 0 20px 48px;
+    }
+  }
+
+  .object-card-wrapper {
+    position: relative;
+    break-inside: avoid;
+    margin-bottom: 16px;
+    background: var(--color-bg-secondary);
+    transition: transform 0.2s ease;
+  }
+
+  .object-card-wrapper:hover {
+    transform: translateY(-4px);
+  }
+
+  .moodboard-item {
+    display: block;
+    width: 100%;
+  }
+
+  .object-card {
+    display: block;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .object-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .item-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .object-card:hover .item-overlay {
+    opacity: 1;
+  }
+
+  .item-overlay h3 {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 450;
+    margin-bottom: 4px;
+    color: var(--color-white);
+  }
+
+  .item-overlay p {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--color-gray);
+  }
+
+  .search-bar-container {
+    max-width: 500px;
+    margin: 24px auto 0;
+  }
+
+  .search-bar {
+    display: flex;
+    justify-content: center;
+  }
+
+  .search-bar input {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    border-radius: 6px;
+  }
+
+  .search-bar input::placeholder {
+    color: var(--color-gray);
+  }
+
+  .search-bar input:focus {
+    outline: none;
+    border-color: var(--color-yellow);
+  }
+
+  .save-btn-container {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+  }
+
+  .browse-link {
+    color: var(--color-yellow);
+    text-decoration: none;
+    margin-top: 16px;
+    display: inline-block;
+  }
+</style>
+
+<script>
+  const filterGrid = () => {
+    const grid = document.getElementById('objects-grid');
+    const emptyState = document.getElementById('empty-state');
+    const countLabel = document.getElementById('count');
+    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+    const query = searchInput?.value.toLowerCase() || '';
+    
+    if (!grid || !window.collectionsState) {
+      return;
+    }
+
+    // Check if still loading
+    if (!window.collectionsState.loaded) {
+      if (countLabel) countLabel.textContent = 'Loading moodboard...';
+      return;
+    }
+
+    // 1. Hide all cards first
+    const allCards = grid.querySelectorAll('.object-card-wrapper');
+    allCards.forEach(card => (card as HTMLElement).style.display = 'none');
+
+    let visibleCount = 0;
+    const savedIDs = window.collectionsState.objects;
+
+    // 2. Iterate keys in order (Newest -> Oldest)
+    for (const id of savedIDs) {
+      const card = grid.querySelector(`.object-card-wrapper[data-id="${id}"]`);
+      
+      if (card) {
+        const objectName = (card.querySelector('h3')?.textContent || '').toLowerCase();
+        const designerName = (card.querySelector('p')?.textContent || '').toLowerCase();
+        const matchesSearch = objectName.includes(query) || designerName.includes(query);
+
+        if (matchesSearch) {
+          (card as HTMLElement).style.display = 'block';
+          // Re-append to sort
+          grid.appendChild(card);
+          visibleCount++;
+        }
+      }
+    }
+
+    if (visibleCount === 0) {
+      if (emptyState) {
+        emptyState.style.display = 'block';
+        emptyState.querySelector('p')!.textContent = query ? 'No objects match your search.' : 'No saved objects.';
+      }
+      if (countLabel) countLabel.textContent = '0 saved';
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+      if (countLabel) countLabel.textContent = `${visibleCount} saved`;
+    }
+
+    grid.style.opacity = '1';
+  };
+
+  // Search input handler
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', filterGrid);
+  }
+
+  // Wait for collections state with timeout
+  const waitForState = () => {
+    let attempts = 0;
+    const maxAttempts = 200; // 10 seconds (50ms * 200)
+    
+    const checkState = setInterval(() => {
+      attempts++;
+      
+      if (window.collectionsState?.loaded) {
+        filterGrid();
+        clearInterval(checkState);
+      } else if (attempts >= maxAttempts) {
+        // Timeout - show error
+        const countLabel = document.getElementById('count');
+        if (countLabel) {
+          countLabel.textContent = 'Failed to load collections. Please refresh.';
+          countLabel.style.color = '#ef4444';
+        }
+        clearInterval(checkState);
+      }
+    }, 50);
+  };
+
+  // Start waiting
+  waitForState();
+
+  // Sync on changes
+  // Sync on changes
+  window.addEventListener('collections-changed', () => {
+    filterGrid();
+  });
+
+  // Sync on cross-tab storage changes
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'collections_state_v1') {
+      filterGrid();
+    }
+  });
+</script>

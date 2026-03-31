@@ -1,0 +1,176 @@
+---
+interface Props {
+  name: string;
+  slug?: string;
+  type?: 'fair' | 'museum' | 'award' | 'designer';
+  image?: string;
+  location?: string;
+  date?: string;
+  pillText?: string;
+  pillType?: 'default' | 'status-open' | 'status-closed';
+}
+
+const { name, slug, type, image, location, date, pillText, pillType = 'default' } = Astro.props;
+
+const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/events/${type === 'fair' ? 'fairs' : type === 'museum' ? 'museums' : 'awards'}/${slug}`) : null;
+---
+
+<a href={href} class="event-basic-card">
+  <div class="card-image-wrapper">
+    {pillText && (
+      <div class:list={["card-pill", pillType]}>
+        <span>{pillText}</span>
+      </div>
+    )}
+    {image ? (
+      <img 
+        src={image} 
+        alt={name} 
+        class="event-image" 
+        loading="lazy" 
+        onerror="if (this.src.includes('img.acceso.design')) { this.src = this.src.replace('img.acceso.design', 'events.acceso.design'); this.onerror = null; }"
+      />
+    ) : (
+      <div class="image-placeholder"></div>
+    )}
+  </div>
+  
+  <div class="card-content">
+    <h3 class="event-title">{name}</h3>
+    {(location || date) && (
+      <div class="event-meta">
+        {location && <span class="event-location">{location}</span>}
+        {location && date && <span class="dot">•</span>}
+        {date && <span class="event-date">{date}</span>}
+      </div>
+    )}
+  </div>
+</a>
+
+<style>
+  .event-basic-card {
+    background: transparent;
+    border-radius: 0px;
+    overflow: visible;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .event-basic-card:hover {
+    transform: translateY(-8px);
+  }
+
+  .card-image-wrapper {
+    position: relative;
+    aspect-ratio: 1.4;
+    background: #111315;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+  }
+
+  .event-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .event-basic-card:hover .event-image {
+    transform: scale(1.05);
+  }
+
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #1A1D20;
+  }
+
+  .card-pill {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    padding: 0 12px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .card-pill span {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--color-white);
+    letter-spacing: 0.08em;
+    line-height: 1;
+    display: block;
+    transform: translateY(0.5px); /* Optical centering */
+  }
+
+  .card-pill.status-open {
+    background: #EDFE44; /* Brighter, no opacity for better contrast */
+    border-color: #EDFE44;
+  }
+  .card-pill.status-open span {
+    color: var(--color-black);
+  }
+
+  .card-pill.status-closed {
+    background: rgba(40, 40, 40, 0.9);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .card-pill.status-closed span {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .card-content {
+    padding: 0 4px 8px; /* Added bottom padding to prevent clipping */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: visible;
+  }
+
+  .event-title {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-white);
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .event-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-gray);
+  }
+
+  .dot {
+    opacity: 0.3;
+  }
+
+  @media (max-width: 768px) {
+    .event-title {
+      font-size: 15px;
+    }
+  }
+</style>

@@ -1,0 +1,24 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="404 – Page Not Found | Acceso"
+  description="The page you're looking for doesn't exist or has been moved. Browse independent design studios, objects, and city maps on Acceso."
+  keywords="404 page not found, page not found, not found, 404 error, 404 page">
+  <Navbar />
+  
+  <main class="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center px-[var(--spacing-page)] bg-black text-center">
+    <div class="flex flex-col items-center justify-center max-w-[600px] -mt-15">
+      <h1 class="font-mono text-[120px] leading-none font-normal text-yellow -tracking-[0.04em] mb-6 md:text-[80px]">404</h1>
+      <h2 class="font-mono text-[32px] font-normal text-white -tracking-[0.02em] mb-4 md:text-2xl">Page not found</h2>
+      <p class="font-sans text-base leading-relaxed text-gray max-w-[400px] mb-10">
+        The page you are looking for doesn't exist or has been moved.
+      </p>
+      <a href="/" class="btn-primary">Return home</a>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>

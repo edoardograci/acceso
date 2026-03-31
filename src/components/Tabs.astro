@@ -1,0 +1,83 @@
+---
+interface Props {
+  active: 'info' | 'moodboard';
+}
+
+const { active } = Astro.props;
+---
+
+<div class="tabs">
+  <button 
+    class:list={['tab', 'tab-button', { active: active === 'info' }]}
+    data-tab="info"
+  >
+    Info
+  </button>
+  
+  <button 
+    class:list={['tab', 'tab-button', { active: active === 'moodboard' }]}
+    data-tab="moodboard"
+  >
+    Moodboard
+  </button>
+  
+  <div class="tab-indicator"></div>
+</div>
+
+<style>
+  .tabs {
+    display: flex;
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: 24px;
+    position: relative;
+    border-bottom: 1px solid var(--color-stroke);
+  }
+
+  .tab {
+    flex: 1;
+    background: none;
+    border: none;
+    font-family: var(--font-sans); /* "Same look as the tab in the navbar" implies sans usually, but user said "same look as tab in navbar" which is actually mono in the code! Let's check Navbar.astro again. Navbar uses var(--color-gray). Let's stick to what was requested: "same look". */
+    font-size: 16px;
+    font-weight: 450; /* Adjusting weight */
+    color: var(--color-gray);
+    cursor: pointer;
+    padding: 12px 0;
+    transition: color 0.2s ease;
+    position: relative;
+    text-align: center;
+  }
+
+  .tab.active {
+    color: var(--color-yellow);
+  }
+
+  .tab-indicator {
+    position: absolute;
+    bottom: -1px; /* Overlap the border */
+    height: 1px;
+    background-color: var(--color-yellow);
+    transition: left 0.3s ease, width 0.3s ease;
+    z-index: 10;
+  }
+</style>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-button') as NodeListOf<HTMLElement>;
+  const tabIndicator = document.querySelector('.tab-indicator') as HTMLElement;
+
+  function updateIndicator() {
+    const activeTab = document.querySelector('.tab-button.active') as HTMLElement;
+    if (activeTab && tabIndicator) {
+      tabIndicator.style.left = activeTab.offsetLeft + 'px';
+      tabIndicator.style.width = activeTab.offsetWidth + 'px';
+    }
+  }
+
+  // Initialize on page load
+  updateIndicator();
+
+  // Update on window resize
+  window.addEventListener('resize', updateIndicator);
+</script>
