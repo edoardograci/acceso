@@ -1,35 +1,33 @@
 import type { APIRoute } from 'astro';
 
-export const GET: APIRoute = async ({ params, locals }) => {
+export const GET: APIRoute = async ({ params, locals, request }) => {
   const { path } = params;
   if (!path) {
     return new Response('Not Found', { status: 404 });
   }
 
+  // Get Cloudflare bindings from context
+  const env = (locals.runtime?.env || (request as any).cf?.env || {}) as any;
+  
   // Determine bucket and adjusted key
   // Select bucket based on whether path starts with 'moodboard'
   let bucket;
   if (path.startsWith('moodboard')) {
-    bucket = locals.runtime?.env?.MOODBOARD_BUCKET;
+    bucket = env.MOODBOARD_BUCKET;
   } else if (
     path === 'metadata.json' || 
     path.startsWith('test-') || 
     path.startsWith('studios/')
   ) {
-    bucket = locals.runtime?.env?.JSON_BUCKET;
+    bucket = env.JSON_BUCKET;
   } else {
-    bucket = locals.runtime?.env?.INDEX_BUCKET;
+    bucket = env.INDEX_BUCKET;
   }
 
   const key = path;
 
-  // Debug: log bucket access
   if (!bucket) {
-    console.error(`Bucket not found. Available in locals:`, {
-      hasRuntime: !!locals.runtime,
-      hasEnv: !!locals.runtime?.env,
-      path: path
-    });
+    console.error(`Bucket not found. Path: ${path}, Available bindings:`, Object.keys(env));
     return new Response('Internal Server Error - Bucket binding unavailable', { status: 500 });
   }
 
@@ -57,7 +55,6 @@ export const GET: APIRoute = async ({ params, locals }) => {
       return new Response(`Not Found: ${key} in ${bucketName} bucket`, { status: 404 });
     }
 
-
     const headers = new Headers();
     object.writeHttpMetadata(headers);
     headers.set('etag', object.httpEtag);
@@ -77,6 +74,8 @@ export const GET: APIRoute = async ({ params, locals }) => {
       headers,
     });
   } catch (e: any) {
-    return new Response('Internal Server Error', { status: 500 });
+    const errorMsg = e instanceof Error ? e.message : String(e);
+    console.error(`CDN Error for path ${path}:`, errorMsg, e);
+    return new Response(`Error fetching ${path}: ${errorMsg}`, { status: 500 });
   }
 };
