@@ -4,6 +4,10 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 
+const runtimeEnv = Astro.locals.runtime?.env;
+const turnstileSiteKey = import.meta.env.TURNSTILE_SITE_KEY || runtimeEnv?.TURNSTILE_SITE_KEY;
+const turnstileSecretKey = import.meta.env.TURNSTILE_SECRET_KEY || runtimeEnv?.TURNSTILE_SECRET_KEY;
+
 const user = Astro.locals.user;
 
 // Redirect to login if user is not authenticated
@@ -184,10 +188,10 @@ if (!user) {
                 <div
                   id="turnstile-container"
                   class="turnstile-container"
-                  data-sitekey={import.meta.env.TURNSTILE_SITE_KEY || ''}
+                  data-sitekey={turnstileSiteKey || ''}
                 ></div>
                 <p class="captcha-error hidden" id="captcha-error">Please complete the captcha.</p>
-                {!import.meta.env.TURNSTILE_SITE_KEY && (
+                {(!turnstileSiteKey || !turnstileSecretKey) && (
                   <p class="captcha-hint">
                     Captcha is not configured. Set <code>TURNSTILE_SITE_KEY</code> and <code>TURNSTILE_SECRET_KEY</code>.
                   </p>
