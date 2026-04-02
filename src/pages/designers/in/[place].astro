@@ -1,96 +1,74 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
+import PostHogLayout from '../../../layouts/PostHogLayout.astro';
 import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
+import DesignerCard from '../../../components/DesignerCard.astro';
+import GetListedCard from '../../../components/GetListedCard.astro';
 import { locationTitle, locationDescription, locationIntro } from '../../../lib/seo/copy';
 import { breadcrumbList, itemList } from '../../../lib/seo/schema';
 import { normalizeImage } from '../../../lib/images';
-
-type Studio = {
-  id: string;
-  slug: string;
-  name: string;
-  city?: string | null;
-  city_slug?: string | null;
-  country_slug?: string | null;
-  cover?: string | null;
-};
-
-type City = { slug: string; name: string; country?: string };
-type Country = { slug: string; name: string };
+import type { Studio } from '../../../lib/types';
 
 const { place } = Astro.params;
 
 const isDev = import.meta.env.DEV;
 const origin = Astro.url.origin;
-const dataOrigin = isDev ? 'https://json.acceso.design' : origin;
+const domain = isDev ? 'https://json.acceso.design' : `${origin}/cdn`;
 
 async function fetchJson<T>(path: string): Promise<T> {
-  const u = new URL(path, dataOrigin).toString();
+  const u = `${domain}${path.startsWith('/') ? '' : '/'}${path}`;
   const r = await fetch(u);
   if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`);
   return (await r.json()) as T;
 }
 
+type City = { slug: string; name: string; country?: string };
+type Country = { slug: string; name: string };
+
 let cities: City[] = [];
 let countries: Country[] = [];
-let studios: Studio[] = [];
+let allStudios: Studio[] = [];
 let mode: 'city' | 'country' | 'unknown' = 'unknown';
 let cityName: string | null = null;
 let countryName: string | null = null;
-let totalStudios: number | null = null;
+let totalStudios: number = 0;
 
 try {
-  [cities, countries] = await Promise.all([
-    fetchJson<City[]>('/cdn/test-cities.json'),
-    fetchJson<Country[]>('/cdn/test-countries.json'),
+  [cities, countries, allStudios] = await Promise.all([
+    fetchJson<City[]>('/test-cities.json'),
+    fetchJson<Country[]>('/test-countries.json'),
+    fetchJson<Studio[]>('/test-studios.json'),
   ]);
-} catch {
-  cities = [];
-  countries = [];
+} catch (e) {
+  console.error('[SSR] Fetch failed:', e);
 }
 
-const city = cities.find((c) => c.slug === place) ?? null;
-const country = countries.find((c) => c.slug === place) ?? null;
+const cityObj = cities.find((c) => c.slug === place) ?? null;
+const countryObj = countries.find((c) => c.slug === place) ?? null;
 
-if (city) {
+let studios: Studio[] = [];
+
+if (cityObj) {
   mode = 'city';
-  cityName = city.name;
-  // Find country display name if possible (test-cities uses country slug)
-  const c = countries.find((x) => x.slug === (city.country ?? '')) ?? null;
+  cityName = cityObj.name;
+  const c = countries.find((x) => x.slug === (cityObj.country ?? '')) ?? null;
   countryName = c?.name ?? null;
-  try {
-    const page1 = await fetchJson<Studio[]>(`/cdn/studios/city/${encodeURIComponent(place)}/page-1.json`);
-    studios = Array.isArray(page1) ? page1 : [];
-  } catch {
-    studios = [];
-  }
-} else if (country) {
+  studios = allStudios.filter(s => s.city_slug === place);
+} else if (countryObj) {
   mode = 'country';
-  countryName = country.name;
-  try {
-    const page1 = await fetchJson<Studio[]>(`/cdn/studios/country/${encodeURIComponent(place)}/page-1.json`);
-    studios = Array.isArray(page1) ? page1 : [];
-  } catch {
-    studios = [];
-  }
+  countryName = countryObj.name;
+  studios = allStudios.filter(s => s.country_slug === place);
 } else {
   return Astro.redirect('/404');
 }
 
-// Best-effort counts from metadata.json (if present)
-try {
-  const meta = await fetchJson<any>('/cdn/metadata.json');
-  if (mode === 'city') totalStudios = meta?.cities?.[place]?.total ?? null;
-  if (mode === 'country') totalStudios = meta?.countries?.[place]?.total ?? null;
-} catch {
-  totalStudios = null;
-}
+totalStudios = studios.length;
 
-// Normalize images (avoid mixed host duplicates)
-studios = studios.map((s) => {
-  return { ...s, cover: normalizeImage(s.cover, Astro) as string | null };
-});
+// Normalize images
+studios = studios.map((s) => ({
+  ...s,
+  cover: normalizeImage(s.cover, Astro) as string | null,
+}));
 
 const where =
   mode === 'city'
@@ -103,18 +81,45 @@ const { paragraphs, h2s } = locationIntro(where);
 
 const canonical = new URL(`/designers/in/${place}`, Astro.site);
 
-const crumbs =
-  mode === 'city'
+const crumbs = 
+  mode === 'city' 
     ? [
-        { name: 'Home', url: new URL('/', Astro.site).toString() },
-        { name: 'Designers', url: new URL('/designers', Astro.site).toString() },
-        { name: `Design studios in ${cityName}`, url: canonical.toString() },
+        { name: 'Home', url: '/' },
+        { name: 'Designers', url: '/designers' },
+        { name: `in ${cityName}`, url: canonical.pathname }
       ]
     : [
-        { name: 'Home', url: new URL('/', Astro.site).toString() },
-        { name: 'Designers', url: new URL('/designers', Astro.site).toString() },
-        { name: `Design studios in ${countryName}`, url: canonical.toString() },
+        { name: 'Home', url: '/' },
+        { name: 'Designers', url: '/designers' },
+        { name: `in ${countryName}`, url: canonical.pathname }
       ];
+
+// Related Locations Logic
+let relatedLocations: { name: string; slug: string }[] = [];
+if (mode === 'country') {
+  relatedLocations = cities
+    .filter(c => c.country === place)
+    .map(c => ({ name: c.name, slug: c.slug }));
+  if (relatedLocations.length === 0) {
+    relatedLocations = countries
+      .filter(c => c.slug !== place)
+      .slice(0, 15)
+      .map(c => ({ name: c.name, slug: c.slug }));
+  }
+} else if (mode === 'city') {
+  if (cityObj?.country) {
+    relatedLocations = cities
+      .filter(c => c.country === cityObj.country && c.slug !== place)
+      .map(c => ({ name: c.name, slug: c.slug }));
+  }
+  if (relatedLocations.length === 0) {
+    relatedLocations = cities
+      .filter(c => c.slug !== place)
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 15)
+      .map(c => ({ name: c.name, slug: c.slug }));
+  }
+}
 
 const listSchema = itemList({
   url: canonical.toString(),
@@ -129,83 +134,549 @@ const schema = {
   '@context': 'https://schema.org',
   '@graph': [breadcrumbList(crumbs), listSchema],
 };
+
+const initialStudios = studios.slice(0, 20);
+const mapStudios = studios.map(s => ({
+  id: s.id,
+  name: s.name,
+  city: s.city,
+  latitude: s.latitude,
+  longitude: s.longitude,
+  slug: s.slug,
+  cover: s.cover
+}));
 ---
 
-<Layout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
+<PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
   <Navbar />
 
-  <main class="bg-black">
-    <section class="max-w-[1600px] mx-auto px-10 pt-14 pb-10">
-      <header class="max-w-[80ch]">
-        <h1 class="font-mono text-white font-extrabold tracking-[-0.04em] leading-[0.98] text-[clamp(36px,4.2vw,68px)]">
-          {mode === 'city'
-            ? <>Design studios in <span class="text-yellow">{cityName}</span>{countryName ? <> <span class="text-gray">({countryName})</span></> : null}</>
-            : <>Design studios in <span class="text-yellow">{countryName}</span></>}
-        </h1>
-        <p class="font-sans text-[15px] leading-[1.6] text-gray mt-5">
-          {pageDesc}
-        </p>
-      </header>
+  <main class="designers-page">
+    <div class="split-container">
+      <!-- Left Column: Results Panel -->
+      <aside class="results-panel">
+        <div class="results-panel-content">
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <a href="/" class="breadcrumb-item">Home</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="/designers" class="breadcrumb-item">Designers</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">In {mode === 'city' ? cityName : countryName}</span>
+          </nav>
 
-      <div class="mt-10 max-w-[85ch] space-y-4">
-        {paragraphs.map((p) => (
-          <p class="font-sans text-[15px] leading-[1.7] text-[rgba(255,255,255,0.75)]">{p}</p>
-        ))}
-      </div>
-    </section>
+          <header class="panel-header">
+             <h1 class="location-heading">
+                Design studios<br />
+                in <span class="text-yellow">{mode === 'city' ? cityName : countryName}</span>
+             </h1>
+             
+             {mode === 'city' && countryName && (
+               <div class="country-subtitle">({countryName})</div>
+             )}
+          </header>
 
-    <section class="max-w-[1600px] mx-auto px-10 pb-14">
-      <h2 class="font-mono text-white font-extrabold tracking-[-0.03em] text-[26px] mb-5">{h2s[0] ?? 'Studios'}</h2>
-      {studios.length === 0 ? (
-        <div class="py-10 text-gray font-sans">No studios found for this location yet.</div>
-      ) : (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {studios.slice(0, 60).map((s) => (
-            <a
-              href={`/designers/${s.slug}`}
-              class="block rounded-2xl bg-[#111315] border border-white/5 overflow-hidden no-underline hover:-translate-y-1 transition-transform duration-200"
-            >
-              <div class="p-6 flex items-center gap-4">
-                <div class="w-14 h-14 rounded-xl bg-[#1C1E20] overflow-hidden flex-shrink-0">
-                  {s.cover ? (
-                    <img src={s.cover} alt={s.name} loading="lazy" class="w-full h-full object-cover" />
-                  ) : (
-                    <div class="w-full h-full bg-[#1C1E20]" />
-                  )}
-                </div>
-                <div class="min-w-0">
-                  <div class="font-mono text-white font-bold text-[18px] leading-[1.15] truncate">{s.name}</div>
-                  <div class="font-sans text-gray text-[13px] mt-1 truncate">
-                    {s.city ?? ''}{s.city && s.country_slug ? ' · ' : ''}{s.country_slug ?? ''}
+          <div class="results-meta">
+            <h2 class="results-count" id="studio-count">
+              {totalStudios} results
+            </h2>
+          </div>
+
+          <div class="studios-grid" id="studios-grid">
+            {initialStudios.map((studio, index) => (
+              <DesignerCard studio={studio} products={[]} index={index} />
+            ))}
+          </div>
+
+          <div class="hidden py-12 text-center text-gray" id="empty-result">
+            <p>No designers found matching your criteria.</p>
+          </div>
+
+          <div id="pagination-container" class="pagination-wrapper"></div>
+          
+          <!-- New Cards Section -->
+          <div class="bottom-cards-section mt-16 pb-12">
+            <div class="cards-split-grid">
+               <GetListedCard className="full-height-card" />
+               
+               <div class="related-locations-card">
+                  <div class="rl-header">
+                     <h3 class="rl-title">Related locations</h3>
                   </div>
+                  <div class="rl-content">
+                     {relatedLocations.map(loc => (
+                       <a href={`/designers/in/${loc.slug}`} class="pill-btn">
+                         {loc.name}
+                       </a>
+                     ))}
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          <!-- SEO Text Section -->
+          <div class="seo-text-area mt-20 pt-16 border-t border-white/5">
+            <div class="max-w-[70ch] space-y-8">
+              {paragraphs.map((p) => (
+                <p class="font-sans text-[16px] leading-[1.8] text-white/60">{p}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Column: Map Panel -->
+      <section class="map-panel">
+        <div id="map"></div>
+        
+        <!-- Studio UI Card -->
+        <div class="studio-ui-container" id="studio-ui-container">
+          <div class="studio-card" id="studio-card">
+            <a href="#" class="studio-card-inner" id="studio-card-link">
+              <div class="studio-card-media">
+                <img 
+                  src="" 
+                  alt="" 
+                  class="studio-card-image" 
+                  id="studio-card-image" 
+                />
+              </div>
+              <div class="studio-card-info">
+                <h3 class="studio-card-title" id="studio-card-title"></h3>
+                <div class="studio-card-address-row">
+                   <p class="studio-card-address" id="studio-card-address"></p>
                 </div>
               </div>
             </a>
-          ))}
+          </div>
         </div>
-      )}
-    </section>
-
-    <section class="max-w-[1600px] mx-auto px-10 pb-24">
-      <h2 class="font-mono text-white font-extrabold tracking-[-0.03em] text-[26px] mb-5">{h2s[1] ?? 'Related locations'}</h2>
-      <div class="flex flex-wrap gap-2">
-        {mode === 'city' && countryName ? (
-          <a href={`/designers/in/${place}`} class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
-            {cityName}
-          </a>
-        ) : null}
-        {mode === 'city' && city?.country ? (
-          <a href={`/designers/in/${city.country}`} class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
-            {countryName ?? city.country}
-          </a>
-        ) : null}
-        <a href="/designers" class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
-          All designers
-        </a>
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
 
   <Footer />
-</Layout>
+
+  <!-- JS Dependencies -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" is:inline></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" is:inline></script>
+  <script src="/js/map-icons.js" is:inline></script>
+  
+  <script define:vars={{ studios, mapStudios }}>
+    window.INITIAL_STUDIOS = studios;
+    window.MAP_STUDIOS = mapStudios;
+  </script>
+
+  <script>
+    import { initializeMap } from '../../../lib/map-init';
+
+    const ALL_STUDIOS = (window as any).INITIAL_STUDIOS;
+    const MAP_STUDIOS = (window as any).MAP_STUDIOS;
+    const itemsPerPage = 20;
+    let currentPage = 1;
+    let filteredStudios = [...ALL_STUDIOS];
+    let mapInstance: any = null;
+
+    function init() {
+      // Initialize map using exactly the same logic
+      if (MAP_STUDIOS?.length > 0) {
+        mapInstance = initializeMap(MAP_STUDIOS);
+        // Automatically focus on the markers for this specific location
+        if (mapInstance && mapInstance.updateStudios) {
+          mapInstance.updateStudios(MAP_STUDIOS, true, true);
+        }
+      }
+
+      renderGrid();
+
+      // Airbnb behavior: Center on map if on desktop and has coords
+      const studiosGrid = document.getElementById('studios-grid');
+      studiosGrid?.addEventListener('click', (e) => {
+        const card = (e.target as HTMLElement).closest('.designer-card') as HTMLElement;
+        if (!card) return;
+
+        const lat = card.dataset.lat;
+        const lng = card.dataset.lng;
+        const slug = card.dataset.slug;
+
+        if (window.innerWidth > 1024 && lat && lng && mapInstance) {
+          e.preventDefault();
+          const studio = mapInstance.studiosData.find((s: any) => s.slug === slug);
+          if (studio) {
+            mapInstance.navigateToStudio(studio);
+          }
+        }
+      });
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('studios-grid');
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageItems = filteredStudios.slice(start, end);
+
+      const count = document.getElementById('studio-count');
+      if (count) count.textContent = `${filteredStudios.length} results`;
+
+      if (grid) {
+        if (filteredStudios.length === 0) {
+          grid.style.display = 'none';
+          const empty = document.getElementById('empty-result');
+          if (empty) empty.style.display = 'block';
+        } else {
+          grid.style.display = 'grid';
+          const empty = document.getElementById('empty-result');
+          if (empty) empty.style.display = 'none';
+          
+          grid.innerHTML = pageItems.map((s) => `
+            <a href="/designers/${s.slug}" 
+               class="designer-card block no-underline text-inherit transition-all duration-200 hover:-translate-y-1"
+               data-lat="${s.latitude || ''}"
+               data-lng="${s.longitude || ''}"
+               data-slug="${s.slug || ''}"
+            >
+              <div class="card-inner">
+                <div class="studio-logo-wrapper">
+                  ${s.cover ? `<img src="${s.cover}" alt="${s.name}" class="studio-logo-img" />` : `<div class="studio-logo-placeholder"></div>`}
+                </div>
+                <div class="header-info">
+                  <h3 class="studio-name">${s.name}</h3>
+                  <p class="studio-location">${s.city || ''}</p>
+                </div>
+              </div>
+            </a>
+          `).join('');
+        }
+      }
+
+      renderPagination();
+    }
+
+    function renderPagination() {
+      const container = document.getElementById('pagination-container');
+      const totalPages = Math.ceil(filteredStudios.length / itemsPerPage);
+      
+      if (!container) return;
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+      }
+      container.innerHTML = html;
+
+      container.querySelectorAll('.pagination-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const page = (e.currentTarget as HTMLElement).dataset.page;
+          currentPage = parseInt(page!);
+          renderGrid();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+
+    init();
+  </script>
+
+  <style>
+    .designers-page {
+      background: var(--color-black);
+    }
+
+    .split-container {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: flex-start;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Left Column */
+    .results-panel {
+      border-right: 1px solid var(--color-stroke);
+      position: relative;
+      background: var(--color-black);
+      z-index: 1000;
+    }
+
+    .results-panel-content {
+      padding: var(--page-top-spacing) 40px 60px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+
+    .breadcrumb-item {
+      color: var(--color-gray);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .breadcrumb-item:hover { color: white; }
+
+    .breadcrumb-separator {
+      color: rgba(255,255,255,0.1);
+    }
+
+    .breadcrumb-current {
+      color: white;
+      font-weight: 700;
+    }
+
+    .panel-header {
+      margin-bottom: 40px;
+    }
+
+    .location-heading {
+      font-family: var(--font-mono);
+      font-size: clamp(40px, 5vw, 68px);
+      font-weight: 800;
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+      color: white;
+      margin: 0;
+    }
+
+    .country-subtitle {
+       font-family: var(--font-mono);
+       font-size: 24px;
+       color: var(--color-gray);
+       margin-top: 12px;
+       font-weight: 700;
+       letter-spacing: -0.02em;
+    }
+
+    .results-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .results-count {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--color-gray);
+      margin: 0;
+    }
+
+    .studios-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    /* Cards Section */
+    .cards-split-grid {
+       display: grid;
+       grid-template-columns: 1fr 1fr;
+       gap: 16px;
+    }
+
+    .related-locations-card {
+       background: rgba(255,255,255,0.04);
+       border: 1px solid rgba(255,255,255,0.08);
+       border-radius: 24px;
+       padding: 24px;
+       display: flex;
+       flex-direction: column;
+    }
+
+    .rl-title {
+       font-family: var(--font-mono);
+       font-size: 22px;
+       font-weight: 900;
+       color: #fff;
+       margin-bottom: 20px;
+       letter-spacing: -0.02em;
+    }
+
+    .rl-content {
+       display: flex;
+       flex-wrap: wrap;
+       gap: 8px;
+    }
+
+    .pill-btn {
+       height: 36px;
+       padding: 0 16px;
+       background: rgba(255,255,255,0.06);
+       border: 1px solid rgba(255,255,255,0.1);
+       border-radius: 999px;
+       color: #fff;
+       font-family: var(--font-sans);
+       font-size: 13px;
+       font-weight: 700;
+       text-decoration: none;
+       display: inline-flex;
+       align-items: center;
+       transition: all 0.2s;
+    }
+
+    .pill-btn:hover {
+       background: white;
+       color: black;
+       border-color: white;
+    }
+
+    /* Copy of DesignerCard styles for dynamic JS rendering */
+    :global(.designer-card) {
+      background: #111315;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    :global(.designer-card .card-inner) {
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    :global(.studio-logo-wrapper) {
+      width: 64px;
+      height: 64px;
+      background: #1C1E20;
+      border-radius: 10px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    :global(.studio-logo-img) { width: 100%; height: 100%; object-fit: cover; }
+    :global(.studio-logo-placeholder) { width: 100%; height: 100%; background: #1C1E20; }
+    :global(.studio-name) { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: white; margin: 0; line-height: 1.2; letter-spacing: -0.02em; }
+    :global(.studio-location) { font-family: var(--font-sans); font-size: 14px; color: var(--color-gray); margin: 4px 0 0; }
+
+    /* Pagination */
+    .pagination-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 48px 0;
+      margin-top: 20px;
+    }
+
+    :global(.pagination-btn) {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 50%;
+      color: var(--color-gray);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    :global(.pagination-btn:hover) { color: white; border-color: rgba(255,255,255,0.1); }
+    :global(.pagination-btn.active) { background: white; color: black; border-color: white; }
+
+    /* Right Column: Map */
+    .map-panel {
+      position: sticky;
+      top: var(--navbar-height);
+      height: calc(100vh - var(--navbar-height));
+      background: var(--color-black);
+      padding: 24px 40px 24px 24px;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid var(--color-stroke);
+    }
+
+    /* Custom Cluster Styles */
+    :global(.cluster-icon) {
+      background: #EDFE44 !important;
+      color: #000000 !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-family: 'PP Supply Sans', 'Supply', var(--font-mono) !important;
+      font-weight: 700 !important;
+      font-size: 15px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.1);
+      border: 2px solid rgba(0,0,0,0.05);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-shadow: 0 0 1px rgba(0,0,0,0.1);
+    }
+    :global(.cluster-icon:hover) {
+      transform: scale(1.1);
+    }
+
+    /* Studio Card on Map */
+    .studio-ui-container {
+      position: absolute;
+      bottom: 48px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      padding: 0 24px;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .studio-ui-container.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .studio-card {
+      background: #1C1E20;
+      border: 1px solid var(--color-stroke);
+      border-radius: 16px;
+      overflow: hidden;
+      pointer-events: auto;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .studio-card-inner { text-decoration: none; display: block; }
+    .studio-card-media { height: 180px; background: #000; overflow: hidden; }
+    .studio-card-image { width: 100%; height: 100%; object-fit: cover; }
+    .studio-card-info { padding: 16px; }
+    .studio-card-title { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: white; margin: 0 0 8px; }
+    .studio-card-address-row { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 12px; }
+    .studio-card-address { font-family: var(--font-sans); font-size: 13px; color: var(--color-gray); margin: 0; }
+
+    /* Tablet: 641px – 1024px */
+    @media (max-width: 1024px) {
+      .split-container { grid-template-columns: minmax(0, 1fr); }
+      .map-panel { display: none; }
+      .results-panel { border-right: none; }
+      .results-panel-content { padding: 24px 20px 60px; }
+      .studios-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .cards-split-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Mobile: ≤640px */
+    @media (max-width: 640px) {
+      .studios-grid { grid-template-columns: 1fr; }
+      .location-heading { font-size: 36px; }
+    }
+  </style>
+</PostHogLayout>
 

@@ -998,6 +998,24 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
       const studiosGrid = document.getElementById('studios-grid');
       const paginationContainer = document.getElementById('pagination-container');
       
+      // Airbnb behavior: Center on map if on desktop and has coords
+      studiosGrid?.addEventListener('click', (e) => {
+        const card = (e.target as HTMLElement).closest('.designer-card') as HTMLElement;
+        if (!card) return;
+
+        const lat = card.dataset.lat;
+        const lng = card.dataset.lng;
+        const slug = card.dataset.slug;
+
+        if (window.innerWidth > 1024 && lat && lng && mapInstance) {
+          e.preventDefault();
+          const studio = mapInstance.studiosData.find((s: any) => s.slug === slug);
+          if (studio) {
+            mapInstance.navigateToStudio(studio);
+          }
+        }
+      });
+      
       const filterTrigger = document.getElementById('filter-trigger');
       const filterPopover = document.getElementById('filter-popover');
       const filterBackdrop = document.getElementById('filter-popover-backdrop');
@@ -1090,6 +1108,10 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
           a.className = 'designer-card block no-underline text-inherit transition-all duration-200 hover:-translate-y-1';
           a.style.cssText = 'background:#111315;border-radius:20px;border:1px solid rgba(255,255,255,0.03);overflow:hidden;display:block;';
           a.dataset.id = String(s?.id ?? '');
+
+          a.dataset.lat = String(s?.latitude ?? '');
+          a.dataset.lng = String(s?.longitude ?? '');
+          a.dataset.slug = String(s?.slug ?? '');
 
           const slug = String(s?.slug ?? '');
           a.href = `/designers/${encodeURIComponent(slug)}`;

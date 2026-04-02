@@ -1,0 +1,102 @@
+---
+interface Props {
+  className?: string;
+}
+
+const { className = "" } = Astro.props;
+---
+
+<a href="/get-listed" class={`cta-card cta-vertical cta-getlisted ${className}`}>
+  <div class="cta-copy">
+    <div class="cta-title">Get listed</div>
+    <div class="cta-sub">Submit your studio. We’ll review and make it discoverable.</div>
+  </div>
+  <div class="cta-action mt-6">Submit for review</div>
+</a>
+
+<style>
+  .cta-card {
+    text-decoration: none;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    padding: 40px 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    gap: 0px;
+    transition: all 0.2s ease;
+  }
+  
+  .cta-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .cta-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cta-title {
+    font-family: var(--font-mono);
+    font-size: 32px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 12px;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .cta-sub {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.5;
+    margin-bottom: 0;
+    max-width: 32ch;
+  }
+
+  .cta-action {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #0b0d0f;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    padding: 0 24px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.18);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .cta-action:hover {
+    background: #f3f4f6;
+    border-color: #f3f4f6;
+    transform: translateY(-2px);
+  }
+
+  .mt-6 { margin-top: 24px; }
+
+  @media (max-width: 640px) {
+    .cta-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .cta-action {
+      width: 100%;
+    }
+  }
+</style>

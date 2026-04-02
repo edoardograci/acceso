@@ -10,6 +10,7 @@ interface MapInstance {
   visitHistory: Studio[];
   isUserInteracting: boolean;
   updateStudios: (filteredStudios: Studio[], autoCenter?: boolean, shouldCluster?: boolean) => void;
+  navigateToStudio: (studio: Studio, state: MapInstance, isBack?: boolean) => void;
 }
 
 function resolveStudioCover(cover?: string | null): string {
@@ -51,7 +52,8 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
     currentStudio: null,
     visitHistory: [],
     isUserInteracting: false,
-    updateStudios: () => { }
+    updateStudios: () => { },
+    navigateToStudio: () => { }
   };
 
   // Initialize map centered roughly on Europe
@@ -129,6 +131,10 @@ export function initializeMap(studiosData: Studio[], targetStudioSlug?: string |
   state.updateStudios = (filteredStudios: Studio[], autoCenter: boolean = true, shouldCluster: boolean = true) => {
     state.studiosData = filteredStudios;
     renderStudios(state, autoCenter, shouldCluster); // Pass clustering flag
+  };
+
+  state.navigateToStudio = (studio: Studio) => {
+    navigateToStudio(studio, state);
   };
 
   // Initial render - Do not auto-fit bounds on first load
