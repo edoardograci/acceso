@@ -148,6 +148,9 @@ const mapStudios = studios.map(s => ({
 ---
 
 <PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" is:inline />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" is:inline />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" is:inline />
   <Navbar />
 
   <main class="designers-page">
