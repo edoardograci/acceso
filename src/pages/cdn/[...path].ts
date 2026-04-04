@@ -14,33 +14,26 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
   const env = (locals.runtime?.env || {}) as any;
 
   // ─────────────────────────────────────────────────────────────
-  // REVISED ROUTING LOGIC – correctly routes by file/path
+  // NEW ROUTING LOGIC – supports all your buckets
   // ─────────────────────────────────────────────────────────────
   let bucket;
-  
-  if (path === 'moodboard.json' || path.startsWith('moodboard/')) {
-    bucket = env.MOODBOARD_BUCKET;               // Moodboard bucket (R2)
+  if (path.endsWith('.json')) {
+    bucket = env.JSON_BUCKET;                    // All JSON files
+  } 
+  else if (path.startsWith('moodboard/')) {
+    bucket = env.MOODBOARD_BUCKET;               // Moodboard images
   } 
   else if (
     path.startsWith('events/') ||
     path.startsWith('fairs/') ||
     path.startsWith('museums/') ||
     path.startsWith('awards/') ||
-    path.endsWith('.json') && (
-      path.includes('fairs') || 
-      path.includes('museums') || 
-      path.includes('awards') || 
-      path.includes('cities') || 
-      path.includes('countries')
-    )
+    path.endsWith('-cover.webp')
   ) {
-    bucket = env.EVENTS_BUCKET;                  // Events bucket
+    bucket = env.EVENTS_BUCKET;                  // ← All event-related images
   } 
-  else if (path.endsWith('.json') && !path.includes('studios')) {
-    bucket = env.JSON_BUCKET;                    // Generic JSON bucket
-  }
   else {
-    bucket = env.INDEX_BUCKET;                   // Studios, fallback, etc.
+    bucket = env.INDEX_BUCKET;                   // Studio covers, submissions, etc.
   }
 
   const key = path;
@@ -50,12 +43,14 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     return new Response('Internal Server Error - Bucket binding unavailable', { status: 500 });
   }
 
-  // Private JSON protection
+  // Private JSON protection (unchanged)
   if (path.endsWith('.json')) {
     const PRIVATE_JSON = [
       'enrichment-metadata.json',
       'moodboard-enrichment.json',
+      'moodboard-metadata.json',
       'spotlight-metadata.json',
+      'studios-metadata.json',
     ];
     if (PRIVATE_JSON.includes(path) && !locals.user) {
       return new Response('Unauthorized', { status: 403 });
@@ -64,8 +59,6 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
 
   try {
     const isImage = /\.(jpg|jpeg|png|webp|avif|heic)$/i.test(path);
-    
-    // Fetch from bucket
     const object = await bucket.get(key);
 
     if (!object) {
@@ -86,36 +79,28 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     let body: any = await object.arrayBuffer();
 
     // CLOUDFLARE IMAGE RESIZING (Option 3: Image Bindings)
-    // If resizing is requested, we use the IMAGES binding if it exists
     if (isImage && (w || h || q)) {
       const imagesBinding = env.IMAGES;
       if (imagesBinding && typeof imagesBinding.resize === 'function') {
         try {
           const resizeOptions: any = {
-            format: 'auto', // Cloudflare will pick the best format (WebP/AVIF)
+            format: 'auto',
             fit: 'cover',
           };
           if (w) resizeOptions.width = parseInt(w);
           if (h) resizeOptions.height = parseInt(h);
           if (q) resizeOptions.quality = parseInt(q);
 
-          // Perform the resize on the blob directly
           const resizedImage = await imagesBinding.resize(body, resizeOptions);
           body = await resizedImage.arrayBuffer();
-          
-          // Update content-type header if it was changed by auto-format
-          // imagesBinding.resize typically returns a Blob with the new type
           headers.set('Content-Type', resizedImage.type || 'image/webp');
-          
-          // Debug header (optional, helps you verify it's working)
           headers.set('X-Resized', 'true');
         } catch (resizeErr) {
           console.error(`Resizing failed for ${path}:`, resizeErr);
-          // Fallback: original body is still there
         }
       }
     }
-    
+
     return new Response(body, { headers });
   } catch (e: any) {
     console.error(`CDN Error for path ${path}:`, e);
