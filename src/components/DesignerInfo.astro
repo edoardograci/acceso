@@ -1,5 +1,6 @@
 ---
 import type { Studio } from '../lib/types';
+import { ensureProtocol } from '../lib/url';
 
 interface Props {
   studio: Studio;
@@ -53,13 +54,13 @@ const { studio } = Astro.props;
 
   <div class="flex gap-3 mt-8">
     {studio.website && (
-      <a href={studio.website} target="_blank" rel="noopener noreferrer" class="btn-pill inline-flex gap-2">
+      <a href={ensureProtocol(studio.website)} target="_blank" rel="noopener noreferrer" class="btn-pill inline-flex gap-2">
         <img src="/icons/source.svg" alt="" class="h-3.5 w-auto" />
         Source
       </a>
     )}
     {studio.instagram && (
-      <a href={studio.instagram} target="_blank" rel="noopener noreferrer" class="btn-pill inline-flex gap-2">
+      <a href={ensureProtocol(studio.instagram)} target="_blank" rel="noopener noreferrer" class="btn-pill inline-flex gap-2">
         <img src="/icons/instagram.svg" alt="" class="h-3.5 w-auto" />
         Instagram
       </a>

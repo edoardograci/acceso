@@ -1,4 +1,8 @@
-export function normalizeImage(path: string | null | undefined, Astro: any): string | null {
+export function normalizeImage(
+  path: string | null | undefined, 
+  Astro: any, 
+  options?: { width?: number; height?: number; quality?: number }
+): string | null {
   if (!path) return null;
 
   let cleanPath = path;
@@ -17,5 +21,20 @@ export function normalizeImage(path: string | null | undefined, Astro: any): str
   // 3. Go through your working CDN proxy
   const origin = Astro.url.origin;
   const key = cleanPath.replace(/^\/+/, ''); // remove leading slashes
-  return `${origin}/cdn/${key}`;
+  
+  let url = `${origin}/cdn/${key}`;
+  
+  if (options) {
+    const params = new URLSearchParams();
+    if (options.width) params.set('w', options.width.toString());
+    if (options.height) params.set('h', options.height.toString());
+    if (options.quality) params.set('q', options.quality.toString());
+    
+    const queryString = params.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+  }
+
+  return url;
 }

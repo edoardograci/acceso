@@ -5,6 +5,7 @@ import Footer from '../../../components/Footer.astro';
 import SaveButton from '../../../components/SaveButton.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
 import { normalizeImage } from '../../../lib/images';
+import { ensureProtocol } from '../../../lib/url';
 
 const { slug } = Astro.params;
 
@@ -98,10 +99,11 @@ const pageDesc = award.description || `Explore the ${award.name}, one of the mos
       <div class="hero-image-wrapper">
         {award.image ? (
           <img 
-            src={normalizeImage(award.image, Astro)} 
+            src={normalizeImage(award.image, Astro, { width: 1200 })} 
             alt={award.name} 
             class="hero-image" 
-            loading="lazy"
+            loading="eager"
+            fetchpriority="high"
             decoding="async"
           />
         ) : (
@@ -149,7 +151,7 @@ const pageDesc = award.description || `Explore the ${award.name}, one of the mos
           </button>
           
           {award.website ? (
-            <a href={award.website} target="_blank" class="footer-btn primary-btn">
+            <a href={ensureProtocol(award.website)} target="_blank" class="footer-btn primary-btn">
               <span>Visit Website</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>

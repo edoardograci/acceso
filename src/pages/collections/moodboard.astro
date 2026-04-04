@@ -59,7 +59,7 @@ try {
           {objects.map(item => (
             <div class="object-card-wrapper" data-id={item.id} style="display: none;">
               <a 
-                href={`/moodboard/${item.slug}`} 
+                href={`/projects/${item.slug}`} 
                 class="object-card"
               >
                 {item.cover && (
@@ -86,7 +86,7 @@ try {
           ))}
           <div id="empty-state" class="empty-state" style="display: none;">
              <p>No saved objects.</p>
-             <a href="/moodboard" class="browse-link">Explore Moodboard</a>
+             <a href="/projects" class="browse-link">Explore projects</a>
           </div>
         </div>
       )}

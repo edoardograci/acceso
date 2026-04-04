@@ -30,3 +30,6 @@ preview_bucket_name = "json-preview"
 binding = "EVENTS_BUCKET"
 bucket_name = "events"
 remote = true
+
+[images]
+binding = "IMAGES"

@@ -6,6 +6,7 @@ import Footer from '../../components/Footer.astro';
 import SaveButton from '../../components/SaveButton.astro';
 import EventBasicCard from '../../components/EventBasicCard.astro';
 import { normalizeImage } from '../../lib/images';
+import { ensureProtocol } from '../../lib/url';
 import type { Studio } from '../../lib/types';
 
 const { slug } = Astro.params;
@@ -98,10 +99,11 @@ if (!studio && !error) {
           <div class="hero-image-wrapper">
             {studio.cover ? (
               <img 
-                src={normalizeImage(studio.cover, Astro)} 
+                src={normalizeImage(studio.cover, Astro, { width: 1200 })} 
                 alt={studio.name} 
                 class="hero-image"
-                loading="lazy"
+                loading="eager"
+                fetchpriority="high"
                 decoding="async"
               />
             ) : (
@@ -117,11 +119,11 @@ if (!studio && !error) {
               </p>
 
               <div class="social-links">
-                <a href={studio.website || '#'} target="_blank" class="social-btn">
+                <a href={ensureProtocol(studio.website) || '#'} target="_blank" class="social-btn">
                   <img src="/icons/source.svg" alt="" width="16" height="16" />
                   <span>Website</span>
                 </a>
-                <a href={studio.instagram || '#'} target="_blank" class="social-btn">
+                <a href={ensureProtocol(studio.instagram) || '#'} target="_blank" class="social-btn">
                   <img src="/icons/instagram.svg" alt="" width="16" height="16" />
                   <span>Instagram</span>
                 </a>

@@ -26,7 +26,7 @@ const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/even
     )}
     {image ? (
       <img 
-        src={normalizeImage(image, Astro)} 
+        src={normalizeImage(image, Astro, { width: 600 })} 
         alt={name} 
         class="event-image" 
         loading="lazy" 

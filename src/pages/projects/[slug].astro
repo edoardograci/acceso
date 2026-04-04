@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import SaveButton from '../../components/SaveButton.astro';
+import { ensureProtocol } from '../../lib/url';
 
 interface ProductImage {
   id: string;
@@ -99,9 +100,12 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
               {item.images.map((image, idx) => (
                 <div class="carousel-slide">
                   <img 
-                    src={image.image_url} 
+                    src={normalizeImage(image.image_url, Astro, { width: 1200 })} 
                     alt={`${item.name} - View ${idx + 1}`} 
                     class="hero-image"
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    fetchpriority={idx === 0 ? "high" : "low"}
+                    decoding="async"
                   />
                 </div>
               ))}
@@ -178,7 +182,7 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
 
             {item.link && (
               <div class="social-links">
-                <a href={item.link} target="_blank" class="social-btn">
+                <a href={ensureProtocol(item.link)} target="_blank" class="social-btn">
                   <img src="/icons/source.svg" alt="" width="16" height="16" />
                   <span>Website</span>
                 </a>

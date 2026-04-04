@@ -137,7 +137,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
               <div class="card-image-bg">
                 <img 
                   src={normalizeImage(card.img, Astro)} 
-                  alt="" 
+                  alt={card.title} 
                   loading="lazy" 
                   decoding="async"
                 />
