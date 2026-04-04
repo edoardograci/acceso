@@ -14,26 +14,33 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
   const env = (locals.runtime?.env || {}) as any;
 
   // ─────────────────────────────────────────────────────────────
-  // NEW ROUTING LOGIC – supports all your buckets
+  // REVISED ROUTING LOGIC – correctly routes by file/path
   // ─────────────────────────────────────────────────────────────
   let bucket;
-  if (path.endsWith('.json')) {
-    bucket = env.JSON_BUCKET;                    // All JSON files
-  } 
-  else if (path.startsWith('moodboard/')) {
-    bucket = env.MOODBOARD_BUCKET;               // Moodboard images
+  
+  if (path === 'moodboard.json' || path.startsWith('moodboard/')) {
+    bucket = env.MOODBOARD_BUCKET;               // Moodboard bucket (R2)
   } 
   else if (
     path.startsWith('events/') ||
     path.startsWith('fairs/') ||
     path.startsWith('museums/') ||
     path.startsWith('awards/') ||
-    path.endsWith('-cover.webp')
+    path.endsWith('.json') && (
+      path.includes('fairs') || 
+      path.includes('museums') || 
+      path.includes('awards') || 
+      path.includes('cities') || 
+      path.includes('countries')
+    )
   ) {
-    bucket = env.EVENTS_BUCKET;                  // ← All event-related images
+    bucket = env.EVENTS_BUCKET;                  // Events bucket
   } 
+  else if (path.endsWith('.json') && !path.includes('studios')) {
+    bucket = env.JSON_BUCKET;                    // Generic JSON bucket
+  }
   else {
-    bucket = env.INDEX_BUCKET;                   // Studio covers, submissions, etc.
+    bucket = env.INDEX_BUCKET;                   // Studios, fallback, etc.
   }
 
   const key = path;
@@ -43,16 +50,12 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     return new Response('Internal Server Error - Bucket binding unavailable', { status: 500 });
   }
 
-  // Private JSON protection (unchanged)
+  // Private JSON protection
   if (path.endsWith('.json')) {
     const PRIVATE_JSON = [
       'enrichment-metadata.json',
       'moodboard-enrichment.json',
-      'moodboard-metadata.json',
       'spotlight-metadata.json',
-      'studios-metadata.json',
-      'studios.json',
-      'test-studios.json',
     ];
     if (PRIVATE_JSON.includes(path) && !locals.user) {
       return new Response('Unauthorized', { status: 403 });
