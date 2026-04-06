@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import SaveButton from '../../components/SaveButton.astro';
 import { ensureProtocol } from '../../lib/url';
+import { normalizeImage } from '../../lib/images';
 
 interface ProductImage {
   id: string;
