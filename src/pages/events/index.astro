@@ -134,41 +134,62 @@ const sections = [
   
   <main class="events-page">
     <div class="page-container">
-      <header class="events-header">
-        <h1 class="page-title">Events</h1>
-        <p class="page-subtitle">A curated index of the most influential design fairs, museums and awards worldwide.</p>
-      </header>
+      <section class="hero">
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <div class="hero-kicker">
+              <span class="pill">Fairs, Museums & Awards</span>
+            </div>
 
-      <!-- Bento Grid Selection -->
-      <div class="bento-grid">
-        {sections.map(section => (
-          <a href={`/events/${section.slug}`} class="bento-card">
-            <div class="card-image-bg">
-              <img 
-                src={section.coverImage} 
-                alt={section.title} 
-                loading="lazy"
-                decoding="async"
-              />
-              <div class="card-overlay"></div>
+            <h1 class="hero-title">Events</h1>
+            <p class="hero-sub">
+              A curated index of the most influential design fairs, museums and awards worldwide.
+            </p>
+
+            <div class="hero-ctas">
+              <a class="btn btn-primary" href="/designers">
+                Explore studios
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <a class="btn btn-ghost" href="/get-listed">
+                Get listed
+              </a>
             </div>
-            <div class="card-bg"></div>
-            <div class="card-content">
-              <div class="card-top"></div>
-              <div class="card-bottom">
-                <h2 class="section-title">{section.cardTitle || section.title}</h2>
-                <p class="section-desc">{section.description}</p>
-                <div class="section-link">
-                   <span>Explore</span>
-                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                     <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-                   </svg>
+          </div>
+
+          <div class="hero-quick-nav" aria-hidden="true">
+            {sections.map(section => (
+              <a href={`/events/${section.slug}`} class="quick-nav-card">
+                <div class="card-image-bg">
+                  <img 
+                    src={section.coverImage} 
+                    alt={section.title} 
+                    loading="lazy" 
+                    decoding="async"
+                  />
+                  <div class="card-overlay"></div>
                 </div>
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
+                <div class="card-bg"></div>
+                <div class="card-content">
+                  <div class="card-top"></div>
+                  <div class="card-bottom">
+                    <h2 class="card-title">{section.cardTitle || section.title}</h2>
+                    <div class="card-link">
+                      <span>Explore</span>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="highlight-border"></div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <!-- Quick Directory Sections -->
       <div class="directory-sections">
@@ -211,29 +232,207 @@ const sections = [
 
 <style>
   .events-page { background: var(--color-black); min-height: 100vh; padding-bottom: 80px; }
-  .page-container { max-width: 1600px; margin: 0 auto; padding: var(--page-top-spacing) 40px 32px; }
-  .events-header { margin-bottom: 64px; }
-  .page-title { font-family: var(--font-mono); font-size: 56px; font-weight: 400; color: var(--color-white); margin: 0 0 16px; letter-spacing: 0; }
-  .page-subtitle { font-family: var(--font-sans); font-size: 18px; color: var(--color-gray); max-width: 600px; line-height: 1.5; }
+  .page-container { max-width: 1600px; margin: 0 auto; padding: 0 40px 32px; }
 
-  /* Bento Grid */
-  .bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 120px; }
-  .bento-card { position: relative; height: 520px; background: #0F1113; border-radius: 24px; border: 1px solid var(--color-stroke); overflow: hidden; text-decoration: none; transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1); }
-  .bento-card:hover { transform: translateY(-8px); border-color: rgba(237, 254, 68, 0.5); background: #191B1D; }
-  
-  .card-image-bg { position: absolute; inset: 0; z-index: 0; }
-  .card-image-bg img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
-  .bento-card:hover .card-image-bg img { transform: scale(1.05); }
-  .card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, #0F1113 0%, rgba(15, 17, 19, 0.8) 40%, rgba(15, 17, 19, 0.2) 100%); z-index: 1; }
+  /* Hero Section */
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: var(--page-top-spacing) 0 80px;
+  }
+  .hero-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
 
-  .card-bg { position: absolute; inset: 0; background: radial-gradient(circle at top right, rgba(237, 254, 68, 0.05), transparent 60%); opacity: 0; transition: opacity 0.3s ease; z-index: 2; }
-  .bento-card:hover .card-bg { opacity: 1; }
-  .card-content { position: relative; z-index: 3; height: 100%; padding: 40px; display: flex; flex-direction: column; justify-content: space-between; }
-  .section-title { font-family: var(--font-mono); font-size: 32px; font-weight: 400; color: var(--color-white); margin: 0 0 16px; letter-spacing: 0; }
-  .section-desc { font-family: var(--font-sans); font-size: 15px; color: var(--color-gray); margin-bottom: 32px; line-height: 1.5; }
-  .section-link { display: flex; align-items: center; gap: 8px; color: var(--color-yellow); font-family: var(--font-sans); font-size: 16px; font-weight: 400; }
-  .section-link svg { transition: transform 0.2s ease; }
-  .bento-card:hover .section-link svg { transform: translateX(4px); }
+  .hero-kicker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pill {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 12px;
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+  }
+
+  .hero-title {
+    font-family: var(--font-mono);
+    font-size: clamp(48px, 5vw, 80px);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: 0;
+    margin: 0 0 18px;
+    color: var(--color-white);
+  }
+
+  .hero-sub {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.62);
+    margin: 0 0 26px;
+    max-width: 52ch;
+  }
+
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 26px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 14px;
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 15px;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  }
+  .btn:hover { color: inherit; }
+  .btn-primary {
+    background: #ffffff;
+    color: #0b0d0f;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .btn-primary:hover {
+    background: #f3f4f6;
+    border-color: #f3f4f6;
+    color: #0b0d0f !important;
+  }
+  .btn-ghost {
+    background: rgba(255,255,255,0.06);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.10);
+    backdrop-filter: blur(10px);
+  }
+  .btn-ghost:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.16);
+  }
+
+  .hero-quick-nav {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    height: 100%;
+    align-items: stretch;
+  }
+
+  .quick-nav-card {
+    position: relative;
+    height: 100%;
+    min-height: 480px;
+    background: #0F1113;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .quick-nav-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(255,255,255,0.15);
+    background: #191B1D;
+  }
+
+  .quick-nav-card .card-image-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .quick-nav-card .card-image-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .quick-nav-card:hover .card-image-bg img {
+    transform: scale(1.08);
+  }
+
+  .quick-nav-card .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, #0F1113 0%, rgba(15, 17, 19, 0.8) 40%, rgba(15, 17, 19, 0.2) 100%);
+    z-index: 1;
+  }
+
+  .quick-nav-card .card-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(237, 254, 68, 0.05), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 2;
+  }
+
+  .quick-nav-card:hover .card-bg {
+    opacity: 1;
+  }
+
+  .quick-nav-card .card-content {
+    position: relative;
+    z-index: 3;
+    height: 100%;
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .quick-nav-card .card-title {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--color-white);
+    margin: 0 0 12px;
+    letter-spacing: 0;
+  }
+
+  .quick-nav-card .card-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .quick-nav-card .card-link svg {
+    transition: transform 0.2s ease;
+  }
+
+  .quick-nav-card:hover .card-link svg {
+    transform: translateX(4px);
+  }
+
+  .highlight-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    border: 1px solid rgba(237, 254, 68, 0);
+    transition: border-color 0.3s ease;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .quick-nav-card:hover .highlight-border {
+    border-color: rgba(237, 254, 68, 0.3);
+  }
 
   /* Directory Sections */
   .directory-sections { display: flex; flex-direction: column; gap: 100px; }
@@ -254,9 +453,18 @@ const sections = [
   .empty-state { color: var(--color-gray); font-family: var(--font-sans); font-size: 14px; padding: 20px 0; }
 
   @media (max-width: 1200px) {
-    .bento-grid { grid-template-columns: 1fr; }
-    .bento-card { height: 320px; }
     .section-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 1024px) {
+    .quick-nav-card .card-title { font-size: 20px; }
+  }
+  @media (max-width: 860px) {
+    .hero-inner {
+      grid-template-columns: 1fr;
+    }
+    .hero-quick-nav {
+      display: none;
+    }
   }
   @media (max-width: 900px) {
     .section-grid { grid-template-columns: repeat(2, 1fr); }
