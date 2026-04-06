@@ -98,7 +98,7 @@ const sections = [
     coverImage: normalizeImage('fairs-cover.webp', Astro)
   },
   { 
-    title: 'Museums & Foundations', 
+    title: 'Museums', 
     items: museums.map(m => ({
       ...m,
       location: m.city || m.location
@@ -137,24 +137,20 @@ const sections = [
       <section class="hero">
         <div class="hero-inner">
           <div class="hero-copy">
-            <div class="hero-kicker">
-              <span class="pill">Fairs, Museums & Awards</span>
-            </div>
-
             <h1 class="hero-title">Events</h1>
             <p class="hero-sub">
               A curated index of the most influential design fairs, museums and awards worldwide.
             </p>
 
             <div class="hero-ctas">
-              <a class="btn btn-primary" href="/designers">
-                Explore studios
+              <a class="btn btn-primary" href="/events/fairs">
+                Explore fairs
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </a>
-              <a class="btn btn-ghost" href="/get-listed">
-                Get listed
+              <a class="btn btn-ghost" href="/events/museums">
+                Browse museums
               </a>
             </div>
           </div>
@@ -184,7 +180,6 @@ const sections = [
                     </div>
                   </div>
                 </div>
-                <div class="highlight-border"></div>
               </a>
             ))}
           </div>
@@ -342,7 +337,8 @@ const sections = [
 
   .quick-nav-card:hover {
     transform: translateY(-8px);
-    border-color: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.4);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.4);
     background: #191B1D;
   }
 
@@ -420,21 +416,6 @@ const sections = [
     transform: translateX(4px);
   }
 
-  .highlight-border {
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    border: 1px solid rgba(237, 254, 68, 0);
-    transition: border-color 0.3s ease;
-    z-index: 3;
-    pointer-events: none;
-  }
-
-  .quick-nav-card:hover .highlight-border {
-    border-color: rgba(237, 254, 68, 0.3);
-  }
-
-  /* Directory Sections */
   .directory-sections { display: flex; flex-direction: column; gap: 100px; }
   .section-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; }
   .directory-name { font-family: var(--font-mono); font-size: 32px; font-weight: 400; color: var(--color-white); margin: 0; letter-spacing: 0; }
