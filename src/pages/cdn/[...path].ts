@@ -14,14 +14,14 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
   const env = (locals.runtime?.env || {}) as any;
 
   // ─────────────────────────────────────────────────────────────
-  // NEW ROUTING LOGIC – supports all your buckets
+  // REFINED ROUTING - Routes moodboard.json to its correct bucket
   // ─────────────────────────────────────────────────────────────
   let bucket;
-  if (path.endsWith('.json')) {
-    bucket = env.JSON_BUCKET;                    // All JSON files
+  if (path === 'moodboard.json' || path.startsWith('moodboard/')) {
+    bucket = env.MOODBOARD_BUCKET;               // Moodboard bucket (R2)
   } 
-  else if (path.startsWith('moodboard/')) {
-    bucket = env.MOODBOARD_BUCKET;               // Moodboard images
+  else if (path.endsWith('.json')) {
+    bucket = env.JSON_BUCKET;                    // All other JSON files
   } 
   else if (
     path.startsWith('events/') ||
