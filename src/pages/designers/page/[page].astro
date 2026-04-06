@@ -81,7 +81,7 @@ const schema = {
 
   <main class="bg-black">
     <section class="max-w-[1600px] mx-auto px-10 pt-14 pb-10">
-      <h1 class="font-mono text-white font-extrabold tracking-[-0.04em] leading-[0.98] text-[clamp(34px,4vw,56px)]">
+      <h1 class="font-mono text-white font-normal tracking-normal leading-[0.98] text-[clamp(34px,4vw,56px)]">
         Design studios directory <span class="text-gray">(Page {page} of {totalPages})</span>
       </h1>
       <p class="font-sans text-[15px] leading-[1.6] text-gray mt-4 max-w-[75ch]">
@@ -104,7 +104,7 @@ const schema = {
                 {s.cover ? <img src={s.cover} alt={s.name} loading="lazy" class="w-full h-full object-cover" /> : <div class="w-full h-full bg-[#1C1E20]" />}
               </div>
               <div class="min-w-0">
-                <div class="font-mono text-white font-bold text-[18px] leading-[1.15] truncate">{s.name}</div>
+                <div class="font-mono text-white font-normal text-[18px] leading-[1.15] truncate">{s.name}</div>
                 <div class="font-sans text-gray text-[13px] mt-1 truncate">
                   {s.city ?? ''}{s.city && s.country_slug ? ' · ' : ''}{s.country_slug ?? ''}
                 </div>

@@ -29,7 +29,7 @@ const errorMessage = url.searchParams.get('message');
             </div>
           )}
           
-          <a href="/auth/google" class="w-full h-12 flex items-center justify-center gap-3 bg-white text-black rounded-lg text-base font-medium no-underline transition-opacity hover:opacity-90">
+          <a href="/auth/google" class="w-full h-12 flex items-center justify-center gap-3 bg-white text-black rounded-lg text-base font-normal no-underline transition-opacity hover:opacity-90">
             <img src="/icons/google.svg" alt="Google" class="w-5 h-5" />
             Continue with Google
           </a>
@@ -43,7 +43,7 @@ const errorMessage = url.searchParams.get('message');
           <form id="magic-link-form" class="w-full flex flex-col gap-3">
             <label for="email" class="label">Email Address</label>
             <input type="email" id="email" name="email" required placeholder="your@email.com" class="input" />
-            <button type="submit" class="w-full h-12 bg-white text-black border-none rounded-lg text-base font-medium cursor-pointer transition-opacity font-sans hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">Send Magic Link</button>
+            <button type="submit" class="w-full h-12 bg-white text-black border-none rounded-lg text-base font-normal cursor-pointer transition-opacity font-sans hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">Send Magic Link</button>
           </form>
           
           <div id="magic-link-result" class="magic-link-result"></div>

@@ -397,9 +397,9 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   .hero-title {
     font-family: var(--font-mono);
     font-size: clamp(48px, 5vw, 80px);
-    font-weight: 800;
+    font-weight: 400;
     line-height: 0.98;
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
     margin: 0 0 18px;
   }
 
@@ -423,7 +423,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
     border-radius: 14px;
     text-decoration: none;
     font-family: var(--font-sans);
-    font-weight: 700;
+    font-weight: 400;
     font-size: 15px;
     transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
   }
@@ -459,13 +459,13 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   }
   .stat-value {
     font-family: var(--font-mono);
-    font-weight: 800;
+    font-weight: 400;
     font-size: 22px;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
   .stat-label {
     font-family: var(--font-sans);
-    font-weight: 600;
+    font-weight: 400;
     font-size: 12px;
     color: rgba(255,255,255,0.55);
     text-transform: uppercase;
@@ -552,10 +552,10 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   .quick-nav-card .card-title {
     font-family: var(--font-mono);
     font-size: 24px;
-    font-weight: 700;
+    font-weight: 400;
     color: var(--color-white);
     margin: 0 0 12px;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
 
   .quick-nav-card .card-link {
@@ -565,7 +565,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
     color: #fff;
     font-family: var(--font-sans);
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 400;
   }
 
   .quick-nav-card .card-link svg {
@@ -606,8 +606,8 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   .section { position: relative; z-index: 1; padding: 46px 0; }
   .section-inner { max-width: 1600px; margin: 0 auto; padding: 0 40px; }
   .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
-  .section-title { font-family: var(--font-mono); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
-  .section-sub { font-family: var(--font-sans); font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.55); margin: 0; }
+  .section-title { font-family: var(--font-mono); font-size: 28px; font-weight: 400; letter-spacing: 0; margin: 0; }
+  .section-sub { font-family: var(--font-sans); font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.55); margin: 0; }
 
   .link-pill {
     display: inline-flex;
@@ -619,7 +619,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
     text-decoration: none;
     font-family: var(--font-sans);
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 400;
     color: #fff;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.10);
@@ -664,9 +664,9 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   .explore-card.highlight::after {
     background: transparent;
   }
-  .ec-title { position: relative; z-index: 1; font-family: var(--font-mono); font-weight: 800; font-size: 20px; letter-spacing: -0.02em; }
-  .ec-sub { position: relative; z-index: 1; font-family: var(--font-sans); font-weight: 500; font-size: 13px; color: rgba(255,255,255,0.58); margin-top: 8px; max-width: 34ch; }
-  .ec-cta { position: relative; z-index: 1; font-family: var(--font-sans); font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.65); margin-top: 20px; }
+  .ec-title { position: relative; z-index: 1; font-family: var(--font-mono); font-weight: 400; font-size: 20px; letter-spacing: 0; }
+  .ec-sub { position: relative; z-index: 1; font-family: var(--font-sans); font-weight: 400; font-size: 13px; color: rgba(255,255,255,0.58); margin-top: 8px; max-width: 34ch; }
+  .ec-cta { position: relative; z-index: 1; font-family: var(--font-sans); font-weight: 400; font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.65); margin-top: 20px; }
 
   .cards {
     display: grid;
@@ -687,8 +687,8 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   .card-img-el { width: 100%; height: 100%; object-fit: cover; display: block; }
   .card-ph { width: 100%; height: 100%; background: rgba(255,255,255,0.08); }
   .card-bottom { padding: 14px 14px 16px; }
-  .card-name { font-family: var(--font-sans); font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
-  .card-loc { font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.55); margin-top: 6px; }
+  .card-name { font-family: var(--font-sans); font-size: 14px; font-weight: 400; letter-spacing: 0; }
+  .card-loc { font-family: var(--font-sans); font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.55); margin-top: 6px; }
 
   /* Landing: simple card grid (matches your previous "recently added" style) */
   .cards-grid {
@@ -762,7 +762,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   .card-name {
     font-family: var(--font-sans);
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 400;
     color: #fff;
     margin: 0;
   }
@@ -770,7 +770,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   .card-location {
     font-family: var(--font-sans);
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 400;
     color: rgba(255,255,255,0.55);
     margin: 0;
   }

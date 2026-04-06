@@ -348,14 +348,14 @@ const pageDesc = fair.description || `Explore ${fair.name}, a premier design eve
   .info-card::-webkit-scrollbar { display: none; }
 
   .tag-row { margin-bottom: 16px; }
-  .category-tag { font-family: var(--font-sans); font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--color-yellow); letter-spacing: 0.1em; }
+  .category-tag { font-family: var(--font-sans); font-size: 11px; font-weight: 400; text-transform: uppercase; color: var(--color-yellow); letter-spacing: 0.1em; }
 
   .fair-name {
     font-family: var(--font-mono);
     font-size: 32px;
-    font-weight: 800;
+    font-weight: 400;
     line-height: 1.1;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
     color: var(--color-white);
     margin-bottom: 24px;
   }
@@ -385,7 +385,7 @@ const pageDesc = fair.description || `Explore ${fair.name}, a premier design eve
     color: var(--color-white);
     font-family: var(--font-sans);
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 400;
     text-decoration: none;
     transition: background 0.2s;
   }
@@ -394,7 +394,7 @@ const pageDesc = fair.description || `Explore ${fair.name}, a premier design eve
   .details-section { background: var(--color-btn-bg); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
   .details-row { display: flex; justify-content: space-between; align-items: center; }
   .detail-label { font-size: 14px; color: var(--color-gray); }
-  .detail-value { font-size: 14px; font-weight: 700; color: var(--color-white); text-align: right; text-decoration: none; }
+  .detail-value { font-size: 14px; font-weight: 400; color: var(--color-white); text-align: right; text-decoration: none; }
   .detail-value.underlined { text-decoration: underline; }
   .detail-value.underlined:hover { color: var(--color-yellow); }
   .detail-value-group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
@@ -411,13 +411,13 @@ const pageDesc = fair.description || `Explore ${fair.name}, a premier design eve
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     flex-shrink: 0;
   }
-  :global(.footer-btn) { display: flex; width: 100%; align-items: center; justify-content: center; gap: 10px; height: 48px; border-radius: 10px; font-weight: 700 !important; cursor: pointer; border: none; transition: opacity 0.2s ease; }
+  :global(.footer-btn) { display: flex; width: 100%; align-items: center; justify-content: center; gap: 10px; height: 48px; border-radius: 10px; font-weight: 400 !important; cursor: pointer; border: none; transition: opacity 0.2s ease; }
   :global(.share-btn) { background: var(--color-btn-bg) !important; color: var(--color-white) !important; }
   :global(.save-btn) { background: var(--color-white) !important; color: var(--color-black) !important; }
 
   .discovery-area { margin-top: 80px; }
   .section-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .discovery-title { font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--color-white); }
+  .discovery-title { font-family: var(--font-mono); font-size: 24px; font-weight: 400; color: var(--color-white); }
   .discovery-see-all { flex-shrink: 0; }
 
   .discovery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
