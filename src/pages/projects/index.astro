@@ -79,7 +79,7 @@ try {
                   class="project-item group relative block overflow-hidden no-underline bg-bg-secondary transition-transform duration-200 break-inside-avoid mb-4 hover:-translate-y-1"
                 >
                   <img 
-                    src={item.cover} 
+                    src={normalizeImage(item.cover, Astro, { width: 600 })} 
                     alt={item.name}
                     class="w-full h-auto block object-cover"
                     loading="lazy"
