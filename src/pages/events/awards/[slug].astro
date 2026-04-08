@@ -36,7 +36,7 @@ try {
       // Discovery: Similar Awards
       relatedAwards = processedAwards
         .filter(a => a.slug !== slug)
-        .slice(0, 8);
+        .slice(0, 10);
     }
   }
 } catch (e) {
@@ -386,10 +386,14 @@ const pageDesc = award.description || `Explore the ${award.name}, one of the mos
   .discovery-title { font-family: var(--font-mono); font-size: 24px; font-weight: 400; color: var(--color-white); }
   .discovery-see-all { flex-shrink: 0; }
 
-  .discovery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .discovery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; }
 
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1300px) {
+    .discovery-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  @media (max-width: 1100px) {
     .discovery-grid { grid-template-columns: repeat(3, 1fr); }
   }
 

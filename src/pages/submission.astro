@@ -30,6 +30,7 @@ if (!user) {
       </div>
       
       <div class="form-outer-container">
+        <h1 class="sr-only">Submit your studio to Acceso</h1>
         <!-- Visual Progress Path -->
         <div class="step-path-container">
           <div class="step-nodes" id="step-track">
@@ -55,7 +56,7 @@ if (!user) {
           <!-- STEP 1: STUDIO INFO -->
           <div class="form-step active" data-step="1">
             <div class="step-header">
-              <h1>Studio Info</h1>
+              <h2>Studio Info</h2>
               <p>Basic details to identify your practice.</p>
             </div>
             
@@ -103,7 +104,7 @@ if (!user) {
           <!-- STEP 2: DETAILS -->
           <div class="form-step" data-step="2">
             <div class="step-header">
-              <h1>Details</h1>
+              <h2>Details</h2>
               <p>Add context and visual personality.</p>
             </div>
 
@@ -144,7 +145,7 @@ if (!user) {
           <!-- STEP 3: REVIEW & PAYMENT -->
           <div class="form-step" data-step="3">
             <div class="step-header">
-              <h1>Review & Payment</h1>
+              <h2>Review & Payment</h2>
               <p>Verify your information before proceeding to payment.</p>
             </div>
 
@@ -214,7 +215,7 @@ if (!user) {
               <div class="success-icon">
                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--color-yellow)" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
               </div>
-              <h1 class="success-title">Submission Received</h1>
+              <h2 class="success-title">Submission Received</h2>
               <p class="success-p">Thank you! We've received your data. Our team will review it and send a payment link to your email within 24 hours.</p>
               
               <div class="success-actions">
@@ -366,7 +367,7 @@ if (!user) {
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .step-header h1 { font-family: var(--font-mono); font-size: 40px; font-weight: 400; margin-bottom: 8px; letter-spacing: 0; }
+    .step-header h2 { font-family: var(--font-mono); font-size: 38px; font-weight: 400; margin-bottom: 8px; letter-spacing: 0; }
     .step-header p { color: rgba(255,255,255,0.6); font-size: 16px; }
 
     .fields-grid { display: flex; flex-direction: column; gap: 24px; }
@@ -438,7 +439,7 @@ if (!user) {
       cursor: pointer;
       transition: 0.3s;
     }
-    .btn-continue:hover { background: var(--color-yellow); }
+    .btn-continue:hover { background: #f3f4f6; }
 
     .btn-back {
       font-size: 14px;

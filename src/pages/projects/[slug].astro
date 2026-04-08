@@ -484,7 +484,7 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
   .detail-value {
     font-family: var(--font-sans);
     font-size: 15px;
-    font-weight: 400;
+    font-weight: 700;
     color: var(--color-white);
     text-decoration: none;
   }
@@ -514,8 +514,13 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
     color: var(--color-white);
     font-family: var(--font-sans);
     font-size: 15px;
-    font-weight: 400;
+    font-weight: 700;
     text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .social-btn:hover {
+    background: rgba(255,255,255,0.1);
   }
 
   .card-footer-actions {
@@ -535,11 +540,15 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
     border-radius: 10px;
     font-family: var(--font-sans);
     font-size: 15px;
-    font-weight: 400 !important;
+    font-weight: 700 !important;
     cursor: pointer;
     border: none;
     padding: 0 16px;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+  }
+
+  :global(.footer-btn:hover) {
+    opacity: 0.9;
   }
 
   :global(.share-btn) {

@@ -44,17 +44,17 @@ try {
   if (fRes.ok) {
     const data = await fRes.json();
     const all = (Array.isArray(data) ? data : data.items || []);
-    fairs = all.slice(0, 4);
+    fairs = all.slice(0, 5);
   }
   if (mRes.ok) {
     const data = await mRes.json();
     const all = (Array.isArray(data) ? data : data.items || []);
-    museums = all.slice(0, 4);
+    museums = all.slice(0, 5);
   }
   if (aRes.ok) {
     const data = await aRes.json();
     const all = (Array.isArray(data) ? data : data.items || []);
-    awards = all.slice(0, 4);
+    awards = all.slice(0, 5);
   }
 } catch (e) {
   console.error('[Landing] Failed to fetch events previews:', e);
@@ -62,8 +62,8 @@ try {
 
 
 
-// Get latest items (keep 4-up rows)
-const recentlyAddedStudios = studios.slice(-4).reverse();
+// Get latest items (5 per row)
+const recentlyAddedStudios = studios.slice(-5).reverse();
 const latestProjects: any[] = []; // Moodboard on hold
 
 // Mock events for the banner
@@ -176,7 +176,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
         </div>
 
         <div class="cards-grid">
-          {recentlyAddedStudios.slice(0, 4).map(studio => (
+          {recentlyAddedStudios.slice(0, 5).map(studio => (
             <a href={`/designers/${studio.slug}`} class="simple-card">
               <div class="card-image-wrapper">
                 {studio.cover ? (
@@ -693,7 +693,7 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   /* Landing: simple card grid (matches your previous "recently added" style) */
   .cards-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 16px;
     margin-top: 14px;
   }
@@ -861,6 +861,9 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
     grid-template-columns: 1fr;
   }
 
+  @media (max-width: 1400px) {
+    .cards-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
   @media (max-width: 1200px) {
     .hero-inner { grid-template-columns: 1fr; }
     .hero-showcase { grid-template-columns: 1fr 1fr; }

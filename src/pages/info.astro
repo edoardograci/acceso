@@ -10,11 +10,40 @@ import Footer from '../components/Footer.astro';
     keywords="independent design studios, furniture design studios, industrial design studios, design studios directory, design studio map, design studios Milan, design studios London, design studios Seoul, design inspiration objects" type="website">
     <Navbar />
     
+    {/* Page Hero */}
+    <section class="info-hero">
+      <div class="info-hero-container reveal-on-scroll">
+        <div class="info-hero-content">
+          <div class="info-hero-kicker">
+            <span class="pill">300+ designers 8+ countries</span>
+          </div>
+          <h1 class="info-hero-title">Design lives<br/>in cities</h1>
+          <p class="info-hero-sub">
+            Explore independent studios through the places they belong to, and the objects they create.
+          </p>
+          <div class="info-hero-ctas">
+            <a href="/designers" class="btn-primary">
+              Explore studios
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 8px;">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <a href="/projects" class="btn-secondary">Browse projects</a>
+          </div>
+        </div>
+        <div class="info-hero-image">
+          <div class="info-hero-img-wrapper">
+             <img src="/images/hero-image-grid.webp" alt="Design objects grid" class="info-hero-img" />
+          </div>
+        </div>
+      </div>
+    </section>
+
     {/* Why Acceso Section */}
     <section class="why-acceso-section">
       <div class="why-header">
         <span class="showcase-label reveal-on-scroll">WHY ACCESO</span>
-        <h1 class="why-title reveal-on-scroll">A different way to explore design studios</h1>
+        <h2 class="why-title reveal-on-scroll">A different way to explore design studios</h2>
       </div>
 
       <div class="why-comparison">
@@ -140,6 +169,125 @@ import Footer from '../components/Footer.astro';
   </Layout>
 
 <style>
+  /* New Info Hero */
+  .info-hero {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--page-top-spacing) 40px 100px;
+  }
+
+  .info-hero-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .info-hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-hero-kicker {
+    margin-bottom: 24px;
+  }
+
+  .pill {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 12px;
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+    display: inline-block;
+  }
+
+  .info-hero-title {
+    font-family: var(--font-mono);
+    font-size: clamp(48px, 6vw, 84px);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: 0;
+    margin: 0 0 24px;
+    color: var(--color-white);
+  }
+
+  .info-hero-sub {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.6);
+    margin: 0 0 32px;
+    max-width: 500px;
+  }
+
+  .info-hero-ctas {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .info-hero-image {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+  }
+
+  .info-hero-img-wrapper {
+    width: 100%;
+    height: 100%;
+  }
+
+  .info-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Shared Button Extensions */
+  .btn-primary, .btn-secondary {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1024px) {
+    .info-hero-container {
+      gap: 40px;
+    }
+    .info-hero-title {
+      font-size: 56px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .info-hero {
+      padding: var(--page-top-spacing) 24px 60px;
+    }
+    .info-hero-container {
+      grid-template-columns: 1fr;
+      gap: 48px;
+    }
+    .info-hero-title {
+      font-size: 42px;
+    }
+    .info-hero-sub {
+      font-size: 16px;
+    }
+    .info-hero-image {
+      aspect-ratio: 4 / 3;
+    }
+  }
+
   /* Hero Section */
   .hero-section {
     padding: 24px var(--spacing-page) 32px;
@@ -225,7 +373,7 @@ import Footer from '../components/Footer.astro';
     justify-content: center;
     height: 48px;
     padding: 0 32px;
-    background: var(--color-yellow);
+    background: #ffffff;
     color: var(--color-black);
     border-radius: 999px;
     font-family: var(--font-sans);
@@ -236,7 +384,7 @@ import Footer from '../components/Footer.astro';
   }
 
   .btn-primary:hover {
-    background: #f2ff74;
+    background: #f3f4f6;
     color: var(--color-black);
   }
 
@@ -266,7 +414,7 @@ import Footer from '../components/Footer.astro';
   .why-acceso-section {
     width: 100%;
     max-width: 1600px;
-    margin: var(--page-top-spacing) auto 120px;
+    margin: 80px auto 120px;
     padding: 0 40px;
     position: relative;
     z-index: 10;
@@ -703,7 +851,7 @@ import Footer from '../components/Footer.astro';
 
   .showcase-btn:hover {
     border-color: var(--color-white);
-    background: #f2ff74;
+    background: #f3f4f6;
     color: #0b0d0f;
   }
 
@@ -745,7 +893,7 @@ import Footer from '../components/Footer.astro';
     padding: 0 22px;
     border-radius: 14px;
     font-family: var(--font-sans);
-    font-weight: 400;
+    font-weight: 700;
     font-size: 14px;
     letter-spacing: 0.01em;
     text-decoration: none;

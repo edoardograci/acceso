@@ -59,7 +59,25 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
 
   try {
     const isImage = /\.(jpg|jpeg|png|webp|avif|heic)$/i.test(path);
-    const object = await bucket.get(key);
+    let object = await bucket.get(key);
+
+    // ─────────────────────────────────────────────────────────────
+    // DEV FALLBACK: If local R2 is empty, proxy from production
+    // ─────────────────────────────────────────────────────────────
+    if (!object && import.meta.env.DEV) {
+      const prodUrl = `https://acceso.design/cdn/${path}`;
+      const prodRes = await fetch(prodUrl);
+      if (prodRes.ok) {
+        const body = await prodRes.arrayBuffer();
+        return new Response(body, {
+          headers: {
+            'Content-Type': prodRes.headers.get('Content-Type') || (isImage ? 'image/webp' : 'application/json'),
+            'Cache-Control': 'no-cache',
+            'X-Proxy-Fallback': 'true'
+          }
+        });
+      }
+    }
 
     if (!object) {
       return new Response(`Not Found: ${key}`, { status: 404 });

@@ -38,7 +38,7 @@ try {
       relatedFairs = processedFairs
         .filter(f => f.slug !== slug && (f.city_slug === fair.city_slug || f.country_slug === fair.country_slug))
         .sort((a, b) => (a.city_slug === fair.city_slug ? -1 : 1))
-        .slice(0, 8);
+        .slice(0, 10);
     }
   }
 
@@ -420,10 +420,14 @@ const pageDesc = fair.description || `Explore ${fair.name}, a premier design eve
   .discovery-title { font-family: var(--font-mono); font-size: 24px; font-weight: 400; color: var(--color-white); }
   .discovery-see-all { flex-shrink: 0; }
 
-  .discovery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .discovery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; }
 
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1300px) {
+    .discovery-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  @media (max-width: 1100px) {
     .discovery-grid { grid-template-columns: repeat(3, 1fr); }
   }
 
