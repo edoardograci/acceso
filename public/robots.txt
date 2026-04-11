@@ -10,7 +10,19 @@ Disallow: /auth/
 Disallow: /collections/
 Disallow: /login
 Disallow: /profile
-Disallow: /cdn/
+# Allow images in CDN to be indexed
+Allow: /cdn/*.jpg
+Allow: /cdn/*.jpeg
+Allow: /cdn/*.png
+Allow: /cdn/*.webp
+Allow: /cdn/*.gif
+Allow: /cdn/*.svg
+Allow: /cdn/*.avif
+Allow: /cdn/*.heic
+
+# Still block sensitive JSON patterns if any, but general /cdn/ should be crawlable for images
+# Disallow: /cdn/*.json # Optional: keep JSONs private if desired, but some are public
+
 
 # Block parameterized duplicates (canonical is clean routes)
 Disallow: /*?*

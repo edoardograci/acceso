@@ -1,6 +1,6 @@
 export function normalizeImage(
   path: string | null | undefined, 
-  Astro: any, 
+  context: any | string, 
   options?: { width?: number; height?: number; quality?: number }
 ): string | null {
   if (!path) return null;
@@ -19,7 +19,7 @@ export function normalizeImage(
   }
 
   // 3. Go through your working CDN proxy
-  const origin = Astro.url.origin;
+  const origin = typeof context === 'string' ? context : context.url.origin;
   const key = cleanPath.replace(/^\/+/, ''); // remove leading slashes
   
   let url = `${origin}/cdn/${key}`;

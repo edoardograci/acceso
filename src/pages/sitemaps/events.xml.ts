@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
 
+import { normalizeImage } from '../../lib/images';
+
 type EventItem = { slug: string; image?: string | null; updated_at?: string | null };
 
 async function fetchEventList(origin: string, path: string): Promise<EventItem[]> {
@@ -12,23 +14,24 @@ async function fetchEventList(origin: string, path: string): Promise<EventItem[]
   return Array.isArray(items) ? items : [];
 }
 
-export const GET: APIRoute = async ({ site, url }) => {
+export const GET: APIRoute = async ({ site, url: requestUrl }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
   const lastmod = toW3CDate(new Date());
 
   const [fairs, museums, awards] = await Promise.allSettled([
-    fetchEventList(url.origin, '/cdn/fairs.json'),
-    fetchEventList(url.origin, '/cdn/museums.json'),
-    fetchEventList(url.origin, '/cdn/awards.json'),
+    fetchEventList(requestUrl.origin, '/cdn/fairs.json'),
+    fetchEventList(requestUrl.origin, '/cdn/museums.json'),
+    fetchEventList(requestUrl.origin, '/cdn/awards.json'),
   ]);
 
-  const urls = [];
+  const urls: import('../../lib/seo/sitemap').SitemapUrl[] = [];
   const add = (base: string, list: EventItem[]) => {
     for (const e of list) {
       if (!e?.slug) continue;
       const loc = new URL(`${base}/${encodeURIComponent(e.slug)}`, site).toString();
       const images: string[] = [];
-      if (e.image && typeof e.image === 'string') images.push(e.image);
+      const normalized = normalizeImage(e.image, requestUrl.origin);
+      if (normalized) images.push(normalized);
       urls.push({ loc, lastmod, changefreq: 'monthly' as const, priority: 0.5, images });
     }
   };

@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
 
+import { normalizeImage } from '../../lib/images';
+
 type Studio = {
   slug: string;
   cover?: string | null;
@@ -27,12 +29,13 @@ export const GET: APIRoute = async ({ site, url }) => {
     studios = [];
   }
 
-  const urls = studios
+  const urls: import('../../lib/seo/sitemap').SitemapUrl[] = studios
     .filter((s) => typeof s?.slug === 'string' && s.slug.length > 0)
     .map((s) => {
       const loc = new URL(`/designers/${encodeURIComponent(s.slug)}`, site).toString();
       const images: string[] = [];
-      if (s.cover && typeof s.cover === 'string') images.push(s.cover);
+      const normalized = normalizeImage(s.cover, url.origin);
+      if (normalized) images.push(normalized);
       return { loc, lastmod, changefreq: 'monthly' as const, priority: 0.7, images };
     });
 

@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
 
+import { normalizeImage } from '../../lib/images';
+
 type MoodboardItem = {
   slug: string;
   cover?: string | null;
@@ -26,12 +28,13 @@ export const GET: APIRoute = async ({ site, url }) => {
     items = [];
   }
 
-  const urls = items
+  const urls: import('../../lib/seo/sitemap').SitemapUrl[] = items
     .filter((i) => typeof i?.slug === 'string' && i.slug.length > 0)
     .map((i) => {
       const loc = new URL(`/projects/${encodeURIComponent(i.slug)}`, site).toString();
       const images: string[] = [];
-      if (i.cover && typeof i.cover === 'string') images.push(i.cover);
+      const normalized = normalizeImage(i.cover, url.origin);
+      if (normalized) images.push(normalized);
       return { loc, lastmod, changefreq: 'monthly' as const, priority: 0.6, images };
     });
 
