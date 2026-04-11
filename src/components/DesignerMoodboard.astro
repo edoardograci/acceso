@@ -60,16 +60,16 @@ try {
 
 <div class="pt-6">
   {designerProducts.length > 0 ? (
-    <div class="columns-2 md:columns-3 gap-4 mt-0">
+    <div class="columns-2 md:columns-4 gap-4 mt-0">
       {designerProducts.map(item => (
         <a 
           href={`/projects/${item.slug}`} 
-          class="group relative block overflow-hidden no-underline bg-bg-secondary transition-transform duration-200 break-inside-avoid mb-4 hover:-translate-y-1"
+          class="group relative block overflow-hidden rounded-[10px] no-underline bg-bg-secondary transition-transform duration-200 break-inside-avoid mb-4 hover:-translate-y-1"
         >
           <img 
             src={normalizeImage(item.cover, Astro)} 
             alt={item.name}
-            class="w-full h-auto block object-cover skeleton"
+            class="w-full h-auto block object-cover skeleton rounded-[10px]"
             loading="lazy"
             decoding="async"
             data-skeleton

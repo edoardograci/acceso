@@ -205,23 +205,19 @@ const user = Astro.locals.user;
     }
 
     .listing-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
-      align-items: start;
+      display: flex;
+      flex-direction: column;
+      gap: 120px;
+      align-items: center;
     }
 
     /* BRANDING STAGE */
-    .hero-stage {
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      text-align: left;
-    }
-
     .branding-stage {
       padding-top: 40px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .hero-headline {
@@ -231,7 +227,7 @@ const user = Astro.locals.user;
       line-height: 0.95;
       margin-bottom: 32px;
       letter-spacing: -0.02em;
-      text-align: left;
+      text-align: center;
     }
 
     .hero-subheadline {
@@ -239,15 +235,16 @@ const user = Astro.locals.user;
       color: #FFFFFF;
       opacity: 0.7;
       line-height: 1.5;
-      max-width: 500px;
-      text-align: left;
+      max-width: 600px;
+      text-align: center;
     }
 
     /* ACTION STAGE */
     .action-stage {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 24px;
+      width: 100%;
     }
 
     .premium-offer-box {
@@ -255,16 +252,18 @@ const user = Astro.locals.user;
       border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 24px;
       padding: 48px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 40px;
-      align-items: center;
+      align-items: flex-start;
+      height: 100%;
     }
 
     .offer-pricing {
       display: flex;
       flex-direction: column;
       gap: 32px;
+      width: 100%;
     }
 
     .price-block {
@@ -392,6 +391,7 @@ const user = Astro.locals.user;
       align-items: flex-start;
       text-align: left;
       position: relative;
+      height: 100%;
     }
 
     .open-call-header {
@@ -465,6 +465,8 @@ const user = Astro.locals.user;
 
     .guarantee-tag {
       padding: 0 12px;
+      grid-column: span 2;
+      text-align: center;
     }
 
     .guarantee-tag p {
@@ -478,13 +480,15 @@ const user = Astro.locals.user;
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     @media (max-width: 1024px) {
-      .listing-layout {
+      .action-stage {
         grid-template-columns: 1fr;
-        gap: 64px;
+        gap: 32px;
+      }
+      .guarantee-tag {
+        grid-column: span 1;
       }
       .hero-headline { font-size: 56px; }
       .premium-offer-box {
-        grid-template-columns: 1fr;
         padding: 32px;
       }
       .open-call-card {
