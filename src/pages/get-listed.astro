@@ -253,9 +253,9 @@ const user = Astro.locals.user;
       border-radius: 24px;
       padding: 48px;
       display: flex;
-      flex-direction: column;
-      gap: 40px;
-      align-items: flex-start;
+      flex-direction: row;
+      gap: 48px;
+      align-items: stretch;
       height: 100%;
     }
 
@@ -263,7 +263,7 @@ const user = Astro.locals.user;
       display: flex;
       flex-direction: column;
       gap: 32px;
-      width: 100%;
+      flex: 1;
     }
 
     .price-block {
@@ -302,6 +302,7 @@ const user = Astro.locals.user;
       color: #FFFFFF;
       opacity: 0.5;
       margin-left: 8px;
+      white-space: nowrap;
     }
 
     .pricing-badge {
@@ -350,6 +351,16 @@ const user = Astro.locals.user;
       font-weight: 400;
       color: rgba(255, 255, 255, 0.4);
       margin: 0;
+    }
+
+    .offer-features {
+      flex: 1;
+      padding-left: 48px;
+      border-left: 1px solid rgba(255, 255, 255, 0.05);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     /* FEATURES */
@@ -496,6 +507,19 @@ const user = Astro.locals.user;
       }
       .call-action-wrap {
         gap: 16px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .premium-offer-box {
+        flex-direction: column;
+        gap: 40px;
+      }
+      .offer-features {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 32px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
       }
     }
   </style>
