@@ -91,74 +91,72 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
 
     <section class="hero">
       <div class="hero-inner">
-        <div class="hero-copy">
-          <div class="hero-kicker">
-            <span class="pill">300+ designers 8+ countries</span>
+        <!-- Top Text Section: 2 Columns -->
+        <div class="hero-header">
+          <div class="header-left">
+            <div class="hero-kicker">
+              <span class="pill">300+ designers 8+ countries</span>
+            </div>
+            <h1 class="hero-title">Discover Design<br/>Studios</h1>
           </div>
-
-          <h1 class="hero-title">Discover Design<br/>Studios</h1>
-          <p class="hero-sub">
-            A modern index of independent furniture & industrial design studios, with projects and events.
-            Built for browsing by city and finding your next collaboration.
-          </p>
-
-          <div class="hero-ctas">
-            <a class="btn btn-primary" href="/designers">
-              Explore studios
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </a>
-            <a class="btn btn-ghost" href="/events">
-              Browse events
-            </a>
+          <div class="header-right">
+            <p class="hero-sub">
+              A modern index of independent furniture & industrial design studios, with projects and events.
+              Built for browsing by city and finding your next collaboration.
+            </p>
+            <div class="hero-ctas">
+              <a class="btn btn-primary" href="/designers">
+                Explore studios
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <a class="btn btn-ghost" href="/events">
+                Browse events
+              </a>
+            </div>
           </div>
         </div>
 
-        <div class="hero-quick-nav" aria-hidden="true">
-          {[
-            { 
-              title: 'Designers', 
-              href: '/designers', 
-              img: 'studios/kasper-friis-egelund.webp'
-            },
-            { 
-              title: 'Projects', 
-              href: '/projects', 
-              img: 'moodboard/2070d7da-2e8c-8063-be37-de7de2f512d8/0-5b68dabf.webp'
-            },
-            { 
-              title: 'Events', 
-              href: '/events', 
-              img: 'museums/die-neue-sammlung.webp'
-            }
-          ].map(card => (
-            <a href={card.href} class="quick-nav-card">
-              <div class="card-image-bg">
-                <img 
-                  src={normalizeImage(card.img, Astro)} 
-                  alt={card.title} 
-                  loading="lazy" 
-                  decoding="async"
-                />
-                <div class="card-overlay"></div>
+        <!-- Bottom Cards Section: Aligned with Header Grid -->
+        <div class="hero-grid">
+          <a href="/designers" class="hero-card hero-card-large">
+            <div class="card-media">
+               <img src="/images/designers-cover.webp" alt="Designers" loading="eager" decoding="async" />
+               <div class="card-overlay-light"></div>
+            </div>
+            <div class="card-content">
+              <div class="card-top">
+                <h2 class="card-label">Designers</h2>
+                <span class="card-accent">DESIGN IS CULTURE.</span>
               </div>
-              <div class="card-bg"></div>
+            </div>
+          </a>
+
+          <div class="hero-subgrid">
+            <a href="/projects" class="hero-card hero-card-small">
+              <div class="card-media">
+                 <img src="/images/projects-cover.webp" alt="Projects" loading="eager" decoding="async" />
+              </div>
               <div class="card-content">
-                <div class="card-top"></div>
-                <div class="card-bottom">
-                  <h2 class="card-title">{card.title}</h2>
-                  <div class="card-link">
-                    <span>Explore</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
+                <div class="card-top">
+                  <h2 class="card-label">Projects</h2>
                 </div>
               </div>
-              <div class="highlight-border"></div>
             </a>
-          ))}
+
+            <a href="/events" class="hero-card hero-card-small">
+              <div class="card-media">
+                 <img src="/images/events-cover.webp" alt="Events" loading="eager" decoding="async" />
+                 <div class="card-overlay"></div>
+              </div>
+              <div class="card-content">
+                <div class="card-top">
+                  <h2 class="card-label">Events</h2>
+                </div>
+              </div>
+            </a>
+          </div>
         </div>
       </div>
     </section>
@@ -367,240 +365,249 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
   .hero {
     position: relative;
     z-index: 1;
-    padding: var(--page-top-spacing) 0 36px;
+    padding: var(--page-top-spacing) 0 60px;
   }
   .hero-inner {
     max-width: 1600px;
     margin: 0 auto;
     padding: 0 40px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 40px;
-    align-items: start;
   }
 
-  .hero-kicker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  /* Header Section */
+  .hero-header {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 60px;
+    align-items: end;
+  }
+
+  .hero-kicker { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
   .pill {
     font-family: var(--font-sans);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.75);
-    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.08);
-    padding: 8px 12px;
+    padding: 7px 14px;
     border-radius: 999px;
-    backdrop-filter: blur(10px);
   }
 
   .hero-title {
     font-family: var(--font-mono);
-    font-size: clamp(48px, 5vw, 80px);
+    font-size: clamp(44px, 5.2vw, 92px);
     font-weight: 400;
-    line-height: 0.98;
-    letter-spacing: 0;
-    margin: 0 0 18px;
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding-bottom: 8px;
   }
 
   .hero-sub {
     font-family: var(--font-sans);
-    font-size: 16px;
-    line-height: 1.6;
-    color: rgba(255,255,255,0.62);
-    margin: 0 0 26px;
-    max-width: 52ch;
+    font-size: 18px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+    max-width: 50ch;
   }
 
-  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 26px; }
+  .hero-ctas { display: flex; gap: 16px; flex-wrap: wrap; }
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    height: 52px;
-    padding: 0 22px;
-    border-radius: 14px;
+    height: 54px;
+    padding: 0 32px;
+    border-radius: 12px;
     text-decoration: none;
     font-family: var(--font-sans);
     font-weight: 700;
     font-size: 15px;
-    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    transition: all 0.2s ease;
   }
   .btn:hover { color: inherit; }
   .btn-primary {
     background: #ffffff;
-    color: #0b0d0f;
-    border: 1px solid rgba(255,255,255,0.18);
+    color: #000;
+    border: 1px solid #ffffff;
   }
   .btn-primary:hover {
     background: #f3f4f6;
-    border-color: #f3f4f6;
-    color: #0b0d0f !important;
+    color: #000 !important;
+    transform: translateY(-2px);
   }
   .btn-ghost {
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.04);
     color: #ffffff;
-    border: 1px solid rgba(255,255,255,0.10);
-    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
   }
   .btn-ghost:hover {
-    background: rgba(255,255,255,0.12);
-    border-color: rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-2px);
   }
 
-  .hero-stats { display: none; }
-  .stat {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 14px 16px;
-    backdrop-filter: blur(10px);
-  }
-  .stat-value {
-    font-family: var(--font-mono);
-    font-weight: 400;
-    font-size: 22px;
-    letter-spacing: 0;
-  }
-  .stat-label {
-    font-family: var(--font-sans);
-    font-weight: 400;
-    font-size: 12px;
-    color: rgba(255,255,255,0.55);
-    text-transform: uppercase;
-    letter-spacing: 0.10em;
-    margin-top: 4px;
-  }
-
-  /* Hero Section styles */
-  .hero-quick-nav {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    height: 100%;
-    align-items: stretch;
-  }
-
-  .quick-nav-card {
-    position: relative;
-    height: 100%;
-    min-height: 480px;
-    background: #0F1113;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.08);
-    overflow: hidden;
-    text-decoration: none;
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  .hero-grid {
     display: flex;
-    flex-direction: column;
+    gap: 20px;
+    height: 500px;
   }
 
-  .quick-nav-card:hover {
+  .hero-card-large {
+    flex: 1;
+  }
+
+  .hero-subgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: calc((100% - 60px) * (1.1 / 2.1));
+    flex-shrink: 0;
+  }
+
+  .hero-card {
+    position: relative;
+    border-radius: 32px;
+    overflow: hidden;
+    background: #141618;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    isolation: isolate;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+  }
+
+  .hero-card:hover {
     transform: translateY(-8px);
-    border-color: rgba(255,255,255,0.15);
-    background: #191B1D;
   }
 
-  .quick-nav-card .card-image-bg {
+  .card-media {
     position: absolute;
     inset: 0;
     z-index: 0;
   }
 
-  .quick-nav-card .card-image-bg img {
+  .card-media img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+    will-change: transform;
+    transform: translateZ(0);
   }
 
-  .quick-nav-card:hover .card-image-bg img {
-    transform: scale(1.08);
+  .hero-card:hover .card-media img {
+    transform: scale(1.04);
   }
 
-  .quick-nav-card .card-overlay {
+  .card-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, #0F1113 0%, rgba(15, 17, 19, 0.8) 40%, rgba(15, 17, 19, 0.2) 100%);
-    z-index: 1;
+    background: linear-gradient(to top, transparent 20%, rgba(255,255,255,0.4) 60%, rgba(255,255,255,0.9) 100%);
+    pointer-events: none;
+    transform: translateZ(0);
   }
 
-  .quick-nav-card .card-bg {
+  .card-overlay-light {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at top right, rgba(237, 254, 68, 0.05), transparent 60%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 2;
+    background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.08) 100%);
+    pointer-events: none;
+    transform: translateZ(0);
   }
 
-  .quick-nav-card:hover .card-bg {
-    opacity: 1;
-  }
-
-  .quick-nav-card .card-content {
+  .card-content {
     position: relative;
-    z-index: 3;
+    z-index: 2;
     height: 100%;
-    padding: 32px 24px;
+    padding: 32px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: space-between;
   }
 
-  .quick-nav-card .card-title {
-    font-family: var(--font-mono);
-    font-size: 24px;
-    font-weight: 400;
-    color: var(--color-white);
-    margin: 0 0 12px;
-    letter-spacing: 0;
+  .hero-card-small .card-content {
+    justify-content: flex-start;
   }
 
-  .quick-nav-card .card-link {
+  .card-top {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    color: #fff;
+  }
+
+  .card-bottom {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .hero-card-large .card-label {
     font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 32px;
+    font-weight: 600;
+    color: #000;
+    margin: 0;
+    line-height: 1;
   }
 
-  .quick-nav-card .card-link svg {
-    transition: transform 0.2s ease;
+  .hero-card-small .card-label {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 600;
+    color: #000;
+    margin: 0;
+    line-height: 1;
   }
 
-  .quick-nav-card:hover .card-link svg {
-    transform: translateX(4px);
+  .card-accent {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: rgba(0,0,0,0.5);
+    letter-spacing: 0.05em;
+    line-height: 1;
   }
 
-  .highlight-border {
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    border: 1px solid rgba(237, 254, 68, 0);
-    transition: border-color 0.3s ease;
-    z-index: 3;
-    pointer-events: none;
-  }
-
-  .quick-nav-card:hover .highlight-border {
-    border-color: rgba(237, 254, 68, 0.3);
+  @media (max-width: 1200px) {
+    .hero-header { gap: 40px; }
+    .hero-title { font-size: 72px; }
+    .hero-grid { height: 500px; }
   }
 
   @media (max-width: 1024px) {
-    .quick-nav-card .card-title { font-size: 20px; }
+    .hero-header { grid-template-columns: 1fr; gap: 32px; }
+    .hero-grid { 
+      flex-direction: column;
+      gap: 20px; 
+      height: auto; 
+    }
+    .hero-subgrid { width: 100%; }
+    .hero-card-large { height: 400px; }
+    .hero-card-small { height: 350px; }
   }
 
-  @media (max-width: 860px) {
-    .hero-inner {
-      grid-template-columns: 1fr;
-    }
-    .hero-quick-nav {
-      display: none;
-    }
+  @media (max-width: 640px) {
+    .hero-title { font-size: 48px; }
+    .hero-inner { padding: 0 20px; }
+    .hero-grid { gap: 16px; }
+    .hero-subgrid { grid-template-columns: 1fr; gap: 16px; }
+    .hero-card-large { height: 300px; }
+    .hero-card-small { height: 300px; }
+    .card-content { padding: 24px; }
   }
 
   .section { position: relative; z-index: 1; padding: 46px 0; }
