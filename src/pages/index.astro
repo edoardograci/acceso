@@ -596,7 +596,10 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
       height: auto; 
     }
     .hero-subgrid { width: 100%; }
-    .hero-card-large { height: 400px; }
+    .hero-card-large { 
+      height: 400px; 
+      flex: none;
+    }
     .hero-card-small { height: 350px; }
   }
 
@@ -605,10 +608,16 @@ const totalCountries = Array.from(new Set(studios.map(s => s.country))).filter(B
     .hero-inner { padding: 0 20px; }
     .hero-grid { gap: 16px; }
     .hero-subgrid { grid-template-columns: 1fr; gap: 16px; }
-    .hero-card-large { height: 300px; }
+    .hero-card-large { 
+      height: 300px; 
+      flex: none;
+    }
     .hero-card-small { height: 300px; }
     .card-content { padding: 24px; }
+    .card-label { font-size: 24px !important; }
+    .card-accent { font-size: 11px; }
   }
+
 
   .section { position: relative; z-index: 1; padding: 46px 0; }
   .section-inner { max-width: 1600px; margin: 0 auto; padding: 0 40px; }
