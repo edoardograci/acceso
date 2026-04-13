@@ -602,13 +602,13 @@ const designerSlug = item ? await getDesignerSlug(item.designer) : null;
       max-width: none;
       width: 100%;
       height: auto;
-      min-height: 260px;
+      min-height: auto;
       /* Remove the clamp min so it doesn't force too-tall a box on phones */
       flex: none;
     }
     /* Carousel fills available width */
     .carousel-container {
-      min-height: 260px;
+      min-height: auto;
     }
     .hero-image {
       max-height: 65vh;
