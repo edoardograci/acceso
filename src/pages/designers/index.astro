@@ -164,6 +164,14 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
 
                 </div>
               </div>
+              
+              <!-- Mobile View Toggle -->
+              <div class="view-toggle-wrapper" id="mobile-view-toggle">
+                <div class="view-toggle-pill">
+                  <button class="view-toggle-btn active" data-view="list">List</button>
+                  <button class="view-toggle-btn" data-view="map">Map</button>
+                </div>
+              </div>
 
               <!-- Scrolling City Pills (Right) -->
               <div class="city-filter-bar">
@@ -199,7 +207,7 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
       </aside>
 
       <!-- Right Column: Map Panel -->
-      <section class="map-panel">
+      <section class="map-panel" id="map-panel">
         <div id="map"></div>
         
         <!-- Studio UI Card (Reused from map.astro) -->
@@ -302,6 +310,10 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
       align-items: center;
       position: relative;
       z-index: 200; /* high enough so popover clears studios grid */
+    }
+
+    .view-toggle-wrapper {
+      display: none;
     }
 
     .city-filter-bar {
@@ -683,6 +695,7 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
       border-radius: 20px;
       overflow: hidden;
       border: 1px solid var(--color-stroke);
+      z-index: 1; /* Ensure radius clips correctly */
     }
 
     /* Map Card UI */
@@ -794,6 +807,123 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
 
     /* ── Mobile: ≤640px ─────────────────────────────────────── */
     @media (max-width: 640px) {
+      /* Only apply viewport-filling layout when Map is active */
+      .split-container {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        align-items: stretch !important;
+        min-width: 100% !important;
+      }
+
+      .results-panel {
+        flex: 0 0 auto;
+        width: 100% !important;
+        border-right: none;
+      }
+
+      /* View Map Adjustments - Nuclear Viewport Lock */
+      .designers-page.view-map {
+        position: fixed;
+        inset: 64px 0 16px 0 !important; /* Standardized 16px from bottom */
+        z-index: 40;
+        background: var(--color-black);
+        overflow: hidden;
+        box-sizing: border-box !important;
+      }
+
+      .designers-page.view-map .split-container {
+        display: grid !important;
+        grid-template-rows: auto 1fr;
+        height: 100% !important;
+        width: 100% !important;
+        padding: 0 16px 0 16px !important;
+        overflow: hidden;
+        box-sizing: border-box !important;
+      }
+
+      .designers-page.view-map .results-panel-content {
+        padding: 16px 0 0 0 !important; /* Inside the grid cell, no side padding needed */
+      }
+
+      .designers-page.view-map .panel-header {
+        margin-bottom: 16px !important;
+      }
+
+      /* Hide footer when map is visible */
+      :global(main.designers-page.view-map ~ footer) {
+        display: none !important;
+      }
+
+      .view-toggle-wrapper {
+        display: flex;
+        flex: 1;
+        justify-content: flex-end;
+      }
+      .view-toggle-pill {
+        display: flex;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--color-stroke);
+        border-radius: 999px;
+        padding: 0;
+        gap: 0;
+        overflow: hidden;
+        height: 40px;
+        min-width: 120px;
+      }
+      .view-toggle-btn {
+        height: 100%;
+        padding: 0 16px;
+        border: none;
+        background: transparent;
+        color: var(--color-white);
+        font-family: var(--font-sans);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .view-toggle-btn.active {
+        background: var(--color-white);
+        color: var(--color-black);
+        border-radius: 999px;
+      }
+
+      .city-filter-bar {
+        display: none !important;
+      }
+
+      /* Map View State */
+      .designers-page.view-map .results-meta,
+      .designers-page.view-map .studios-grid,
+      .designers-page.view-map #pagination-container {
+        display: none !important;
+      }
+
+      .designers-page.view-map .map-panel {
+        display: block !important;
+        margin: 0 !important; /* No margin: rely on parent padding */
+        padding: 0;
+        z-index: 10;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid var(--color-stroke);
+        min-height: 0; /* Important for grid shrinking */
+        background: #111;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .designers-page.view-map #map {
+        position: absolute;
+        inset: 0;
+        background: transparent;
+      }
+
       .results-panel-content {
         padding: 16px 16px 48px;
       }
@@ -1038,6 +1168,45 @@ const initialCity = Astro.url.searchParams.get('city') || 'all';
 
       document.getElementById('filter-close-btn')?.addEventListener('click', () => {
         filterPopover?.classList.remove('show');
+      });
+
+      // Mobile View Toggle Logic
+      const mobileToggleBtns = document.querySelectorAll('.view-toggle-btn');
+      const designersPage = document.querySelector('.designers-page');
+
+      mobileToggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const view = (btn as HTMLElement).dataset.view;
+          
+          mobileToggleBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          if (view === 'map') {
+            designersPage?.classList.add('view-map');
+            document.body.style.overflow = 'hidden'; // Lock scroll
+            // Ensure map is correctly sized and framed when revealed
+            setTimeout(() => {
+              if (mapInstance && mapInstance.map) {
+                mapInstance.map.invalidateSize();
+                // If it looks lost, bring it back to Europe or its clusters
+                const markers = mapInstance.markers || [];
+                const searchInput = document.querySelector('.search-input') as HTMLInputElement;
+                const isFiltered = (searchInput?.value?.length > 0) || document.querySelectorAll('.city-checkbox:checked').length > 0;
+
+                if (isFiltered && markers.length > 0) {
+                   const group = (window as any).L.featureGroup(markers);
+                   mapInstance.map.fitBounds(group.getBounds(), { padding: [30, 30], maxZoom: 13 });
+                } else {
+                   // Default View (No filters active) - Center on Europe
+                   mapInstance.map.setView([48.0, 12.0], 4.0);
+                }
+              }
+            }, 400);
+          } else {
+            designersPage?.classList.remove('view-map');
+            document.body.style.overflow = ''; // Unlock scroll
+          }
+        });
       });
 
       document.addEventListener('click', (e) => {
