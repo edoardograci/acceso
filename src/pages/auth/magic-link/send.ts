@@ -120,7 +120,7 @@ If you did not request this email, you can safely ignore it.
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
-          <td align="center" style="padding:0 20px 40px;">
+          <td align="center" style="padding:40px 20px 40px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-container" style="max-width:500px;background-color:#FFFFFF;border:1px solid #E4E4E7;border-radius:12px;overflow:hidden;">
           <tr>
             <td align="center" style="padding:40px 40px 20px;">

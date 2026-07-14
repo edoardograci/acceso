@@ -16,7 +16,8 @@ const SESSION_CACHE_TTL = 300; // 5 minutes in seconds
 // Keep the CSP in sync with public/_headers.
 const CSP_BASE =
   "default-src 'self'; " +
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://scripts.simpleanalyticscdn.com; " +
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://scripts.simpleanalyticscdn.com https://challenges.cloudflare.com; " +
+  "frame-src 'self' https://challenges.cloudflare.com; " +
   "style-src 'self' 'unsafe-inline'; " +
   "img-src 'self' data: https:; " +
   "font-src 'self' data:; " +
