@@ -451,8 +451,9 @@ const faqs = [
       </div>
     </main>
 
-    <script is:inline define:vars={{ studios: currentDataWithCoords, studioSlug: itemSlug, itemType }}>
+    <script is:inline define:vars={{ studios: currentDataWithCoords, allStudiosDataByType: { studio: studios, museum: museums, university: universities }, studioSlug: itemSlug, itemType }}>
       window.studiosData = studios;
+      window.allStudiosDataByType = allStudiosDataByType;
       window.studioSlug = studioSlug;
       window.itemType = itemType;
     </script>
