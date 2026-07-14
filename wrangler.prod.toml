@@ -31,9 +31,6 @@ binding = "EVENTS_BUCKET"
 bucket_name = "events"
 remote = true
 
-[images]
-binding = "IMAGES"
-
 # KV binding used by @astrojs/cloudflare for Astro's built-in Sessions feature.
 # (App auth itself uses Turso; this is required by the adapter at runtime.)
 [[kv_namespaces]]
