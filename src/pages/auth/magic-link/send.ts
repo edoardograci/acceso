@@ -222,8 +222,9 @@ If you did not request this email, you can safely ignore it.
 
   } catch (error) {
     console.error('[Magic Link] Error:', error);
+    const detail = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ success: false, error: 'Failed to send magic link' }),
+      JSON.stringify({ success: false, error: 'Failed to send magic link', detail }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
