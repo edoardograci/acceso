@@ -21,7 +21,7 @@ const CSP_BASE =
   "style-src 'self' 'unsafe-inline'; " +
   "img-src 'self' data: https:; " +
   "font-src 'self' data:; " +
-  "connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://*.acceso.design https://*.turso.io https://*.openfreemap.org https://queue.simpleanalyticscdn.com; " +
+  "connect-src 'self' https://eu.i.posthog.com https://eu-assets.i.posthog.com https://*.acceso.design https://*.turso.io https://*.openfreemap.org https://scripts.simpleanalyticscdn.com https://queue.simpleanalyticscdn.com; " +
   "worker-src 'self' blob:;";
 
 // Main pages must not be framed (clickjacking protection).
