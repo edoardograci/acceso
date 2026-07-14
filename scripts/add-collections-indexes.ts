@@ -57,7 +57,9 @@ async function queryTurso(url: string, authToken: string, sql: string, args: any
     const data: TursoHttpResponse = await response.json();
     const pipelineResult = data.results?.[0];
     if (!pipelineResult || pipelineResult.type !== 'ok') {
-        throw new Error('No valid pipeline result in Turso API response');
+        const tursoError = (pipelineResult as any)?.error;
+        const detail = tursoError?.message || JSON.stringify(tursoError || pipelineResult || data);
+        throw new Error(`Turso query failed: ${detail} | SQL: ${sql}`);
     }
 
     const result = pipelineResult.response.result;
@@ -87,12 +89,28 @@ async function addCreatedAtIndexes() {
     ON user_saved_objects(user_id, created_at DESC);
   `;
 
+    const createMuseumsCreatedAtIndex = `
+    CREATE INDEX IF NOT EXISTS idx_user_saved_museums_created_at 
+    ON user_saved_museums(user_id, created_at DESC);
+  `;
+
+    const createUniversitiesCreatedAtIndex = `
+    CREATE INDEX IF NOT EXISTS idx_user_saved_universities_created_at 
+    ON user_saved_universities(user_id, created_at DESC);
+  `;
+
     try {
         await queryTurso(dbUrl, authToken, createDesignersCreatedAtIndex);
         console.log('✅ Created created_at index on user_saved_designers');
 
         await queryTurso(dbUrl, authToken, createObjectsCreatedAtIndex);
         console.log('✅ Created created_at index on user_saved_objects');
+
+        await queryTurso(dbUrl, authToken, createMuseumsCreatedAtIndex);
+        console.log('✅ Created created_at index on user_saved_museums');
+
+        await queryTurso(dbUrl, authToken, createUniversitiesCreatedAtIndex);
+        console.log('✅ Created created_at index on user_saved_universities');
 
         console.log('🎉 Migration complete!');
     } catch (error) {

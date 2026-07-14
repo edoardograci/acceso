@@ -6,11 +6,61 @@ import type { Env } from './env.d';
 // Session cache TTL (for Cache API)
 const SESSION_CACHE_TTL = 300; // 5 minutes in seconds
 
+// ---------------------------------------------------------------------------
+// Security headers
+// ---------------------------------------------------------------------------
+// NOTE: public/_headers only applies to STATIC asset responses on Cloudflare
+// Pages. SSR/HTML responses come from the Pages Function (the Astro worker),
+// so security headers for real pages must be set here in middleware.
+//
+// Keep the CSP in sync with public/_headers.
+const CSP_BASE =
+  "default-src 'self'; " +
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://eu.i.posthog.com https://scripts.simpleanalyticscdn.com; " +
+  "style-src 'self' 'unsafe-inline'; " +
+  "img-src 'self' data: https:; " +
+  "font-src 'self' data:; " +
+  "connect-src 'self' https://eu.i.posthog.com https://*.acceso.design https://*.turso.io https://*.openfreemap.org https://queue.simpleanalyticscdn.com; " +
+  "worker-src 'self' blob:;";
+
+// Main pages must not be framed (clickjacking protection).
+const CSP_MAIN = `${CSP_BASE} frame-ancestors 'none';`;
+// /embed/* widgets are meant to be embedded in third-party iframes.
+const CSP_EMBED = `${CSP_BASE} frame-ancestors *;`;
+
+function applySecurityHeaders(res: Response, pathname: string): Response {
+  const h = res.headers;
+
+  h.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  h.set('X-Content-Type-Options', 'nosniff');
+  h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  h.set('Permissions-Policy', 'browsing-topics=(), interest-cohort=()');
+
+  const isEmbed = pathname.startsWith('/embed/');
+  h.set('Content-Security-Policy', isEmbed ? CSP_EMBED : CSP_MAIN);
+  if (!isEmbed) {
+    // Do NOT set X-Frame-Options on /embed/* — it would block third-party iframes.
+    h.set('X-Frame-Options', 'DENY');
+  }
+
+  // Keep private/utility routes out of search indexes. These are SSR responses,
+  // so the X-Robots-Tag rules in public/_headers do not apply to them.
+  if (pathname.startsWith('/api')) {
+    h.set('X-Robots-Tag', 'noindex');
+  } else if (pathname.startsWith('/collections') || pathname === '/submission') {
+    h.set('X-Robots-Tag', 'noindex, nofollow');
+  }
+
+  return res;
+}
+
 // Paths that NEVER need auth checks
 const STATIC_PATHS = [
   '/favicon.ico',
   '/robots.txt',
   '/sitemap',
+  '/sitemap.xml',
+  '/sitemaps',
   '/manifest.webmanifest',
   '/_image',
   '/fonts/',
@@ -50,11 +100,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
     locals.user = null;
     locals.session = null;
     const res = await next();
-    res.headers.set(
-      'Permissions-Policy',
-      'browsing-topics=(), interest-cohort=()'
-    );
-    return res;
+    return applySecurityHeaders(res, pathname);
   }
 
   // CSRF protection for non-GET requests
@@ -81,7 +127,8 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
     console.error('[Auth] Failed to create Lucia instance:', e);
     locals.user = null;
     locals.session = null;
-    return next();
+    const res = await next();
+    return applySecurityHeaders(res, pathname);
   }
 
   const sessionId = cookies.get(lucia.sessionCookieName)?.value ?? null;
@@ -89,7 +136,8 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
   if (!sessionId) {
     locals.user = null;
     locals.session = null;
-    return next();
+    const res = await next();
+    return applySecurityHeaders(res, pathname);
   }
 
   // Standard Cache API implementation
@@ -105,7 +153,8 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
     const data = await cachedResponse.json() as { user: any, session: any };
     locals.session = data.session;
     locals.user = data.user;
-    return next();
+    const res = await next();
+    return applySecurityHeaders(res, pathname);
   }
 
   // Validate session from database (Turso)
@@ -154,9 +203,5 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
   }
 
   const res = await next();
-  res.headers.set(
-    'Permissions-Policy',
-    'browsing-topics=(), interest-cohort=()'
-  );
-  return res;
+  return applySecurityHeaders(res, pathname);
 });

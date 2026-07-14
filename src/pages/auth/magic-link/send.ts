@@ -4,11 +4,19 @@ import { generateMagicLink } from '../../../lib/auth/magic-link';
 import { Resend } from 'resend';
 
 import type { Env } from '../../../env.d';
+import { checkRateLimit, createRateLimitResponse, getClientIdentifier, RateLimits } from '../../../lib/rate-limiter';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const runtimeEnv = locals.runtime?.env || {};
   const metaEnv = import.meta.env || {};
   const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
+
+  // Abuse protection: throttle magic-link requests per client/IP
+  const clientId = getClientIdentifier(request);
+  const rateLimitResult = await checkRateLimit(clientId, RateLimits.EMAIL, env);
+  if (!rateLimitResult.success && rateLimitResult.retryAfter) {
+    return createRateLimitResponse(rateLimitResult.retryAfter, rateLimitResult.limit);
+  }
 
   try {
     const body = await request.json() as { email?: string };
@@ -40,14 +48,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (env.RESEND_API_KEY) {
       const resend = new Resend(env.RESEND_API_KEY);
 
-      const { data, error: resendError } = await resend.emails.send({
+      const { error: resendError } = await resend.emails.send({
         from: 'Acceso <login@acceso.design>',
         to: normalizedEmail,
         subject: 'Your Acceso login link',
         headers: {
           'X-Entity-Ref-ID': crypto.randomUUID(),
         },
-        text: `Log in to Acceso
+        text: `Login to Acceso
 
 Use the link below to securely log in to your account:
 
@@ -57,7 +65,7 @@ This link will expire in 15 minutes.
 
 If you did not request this email, you can safely ignore it.
 
-© 2025 Acceso`,
+© 2026 Acceso`,
         html: `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
@@ -102,8 +110,8 @@ If you did not request this email, you can safely ignore it.
   </style>
 </head>
 
-<body style="margin:0;padding:0;background-color:#111111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-<center style="width:100%;background-color:#111111;">
+<body style="margin:0;padding:0;background-color:#F4F4F5;font-family:'Geist Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<center style="width:100%;background-color:#F4F4F5;">
 
   <!-- Preheader -->
   <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
@@ -112,31 +120,19 @@ If you did not request this email, you can safely ignore it.
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
-      <td align="center" style="padding:40px 0 30px;">
-        <img
-          src="https://acceso.design/icons/acceso.png"
-          width="60"
-          height="60"
-          alt="Acceso"
-          style="display:block;"
-        />
-      </td>
-    </tr>
-
-    <tr>
-      <td align="center" style="padding:0 20px 40px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-container" style="max-width:500px;background-color:#1A1A1A;border:1px solid #333333;">
+          <td align="center" style="padding:0 20px 40px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-container" style="max-width:500px;background-color:#FFFFFF;border:1px solid #E4E4E7;border-radius:12px;overflow:hidden;">
           <tr>
             <td align="center" style="padding:40px 40px 20px;">
-              <h1 style="margin:0;font-size:24px;line-height:32px;font-weight:600;color:#ffffff;">
-                Log in to Acceso
+              <h1 style="margin:0;font-size:24px;line-height:32px;font-weight:600;color:#0F1113;">
+                Login to Acceso
               </h1>
             </td>
           </tr>
 
           <tr>
             <td align="center" style="padding:0 40px 30px;">
-              <p style="margin:0;font-size:16px;line-height:24px;color:#bbbbbb;">
+              <p style="margin:0;font-size:16px;line-height:24px;color:#52525B;">
                 Click the button below to securely log in. This link expires in 15 minutes.
               </p>
             </td>
@@ -145,10 +141,10 @@ If you did not request this email, you can safely ignore it.
           <tr>
             <td align="center" style="padding:0 40px 40px;">
               <!--[if mso]>
-              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${magicLink}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="16%" fillcolor="#EDFE44">
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${magicLink}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="50%" fillcolor="#EDFF77">
                 <w:anchorlock/>
-                <center style="color:#000000;font-size:16px;font-weight:600;">
-                  Log in to Acceso
+                <center style="color:#0F1113;font-size:16px;font-weight:700;">
+                  Login to Acceso
                 </center>
               </v:roundrect>
               <![endif]-->
@@ -157,9 +153,9 @@ If you did not request this email, you can safely ignore it.
                 href="${magicLink}"
                 target="_blank"
                 rel="noopener noreferrer"
-                style="display:inline-block;padding:14px 32px;background-color:#EDFE44;color:#000000;font-size:16px;font-weight:600;text-decoration:none;border-radius:6px;"
+                style="display:inline-block;padding:14px 32px;background-color:#EDFF77;color:#0F1113;font-size:16px;font-weight:700;text-decoration:none;border-radius:9999px;font-family:'Geist Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"
               >
-                Log in to Acceso
+                Login to Acceso
               </a>
               <!--<![endif]-->
             </td>
@@ -167,11 +163,11 @@ If you did not request this email, you can safely ignore it.
 
           <tr>
             <td align="center" style="padding:0 40px 30px;">
-              <p style="margin:0;font-size:13px;line-height:20px;color:#777777;">
+              <p style="margin:0;font-size:13px;line-height:20px;color:#71717A;">
                 Or copy and paste this link:
               </p>
               <p style="margin:10px 0 0;word-break:break-all;">
-                <a href="${magicLink}" style="font-size:12px;color:#EDFE44;text-decoration:underline;">
+                <a href="${magicLink}" style="font-size:12px;color:#52525B;text-decoration:underline;word-break:break-all;">
                   ${magicLink}
                 </a>
               </p>
@@ -179,8 +175,8 @@ If you did not request this email, you can safely ignore it.
           </tr>
 
           <tr>
-            <td align="center" style="padding:20px 40px 40px;border-top:1px solid #333333;">
-              <p style="margin:0;font-size:13px;line-height:20px;color:#777777;">
+              <td align="center" style="padding:20px 40px 40px;border-top:1px solid #E4E4E7;">
+              <p style="margin:0;font-size:13px;line-height:20px;color:#71717A;">
                 If you did not request this email, you can safely ignore it.
               </p>
             </td>
@@ -191,8 +187,8 @@ If you did not request this email, you can safely ignore it.
 
     <tr>
       <td align="center" style="padding:0 20px 40px;">
-        <p style="margin:0;font-size:12px;line-height:18px;color:#555555;">
-          © 2025 Acceso
+        <p style="margin:0;font-size:12px;line-height:18px;color:#71717A;font-family:'Geist Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+          © 2026 Acceso
         </p>
       </td>
     </tr>

@@ -2,10 +2,10 @@
   "name": "Acceso - Design Studio Directory",
   "short_name": "Acceso",
   "description": "Discover independent design studios worldwide",
-  "start_url": "/",
+  "start_url": "/map",
   "display": "standalone",
-  "background_color": "#0F0F0F",
-  "theme_color": "#0F0F0F",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
   "orientation": "portrait-primary",
   "icons": [
     {

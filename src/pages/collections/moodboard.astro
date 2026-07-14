@@ -1,16 +1,13 @@
 ---
-import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
 import SaveButton from '../../components/SaveButton.astro';
-import type { Env } from '../../env.d';
+import { normalizeImage } from '../../lib/images';
 
-// Protected
 if (!Astro.locals.user) {
   return Astro.redirect('/login');
 }
-
-const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
 
 let objects: any[] = [];
 let error = null;
@@ -21,7 +18,7 @@ try {
   if (!response.ok) throw new Error('CDN Proxy Not Ready');
   objects = await response.json();
 } catch (e) {
-  console.warn('Falling back to local moodboard.json:', e.message);
+  console.warn('Falling back to local moodboard.json:', e instanceof Error ? e.message : String(e));
   try {
      const localUrl = new URL('/moodboard.json', Astro.url.origin);
      const localRes = await fetch(localUrl.toString());
@@ -33,124 +30,201 @@ try {
 }
 ---
 
-<PostHogLayout>
-  <Layout title="My Moodboard - Acceso">
+<Layout title="My Moodboard - Acceso">
     <Navbar />
     
-    <main class="objects-page">
-      <div class="header">
-        <h1 class="page-title">Moodboard</h1>
-        <p id="count" class="count">Loading moodboard...</p>
-        
-        <div class="search-bar-container">
-          <div class="search-bar">
-            <input 
-              type="text" 
-              id="search-input" 
-              placeholder="Search by name or designer..."
-              aria-label="Search moodboard"
-            />
-          </div>
-        </div>
-      </div>
+    <main class="collection-page">
+      <div class="collection-inner">
+        <nav class="collection-back" aria-label="Back navigation">
+          <a href="/profile" class="collection-back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Profile
+          </a>
+        </nav>
 
-      {!error && (
-        <div id="objects-grid" class="objects-grid" style="opacity: 0; transition: opacity 0.3s ease;">
-          {objects.map(item => (
-            <div class="object-card-wrapper" data-id={item.id} style="display: none;">
-              <a 
-                href={`/projects/${item.slug}`} 
-                class="object-card"
-              >
-                {item.cover && (
-                  <img 
-                    src={item.cover} 
-                    alt={item.name}
-                    loading="lazy"
-                    data-skeleton
-                  />
-                )}
-                <div class="item-overlay">
-                  <h3>{item.name}</h3>
-                  {item.designer && <p>{item.designer}</p>}
-                </div>
-              </a>
-              
-              <div class="save-btn-container">
-                <SaveButton 
-                  type="object" 
-                  itemId={item.id} 
-                />
-              </div>
-            </div>
-          ))}
-          <div id="empty-state" class="empty-state" style="display: none;">
-             <p>No saved objects.</p>
-             <a href="/projects" class="browse-link">Explore projects</a>
-          </div>
+        <header class="collection-hero">
+          <h1 class="collection-title">Moodboard</h1>
+          <p id="count" class="collection-meta">Loading moodboard...</p>
+        </header>
+
+        <div class="collection-search-wrap">
+          <svg class="collection-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3" stroke-linecap="round"/>
+          </svg>
+          <input 
+            type="search" 
+            id="search-input" 
+            class="collection-search-input"
+            placeholder="Search by name or designer..."
+            aria-label="Search moodboard"
+          />
         </div>
-      )}
+
+        {!error && (
+          <div id="objects-grid" class="objects-grid" style="opacity: 0; transition: opacity 0.3s ease;">
+            {objects.map(item => (
+              <div class="object-card-wrapper" data-id={item.id} style="display: none;">
+                <a 
+                  href={`/discover/${item.slug}`} 
+                  class="object-card"
+                >
+                  {item.cover && (
+                    <img 
+                      src={normalizeImage(item.cover, Astro)} 
+                      alt={item.name}
+                      loading="lazy"
+                      data-skeleton
+                    />
+                  )}
+                  <div class="item-overlay">
+                    <h3>{item.name}</h3>
+                    {item.designer && <p>{item.designer}</p>}
+                  </div>
+                </a>
+                
+                <div class="save-btn-container">
+                  <SaveButton 
+                    type="object" 
+                    itemId={item.id} 
+                  />
+                </div>
+              </div>
+            ))}
+            <div id="empty-state" class="empty-state" style="display: none;">
+               <p>No saved objects.</p>
+               <a href="/discover" class="browse-link">Explore projects</a>
+            </div>
+          </div>
+        )}
+      </div>
     </main>
-  </Layout>
-</PostHogLayout>
+
+    <Footer />
+</Layout>
 
 <style>
-  .objects-page {
-    min-height: 100vh;
-    padding-top: var(--page-top-spacing);
+  .collection-page {
+    background: var(--color-white);
+    min-height: calc(100vh - var(--navbar-height));
+    padding: var(--page-top-spacing) 0 80px;
   }
 
-  .header {
-    text-align: center;
-    margin-bottom: 48px;
+  .collection-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
   }
 
-  .page-title {
-    font-size: 48px;
-    margin-bottom: 8px;
+  .collection-back {
+    margin-bottom: 24px;
+  }
+
+  .collection-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 999px;
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .collection-back-link:hover {
+    border-color: var(--color-black);
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+
+  .collection-hero {
+    margin-bottom: 28px;
+    max-width: 640px;
+  }
+
+  .collection-title {
+    font-family: var(--font-sans);
+    font-size: clamp(40px, 5vw, 64px);
     font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--color-black);
+    margin: 0 0 10px -2px;
   }
 
-  .count {
-    color: var(--color-gray);
+  .collection-meta {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .collection-search-wrap {
+    position: relative;
+    max-width: 480px;
+    margin-bottom: 32px;
+  }
+
+  .collection-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+
+  .collection-search-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px 0 44px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .collection-search-input:focus {
+    border-color: var(--color-black);
+    background: var(--color-white);
+    box-shadow: 0 0 0 3px rgba(15, 17, 19, 0.06);
+  }
+
+  .collection-search-input::placeholder {
+    color: var(--color-text-muted);
   }
 
   .objects-grid {
-    column-count: 4;
+    columns: 3;
     column-gap: 16px;
-    padding: 0 40px 48px;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  @media (max-width: 1024px) {
-    .objects-grid {
-      column-count: 3;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .objects-grid {
-      column-count: 2;
-      padding: 0 20px 48px;
-    }
   }
 
   .object-card-wrapper {
     position: relative;
     break-inside: avoid;
     margin-bottom: 16px;
+    border-radius: 12px;
+    overflow: hidden;
     background: var(--color-bg-secondary);
     transition: transform 0.2s ease;
   }
 
   .object-card-wrapper:hover {
-    transform: translateY(-4px);
-  }
-
-  .moodboard-item {
-    display: block;
-    width: 100%;
+    transform: translateY(-2px);
   }
 
   .object-card {
@@ -172,7 +246,7 @@ try {
     left: 0;
     right: 0;
     padding: 16px;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent);
     opacity: 0;
     transition: opacity 0.2s ease;
   }
@@ -184,59 +258,61 @@ try {
   .item-overlay h3 {
     font-family: var(--font-sans);
     font-size: 14px;
-    font-weight: 450;
-    margin-bottom: 4px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
     color: var(--color-white);
   }
 
   .item-overlay p {
     font-family: var(--font-sans);
     font-size: 12px;
-    color: var(--color-gray);
-  }
-
-  .search-bar-container {
-    max-width: 500px;
-    margin: 24px auto 0;
-  }
-
-  .search-bar {
-    display: flex;
-    justify-content: center;
-  }
-
-  .search-bar input {
-    width: 100%;
-    padding: 12px 20px;
-    font-size: 16px;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-stroke);
-    color: var(--color-white);
-    font-family: var(--font-sans);
-    border-radius: 6px;
-  }
-
-  .search-bar input::placeholder {
-    color: var(--color-gray);
-  }
-
-  .search-bar input:focus {
-    outline: none;
-    border-color: var(--color-yellow);
+    letter-spacing: -0.005em;
+    color: rgba(255, 255, 255, 0.82);
+    margin: 0;
   }
 
   .save-btn-container {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
     z-index: 10;
   }
 
+  .empty-state {
+    column-span: all;
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--color-text-muted);
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+  }
+
   .browse-link {
-    color: var(--color-yellow);
-    text-decoration: none;
-    margin-top: 16px;
     display: inline-block;
+    margin-top: 16px;
+    color: var(--color-black);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 1024px) {
+    .objects-grid {
+      columns: 2;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .collection-inner {
+      padding: 0 20px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .collection-inner {
+      padding: 0 16px;
+    }
   }
 </style>
 
@@ -252,20 +328,17 @@ try {
       return;
     }
 
-    // Check if still loading
     if (!window.collectionsState.loaded) {
       if (countLabel) countLabel.textContent = 'Loading moodboard...';
       return;
     }
 
-    // 1. Hide all cards first
     const allCards = grid.querySelectorAll('.object-card-wrapper');
     allCards.forEach(card => (card as HTMLElement).style.display = 'none');
 
     let visibleCount = 0;
     const savedIDs = window.collectionsState.objects;
 
-    // 2. Iterate keys in order (Newest -> Oldest)
     for (const id of savedIDs) {
       const card = grid.querySelector(`.object-card-wrapper[data-id="${id}"]`);
       
@@ -276,7 +349,6 @@ try {
 
         if (matchesSearch) {
           (card as HTMLElement).style.display = 'block';
-          // Re-append to sort
           grid.appendChild(card);
           visibleCount++;
         }
@@ -297,16 +369,14 @@ try {
     grid.style.opacity = '1';
   };
 
-  // Search input handler
   const searchInput = document.getElementById('search-input');
   if (searchInput) {
     searchInput.addEventListener('input', filterGrid);
   }
 
-  // Wait for collections state with timeout
   const waitForState = () => {
     let attempts = 0;
-    const maxAttempts = 200; // 10 seconds (50ms * 200)
+    const maxAttempts = 200;
     
     const checkState = setInterval(() => {
       attempts++;
@@ -315,7 +385,6 @@ try {
         filterGrid();
         clearInterval(checkState);
       } else if (attempts >= maxAttempts) {
-        // Timeout - show error
         const countLabel = document.getElementById('count');
         if (countLabel) {
           countLabel.textContent = 'Failed to load collections. Please refresh.';
@@ -326,16 +395,12 @@ try {
     }, 50);
   };
 
-  // Start waiting
   waitForState();
 
-  // Sync on changes
-  // Sync on changes
   window.addEventListener('collections-changed', () => {
     filterGrid();
   });
 
-  // Sync on cross-tab storage changes
   window.addEventListener('storage', (e) => {
     if (e.key === 'collections_state_v1') {
       filterGrid();

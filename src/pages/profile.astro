@@ -1,9 +1,10 @@
 ---
-import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
 import type { Env } from '../env.d';
 import { getProfileSummary } from '../lib/db';
+import { normalizeImage } from '../lib/images';
 const user = Astro.locals.user;
 if (!user) {
   return Astro.redirect('/login');
@@ -11,8 +12,12 @@ if (!user) {
 
 let savedDesignersCount = 0;
 let savedObjectsCount = 0;
+let savedMuseumsCount = 0;
+let savedUniversitiesCount = 0;
 let designerCover = null;
 let objectCover = null;
+let museumCover = null;
+let universityCover = null;
 
 try {
   const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
@@ -21,15 +26,20 @@ try {
   
   savedDesignersCount = summary.designers.count;
   savedObjectsCount = summary.objects.count;
+  savedMuseumsCount = summary.museums.count;
+  savedUniversitiesCount = summary.universities.count;
+
+  const fetchJson = async (path: string) => {
+    const resp = await fetch(new URL(path, Astro.url.origin).toString());
+    if (!resp.ok) throw new Error('Proxy failed');
+    return resp.json();
+  };
 
   if (summary.designers.recentId) {
     try {
-      const resp = await fetch(new URL("/cdn/test-studios.json", Astro.url.origin).toString());
-      if (resp.ok) {
-        const studios = await resp.json();
-        const recentStudio = studios.find((s: any) => String(s.id) === String(summary.designers.recentId));
-        designerCover = recentStudio?.cover || null;
-      }
+      const studios = await fetchJson("/cdn/test-studios.json");
+      const recentStudio = studios.find((s: any) => String(s.id) === String(summary.designers.recentId));
+      designerCover = recentStudio?.cover || null;
     } catch {
       // CDN unavailable, designer cover will remain null
     }
@@ -37,13 +47,31 @@ try {
 
   if (summary.objects.recentId) {
     try {
-      const resp = await fetch(new URL("/cdn/moodboard.json", Astro.url.origin).toString());
-      if (!resp.ok) throw new Error('Proxy failed');
-      const moodboard = await resp.json();
+      const moodboard = await fetchJson("/cdn/moodboard.json");
       const recentItem = moodboard.find((i: any) => String(i.id) === String(summary.objects.recentId));
       objectCover = recentItem?.cover || null;
     } catch {
       // CDN unavailable, object cover will remain null
+    }
+  }
+
+  if (summary.museums.recentId) {
+    try {
+      const museums = await fetchJson("/cdn/museums.json");
+      const recentMuseum = (Array.isArray(museums) ? museums : (museums.items || [])).find((m: any) => String(m.id) === String(summary.museums.recentId));
+      museumCover = recentMuseum?.image || null;
+    } catch {
+      // CDN unavailable, museum cover will remain null
+    }
+  }
+
+  if (summary.universities.recentId) {
+    try {
+      const universities = await fetchJson("/cdn/universities.json");
+      const recentUniversity = (Array.isArray(universities) ? universities : (universities.items || [])).find((u: any) => String(u.id) === String(summary.universities.recentId));
+      universityCover = recentUniversity?.image || null;
+    } catch {
+      // CDN unavailable, university cover will remain null
     }
   }
 } catch (e) {
@@ -51,126 +79,186 @@ try {
 }
 ---
 
-<PostHogLayout>
-  <Layout title="Your Profile | Acceso"
+<Layout title="Your Profile | Acceso"
   description="Manage your saved studios, objects, and collections on Acceso."
   keywords="profile acceso, profile, profile acceso">
     <Navbar />
-    <main class="max-w-[1000px] mx-auto px-6 pt-12 pb-15 font-sans">
-      <div class="mb-12">
-        <div class="flex justify-between items-center mb-8">
-          <h1 class="text-[32px] font-normal text-white font-mono">Profile</h1>
+
+    <main class="profile-page">
+      <div class="profile-inner">
+        <div class="profile-top">
+          <h1 class="profile-title">Profile</h1>
           <form action="/auth/logout" method="POST">
-            <button type="submit" class="btn-danger">
+            <button type="submit" class="btn-sign-out">
               Sign Out
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16 17l5-5-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 12H9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </button>
           </form>
         </div>
-        
-        <div class="card p-6 mb-12">
-          <p class="text-white text-lg mb-3">
-            Welcome back, <strong>{user.email}</strong>
+
+        <header class="profile-hero">
+          <p class="profile-description">
+            Welcome back
           </p>
-          <div class="flex items-center">
-            <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-[rgba(46,204,113,0.1)] border border-[rgba(46,204,113,0.2)] rounded-full text-success text-[13px] font-mono">
-              <span class="w-1.5 h-1.5 bg-current rounded-full"></span>
-              {user.emailVerified ? 'Verified Account' : 'Unverified'}
+          <div class="profile-account">
+            <p class="profile-email">{user.email}</p>
+            <span class="profile-badge" title={user.emailVerified ? 'Verified Account' : 'Unverified Account'} aria-label={user.emailVerified ? 'Verified Account' : 'Unverified Account'}>
+              <svg class="profile-badge-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
+                <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </span>
           </div>
-        </div>
-      </div>
+        </header>
 
-      <div>
-        <h2 class="text-xl font-normal text-white mb-6 font-mono">My Collections</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
-          <a href="/collections/designers" class="card card-interactive block overflow-hidden no-underline">
-            <div class="h-[200px] relative bg-bg-secondary">
-              {designerCover ? (
-                <img src={designerCover} alt="Designers" class="w-full h-full object-cover" />
-              ) : (
-                <div class="w-full h-full flex items-center justify-center text-gray">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-              )}
-              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-            </div>
-            <div class="p-5">
-              <div class="flex justify-between items-center mb-1">
-                <h3 class="text-white text-lg font-normal font-sans">Designers</h3>
-                <span id="saved-designers-count" class="bg-black text-gray px-2 py-0.5 rounded-full text-xs font-mono border border-stroke">{savedDesignersCount >= 100 ? 'MAXED' : savedDesignersCount}</span>
+        <div class="profile-split">
+          <section class="profile-section">
+            <h2 class="profile-section-title">My Map</h2>
+            <a href="/map/mine" class="profile-mymap">
+              <img src="/images/map.webp" alt="" class="profile-mymap-img" loading="lazy" />
+            </a>
+          </section>
+
+          <section class="profile-section">
+            <h2 class="profile-section-title">My Collections</h2>
+            <div class="profile-collections">
+            <a href="/collections/designers" class="collection-card">
+              <div class="collection-card-media">
+                {designerCover ? (
+                  <img src={normalizeImage(designerCover, Astro)} alt="" class="collection-card-image" loading="lazy" />
+                ) : (
+                  <div class="collection-card-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                )}
               </div>
-              <p class="text-gray text-sm">Saved studios and designers</p>
-            </div>
-          </a>
-
-          <a href="/collections/moodboard" class="card card-interactive block overflow-hidden no-underline">
-            <div class="h-[200px] relative bg-bg-secondary">
-              {objectCover ? (
-                <img src={objectCover} alt="Moodboard" class="w-full h-full object-cover" />
-              ) : (
-                <div class="w-full h-full flex items-center justify-center text-gray">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+              <div class="collection-card-body">
+                <div class="collection-card-head">
+                  <h3 class="collection-card-title">Designers</h3>
+                  <span id="saved-designers-count" class="collection-count">{savedDesignersCount >= 100 ? 'MAXED' : savedDesignersCount}</span>
                 </div>
-              )}
-              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-            </div>
-            <div class="p-5">
-              <div class="flex justify-between items-center mb-1">
-                <h3 class="text-white text-lg font-normal font-sans">Moodboard</h3>
-                <span id="saved-objects-count" class="bg-black text-gray px-2 py-0.5 rounded-full text-xs font-mono border border-stroke">{savedObjectsCount >= 100 ? 'MAXED' : savedObjectsCount}</span>
+                <p class="collection-card-text">Saved studios and designers</p>
               </div>
-              <p class="text-gray text-sm">Saved objects and inspiration</p>
-            </div>
-          </a>
-        </div>
-      </div>
+            </a>
 
-      <div class="mt-15 border-t border-stroke pt-10 flex flex-col items-start">
-        <p class="text-base text-white mb-4 font-normal">Do you want to delete your account?</p>
-        <button type="button" class="btn-danger w-full md:w-auto mb-2" id="init-delete-btn">
-          Delete Account
-        </button>
-        <p class="text-danger text-[13px]">This action is irreversible</p>
-      </div>
+            <a href="/collections/moodboard" class="collection-card">
+              <div class="collection-card-media">
+                {objectCover ? (
+                  <img src={normalizeImage(objectCover, Astro)} alt="" class="collection-card-image" loading="lazy" />
+                ) : (
+                  <div class="collection-card-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div class="collection-card-body">
+                <div class="collection-card-head">
+                  <h3 class="collection-card-title">Moodboard</h3>
+                  <span id="saved-objects-count" class="collection-count">{savedObjectsCount >= 100 ? 'MAXED' : savedObjectsCount}</span>
+                </div>
+                <p class="collection-card-text">Saved objects and inspiration</p>
+              </div>
+            </a>
 
-      <!-- Delete Modal -->
-      <div class="modal-backdrop hidden" id="delete-modal">
-        <div class="modal-panel">
-          <h3 class="mt-0 text-white font-mono text-xl">Are you sure?</h3>
-          <p class="text-gray mb-6 text-sm leading-relaxed">This will permanently delete your account and all saved collections. This action cannot be undone.</p>
-          <div class="flex gap-3 justify-center">
-            <button type="button" class="h-10 px-6 rounded-md text-sm cursor-pointer font-sans border border-stroke bg-transparent text-gray hover:border-white hover:text-white" id="cancel-delete">Cancel</button>
-            <button type="button" class="h-10 px-6 rounded-md text-sm cursor-pointer font-sans border-none bg-danger text-white hover:bg-danger-hover disabled:opacity-70 disabled:cursor-not-allowed" id="confirm-delete">Delete</button>
+            <a href="/collections/museums" class="collection-card">
+              <div class="collection-card-media">
+                {museumCover ? (
+                  <img src={normalizeImage(museumCover, Astro)} alt="" class="collection-card-image" loading="lazy" />
+                ) : (
+                  <div class="collection-card-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div class="collection-card-body">
+                <div class="collection-card-head">
+                  <h3 class="collection-card-title">Museums</h3>
+                  <span id="saved-museums-count" class="collection-count">{savedMuseumsCount >= 100 ? 'MAXED' : savedMuseumsCount}</span>
+                </div>
+                <p class="collection-card-text">Saved museums and foundations</p>
+              </div>
+            </a>
+
+            <a href="/collections/universities" class="collection-card">
+              <div class="collection-card-media">
+                {universityCover ? (
+                  <img src={normalizeImage(universityCover, Astro)} alt="" class="collection-card-image" loading="lazy" />
+                ) : (
+                  <div class="collection-card-placeholder">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div class="collection-card-body">
+                <div class="collection-card-head">
+                  <h3 class="collection-card-title">Universities</h3>
+                  <span id="saved-universities-count" class="collection-count">{savedUniversitiesCount >= 100 ? 'MAXED' : savedUniversitiesCount}</span>
+                </div>
+                <p class="collection-card-text">Saved design universities</p>
+              </div>
+            </a>
           </div>
+        </section>
         </div>
+
+        <section class="profile-danger-zone">
+          <h2 class="profile-section-title">Account</h2>
+          <p class="profile-danger-text">Do you want to delete your account?</p>
+          <button type="button" class="btn-danger" id="init-delete-btn">Delete Account</button>
+          <p class="profile-danger-note">This action is irreversible</p>
+        </section>
       </div>
     </main>
+
+    <div class="modal-backdrop hidden" id="delete-modal">
+      <div class="modal-panel">
+        <h3 class="modal-title">Are you sure?</h3>
+        <p class="modal-text">This will permanently delete your account and all saved collections. This action cannot be undone.</p>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn modal-btn--ghost" id="cancel-delete">Cancel</button>
+          <button type="button" class="modal-btn modal-btn--danger" id="confirm-delete">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <Footer />
 
     <script>
       const deleteBtn = document.getElementById('init-delete-btn');
       const modal = document.getElementById('delete-modal');
       const cancelBtn = document.getElementById('cancel-delete');
-      const confirmBtn = document.getElementById('confirm-delete');
+      const confirmBtn = document.getElementById('confirm-delete') as HTMLButtonElement | null;
 
-      // Real-time count updates
       const updateCounts = () => {
         if (!window.collectionsState || !window.collectionsState.loaded) return;
 
         const dCount = window.collectionsState.getCount('designer');
         const oCount = window.collectionsState.getCount('object');
+        const mCount = window.collectionsState.getCount('museum');
+        const uCount = window.collectionsState.getCount('university');
         
         const dEl = document.getElementById('saved-designers-count');
         const oEl = document.getElementById('saved-objects-count');
-
-        if (dEl) dEl.textContent = dCount >= 100 ? 'MAXED' : dCount;
-        if (oEl) oEl.textContent = oCount >= 100 ? 'MAXED' : oCount;
+        const mEl = document.getElementById('saved-museums-count');
+        const uEl = document.getElementById('saved-universities-count');
+        
+        if (dEl) dEl.textContent = dCount >= 100 ? 'MAXED' : String(dCount);
+        if (oEl) oEl.textContent = oCount >= 100 ? 'MAXED' : String(oCount);
+        if (mEl) mEl.textContent = mCount >= 100 ? 'MAXED' : String(mCount);
+        if (uEl) uEl.textContent = uCount >= 100 ? 'MAXED' : String(uCount);
       };
 
-      // Wait for state
       const checkState = setInterval(() => {
         if (window.collectionsState?.loaded) {
           updateCounts();
@@ -178,7 +266,6 @@ try {
         }
       }, 50);
 
-      // Listen for changes
       window.addEventListener('collections-changed', updateCounts);
 
       if (deleteBtn && modal && cancelBtn && confirmBtn) {
@@ -228,22 +315,25 @@ try {
       }
     </script>
 
-    <script define:vars={{ 
+    <script is:inline define:vars={{ 
       user: {
         id: user.id,
         email: user.email,
         emailVerified: user.emailVerified,
         savedDesignersCount: savedDesignersCount,
         savedObjectsCount: savedObjectsCount,
+        savedMuseumsCount: savedMuseumsCount,
+        savedUniversitiesCount: savedUniversitiesCount,
       }
     }}>
-      // Identify user with PostHog when logged in
       if (typeof window !== 'undefined' && window.posthog && window.posthog.identify) {
         window.posthog.identify(user.id, {
           email: user.email,
           email_verified: user.emailVerified,
           saved_designers_count: user.savedDesignersCount || 0,
           saved_moodboards_count: user.savedObjectsCount || 0,
+          saved_museums_count: user.savedMuseumsCount || 0,
+          saved_universities_count: user.savedUniversitiesCount || 0,
           last_login_at: new Date().toISOString(),
           is_power_user: (user.savedDesignersCount || 0) > 10,
         });
@@ -254,4 +344,397 @@ try {
       }
     </script>
   </Layout>
-</PostHogLayout>
+
+<style>
+  .profile-page {
+    background: var(--color-white);
+    min-height: calc(100vh - var(--navbar-height));
+    padding: var(--page-top-spacing) 0 0;
+  }
+
+  .profile-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .profile-hero {
+    margin-bottom: 56px;
+    max-width: 640px;
+  }
+
+  .profile-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .profile-title {
+    font-family: var(--font-sans);
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.08em;
+    color: var(--color-black);
+    margin: 0 0 0 -2px;
+  }
+
+  .profile-description {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: -0.015em;
+    color: var(--color-text-muted);
+    margin: 0 0 4px;
+  }
+
+  .profile-email {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.015em;
+    color: var(--color-black);
+    margin: 0;
+  }
+
+  .profile-account {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 14px;
+  }
+
+  .profile-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(46, 204, 113, 0.08);
+    border: 1px solid rgba(46, 204, 113, 0.18);
+    color: var(--color-success);
+    flex-shrink: 0;
+  }
+
+  .profile-badge-check {
+    flex-shrink: 0;
+  }
+
+  .btn-sign-out {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 36px;
+    padding: 1px 16px 0;
+    border-radius: 999px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .btn-sign-out:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+    color: var(--color-black);
+  }
+
+  .profile-section {
+    margin-bottom: 56px;
+  }
+
+  .profile-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: stretch;
+    margin-bottom: 56px;
+  }
+
+  .profile-split .profile-section {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+  }
+
+  .profile-section-title {
+    font-family: var(--font-sans);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    color: var(--color-black);
+    margin: 0 0 20px -2px;
+  }
+
+  .profile-collections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .collection-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease;
+  }
+
+  .collection-card:hover {
+    transform: translateY(-2px);
+    color: inherit;
+  }
+
+  .collection-card-media {
+    aspect-ratio: 16 / 10;
+    background: var(--color-bg-secondary);
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  .collection-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .collection-card:hover .collection-card-image {
+    transform: scale(1.03);
+  }
+
+  .collection-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+  }
+
+  .collection-card-body {
+    padding: 14px 2px 0;
+  }
+
+  .collection-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .collection-card-title {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    color: var(--color-black);
+    margin: 0;
+  }
+
+  .collection-count {
+    flex-shrink: 0;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--color-bg-secondary);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--color-text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .collection-card-text {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .profile-danger-zone {
+    padding-top: 40px;
+    border-top: 1px solid var(--color-stroke);
+  }
+
+  .profile-mymap {
+    display: block;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--color-black);
+    aspect-ratio: 21 / 9;
+    flex: 1 1 auto;
+    min-height: 0;
+    background: var(--color-bg-secondary);
+    transition: transform 0.2s ease;
+  }
+
+  .profile-mymap:hover {
+    transform: translateY(-2px);
+  }
+
+  .profile-mymap-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .profile-danger-text {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    margin: 0 0 14px;
+  }
+
+  .profile-danger-note {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    letter-spacing: -0.005em;
+    color: var(--color-danger);
+    margin: 10px 0 0;
+  }
+
+  .modal-title {
+    margin: 0 0 12px;
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--color-black);
+  }
+
+  .modal-text {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+    color: var(--color-text-muted);
+    margin: 0 0 24px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .modal-btn {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .modal-btn--ghost {
+    border: 1px solid var(--color-stroke);
+    background: transparent;
+    color: var(--color-text-muted);
+  }
+
+  .modal-btn--ghost:hover {
+    border-color: var(--color-black);
+    color: var(--color-black);
+  }
+
+  .modal-btn--danger {
+    border: none;
+    background: var(--color-danger);
+    color: var(--color-white);
+  }
+
+  .modal-btn--danger:hover {
+    background: var(--color-danger-hover);
+  }
+
+  .modal-btn--danger:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 1024px) {
+    .profile-inner {
+      padding: 0 24px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .profile-split {
+      grid-template-columns: 1fr;
+      gap: 0;
+      margin-bottom: 0;
+    }
+
+    .profile-split .profile-section {
+      margin-bottom: 56px;
+    }
+
+    .profile-mymap {
+      aspect-ratio: 16 / 10;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .profile-inner {
+      padding: 0 20px;
+    }
+
+    .profile-collections {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-hero-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .profile-top {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .btn-sign-out {
+      width: auto;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .profile-inner {
+      padding: 0 16px;
+    }
+  }
+</style>

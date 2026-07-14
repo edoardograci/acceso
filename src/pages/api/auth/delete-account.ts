@@ -3,7 +3,7 @@ import { TursoHttpClient } from '../../../lib/turso';
 import type { Env } from '../../../env.d';
 import { createLucia } from '../../../lib/auth/lucia';
 
-export const POST: APIRoute = async ({ locals, cookies, redirect }) => {
+export const POST: APIRoute = async ({ locals, cookies }) => {
     if (!locals.user) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
@@ -27,6 +27,28 @@ export const POST: APIRoute = async ({ locals, cookies, redirect }) => {
         // 2. Delete user's sessions
         await turso.execute({
             sql: 'DELETE FROM sessions WHERE user_id = ?',
+            args: [userId],
+        });
+
+        // 2b. Delete remaining owned data (museums, universities, oauth links, magic links, submissions)
+        await turso.execute({
+            sql: 'DELETE FROM user_saved_museums WHERE user_id = ?',
+            args: [userId],
+        });
+        await turso.execute({
+            sql: 'DELETE FROM user_saved_universities WHERE user_id = ?',
+            args: [userId],
+        });
+        await turso.execute({
+            sql: 'DELETE FROM oauth_accounts WHERE user_id = ?',
+            args: [userId],
+        });
+        await turso.execute({
+            sql: 'DELETE FROM magic_link_tokens WHERE user_id = ?',
+            args: [userId],
+        });
+        await turso.execute({
+            sql: 'DELETE FROM submissions WHERE user_id = ?',
             args: [userId],
         });
 

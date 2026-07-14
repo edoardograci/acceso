@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { saveDesigner, getCollectionsCounts } from '../../../../lib/db';
+import { saveDesigner } from '../../../../lib/db';
 import { checkRateLimit, createRateLimitResponse, getClientIdentifier, RateLimits } from '../../../../lib/rate-limiter';
 import type { Env } from '../../../../env.d';
 
@@ -16,9 +16,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         }
 
         const clientId = getClientIdentifier(request, locals.user.id);
-        const rateLimitResult = checkRateLimit(clientId, RateLimits.COLLECTIONS);
+        const rateLimitResult = await checkRateLimit(clientId, RateLimits.COLLECTIONS, env);
         if (!rateLimitResult.success && rateLimitResult.retryAfter) {
-            return createRateLimitResponse(rateLimitResult.retryAfter);
+            return createRateLimitResponse(rateLimitResult.retryAfter, rateLimitResult.limit);
         }
 
         const body = await request.json().catch(() => null);
@@ -26,15 +26,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
             return Response.json({ error: 'Bad Request', detail: 'studio_id required' }, { status: 400 });
         }
 
-        const counts = await getCollectionsCounts(locals.user.id, env);
-        if (counts.designers >= 100) {
-            return Response.json({ error: 'LIMIT_REACHED' }, { status: 403 });
-        }
-
+        // Limit is enforced atomically inside saveDesigner (no extra read needed).
         await saveDesigner(locals.user.id, body.studio_id, env);
         return Response.json({ success: true, saved: true });
 
     } catch (err: any) {
+        if (err?.message === 'LIMIT_REACHED') {
+            return Response.json({ error: 'LIMIT_REACHED' }, { status: 403 });
+        }
         console.error('[API] Save Designer Error:', err);
         return Response.json({ error: 'Server Error', message: err.message }, { status: 500 });
     }

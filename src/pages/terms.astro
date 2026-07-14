@@ -1,12 +1,10 @@
 ---
-import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<PostHogLayout>
-  <Layout title="Terms of Service | Acceso"
+<Layout title="Terms of Service | Acceso"
   description="Terms and conditions governing the use of Acceso, the independent design studios directory."
   keywords="terms of service acceso, terms of service, tos acceso">
     <Navbar />
@@ -79,13 +77,12 @@ import Footer from '../components/Footer.astro';
     </main>
 
     <Footer />
-  </Layout>
-</PostHogLayout>
+</Layout>
 
 <style>
   .legal-page {
     min-height: 100vh;
-    background: var(--color-black);
+    background: var(--color-white);
   }
 
   .legal-container {
@@ -95,10 +92,10 @@ import Footer from '../components/Footer.astro';
   }
 
   .legal-title {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 48px;
     font-weight: 400;
-    color: var(--color-white);
+    color: var(--color-black);
     margin-bottom: 16px;
     letter-spacing: 0;
   }
@@ -118,7 +115,7 @@ import Footer from '../components/Footer.astro';
     font-family: var(--font-sans);
     font-size: 20px;
     font-weight: 400;
-    color: var(--color-white);
+    color: var(--color-black);
     margin-bottom: 16px;
   }
 
@@ -131,14 +128,14 @@ import Footer from '../components/Footer.astro';
   }
 
   a {
-    color: var(--color-white);
+    color: var(--color-black);
     text-decoration: underline;
     text-underline-offset: 4px;
     transition: color 0.2s ease;
   }
 
   a:hover {
-    color: var(--color-yellow);
+    color: var(--color-gray);
   }
 
   @media (max-width: 768px) {

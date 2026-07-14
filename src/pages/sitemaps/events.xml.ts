@@ -36,9 +36,9 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
     }
   };
 
-  if (fairs.status === 'fulfilled') add('/events/fairs', fairs.value);
-  if (museums.status === 'fulfilled') add('/events/museums', museums.value);
-  if (awards.status === 'fulfilled') add('/events/awards', awards.value);
+  if (fairs.status === 'fulfilled') add('/directory/fairs', fairs.value);
+  if (museums.status === 'fulfilled') add('/directory/museums', museums.value);
+  if (awards.status === 'fulfilled') add('/directory/awards', awards.value);
 
   return new Response(renderUrlSet(urls), {
     status: 200,

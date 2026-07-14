@@ -5,7 +5,7 @@ export const GET: APIRoute = async ({ site, url }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
 
   const lastmod = toW3CDate(new Date());
-  const perPage = 20;
+  const perPage = 18;
 
   let total = 0;
   try {

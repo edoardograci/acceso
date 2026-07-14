@@ -1,4 +1,3 @@
-import type { Studio } from './types';
 import type { Env } from '../env.d';
 import { TursoHttpClient } from './turso';
 
@@ -254,6 +253,166 @@ export async function removeObject(userId: string, productId: string, env: Env):
   }
 }
 
+export async function saveMuseum(userId: string, museumId: string, env: Env): Promise<boolean> {
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  const now = Math.floor(Date.now() / 1000);
+
+  try {
+    const result = await turso.execute({
+      sql: `
+        INSERT INTO user_saved_museums (id, user_id, museum_id, created_at)
+        SELECT ?, ?, ?, ?
+        WHERE (SELECT COUNT(*) FROM user_saved_museums WHERE user_id = ?) < 100
+        AND NOT EXISTS (SELECT 1 FROM user_saved_museums WHERE user_id = ? AND museum_id = ?)
+      `,
+      args: [generateId(), userId, museumId, now, userId, userId, museumId],
+    });
+
+    if (result.rowsAffected === 0) {
+      const countResult = await turso.execute({
+        sql: 'SELECT COUNT(*) as count FROM user_saved_museums WHERE user_id = ?',
+        args: [userId],
+      });
+
+      const count = (countResult.rows[0] as any).count;
+      if (count >= 100) {
+        throw new Error('LIMIT_REACHED');
+      }
+
+      invalidateCache(userId);
+      return false;
+    }
+
+    invalidateCache(userId);
+    return true;
+  } catch (error: any) {
+    if (error.message === 'LIMIT_REACHED') {
+      throw error;
+    }
+    console.error('[DB] Error saving museum:', error);
+    throw error;
+  }
+}
+
+export async function removeMuseum(userId: string, museumId: string, env: Env): Promise<boolean> {
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+    await turso.execute({
+      sql: 'DELETE FROM user_saved_museums WHERE user_id = ? AND museum_id = ?',
+      args: [userId, museumId],
+    });
+
+    invalidateCache(userId);
+    return true;
+  } catch (error) {
+    console.error('[DB] Error removing museum:', error);
+    throw error;
+  }
+}
+
+export async function getSavedMuseums(userId: string, env: Env): Promise<string[]> {
+  const cacheKey = getCacheKey('collections', userId, 'museums');
+  const cached = getFromCache<string[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+    const result = await turso.execute({
+      sql: 'SELECT museum_id FROM user_saved_museums WHERE user_id = ?',
+      args: [userId],
+    });
+
+    const ids = result.rows
+      .sort((a: any, b: any) => parseTimestamp(b.created_at) - parseTimestamp(a.created_at))
+      .map((row: any) => row.museum_id as string);
+    setCache(cacheKey, ids);
+    return ids;
+  } catch (error) {
+    console.error('[DB] Error fetching saved museums:', error);
+    throw error;
+  }
+}
+
+export async function saveUniversity(userId: string, universityId: string, env: Env): Promise<boolean> {
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  const now = Math.floor(Date.now() / 1000);
+
+  try {
+    const result = await turso.execute({
+      sql: `
+        INSERT INTO user_saved_universities (id, user_id, university_id, created_at)
+        SELECT ?, ?, ?, ?
+        WHERE (SELECT COUNT(*) FROM user_saved_universities WHERE user_id = ?) < 100
+        AND NOT EXISTS (SELECT 1 FROM user_saved_universities WHERE user_id = ? AND university_id = ?)
+      `,
+      args: [generateId(), userId, universityId, now, userId, userId, universityId],
+    });
+
+    if (result.rowsAffected === 0) {
+      const countResult = await turso.execute({
+        sql: 'SELECT COUNT(*) as count FROM user_saved_universities WHERE user_id = ?',
+        args: [userId],
+      });
+
+      const count = (countResult.rows[0] as any).count;
+      if (count >= 100) {
+        throw new Error('LIMIT_REACHED');
+      }
+
+      invalidateCache(userId);
+      return false;
+    }
+
+    invalidateCache(userId);
+    return true;
+  } catch (error: any) {
+    if (error.message === 'LIMIT_REACHED') {
+      throw error;
+    }
+    console.error('[DB] Error saving university:', error);
+    throw error;
+  }
+}
+
+export async function removeUniversity(userId: string, universityId: string, env: Env): Promise<boolean> {
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+    await turso.execute({
+      sql: 'DELETE FROM user_saved_universities WHERE user_id = ? AND university_id = ?',
+      args: [userId, universityId],
+    });
+
+    invalidateCache(userId);
+    return true;
+  } catch (error) {
+    console.error('[DB] Error removing university:', error);
+    throw error;
+  }
+}
+
+export async function getSavedUniversities(userId: string, env: Env): Promise<string[]> {
+  const cacheKey = getCacheKey('collections', userId, 'universities');
+  const cached = getFromCache<string[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+    const result = await turso.execute({
+      sql: 'SELECT university_id FROM user_saved_universities WHERE user_id = ?',
+      args: [userId],
+    });
+
+    const ids = result.rows
+      .sort((a: any, b: any) => parseTimestamp(b.created_at) - parseTimestamp(a.created_at))
+      .map((row: any) => row.university_id as string);
+    setCache(cacheKey, ids);
+    return ids;
+  } catch (error) {
+    console.error('[DB] Error fetching saved universities:', error);
+    throw error;
+  }
+}
+
 export async function getSavedDesigners(userId: string, env: Env): Promise<string[]> {
   const cacheKey = getCacheKey('collections', userId, 'designers');
   const cached = getFromCache<string[]>(cacheKey);
@@ -317,15 +476,15 @@ export async function checkSavedStatus(userId: string, type: 'designers' | 'obje
   }
 }
 
-export async function getCollectionsCounts(userId: string, env: Env): Promise<{ designers: number, objects: number }> {
+export async function getCollectionsCounts(userId: string, env: Env): Promise<{ designers: number, objects: number, museums: number, universities: number }> {
   const cacheKey = getCacheKey('collections:counts', userId);
-  const cached = getFromCache<{ designers: number, objects: number }>(cacheKey);
+  const cached = getFromCache<{ designers: number, objects: number, museums: number, universities: number }>(cacheKey);
   if (cached) return cached;
 
   try {
     const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
 
-    const [designersResult, objectsResult] = await Promise.all([
+    const [designersResult, objectsResult, museumsResult, universitiesResult] = await Promise.all([
       turso.execute({
         sql: 'SELECT COUNT(*) as count FROM user_saved_designers WHERE user_id = ?',
         args: [userId],
@@ -333,12 +492,22 @@ export async function getCollectionsCounts(userId: string, env: Env): Promise<{ 
       turso.execute({
         sql: 'SELECT COUNT(*) as count FROM user_saved_objects WHERE user_id = ?',
         args: [userId],
+      }),
+      turso.execute({
+        sql: 'SELECT COUNT(*) as count FROM user_saved_museums WHERE user_id = ?',
+        args: [userId],
+      }),
+      turso.execute({
+        sql: 'SELECT COUNT(*) as count FROM user_saved_universities WHERE user_id = ?',
+        args: [userId],
       })
     ]);
 
     const counts = {
       designers: Number(designersResult.rows[0]?.count) || 0,
-      objects: Number(objectsResult.rows[0]?.count) || 0
+      objects: Number(objectsResult.rows[0]?.count) || 0,
+      museums: Number(museumsResult.rows[0]?.count) || 0,
+      universities: Number(universitiesResult.rows[0]?.count) || 0
     };
 
     setCache(cacheKey, counts);
@@ -409,9 +578,9 @@ export async function getObjectCollectionSummary(userId: string, env: Env): Prom
   }
 }
 
-export async function getFullCollectionStatus(userId: string, env: Env): Promise<{ designers: string[], objects: string[] }> {
+export async function getFullCollectionStatus(userId: string, env: Env): Promise<{ designers: string[], objects: string[], museums: string[], universities: string[] }> {
   const cacheKey = getCacheKey('collections:full', userId);
-  const cached = getFromCache<{ designers: string[], objects: string[] }>(cacheKey);
+  const cached = getFromCache<{ designers: string[], objects: string[], museums: string[], universities: string[] }>(cacheKey);
   if (cached) return cached;
 
   try {
@@ -421,22 +590,30 @@ export async function getFullCollectionStatus(userId: string, env: Env): Promise
               SELECT studio_id as id, 'designer' as type, created_at FROM user_saved_designers WHERE user_id = ?
               UNION ALL
               SELECT product_id as id, 'object' as type, created_at FROM user_saved_objects WHERE user_id = ?
+              UNION ALL
+              SELECT museum_id as id, 'museum' as type, created_at FROM user_saved_museums WHERE user_id = ?
+              UNION ALL
+              SELECT university_id as id, 'university' as type, created_at FROM user_saved_universities WHERE user_id = ?
             ) ORDER BY created_at DESC`,
-      args: [userId, userId],
+      args: [userId, userId, userId, userId],
     });
 
     const designers: string[] = [];
     const objects: string[] = [];
+    const museums: string[] = [];
+    const universities: string[] = [];
 
     // Explicitly sort by created_at DESC in JS to guarantee order, handling mixed DB formats
     result.rows.sort((a: any, b: any) => parseTimestamp(b.created_at) - parseTimestamp(a.created_at));
 
     result.rows.forEach((row: any) => {
       if (row.type === 'designer') designers.push(row.id);
+      else if (row.type === 'museum') museums.push(row.id);
+      else if (row.type === 'university') universities.push(row.id);
       else objects.push(row.id);
     });
 
-    const status = { designers, objects };
+    const status = { designers, objects, museums, universities };
     setCache(cacheKey, status);
     return status;
   } catch (error) {
@@ -447,7 +624,9 @@ export async function getFullCollectionStatus(userId: string, env: Env): Promise
 
 export async function getProfileSummary(userId: string, env: Env): Promise<{
   designers: { count: number, recentId: string | null },
-  objects: { count: number, recentId: string | null }
+  objects: { count: number, recentId: string | null },
+  museums: { count: number, recentId: string | null },
+  universities: { count: number, recentId: string | null }
 }> {
   const cacheKey = getCacheKey('collections:profile_summary', userId);
   const cached = getFromCache<any>(cacheKey);
@@ -455,7 +634,7 @@ export async function getProfileSummary(userId: string, env: Env): Promise<{
 
   try {
     const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
-    const [designersResult, objectsResult] = await Promise.all([
+    const [designersResult, objectsResult, museumsResult, universitiesResult] = await Promise.all([
       turso.execute({
         sql: 'SELECT studio_id, created_at FROM user_saved_designers WHERE user_id = ?',
         args: [userId],
@@ -463,15 +642,27 @@ export async function getProfileSummary(userId: string, env: Env): Promise<{
       turso.execute({
         sql: 'SELECT product_id, created_at FROM user_saved_objects WHERE user_id = ?',
         args: [userId],
+      }),
+      turso.execute({
+        sql: 'SELECT museum_id, created_at FROM user_saved_museums WHERE user_id = ?',
+        args: [userId],
+      }),
+      turso.execute({
+        sql: 'SELECT university_id, created_at FROM user_saved_universities WHERE user_id = ?',
+        args: [userId],
       })
     ]);
 
     const dRows = designersResult.rows.map((r: any) => ({ id: r.studio_id as string, ts: parseTimestamp(r.created_at) })).sort((a: { ts: number }, b: { ts: number }) => b.ts - a.ts);
     const oRows = objectsResult.rows.map((r: any) => ({ id: r.product_id as string, ts: parseTimestamp(r.created_at) })).sort((a: { ts: number }, b: { ts: number }) => b.ts - a.ts);
+    const mRows = museumsResult.rows.map((r: any) => ({ id: r.museum_id as string, ts: parseTimestamp(r.created_at) })).sort((a: { ts: number }, b: { ts: number }) => b.ts - a.ts);
+    const uRows = universitiesResult.rows.map((r: any) => ({ id: r.university_id as string, ts: parseTimestamp(r.created_at) })).sort((a: { ts: number }, b: { ts: number }) => b.ts - a.ts);
 
     const summary = {
       designers: { count: dRows.length, recentId: dRows[0]?.id || null },
-      objects: { count: oRows.length, recentId: oRows[0]?.id || null }
+      objects: { count: oRows.length, recentId: oRows[0]?.id || null },
+      museums: { count: mRows.length, recentId: mRows[0]?.id || null },
+      universities: { count: uRows.length, recentId: uRows[0]?.id || null }
     };
 
     setCache(cacheKey, summary);
@@ -480,7 +671,9 @@ export async function getProfileSummary(userId: string, env: Env): Promise<{
     console.error('[DB] Error fetching profile summary:', error);
     return {
       designers: { count: 0, recentId: null },
-      objects: { count: 0, recentId: null }
+      objects: { count: 0, recentId: null },
+      museums: { count: 0, recentId: null },
+      universities: { count: 0, recentId: null }
     };
   }
 }

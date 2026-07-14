@@ -28,9 +28,10 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     path.startsWith('fairs/') ||
     path.startsWith('museums/') ||
     path.startsWith('awards/') ||
+    path.startsWith('universities/') ||
     path.endsWith('-cover.webp')
   ) {
-    bucket = env.EVENTS_BUCKET;                  // ← All event-related images
+    bucket = env.EVENTS_BUCKET;               // ← All event-related images
   } 
   else {
     bucket = env.INDEX_BUCKET;                   // Studio covers, submissions, etc.
@@ -84,8 +85,18 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     }
 
     const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set('etag', object.httpEtag);
+    const meta = (object as any).httpMetadata || {};
+    if (meta.contentType) {
+      headers.set('Content-Type', meta.contentType);
+    } else if (isImage) {
+      const ext = path.split('.').pop()?.toLowerCase();
+      const typeMap: Record<string, string> = {
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+        webp: 'image/webp', avif: 'image/avif', heic: 'image/heic'
+      };
+      if (ext && typeMap[ext]) headers.set('Content-Type', typeMap[ext]);
+    }
+    headers.set('etag', (object as any).httpEtag);
 
     // Cache policy
     if (!path.endsWith('.json')) {

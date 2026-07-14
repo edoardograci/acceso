@@ -1,0 +1,113 @@
+---
+interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  items: Crumb[];
+  backHref?: string;
+  class?: string;
+}
+
+const { items, backHref, class: className } = Astro.props;
+
+const fallbackBack = items.length > 1 ? items[items.length - 2].href : '/';
+const back = backHref ?? fallbackBack ?? '/';
+---
+
+<nav class:list={['breadcrumbs', className]} aria-label="Breadcrumb">
+  <a class="breadcrumb-back" href={back} aria-label="Go back">
+    <svg class="breadcrumb-back-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+    <span>Back</span>
+  </a>
+
+  {items.map((item, i) => (
+    <Fragment>
+      {i > 0 && (
+        <span class="breadcrumb-separator" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </span>
+      )}
+      {item.href ? (
+        <a class="breadcrumb-item" href={item.href}>{item.label}</a>
+      ) : (
+        <span class="breadcrumb-current" aria-current="page">{item.label}</span>
+      )}
+    </Fragment>
+  ))}
+</nav>
+
+<style>
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.2;
+    color: var(--color-gray);
+    margin-bottom: 32px;
+  }
+
+  .breadcrumb-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    height: 34px;
+    margin-right: 4px;
+    padding: 0 14px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 999px;
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+
+  .breadcrumb-back:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+  }
+
+  .breadcrumb-back-icon { display: block; }
+
+  .breadcrumb-item {
+    flex: none;
+    color: var(--color-gray);
+    text-decoration: none;
+    transition: color 0.2s;
+    white-space: nowrap;
+  }
+
+  .breadcrumb-item:hover { color: var(--color-black); }
+
+  .breadcrumb-separator {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    color: var(--color-gray);
+  }
+
+  .breadcrumb-separator svg { display: block; }
+
+  .breadcrumb-current {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-black);
+    font-weight: 600;
+  }
+</style>

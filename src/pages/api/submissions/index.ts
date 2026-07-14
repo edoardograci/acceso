@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { TursoHttpClient } from '../../../lib/turso';
+import { Resend } from 'resend';
 import type { Env } from '../../../env.d';
 
 const MAX_IMAGE_SIZE = 1024 * 1024; // 1MB
@@ -77,11 +78,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const address = String(form.get('address') || '').trim();
     const instagram = String(form.get('instagram') || '').trim();
     const description = String(form.get('description') || '').trim();
-    const contactEmail = String(form.get('contact_email') || '').trim();
+    const contactEmail = String(form.get('contact_email') || '').trim() || (user.email ?? '');
     const captchaToken = String(form.get('captcha_token') || '').trim();
     const coverFile = form.get('cover_file');
 
-    if (!name || !website || !city || !country || !contactEmail) {
+    if (!name || !website || !city || !country) {
       return json(400, { error: 'Missing required fields' });
     }
     if (!description) {
@@ -186,6 +187,43 @@ export const POST: APIRoute = async ({ request, locals }) => {
         now,
       ],
     }), TURSO_TIMEOUT_MS, 'TURSO_INSERT');
+
+    // Notify the Acceso team of the new submission.
+    const resendApiKey =
+      import.meta.env.RESEND_API_KEY ||
+      runtimeEnv?.RESEND_API_KEY ||
+      process.env.RESEND_API_KEY ||
+      '';
+    if (resendApiKey) {
+      try {
+        const resend = new Resend(resendApiKey);
+        const notifyBody = [
+          `New submission on acceso.design`,
+          ``,
+          `Studio:        ${name}`,
+          `Website:       ${website || '-'}`,
+          `City:          ${city || '-'}`,
+          `Country:       ${country || '-'}`,
+          `Address:       ${address || '-'}`,
+          `Instagram:     ${instagram || '-'}`,
+          `Description:   ${description}`,
+          ``,
+          `Submitted by:   ${(user.email ?? 'unknown')}`,
+          `User ID:       ${user.id}`,
+          `Submission ID: ${submissionId}`,
+          `Cover image:   ${imageUrl}`,
+        ].join('\n');
+        await resend.emails.send({
+          from: 'Acceso <login@acceso.design>',
+          to: 'hello@acceso.design',
+          replyTo: user.email || undefined,
+          subject: 'New submission on acceso.design',
+          text: notifyBody,
+        });
+      } catch (emailErr) {
+        console.error('[Submissions] Failed to send notification email:', emailErr);
+      }
+    }
 
     return json(200, { success: true, id: submissionId, imageUrl });
   } catch (error: any) {

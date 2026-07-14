@@ -31,7 +31,7 @@ export const GET: APIRoute = async ({ site, url }) => {
   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = items
     .filter((i) => typeof i?.slug === 'string' && i.slug.length > 0)
     .map((i) => {
-      const loc = new URL(`/projects/${encodeURIComponent(i.slug)}`, site).toString();
+      const loc = new URL(`/discover/${encodeURIComponent(i.slug)}`, site).toString();
       const images: string[] = [];
       const normalized = normalizeImage(i.cover, url.origin);
       if (normalized) images.push(normalized);

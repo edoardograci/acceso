@@ -4,8 +4,8 @@ import { normalizeImage } from '../lib/images';
 interface Props {
   name: string;
   slug?: string;
-  type?: 'fair' | 'museum' | 'award' | 'designer';
-  image?: string;
+  type?: 'fair' | 'museum' | 'award' | 'designer' | 'university';
+  image?: string | null;
   location?: string;
   date?: string;
   pillText?: string;
@@ -14,7 +14,7 @@ interface Props {
 
 const { name, slug, type, image, location, date, pillText, pillType = 'default' } = Astro.props;
 
-const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/events/${type === 'fair' ? 'fairs' : type === 'museum' ? 'museums' : 'awards'}/${slug}`) : null;
+const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/directory/${type === 'fair' ? 'fairs' : type === 'museum' ? 'museums' : type === 'university' ? 'universities' : 'awards'}/${slug}`) : null;
 ---
 
 <a href={href} class="event-basic-card">
@@ -52,46 +52,47 @@ const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/even
 <style>
   .event-basic-card {
     background: transparent;
-    border-radius: 0px;
+    border-radius: 0;
     overflow: visible;
-    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    transition: transform 0.2s ease;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     height: 100%;
-    gap: 16px;
+    gap: 14px;
     text-decoration: none;
     color: inherit;
   }
 
   .event-basic-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-4px);
+    color: inherit;
   }
 
   .card-image-wrapper {
     position: relative;
     aspect-ratio: 1.4;
-    background: #111315;
+    background: #E8E8EA;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--color-stroke);
   }
 
   .event-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    transition: transform 0.4s ease;
   }
 
   .event-basic-card:hover .event-image {
-    transform: scale(1.05);
+    transform: scale(1.03);
   }
 
   .image-placeholder {
     width: 100%;
     height: 100%;
-    background: #1A1D20;
+    background: #E8E8EA;
   }
 
   .card-pill {
@@ -99,62 +100,60 @@ const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/even
     top: 12px;
     left: 12px;
     z-index: 10;
-    padding: 0 12px;
-    height: 24px;
+    padding: 2px 12px 0;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(15, 17, 19, 0.82);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .card-pill span {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 400;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
     text-transform: uppercase;
     color: var(--color-white);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     line-height: 1;
-    display: block;
-    transform: translateY(0.5px); /* Optical centering */
   }
 
   .card-pill.status-open {
-    background: #EDFE44; /* Brighter, no opacity for better contrast */
-    border-color: #EDFE44;
+    background: #C6F6D6;
+    border-color: #C6F6D6;
   }
   .card-pill.status-open span {
     color: var(--color-black);
   }
 
   .card-pill.status-closed {
-    background: rgba(40, 40, 40, 0.9);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(15, 17, 19, 0.88);
+    border-color: rgba(255, 255, 255, 0.08);
   }
   .card-pill.status-closed span {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.72);
+    font-weight: 400;
   }
 
   .card-content {
-    padding: 0 4px 8px; /* Added bottom padding to prevent clipping */
+    padding: 0 2px 4px;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    overflow: visible;
   }
 
   .event-title {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 16px;
     font-weight: 400;
-    color: var(--color-white);
+    color: var(--color-black);
     margin: 0;
-    line-height: 1.2;
-    letter-spacing: 0;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
   }
 
   .event-meta {
@@ -163,11 +162,12 @@ const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/even
     gap: 6px;
     font-family: var(--font-sans);
     font-size: 13px;
-    color: var(--color-gray);
+    color: var(--color-text-muted);
   }
 
   .dot {
-    opacity: 0.3;
+    color: var(--color-text-muted);
+    opacity: 0.5;
   }
 
   @media (max-width: 768px) {

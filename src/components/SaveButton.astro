@@ -1,6 +1,6 @@
 ---
 interface Props {
-  type: 'designer' | 'object';
+  type: 'designer' | 'object' | 'museum' | 'university';
   itemId: string;
   itemName?: string;
   buttonClass?: string;
@@ -25,7 +25,12 @@ const isLoggedIn = !!Astro.locals.user;
   customElements.define('save-button', class SaveButton extends HTMLElement {
     private boundHandleClick = this.handleClick.bind(this);
     private isProcessing = false;
-
+    private btn: HTMLButtonElement | null = null;
+    private type: string = '';
+    private name: string = '';
+    private isLoggedIn = false;
+    private updateTimeout: number | undefined;
+    private unsubscribe: (() => void) | null = null;
     constructor() {
       super();
     }
@@ -39,7 +44,7 @@ const isLoggedIn = !!Astro.locals.user;
 
       if (!this.btn || !this.isLoggedIn) {
         if (this.btn && !this.isLoggedIn) {
-          this.btn.addEventListener('click', (e) => {
+          this.btn.addEventListener('click', (e: Event) => {
             e.preventDefault();
             e.stopPropagation();
             window.location.href = '/login';
@@ -134,7 +139,7 @@ const isLoggedIn = !!Astro.locals.user;
         // @ts-ignore
         const isSaved = window.collectionsState.isSaved(this.type, this.id);
         const count = window.collectionsState.getCount(this.type);
-        const limitType = this.type === 'designer' ? 'designers' : 'moodboards';
+        const limitType = this.type === 'designer' ? 'designers' : this.type === 'museum' ? 'museums' : this.type === 'university' ? 'universities' : 'moodboards';
 
         if (!isSaved) {
           if (count >= 100) {
@@ -155,10 +160,10 @@ const isLoggedIn = !!Astro.locals.user;
         if (isSaved) {
           // @ts-ignore
           await window.collectionsState.removeItem(this.type, this.id);
-          
+           
           // Track unsave
           if (window.posthog && typeof window.posthog.capture === 'function') {
-            const eventName = this.type === 'designer' ? 'designer_unsaved' : 'moodboard_unsaved';
+            const eventName = this.type === 'designer' ? 'designer_unsaved' : this.type === 'museum' ? 'museum_unsaved' : this.type === 'university' ? 'university_unsaved' : 'moodboard_unsaved';
             const props = {
               [`${this.type}_id`]: this.id,
               [`${this.type}_name`]: this.name || this.id,
@@ -169,10 +174,10 @@ const isLoggedIn = !!Astro.locals.user;
         } else {
           // @ts-ignore
           await window.collectionsState.addItem(this.type, this.id);
-          
+           
           // Track save
           if (window.posthog && typeof window.posthog.capture === 'function') {
-            const eventName = this.type === 'designer' ? 'designer_saved' : 'moodboard_saved';
+            const eventName = this.type === 'designer' ? 'designer_saved' : this.type === 'museum' ? 'museum_saved' : this.type === 'university' ? 'university_saved' : 'moodboard_saved';
             const props = {
               [`${this.type}_id`]: this.id,
               [`${this.type}_name`]: this.name || this.id,

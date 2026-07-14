@@ -1,61 +1,69 @@
 ---
 import type { NavLink } from '../lib/types';
-import { iconMap } from '../lib/map-icons';
 
 const navLinks: NavLink[] = [
-  { label: 'Discover', href: '/' },
+  { label: 'Map', href: '/map' },
   { label: 'Designers', href: '/designers' },
-  { label: 'Projects', href: '/projects' },
-  { label: 'Events', href: '/events' }
+  { label: 'Discover', href: '/discover' },
+  { label: 'Directory', href: '/directory' },
+  { label: 'Info', href: '/info' },
 ];
 
 const currentPath = Astro.url.pathname;
 
 function isActive(href: string): boolean {
-  if (href === '/') return currentPath === '/';
+  if (href === '/map') return currentPath === '/map' || currentPath === '/';
+  if (href === '/discover') return currentPath === '/discover' || currentPath.startsWith('/discover/');
+  if (href === '/directory') return currentPath === '/directory' || currentPath.startsWith('/directory/');
+  if (href === '/designers') return currentPath === '/designers' || currentPath.startsWith('/designers/');
   return currentPath.startsWith(href);
 }
 
 const user = Astro.locals.user;
-let userIcon = iconMap['DEFAULT'];
-
-if (user && user.email) {
-  const firstLetter = user.email.charAt(0).toUpperCase();
-  userIcon = iconMap[firstLetter] || iconMap['DEFAULT'];
-}
+const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
 ---
 
 <nav class="navbar">
   <div class="navbar-inner">
-    <a href="/" class="navbar-logo" aria-label="Acceso Home">
-      <svg width="56" height="14" viewBox="0 0 56 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M1.86039 14H0.000390738V9.4L3.38039 -9.53674e-07H5.28039L8.66039 9.4V14H6.80039V10.68H1.86039V14ZM2.18039 8.82H6.48039L4.36039 2.92H4.30039L2.18039 8.82ZM16.2559 3.54C16.2559 2.6 15.5359 1.86 14.5959 1.86H12.9959C12.0559 1.86 11.3159 2.62 11.3159 3.54V10.44C11.3159 11.36 12.0759 12.12 12.9959 12.12H14.5959C15.5159 12.12 16.2559 11.36 16.2559 10.44V9.34H18.1159V10.44C18.1159 12.4 16.5559 14 14.5959 14H12.9959C11.0559 14 9.45586 12.38 9.45586 10.44V3.54C9.45586 1.58 11.0559 -9.53674e-07 12.9959 -9.53674e-07H14.5959C16.5559 -9.53674e-07 18.1159 1.56 18.1159 3.54V4.64H16.2559V3.54ZM25.7113 3.54C25.7113 2.6 24.9913 1.86 24.0513 1.86H22.4513C21.5113 1.86 20.7713 2.62 20.7713 3.54V10.44C20.7713 11.36 21.5313 12.12 22.4513 12.12H24.0513C24.9713 12.12 25.7113 11.36 25.7113 10.44V9.34H27.5713V10.44C27.5713 12.4 26.0113 14 24.0513 14H22.4513C20.5113 14 18.9113 12.38 18.9113 10.44V3.54C18.9113 1.58 20.5113 -9.53674e-07 22.4513 -9.53674e-07H24.0513C26.0113 -9.53674e-07 27.5713 1.56 27.5713 3.54V4.64H25.7113V3.54ZM37.0268 -9.53674e-07V1.86H30.2268V5.7H36.2268V7.58H30.2268V12.14H37.0268V14H28.3668V-9.53674e-07H37.0268ZM37.8223 9.52H39.6823V10.34C39.6823 11.34 40.4823 12.14 41.4823 12.14H42.8223C43.8823 12.14 44.6223 11.46 44.6223 10.54C44.6223 7.72 38.0223 7 38.0223 3.26C38.0223 1.34 39.5423 -9.53674e-07 41.6823 -9.53674e-07H42.6223C44.6423 -9.53674e-07 46.2823 1.64 46.2823 3.66V4.26H44.4223V3.66C44.4223 2.66 43.6223 1.86 42.6223 1.86H41.6823C40.5423 1.86 39.8823 2.4 39.8823 3.26C39.8823 5.44 46.4823 6.36 46.4823 10.54C46.4823 12.5 44.9023 14 42.8223 14H41.4823C39.4623 14 37.8223 12.36 37.8223 10.34V9.52ZM52.4177 12.12C53.3377 12.12 54.0777 11.36 54.0777 10.44V3.54C54.0777 2.6 53.3577 1.86 52.4177 1.86H50.8177C49.8777 1.86 49.1377 2.62 49.1377 3.54V10.44C49.1377 11.36 49.8977 12.12 50.8177 12.12H52.4177ZM47.2777 10.44V3.54C47.2777 1.58 48.8777 -9.53674e-07 50.8177 -9.53674e-07H52.4177C54.3777 -9.53674e-07 55.9377 1.56 55.9377 3.54V10.44C55.9377 12.4 54.3777 14 52.4177 14H50.8177C48.8777 14 47.2777 12.38 47.2777 10.44Z" fill="white"/>
+    <a href="/map" class="navbar-logo" aria-label="Acceso Home">
+      <svg width="76" height="20" viewBox="0 0 108 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M98.2954 0C104.519 0 108 4.1523 108 9.85292C108 15.5184 104.519 19.7058 98.2954 19.7058C92.0718 19.7058 88.5908 15.5184 88.5908 9.85292C88.5908 4.1523 92.0718 0 98.2954 0ZM98.2954 16.2925C101.214 16.2925 102.972 13.8645 102.972 9.85292C102.972 5.80619 101.214 3.41333 98.2954 3.41333C95.377 3.41333 93.6189 5.80619 93.6189 9.85292C93.6189 13.8645 95.377 16.2925 98.2954 16.2925Z" fill="black"/>
+      <path d="M11.9198 19.3807L11.5682 16.636L10.654 18.6418C9.35299 19.5215 7.77072 19.8734 6.01264 19.8734C2.77777 19.8734 0 17.9732 0 14.4191C0 10.302 3.51616 7.97948 10.3024 7.97948H11.4978V7.59241C11.4978 7.02938 11.4978 6.46636 11.4275 5.83295C11.2869 4.53096 10.443 3.58086 8.54427 3.58086C6.61038 3.58086 5.55554 4.70691 5.41489 6.74787L0.703232 6.78306C0.843879 2.56038 4.25456 0.167526 8.72008 0.167526C13.9592 0.167526 15.9282 2.45481 16.2095 5.6922C16.2798 6.57192 16.315 7.55722 16.315 8.5777V14.6302C16.315 16.0378 16.3853 17.3046 16.6666 19.3807H11.9198ZM7.8762 16.46C9.84525 16.46 11.4978 15.0877 11.4978 12.4837V10.9705C7.63007 10.689 5.02811 11.5688 5.02811 14.032C5.02811 15.6859 6.15328 16.46 7.8762 16.46Z" fill="black"/>
+      <path d="M26.4588 0.294158C31.522 0.294158 34.6514 3.39079 35.003 7.54309H30.2211C29.764 4.83354 28.3575 3.70749 26.3533 3.70749C23.892 3.70749 22.1339 5.71326 22.1339 9.97113C22.1339 14.6161 23.892 16.5867 26.3181 16.5867C28.2168 16.5867 29.6233 15.3902 30.1156 13.0326H34.9679C34.1591 17.6423 30.7133 20 26.0368 20C20.9384 20 17.1058 16.7626 17.1058 10.2878C17.1058 3.88344 21.3252 0.294158 26.4588 0.294158Z" fill="black"/>
+      <path d="M44.8003 0.167526C49.8636 0.167526 52.993 3.26416 53.3446 7.41646H48.5626C48.1055 4.70691 46.6991 3.58086 44.6948 3.58086C42.2335 3.58086 40.4754 5.58663 40.4754 9.8445C40.4754 14.4894 42.2335 16.46 44.6597 16.46C46.5584 16.46 47.9649 15.2636 48.4571 12.9059H53.3094C52.5007 17.5157 49.0549 19.8734 44.3784 19.8734C39.28 19.8734 35.4473 16.636 35.4473 10.1612C35.4473 3.7568 39.6667 0.167526 44.8003 0.167526Z" fill="black"/>
+      <path d="M72.0875 9.63337C72.0875 10.0908 72.0875 10.6538 72.0172 11.2873H58.7261C59.0426 15.2284 60.8007 16.46 63.051 16.46C65.1255 16.46 66.6375 15.2988 66.9539 13.293H71.8062C70.8569 17.6565 67.3407 19.8734 62.9455 19.8734C57.8119 19.8734 53.8387 16.6712 53.8387 10.0908C53.8387 4.35502 57.6009 0.167526 63.3323 0.167526C69.0636 0.167526 72.0875 4.53096 72.0875 9.63337ZM63.1213 3.58086C60.871 3.58086 59.2887 5.02361 58.8668 8.12024H67.0946C66.7781 5.16436 65.442 3.58086 63.1213 3.58086Z" fill="black"/>
+      <path d="M80.6185 0.167526C85.084 0.167526 87.6156 2.66594 88.0376 6.07928H83.1853C82.8688 4.35502 81.9194 3.36972 80.302 3.36972C78.8604 3.36972 78.0868 4.21426 78.0868 5.3755C78.0868 6.78306 79.2472 7.52203 82.3414 8.29618C86.174 9.28148 88.4243 10.8298 88.4243 14.2783C88.4243 18.0435 85.0137 19.8734 80.724 19.8734C76.1881 19.8734 72.9884 17.9028 72.461 13.6801H77.3133C77.7001 15.7211 79.1065 16.6712 80.7943 16.6712C82.3414 16.6712 83.5369 16.0026 83.5369 14.6302C83.5369 13.1875 82.3062 12.3781 79.0714 11.5688C75.5904 10.689 73.1994 9.17591 73.1994 5.93852C73.1994 2.34924 76.1529 0.167526 80.6185 0.167526Z" fill="black"/>
       </svg>
     </a>
 
     <div class="navbar-links">
-      <a href="/" class:list={['nav-link', { active: isActive('/') }]}>Discover</a>
-      <a href="/designers" class:list={['nav-link', { active: isActive('/designers') }]}>Designers</a>
-      <a href="/projects" class:list={['nav-link', { active: isActive('/projects') }]}>Projects</a>
-      <a href="/events" class:list={['nav-link', { active: isActive('/events') }]}>Events</a>
+      {navLinks.map(({ label, href }) => (
+        <a href={href} class:list={['nav-link', { active: isActive(href) }]}>{label}</a>
+      ))}
     </div>
 
     <div class="navbar-actions">
-      <a href="/info" class="nav-link">Info</a>
-      <a href="/get-listed" class="nav-link">Get listed</a>
+      <a
+        href="https://instagram.com/acceso_design"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Instagram"
+        class="navbar-instagram-btn btn-icon social-icon-btn"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+        </svg>
+      </a>
+      <a href="/submission" class="btn-submission">Submission</a>
       {user ? (
         <a href="/profile" class="navbar-profile-btn" aria-label="Profile">
-          <div class="profile-icon" set:html={userIcon} />
+          <span class="profile-icon">{profileLetter}</span>
         </a>
       ) : (
-        <div class="auth-buttons">
-          <a href="/login" class="btn-login">Login</a>
-          <a href="/login" class="btn-signup">Sign up</a>
-        </div>
+        <a href="/login" class="btn-login">Login</a>
       )}
     </div>
 
-    <!-- Mobile hamburger button -->
     <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
       <svg class="hamburger-svg" width="22" height="16" viewBox="0 0 22 16" fill="currentColor">
         <rect class="line top" x="0" y="0" width="22" height="2" rx="1" />
@@ -66,25 +74,30 @@ if (user && user.email) {
   </div>
 </nav>
 
-<!-- Mobile Nav Overlay -->
 <div class="mobile-nav-overlay" id="mobile-nav-overlay" aria-hidden="true">
   <div class="mobile-nav-content">
     <nav class="mobile-nav-links">
-      <a href="/" class:list={['mobile-nav-link', { active: isActive('/') }]}>Discover</a>
-      <a href="/designers" class:list={['mobile-nav-link', { active: isActive('/designers') }]}>Designers</a>
-      <a href="/projects" class:list={['mobile-nav-link', { active: isActive('/projects') }]}>Projects</a>
-      <a href="/events" class:list={['mobile-nav-link', { active: isActive('/events') }]}>Events</a>
-      <a href="/info" class:list={['mobile-nav-link', { active: isActive('/info') }]}>Info</a>
-      <a href="/get-listed" class:list={['mobile-nav-link', { active: isActive('/get-listed') }]}>Get listed</a>
+      {navLinks.map(({ label, href }) => (
+        <a href={href} class:list={['mobile-nav-link', { active: isActive(href) }]}>{label}</a>
+      ))}
+      <a href="/submission" class:list={['mobile-nav-link', { active: isActive('/submission') }]}>Submission</a>
     </nav>
     <div class="mobile-nav-actions">
+      <a
+        href="https://instagram.com/acceso_design"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="mobile-instagram-btn"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+        </svg>
+        Instagram
+      </a>
       {user ? (
         <a href="/profile" class="btn-primary" style="width:100%;text-align:center;">Profile</a>
       ) : (
-        <div class="mobile-auth-buttons">
-          <a href="/login" class="btn-login mobile-btn-login">Login</a>
-          <a href="/login" class="btn-signup mobile-btn-signup">Sign up</a>
-        </div>
+        <a href="/login" class="btn-login mobile-btn-login">Login</a>
       )}
     </div>
   </div>
@@ -116,7 +129,6 @@ if (user && user.email) {
     else openMenu();
   });
 
-  // Close on overlay tap outside content
   mobileNavOverlay?.addEventListener('click', (e) => {
     if (e.target === mobileNavOverlay) closeMenu();
   });
@@ -130,10 +142,11 @@ if (user && user.email) {
   right: 0;
   height: var(--navbar-height);
   z-index: 2000;
-  background-color: rgba(15, 17, 19, 0.9);
+  background-color: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-stroke);
+  color: var(--color-black);
 }
 
 .navbar-inner {
@@ -163,28 +176,61 @@ if (user && user.email) {
   white-space: nowrap;
 }
 
-.nav-link:hover, .nav-link.active {
-  color: var(--color-white);
+.nav-link:hover {
+  color: var(--color-black);
+}
+
+.nav-link.active {
+  color: var(--color-black);
+  font-weight: 400;
 }
 
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 24px;
-}
-
-.auth-buttons {
-  display: flex;
-  align-items: center;
   gap: 12px;
 }
 
-.btn-login, .btn-signup {
+.navbar-instagram-btn {
+  color: var(--color-black);
+  text-decoration: none;
+}
+
+.navbar-instagram-btn:hover {
+  color: var(--color-black);
+}
+
+.mobile-instagram-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  padding: 0 16px;
+  gap: 10px;
+  width: 100%;
+  height: 52px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-stroke);
+  background: var(--color-bg-secondary);
+  color: var(--color-black);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.mobile-instagram-btn:hover {
+  opacity: 0.7;
+  color: var(--color-black);
+}
+
+  .btn-submission,
+  .btn-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 1px 16px 0;
   border-radius: 999px;
   font-family: var(--font-sans);
   font-size: 15px;
@@ -196,51 +242,55 @@ if (user && user.email) {
   border: 1px solid transparent;
 }
 
-.btn-login {
-  background: var(--color-dark-yellow);
-  color: var(--color-yellow);
-  border-color: rgba(237, 254, 68, 0.24);
+.btn-submission {
+  background: var(--color-bg-secondary);
+  color: var(--color-black);
+  border-color: var(--color-stroke);
 }
 
-.btn-signup {
+.btn-submission:hover {
+  background: #EBEBED;
+  border-color: #D4D4D8;
+  color: var(--color-black);
+}
+
+.btn-login {
   background: var(--color-yellow);
   color: var(--color-black);
-  border-color: rgba(237, 254, 68, 0.5);
+  border-color: rgba(237, 255, 119, 0.5);
 }
 
-.btn-login:hover, .btn-signup:hover {
-  color: inherit;
-}
-
-.btn-login:hover {
-  background: rgba(237, 254, 68, 0.18);
-  border-color: rgba(237, 254, 68, 0.45);
-}
-
-.btn-signup:hover {
-  background: #f2ff74;
-  border-color: #f2ff74;
-  color: var(--color-black) !important;
-}
+  .btn-login:hover {
+    background: var(--color-yellow);
+    border-color: var(--color-yellow);
+    filter: brightness(0.93);
+    color: var(--color-black) !important;
+  }
 
 .navbar-profile-btn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-yellow);
 }
 
 .profile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   height: 100%;
+  color: #000;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
 }
 
-.profile-icon :global(svg) {
-  width: 100%;
-  height: 100%;
-}
-
-/* ── Hamburger ─────────────────────────────── */
 .hamburger-btn {
   display: none;
   justify-content: center;
@@ -251,7 +301,7 @@ if (user && user.email) {
   border: none;
   cursor: pointer;
   flex-shrink: 0;
-  color: var(--color-white);
+  color: var(--color-black);
   padding: 0;
 }
 
@@ -264,7 +314,7 @@ if (user && user.email) {
 
 .hamburger-svg .line {
   transform-origin: center;
-  transform-box: fill-box; /* Ensures each line rotates independently around its own center */
+  transform-box: fill-box;
   transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
@@ -281,13 +331,12 @@ if (user && user.email) {
   transform: translateY(-7px) rotate(-45deg);
 }
 
-/* ── Mobile Nav Overlay ────────────────────── */
 .mobile-nav-overlay {
   display: none;
   position: fixed;
   inset: 0;
   top: var(--navbar-height);
-  background: rgba(15, 17, 19, 0.98);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   z-index: 9999;
@@ -330,38 +379,30 @@ if (user && user.email) {
 
 .mobile-nav-link:hover,
 .mobile-nav-link.active {
-  color: var(--color-white);
+  color: var(--color-black);
+  font-weight: 400;
 }
 
 .mobile-nav-actions {
   margin-top: 48px;
 }
 
-.mobile-auth-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.mobile-btn-login,
-.mobile-btn-signup {
+.mobile-btn-login {
   width: 100%;
   height: 52px;
   font-size: 16px;
   justify-content: center;
-  display: flex;
-  align-items: center;
 }
 
-/* ── Responsive ────────────────────────────── */
 @media (max-width: 860px) {
   .navbar-inner {
     padding: 0 16px;
   }
   .navbar-links,
-  .navbar-actions > .nav-link,
-  .navbar-actions > .auth-buttons,
-  .navbar-actions > .navbar-profile-btn {
+  .navbar-actions > .btn-submission,
+  .navbar-actions > .btn-login,
+  .navbar-actions > .navbar-profile-btn,
+  .navbar-actions > .navbar-instagram-btn {
     display: none;
   }
   .navbar-actions {

@@ -1,25 +1,33 @@
 ---
 interface Props {
   className?: string;
+  title?: string;
+  subtitle?: string;
+  ctaLabel?: string;
 }
 
-const { className = "" } = Astro.props;
+const {
+  className = "",
+  title = "Get listed",
+  subtitle = "Submit your studio. We’ll review and make it discoverable.",
+  ctaLabel = "Submit for review",
+} = Astro.props;
 ---
 
-<a href="/get-listed" class={`cta-card cta-vertical cta-getlisted ${className}`}>
+<a href="/submission" class={`cta-card cta-vertical cta-getlisted ${className}`}>
   <div class="cta-copy">
-    <div class="cta-title">Get listed</div>
-    <div class="cta-sub">Submit your studio. We’ll review and make it discoverable.</div>
+    <div class="cta-title">{title}</div>
+    <div class="cta-sub">{subtitle}</div>
   </div>
-  <div class="cta-action mt-6">Submit for review</div>
+  <div class="cta-action mt-6">{ctaLabel}</div>
 </a>
 
 <style>
   .cta-card {
     text-decoration: none;
     border-radius: 24px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
     padding: 40px 32px;
     overflow: hidden;
     position: relative;
@@ -33,8 +41,8 @@ const { className = "" } = Astro.props;
   }
   
   .cta-card:hover {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.12);
+    background: #EAEAEC;
+    border-color: #D4D4D8;
   }
 
   .cta-copy {
@@ -45,10 +53,10 @@ const { className = "" } = Astro.props;
   }
 
   .cta-title {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 32px;
     font-weight: 400;
-    color: #fff;
+    color: var(--color-black);
     margin-bottom: 12px;
     letter-spacing: 0;
     line-height: 1;
@@ -57,7 +65,7 @@ const { className = "" } = Astro.props;
   .cta-sub {
     font-family: var(--font-sans);
     font-size: 15px;
-    color: rgba(255,255,255,0.5);
+    color: var(--color-gray);
     line-height: 1.5;
     margin-bottom: 0;
     max-width: 32ch;
@@ -68,15 +76,15 @@ const { className = "" } = Astro.props;
     font-size: 15px;
     font-weight: 400;
     letter-spacing: 0;
-    color: #0b0d0f;
-    background: #ffffff;
+    color: var(--color-black);
+    background: var(--color-white);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     height: 48px;
     padding: 0 24px;
     border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.18);
+    border: 1px solid var(--color-stroke);
     transition: all 0.2s ease;
     flex-shrink: 0;
   }

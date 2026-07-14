@@ -8,7 +8,7 @@ import { normalizeImage } from '../../../lib/images';
 type Studio = { slug: string; name: string; cover?: string | null; city?: string | null; country_slug?: string | null };
 
 const page = Math.max(1, Number.parseInt(Astro.params.page || '1', 10) || 1);
-const perPage = 20;
+const perPage = 18;
 
 const isDev = import.meta.env.DEV;
 const origin = Astro.url.origin;
@@ -79,16 +79,16 @@ const schema = {
     {nextUrl && <link rel="next" href={nextUrl} />}
   </slot>
 
-  <main class="bg-black">
+  <main class="bg-white">
     <section class="max-w-[1600px] mx-auto px-10 pt-14 pb-10">
-      <h1 class="font-mono text-white font-normal tracking-normal leading-[0.98] text-[clamp(34px,4vw,56px)]">
+      <h1 class="font-sans text-black font-normal tracking-normal leading-[0.98] text-[clamp(34px,4vw,56px)]">
         Design studios directory <span class="text-gray">(Page {page} of {totalPages})</span>
       </h1>
       <p class="font-sans text-[15px] leading-[1.6] text-gray mt-4 max-w-[75ch]">
         A crawlable, server-rendered directory view for search engines and research. For interactive filtering and map exploration, use the main Designers experience.
       </p>
       <div class="mt-4 flex gap-2 flex-wrap">
-        <a href="/designers" class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">Open Designers</a>
+        <a href="/designers" class="px-4 h-10 inline-flex items-center rounded-full border border-stroke bg-bg-secondary text-black font-sans font-semibold text-[13px] no-underline">Open Designers</a>
       </div>
     </section>
 
@@ -97,14 +97,14 @@ const schema = {
         {slice.map((s) => (
           <a
             href={`/designers/${s.slug}`}
-            class="block rounded-2xl bg-[#111315] border border-white/5 overflow-hidden no-underline hover:-translate-y-1 transition-transform duration-200"
+            class="block rounded-2xl bg-white border border-stroke overflow-hidden no-underline hover:-translate-y-1 transition-transform duration-200"
           >
             <div class="p-6 flex items-center gap-4">
-              <div class="w-14 h-14 rounded-xl bg-[#1C1E20] overflow-hidden flex-shrink-0">
-                {s.cover ? <img src={s.cover} alt={s.name} loading="lazy" class="w-full h-full object-cover" /> : <div class="w-full h-full bg-[#1C1E20]" />}
+              <div class="w-14 h-14 rounded-xl bg-bg-secondary overflow-hidden flex-shrink-0">
+                {s.cover ? <img src={s.cover} alt={s.name} loading="lazy" class="w-full h-full object-cover" /> : <div class="w-full h-full bg-bg-secondary" />}
               </div>
               <div class="min-w-0">
-                <div class="font-mono text-white font-normal text-[18px] leading-[1.15] truncate">{s.name}</div>
+                <div class="font-sans text-black font-normal text-[18px] leading-[1.15] truncate">{s.name}</div>
                 <div class="font-sans text-gray text-[13px] mt-1 truncate">
                   {s.city ?? ''}{s.city && s.country_slug ? ' · ' : ''}{s.country_slug ?? ''}
                 </div>
@@ -117,12 +117,12 @@ const schema = {
 
     <nav class="max-w-[1600px] mx-auto px-10 pb-24 flex items-center justify-between">
       {prevUrl ? (
-        <a href={`/designers/page/${page - 1}`} class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
+        <a href={`/designers/page/${page - 1}`} class="px-4 h-10 inline-flex items-center rounded-full border border-stroke bg-bg-secondary text-black font-sans font-semibold text-[13px] no-underline">
           Prev
         </a>
       ) : <span />}
       {nextUrl ? (
-        <a href={`/designers/page/${page + 1}`} class="px-4 h-10 inline-flex items-center rounded-full border border-white/10 bg-white/5 text-white font-sans font-semibold text-[13px] no-underline">
+        <a href={`/designers/page/${page + 1}`} class="px-4 h-10 inline-flex items-center rounded-full border border-stroke bg-bg-secondary text-black font-sans font-semibold text-[13px] no-underline">
           Next
         </a>
       ) : <span />}

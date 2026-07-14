@@ -170,6 +170,31 @@ function createTursoAdapter(env: Env) {
           args: [userId],
         });
 
+        await turso.execute({
+          sql: 'DELETE FROM user_saved_museums WHERE user_id = ?',
+          args: [userId],
+        });
+
+        await turso.execute({
+          sql: 'DELETE FROM user_saved_universities WHERE user_id = ?',
+          args: [userId],
+        });
+
+        await turso.execute({
+          sql: 'DELETE FROM oauth_accounts WHERE user_id = ?',
+          args: [userId],
+        });
+
+        await turso.execute({
+          sql: 'DELETE FROM magic_link_tokens WHERE user_id = ?',
+          args: [userId],
+        });
+
+        await turso.execute({
+          sql: 'DELETE FROM submissions WHERE user_id = ?',
+          args: [userId],
+        });
+
         // Delete user's sessions
         await turso.execute({
           sql: 'DELETE FROM sessions WHERE user_id = ?',

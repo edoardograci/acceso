@@ -5,23 +5,22 @@
    THEME: Design tokens mapped to Tailwind v4 syntax
    =================================================== */
 @theme {
-  /* Colors */
+  /* Colors — light mode */
   --color-black: #0F1113;
   --color-white: #FFFFFF;
-  --color-bg-secondary: #15181A;
-  --color-stroke: #28292B;
-  --color-gray: #898A8B;
-  --color-nav-inactive: #9FA0A1;
-  --color-yellow: #EDFE44;
-  --color-dark-yellow: #1A1D15;
-  --color-btn-bg: #1C1E20;
+  --color-bg-secondary: #F4F4F5;
+  --color-stroke: #E4E4E7;
+  --color-gray: #52525B;
+  --color-nav-inactive: #52525B;
+  --color-text-muted: #52525B;
+  --color-yellow: #EDFF77;
+  --color-btn-bg: #F4F4F5;
   --color-danger: #ef4444;
   --color-danger-hover: #dc2626;
   --color-success: #2ecc71;
 
   /* Typography */
-  --font-mono: 'PP Supply Sans', monospace;
-  --font-sans: 'PP Fraktion Sans', sans-serif;
+  --font-sans: 'Geist Sans', ui-sans-serif, system-ui, sans-serif;
 
   /* Spacing */
   --spacing-page: 16px;
@@ -29,18 +28,16 @@
 
 /* ===================================================
    FONTS
+   Self-hosted from the `geist` npm package (same-origin,
+   satisfies the strict `font-src 'self'` CSP). Source file:
+   node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2
+   copied to public/fonts/Geist-Variable.woff2
    =================================================== */
 @font-face {
-  font-family: 'PP Supply Sans';
-  src: url('/fonts/PPSupplySans-Variable.ttf') format('truetype');
-  font-weight: 200 800;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'PP Fraktion Sans';
-  src: url('/fonts/PPFraktionSans-Variable.ttf') format('truetype');
-  font-weight: 300 800;
+  font-family: 'Geist Sans';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -80,21 +77,22 @@
 
   html {
     scroll-behavior: smooth;
+    color-scheme: light;
   }
 
   ::selection {
-    background-color: var(--color-dark-yellow);
-    color: var(--color-white);
+    background-color: var(--color-yellow);
+    color: var(--color-black);
   }
 
   ::-moz-selection {
-    background-color: var(--color-dark-yellow);
-    color: var(--color-white);
+    background-color: var(--color-yellow);
+    color: var(--color-black);
   }
 
   body {
-    background-color: var(--color-black);
-    color: var(--color-white);
+    background-color: var(--color-white);
+    color: var(--color-black);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -104,7 +102,7 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-weight: 400;
   }
 
@@ -119,7 +117,7 @@
   }
 
   a:hover {
-    color: var(--color-yellow);
+    color: var(--color-black);
   }
 }
 
@@ -149,7 +147,8 @@
   }
 
   .btn-primary:hover {
-    background: #f2ff74;
+    background: var(--color-yellow);
+    filter: brightness(0.93);
     color: var(--color-black);
   }
 
@@ -160,7 +159,7 @@
     padding: 0 32px;
     background: transparent;
     border: 1px solid var(--color-stroke);
-    color: var(--color-white);
+    color: var(--color-black);
     border-radius: 999px;
     font-family: var(--font-sans);
     font-size: 15px;
@@ -171,9 +170,9 @@
   }
 
   .btn-secondary:hover:not(:disabled) {
-    border-color: var(--color-white);
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--color-white);
+    border-color: var(--color-black);
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--color-black);
   }
 
   .btn-secondary:disabled {
@@ -188,7 +187,7 @@
     padding: 0 16px;
     border: 1px solid var(--color-stroke);
     background: var(--color-bg-secondary);
-    color: var(--color-white);
+    color: var(--color-black);
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 700;
@@ -202,8 +201,8 @@
   }
 
   .btn-pill:hover {
-    border-color: var(--color-yellow);
-    color: var(--color-white);
+    border-color: var(--color-black);
+    color: var(--color-black);
   }
 
   /* Unified small pill link button (See all / Discover city / Explore ...) */
@@ -213,9 +212,9 @@
     height: 36px;
     padding: 0 16px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--color-white);
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
     font-family: var(--font-sans);
     font-size: 15px;
     font-weight: 400;
@@ -226,9 +225,9 @@
   }
 
   .pill-link:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.18);
-    color: var(--color-white);
+    background: #EBEBED;
+    border-color: #D4D4D8;
+    color: var(--color-black);
   }
 
   .pill-link svg {
@@ -256,7 +255,114 @@
   }
 
   .btn-icon:hover {
-    opacity: 0.8;
+    border-color: var(--color-black);
+    background-color: var(--color-white);
+    color: var(--color-black);
+    opacity: 1;
+  }
+
+  /* Social icon links — opacity only, no movement or harsh bg swap */
+  .social-icon-btn {
+    transition: opacity 0.2s ease;
+  }
+
+  .social-icon-btn:hover {
+    background-color: #EBEBED;
+    border-color: #D4D4D8;
+    color: var(--color-black);
+  }
+
+  /* Card action buttons (designer + discover detail pages) */
+  .card-footer-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .footer-btn {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 48px;
+    border-radius: 10px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0 16px;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .footer-btn:hover {
+    color: inherit;
+  }
+
+  .share-btn {
+    background: var(--color-white);
+    border: 1px solid var(--color-stroke);
+    color: var(--color-black);
+  }
+
+  .share-btn:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+    color: var(--color-black);
+  }
+
+  .save-btn {
+    background: var(--color-black);
+    border: 1px solid var(--color-black);
+    color: var(--color-white);
+  }
+
+  .save-btn:hover {
+    background: #2a2d30;
+    border-color: #2a2d30;
+    color: var(--color-white);
+  }
+
+  .card-social-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    background: var(--color-white);
+    border: 1px solid var(--color-stroke);
+    border-radius: 10px;
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .card-social-btn:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+    color: var(--color-black);
+  }
+
+  /* Pagination — make the current page clearly distinguishable from the rest */
+  .pagination-wrapper .pagination-btn {
+    border: 1px solid transparent;
+    color: #9ca3af;
+  }
+
+  .pagination-wrapper .pagination-btn.active {
+    background: var(--color-black);
+    color: var(--color-white);
+    border-color: var(--color-black);
+    cursor: default;
+  }
+
+  .pagination-wrapper .pagination-btn:not(.active):hover {
+    color: var(--color-black);
   }
 
   .btn-icon img {
@@ -303,10 +409,10 @@
     width: 100%;
     height: var(--btn-height-large);
     padding: 0 16px;
-    background: var(--color-bg-secondary);
+    background: var(--color-white);
     border: 1px solid var(--color-stroke);
     border-radius: 6px;
-    color: var(--color-white);
+    color: var(--color-black);
     font-family: var(--font-sans);
     font-size: 15px;
     outline: none;
@@ -319,7 +425,7 @@
   }
 
   .input::placeholder {
-    color: #555;
+    color: var(--color-gray);
   }
 
   /* --- Cards -------------------------------------------- */
@@ -369,13 +475,13 @@
   .dropdown-menu {
     position: absolute;
     top: calc(100% + 8px);
-    background-color: var(--color-bg-secondary);
+    background-color: var(--color-white);
     border: 1px solid var(--color-stroke);
     border-radius: 6px;
     overflow: hidden;
     z-index: 1000;
     min-width: 160px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   .dropdown-item {
@@ -383,7 +489,7 @@
     padding: 12px 16px;
     background: none;
     border: none;
-    color: var(--color-white);
+    color: var(--color-black);
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 450;
@@ -392,8 +498,8 @@
   }
 
   .dropdown-item:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--color-white);
+    background-color: var(--color-bg-secondary);
+    color: var(--color-black);
   }
 
   .dropdown-item:not(:last-child) {
@@ -404,12 +510,12 @@
 
   .modal-backdrop {
     @apply fixed inset-0 flex items-center justify-center;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.4);
     z-index: 1000;
   }
 
   .modal-panel {
-    background: var(--color-bg-secondary);
+    background: var(--color-white);
     border: 1px solid var(--color-stroke);
     border-radius: 6px;
     padding: 32px;
@@ -424,7 +530,7 @@
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 500;
-    color: var(--color-white);
+    color: var(--color-black);
   }
 }
 
@@ -436,7 +542,7 @@
   /* Skeleton loading shimmer */
   .skeleton {
     position: relative;
-    background: linear-gradient(90deg, #242424 0px, #2a2a2a 40px, #242424 80px);
+    background: linear-gradient(90deg, #E4E4E7 0px, #F4F4F5 40px, #E4E4E7 80px);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.2s ease-in-out infinite;
   }

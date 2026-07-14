@@ -3,7 +3,9 @@ export function normalizeImage(
   context: any | string, 
   options?: { width?: number; height?: number; quality?: number }
 ): string | null {
-  if (!path) return null;
+  if (!path) {
+    return null;
+  }
 
   let cleanPath = path;
 

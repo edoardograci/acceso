@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ site, url }) => {
   const projectItems =
     projects.status === 'fulfilled'
       ? (Array.isArray(projects.value) ? projects.value : []).slice(0, 80).map((p) => {
-          const link = new URL(`/projects/${encodeURIComponent(p.slug)}`, site).toString();
+          const link = new URL(`/discover/${encodeURIComponent(p.slug)}`, site).toString();
           const pubDate = p.updated_at ? new Date(p.updated_at) : new Date();
           const description = p.designer ? `${p.name} by ${p.designer}.` : `${p.name}.`;
           return {

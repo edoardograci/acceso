@@ -1,0 +1,471 @@
+﻿---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import DirectoryCard from '../../components/DirectoryCard.astro';
+import Footer from '../../components/Footer.astro';
+import SaveButton from '../../components/SaveButton.astro';
+import { normalizeImage } from '../../lib/images';
+import { ensureProtocol } from '../../lib/url';
+import type { Studio } from '../../lib/types';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import DesignerMoodboard from '../../components/DesignerMoodboard.astro';
+
+const { slug } = Astro.params;
+
+const countryNames: Record<string, string> = {
+  'united-kingdom': 'United Kingdom',
+  'south-korea': 'South Korea',
+  'united-states': 'United States',
+};
+
+function countryDisplayName(slugVal: string | null): string {
+  if (!slugVal) return '';
+  const val = slugVal.toLowerCase();
+  if (countryNames[val]) return countryNames[val];
+  return val.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+const user = Astro.locals.user;
+const isLoggedIn = !!user;
+
+let studio: Studio | null = null;
+let error = null;
+let relatedStudios: Studio[] = [];
+let hasProjects = false;
+
+try {
+  const isDev = import.meta.env.DEV;
+  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+  const studiosUrl = `${domain}/test-studios.json`;
+  const moodboardUrl = `${domain}/moodboard.json`;
+  
+  const response = await fetch(studiosUrl);
+  if (response.ok) {
+    const rawStudios: Studio[] = await response.json();
+    const mappedStudios = rawStudios;
+    studio = mappedStudios.find(s => s.slug === slug) || null;
+
+    if (studio) {
+      const currentStudio = studio;
+      // 1. Fetch Projects for this studio to check if section should exist
+      const moodboardRes = await fetch(moodboardUrl);
+      if (moodboardRes.ok) {
+        const moodboardItems = await moodboardRes.json();
+        const projects = moodboardItems.filter(
+          (item: any) => item.designer && item.designer.toLowerCase() === currentStudio.name.toLowerCase() && item.cover
+        );
+        hasProjects = projects.length > 0;
+      }
+
+      // 2. Similar Studios
+      relatedStudios = mappedStudios
+        .filter((s: any) => s.slug !== slug && (s.city_slug === currentStudio.city_slug || s.country_slug === currentStudio.country_slug))
+        .sort((a: any) => (a.city_slug === currentStudio.city_slug ? -1 : 1))
+        .slice(0, 10);
+    }
+  } else {
+    throw new Error('Failed to fetch studios');
+  }
+} catch (e) {
+  error = e;
+  console.error('Failure to fetch data:', e);
+}
+
+if (!studio && !error) {
+  return Astro.redirect('/404');
+}
+
+// Event fetching has been removed
+---
+
+<Layout 
+  title={studio ? `${studio.name} — Independent Design Studio in ${studio.city}` : 'Loading...'}
+  description={studio ? `${studio.name} is an independent design studio based in ${studio.city}. Explore projects, objects, and studio information.` : ''}
+>
+  <Navbar />
+  
+  {studio && (
+    <div class="breadcrumbs-container">
+      <Breadcrumbs items={[
+        { label: 'Directory', href: '/directory' },
+        { label: studio.name }
+      ]} />
+    </div>
+  )}
+
+  <main class="designer-container">
+    {error ? (
+      <div role="alert" style="padding: 64px 24px; text-align: center; color: var(--color-text-muted); font-family: var(--font-sans);">
+        <p style="margin: 0;">This studio couldn't be loaded right now. Please try again later.</p>
+      </div>
+    ) : studio && (
+      <>
+        <div class="designer-hero-row">
+          <div class="hero-image-wrapper">
+            {studio.cover ? (
+              <img 
+                src={normalizeImage(studio.cover, Astro, { width: 1200 })} 
+                alt={studio.name} 
+                class="hero-image"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+              />
+            ) : (
+              <div class="hero-image-placeholder">No image available</div>
+            )}
+          </div>
+
+          <aside class="info-card">
+            <div class="info-card-content">
+              <h1 class="designer-name">{studio.name}</h1>
+              <p class="designer-description">
+                {studio.description || 'No description available.'}
+              </p>
+
+              <div class="social-links">
+                <a href={ensureProtocol(studio.website) || '#'} target="_blank" rel="noopener noreferrer" class="card-social-btn">
+                  <img src="/icons/source.svg" alt="" width="16" height="16" />
+                  <span>Website</span>
+                </a>
+                <a href={ensureProtocol(studio.instagram) || '#'} target="_blank" rel="noopener noreferrer" class="card-social-btn">
+                  <img src="/icons/instagram.svg" alt="" width="16" height="16" />
+                  <span>Instagram</span>
+                </a>
+              </div>
+
+              <div class="details-section">
+                <div class="details-row">
+                  <span class="detail-label">Country</span>
+                  {studio.country_slug ? (
+                    <a href={`/designers/in/${studio.country_slug}`} class="detail-value underlined detail-link">
+                      {countryDisplayName(studio.country_slug)}
+                    </a>
+                  ) : (
+                    <span class="detail-value">{studio.city}</span>
+                  )}
+                </div>
+                <div class="details-divider"></div>
+                <div class="details-row">
+                  <span class="detail-label">Location</span>
+                  {studio.city_slug ? (
+                    <a href={`/designers/in/${studio.city_slug}`} class="detail-value underlined detail-link">
+                      {studio.city}
+                    </a>
+                  ) : (
+                    <span class="detail-value underlined">{studio.city}</span>
+                  )}
+                </div>
+              </div>
+
+              <div class="contacts-section" id="contactsSection">
+                <div class="details-row" id="contactsToggle">
+                  <span class="detail-label">Contacts</span>
+                  {isLoggedIn ? (
+                    <div class="contact-trigger">
+                      <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  ) : (
+                    <a href="/login" class="detail-value contact-link">
+                      <span>Login to view</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </a>
+                  )}
+                </div>
+                {isLoggedIn && studio && (
+                  <div class="contacts-content" id="contactsContent">
+                    {studio.email && <a href={`mailto:${studio.email}`} class="contact-email underlined">{studio.email}</a>}
+                    {studio.email2 && <a href={`mailto:${studio.email2}`} class="contact-email underlined">{studio.email2}</a>}
+                    {!studio.email && !studio.email2 && <span class="contact-email">No contact email available</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div class="card-footer-actions">
+              <button class="footer-btn share-btn" id="shareButton">
+                <img src="/icons/share.svg" alt="" width="18" height="18" />
+                <span>Share</span>
+              </button>
+              <SaveButton type="designer" itemId={studio.id} itemName={studio.name} buttonClass="footer-btn save-btn" />
+            </div>
+          </aside>
+        </div>
+
+        {hasProjects && (
+          <section class="projects-section">
+            <h2 class="projects-title">Projects</h2>
+            <div class="projects-grid-wrapper">
+              <DesignerMoodboard studio={studio} />
+            </div>
+          </section>
+        )}
+
+        <section class="discovery-area">
+          <div class="discovery-content">
+            {relatedStudios.length > 0 && (
+              <div class="discovery-section">
+                <div class="section-top">
+                  <h2 class="discovery-title">Discover more in {studio.city || 'the area'}</h2>
+                  <a href={`/directory?city=${studio.city_slug}`} class="discovery-see-all pill-link">
+                    Discover city
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                </div>
+                <div class="discovery-grid">
+                  {relatedStudios.map((s, index) => (
+                    <DirectoryCard studio={s} index={index} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      </>
+    )}
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Share Button Functionality
+  const shareButton = document.getElementById('shareButton');
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      const shareData = {
+        title: document.title,
+        url: window.location.href,
+        text: 'Check out this designer on Acceso'
+      };
+
+      try {
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          alert('Link copied to clipboard');
+        }
+      } catch (err) {
+      }
+    });
+  }
+
+  // Contacts Dropdown Toggle
+  const contactsToggle = document.getElementById('contactsToggle');
+  const contactsSection = document.getElementById('contactsSection');
+  if (contactsToggle && contactsSection) {
+    contactsToggle.addEventListener('click', () => {
+      contactsSection.classList.toggle('expanded');
+    });
+  }
+</script>
+
+<style>
+  .detail-value.underlined {
+    text-decoration: underline;
+  }
+
+  save-button {
+    display: contents;
+  }
+
+  .designer-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 40px 0px;
+  }
+
+  /* Breadcrumbs */
+  .breadcrumbs-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--page-top-spacing) 40px 0;
+  }
+
+  /* Hero Layout */
+  .designer-hero-row {
+    display: flex;
+    gap: 40px;
+    margin-top: var(--page-hero-gap);
+    align-items: stretch;
+    justify-content: flex-end;
+    --hero-card-height: clamp(500px, 75vh, 700px);
+  }
+
+  .hero-image-wrapper {
+    height: var(--hero-card-height);
+    max-height: var(--hero-card-height);
+    width: auto;
+    max-width: 100%;
+    background: var(--color-bg-secondary);
+    border-radius: 0;
+    overflow: hidden;
+    flex-shrink: 1;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .hero-image {
+    max-height: 100%;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    border-radius: 0;
+  }
+
+  /* Info Card */
+  .info-card {
+    width: 400px;
+    height: var(--hero-card-height, clamp(500px, 75vh, 700px));
+    max-height: var(--hero-card-height, clamp(500px, 75vh, 700px));
+    background: var(--color-bg-secondary);
+    border-radius: 20px;
+    padding: clamp(20px, 3vh, 32px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .info-card-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    padding-right: 8px;
+    margin-right: -8px;
+    min-height: 0;
+  }
+
+  .info-card::-webkit-scrollbar { display: none; }
+  .info-card-content::-webkit-scrollbar { display: none; }
+
+  .designer-name {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: 0;
+    color: var(--color-black);
+    margin-bottom: 24px;
+  }
+
+  .designer-description {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-gray);
+    margin-bottom: 24px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .details-section {
+    background: var(--color-btn-bg);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .details-row { display: flex; justify-content: space-between; align-items: center; }
+  .detail-label { font-size: 15px; color: var(--color-gray); }
+  .detail-value { font-size: 15px; font-weight: 700; color: var(--color-black); text-decoration: none; display: flex; align-items: center; gap: 6px; }
+  .detail-link:hover { color: var(--color-black); transform: translateX(2px); transition: 0.2s; }
+
+  .details-divider { height: 1px; background: var(--color-stroke); margin: 12px 0; }
+
+  .contacts-section { background: var(--color-btn-bg); border-radius: 10px; padding: 16px; margin-bottom: 24px; }
+  .contact-trigger { cursor: pointer; display: flex; align-items: center; color: var(--color-black); }
+  .chevron-icon { transition: transform 0.3s ease; }
+  .contacts-section.expanded .chevron-icon { transform: rotate(180deg); }
+  .contacts-content { display: none; flex-direction: column; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-stroke); }
+  .contacts-section.expanded .contacts-content { display: flex; }
+  .contact-email { font-size: 15px; font-weight: 700; color: var(--color-black); text-decoration: none; width: fit-content; }
+
+  .card-footer-actions {
+    margin-top: auto;
+  }
+
+  .projects-section { margin-top: 120px; }
+  .projects-title { font-family: var(--font-sans); font-size: 31px; font-weight: 400; color: var(--color-black); margin-bottom: 40px; }
+
+  /* Discovery Area Styling */
+  .discovery-area {
+    margin-top: 120px;
+    padding-bottom: 80px;
+  }
+
+  .discovery-section {
+    margin-bottom: 80px;
+  }
+
+  .section-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+    padding-bottom: 0;
+  }
+
+  .discovery-title {
+    font-family: var(--font-sans);
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+
+  .discovery-see-all { flex-shrink: 0; }
+
+  .discovery-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(16px, 2vw, 24px); }
+
+  .events-discovery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  @media (max-width: 1300px) {
+    .discovery-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  @media (max-width: 1100px) {
+    .discovery-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 1024px) {
+    .designer-hero-row { flex-direction: column; align-items: center; }
+    .info-card { width: 100%; height: auto; max-height: none; max-width: 600px; }
+    .hero-image-wrapper { width: 100%; max-width: 600px; height: auto; max-height: none; min-height: auto; }
+    .designer-container { padding: 0 20px 0px; }
+    .breadcrumbs-container { padding-left: 20px; }
+  }
+
+  @media (max-width: 640px) {
+    .discovery-grid { grid-template-columns: repeat(2, 1fr); }
+    .events-discovery-grid { grid-template-columns: 1fr; }
+    .discovery-area { margin-top: 80px; padding-bottom: 40px; }
+    .discovery-title { font-size: 20px; }
+  }
+</style>

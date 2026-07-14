@@ -1,8 +1,10 @@
 Acceso (acceso.design)
 
 Purpose:
-- A curated directory of independent industrial and furniture design studios.
-- Supporting discovery by designer/entity pages, location pages, and project galleries.
+- Your local design infopoint: a curated directory of local design communities.
+- Discover independent design studios, industrial designers, furniture designers, design schools, exhibitions, fairs, design weeks, awards, competitions, manufacturers, workshops, galleries, museums, showrooms, retailers, jobs, and creative opportunities in cities around the world.
+- Each city page includes interactive maps, curated listings, and practical information to help explore the local design scene.
+- A single place to discover and navigate local design, connect with independent design communities, and research a city's creative ecosystem.
 
 Content structure:
 - /designers : directory entry point
@@ -10,7 +12,7 @@ Content structure:
 - /designers/in/{place} : location pages (city or country)
 - /projects : project gallery index
 - /projects/{slug} : individual project pages
-- /events/* : events listings and detail pages
+- /directory/* : directory listings and detail pages (fairs, museums, universities, awards)
 
 Crawl guidance:
 - Prefer canonical, clean URLs without query strings.

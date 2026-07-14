@@ -1,6 +1,10 @@
 // src/lib/rate-limiter.ts
-// Simple in-memory rate limiter for Cloudflare Workers
-// For production, consider using Cloudflare Workers KV or Durable Objects for distributed rate limiting
+// Persistent rate limiter backed by Turso.
+// This replaces the old in-memory Map, which did not survive Cloudflare
+// Workers cold starts / isolation, so limits now apply across all instances.
+
+import { TursoHttpClient } from './turso';
+import type { Env } from '../env.d';
 
 interface RateLimitConfig {
     maxRequests: number;
@@ -8,91 +12,82 @@ interface RateLimitConfig {
     keyPrefix?: string;
 }
 
-interface RateLimitEntry {
-    count: number;
-    resetTime: number;
-}
-
-// In-memory store (resets on worker restart, but good enough for basic protection)
-const store = new Map<string, RateLimitEntry>();
-
-// Cleanup old entries periodically (inline to avoid setInterval crash on Edge)
-let lastCleanup = Date.now();
-const CLEANUP_INTERVAL = 60 * 1000; // 1 minute
-
-function cleanup() {
-    const now = Date.now();
-    for (const [key, entry] of store.entries()) {
-        if (now > entry.resetTime) {
-            store.delete(key);
-        }
-    }
-    lastCleanup = now;
-}
-
 /**
- * Check if request should be rate limited
+ * Check if a request should be rate limited.
+ * Uses a Turso-backed `rate_limits` table so the counter persists across
+ * serverless instances. The window is reset automatically once it expires.
+ *
  * @param identifier - Unique identifier (user ID, IP address, etc.)
  * @param config - Rate limit configuration
+ * @param env - Runtime environment providing Turso credentials
  * @returns Object with success boolean and retry info
  */
-export function checkRateLimit(
+export async function checkRateLimit(
     identifier: string,
-    config: RateLimitConfig
-): {
+    config: RateLimitConfig,
+    env: Env
+): Promise<{
     success: boolean;
     remaining: number;
     resetTime: number;
     retryAfter?: number;
-} {
+    limit: number;
+}> {
+    const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
     const now = Date.now();
-
-    // Passive cleanup
-    if (now - lastCleanup > CLEANUP_INTERVAL) {
-        cleanup();
-    }
-
     const key = `${config.keyPrefix || 'rl'}:${identifier}`;
-    const entry = store.get(key);
+    const resetTime = now + config.windowMs;
 
-    if (!entry || now > entry.resetTime) {
-        // First request or window expired, create new entry
-        const resetTime = now + config.windowMs;
-        store.set(key, { count: 1, resetTime });
+    // Atomic upsert: reset the window if it has expired, otherwise increment.
+    await turso.execute({
+        sql: `
+            INSERT INTO rate_limits (key, count, reset_time) VALUES (?, 1, ?)
+            ON CONFLICT(key) DO UPDATE SET
+                count = CASE WHEN rate_limits.reset_time <= ? THEN 1 ELSE rate_limits.count + 1 END,
+                reset_time = CASE WHEN rate_limits.reset_time <= ? THEN ? ELSE rate_limits.reset_time END
+        `,
+        args: [key, resetTime, now, now, resetTime],
+    });
 
+    // Best-effort pruning of expired entries (sampled) to keep the table lean.
+    if (Math.random() < 0.01) {
+        await turso.execute({
+            sql: 'DELETE FROM rate_limits WHERE reset_time <= ?',
+            args: [now],
+        }).catch(() => {});
+    }
+
+    const result = await turso.execute({
+        sql: 'SELECT count, reset_time FROM rate_limits WHERE key = ?',
+        args: [key],
+    });
+
+    const row = result.rows[0];
+    const count = (row?.count as number) ?? 1;
+    const rowReset = (row?.reset_time as number) ?? resetTime;
+
+    if (count > config.maxRequests) {
         return {
-            success: true,
-            remaining: config.maxRequests - 1,
-            resetTime
+            success: false,
+            remaining: 0,
+            resetTime: rowReset,
+            retryAfter: Math.ceil((rowReset - now) / 1000),
+            limit: config.maxRequests,
         };
     }
 
-    // Within rate limit window
-    if (entry.count < config.maxRequests) {
-        // Increment count
-        entry.count++;
-        store.set(key, entry);
-
-        return {
-            success: true,
-            remaining: config.maxRequests - entry.count,
-            resetTime: entry.resetTime
-        };
-    }
-
-    // Rate limit exceeded
     return {
-        success: false,
-        remaining: 0,
-        resetTime: entry.resetTime,
-        retryAfter: Math.ceil((entry.resetTime - now) / 1000)
+        success: true,
+        remaining: Math.max(0, config.maxRequests - count),
+        resetTime: rowReset,
+        limit: config.maxRequests,
     };
 }
 
 /**
  * Create rate limit error response
  */
-export function createRateLimitResponse(retryAfter: number): Response {
+export function createRateLimitResponse(retryAfter: number, limit?: number): Response {
     return new Response(
         JSON.stringify({
             error: 'Too many requests',
@@ -104,7 +99,7 @@ export function createRateLimitResponse(retryAfter: number): Response {
             headers: {
                 'Content-Type': 'application/json',
                 'Retry-After': retryAfter.toString(),
-                'X-RateLimit-Limit': '100',
+                'X-RateLimit-Limit': (limit ?? 100).toString(),
                 'X-RateLimit-Remaining': '0',
                 'X-RateLimit-Reset': new Date(Date.now() + retryAfter * 1000).toISOString()
             }

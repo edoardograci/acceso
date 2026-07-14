@@ -17,8 +17,11 @@ export type Env = {
   INDEX_BUCKET: R2Bucket;
   MOODBOARD_BUCKET: R2Bucket;
   JSON_BUCKET: R2Bucket;
+  EVENTS_BUCKET: R2Bucket;
+  IMAGES: {
+    resize: (input: ArrayBuffer | ReadableStream | Response, options: Record<string, any>) => Promise<{ arrayBuffer: () => Promise<ArrayBuffer>; type?: string }>;
+  };
 };
-
 
 type Runtime = {
   env: Env;
@@ -34,6 +37,9 @@ declare global {
         id: string;
         email: string;
         emailVerified: boolean;
+        name?: string;
+        plan?: string;
+        createdAt?: string;
       } | null;
       session: {
         id: string;
@@ -70,12 +76,19 @@ declare global {
     };
     collectionsState?: {
       loaded: boolean;
+      init: () => void;
+      designers: Set<string>;
+      objects: Set<string>;
+      museums: Set<string>;
+      universities: Set<string>;
       subscribe: (fn: () => void) => () => void;
       isSaved: (type: string, id: string) => boolean;
       getCount: (type: string) => number;
       addItem: (type: string, id: string) => Promise<void>;
       removeItem: (type: string, id: string) => Promise<void>;
+      clear: () => void;
     };
+    studiosData?: any[];
     __posthog_loaded?: boolean;
   }
 }

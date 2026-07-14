@@ -1,0 +1,575 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Navbar from '../../../components/Navbar.astro';
+import Footer from '../../../components/Footer.astro';
+import EventBasicCard from '../../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../../lib/images';
+
+// R2 URLs
+const isDev = import.meta.env.DEV;
+const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+
+let fairs = [];
+let error = null;
+let orderedFilterData: any[] = [];
+let citiesPills: any[] = [];
+
+function distributeGroupsForColumns(groups: any[], columns = 3) {
+  const colHeights = Array(columns).fill(0);
+  const cols: any[][] = Array.from({ length: columns }, () => []);
+  for (const g of groups) {
+    const weight = 1 + (g.cities?.length || 0);
+    let target = 0;
+    for (let i = 1; i < columns; i++) {
+      if (colHeights[i] < colHeights[target]) target = i;
+    }
+    cols[target].push(g);
+    colHeights[target] += weight;
+  }
+  return cols.flat();
+}
+
+try {
+  const [fRes, cRes, ciRes] = await Promise.all([
+    fetch(`${domain}/fairs.json`),
+    fetch(`${domain}/test-countries.json`),
+    fetch(`${domain}/test-cities.json`)
+  ]);
+
+  if (fRes.ok) {
+    const data = await fRes.json();
+    fairs = Array.isArray(data) ? data : (data.items || []);
+  }
+
+  if (cRes.ok && ciRes.ok) {
+    const countriesList = await cRes.json();
+    const citiesList = await ciRes.json();
+    const countryNames = Object.fromEntries(countriesList.map((c: any) => [c.slug, c.name]));
+
+    // Count fairs per city from the actual data
+    const cityCounts: Record<string, number> = {};
+    fairs.forEach((f: any) => {
+      if (f.city_slug) cityCounts[f.city_slug] = (cityCounts[f.city_slug] || 0) + 1;
+    });
+
+    // The cities list has empty country fields, so derive each city's
+    // country from the fairs data (which carries country_slug).
+    const cityToCountry: Record<string, string> = {};
+    fairs.forEach((f: any) => {
+      if (f.city_slug && f.country_slug) cityToCountry[f.city_slug] = f.country_slug;
+    });
+
+    // Group every city under its real country (mirrors designers filtering)
+    const groupsByCountry: Record<string, any> = {};
+    citiesList.forEach((ct: any) => {
+      if (!ct.slug || !cityCounts[ct.slug]) return;
+      const countrySlug = ct.country || cityToCountry[ct.slug];
+      if (!countrySlug) return;
+      if (!groupsByCountry[countrySlug]) {
+        groupsByCountry[countrySlug] = {
+          name: countryNames[countrySlug] || countrySlug,
+          slug: countrySlug,
+          count: 0,
+          cities: [] as any[],
+        };
+      }
+      groupsByCountry[countrySlug].cities.push({ name: ct.name, slug: ct.slug, count: cityCounts[ct.slug] });
+      groupsByCountry[countrySlug].count += cityCounts[ct.slug];
+    });
+
+    const sortedGroups = Object.values(groupsByCountry).sort((a: any, b: any) => {
+      const byCities = (b.cities?.length || 0) - (a.cities?.length || 0);
+      if (byCities !== 0) return byCities;
+      return a.name.localeCompare(b.name);
+    });
+    orderedFilterData = distributeGroupsForColumns(sortedGroups, 3);
+
+    citiesPills = citiesList
+      .filter((ct: any) => cityCounts[ct.slug])
+      .map((ct: any) => ({ name: ct.name, slug: ct.slug }))
+      .sort((a: any, b: any) => cityCounts[b.slug] - cityCounts[a.slug]);
+  }
+} catch (e) {
+  error = e;
+  console.error('[Fairs Index] Fail to fetch data:', e);
+}
+
+function getPeriod(startStr: string, endStr: string) {
+  if (!startStr) return "";
+  const start = new Date(startStr);
+  const end = endStr ? new Date(endStr) : null;
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const startDay = start.getDate();
+  const startMonth = monthNames[start.getMonth()];
+  if (!end || isNaN(end.getTime()) || startStr === endStr) return `${startMonth} ${startDay}`;
+  const endDay = end.getDate();
+  if (start.getMonth() === end.getMonth()) return `${startMonth} ${startDay}-${endDay}`;
+  const endMonth = monthNames[end.getMonth()];
+  return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
+}
+
+const now = new Date();
+now.setHours(0, 0, 0, 0);
+
+const processedFairs = fairs.map((f: any) => {
+  const end = f.end_date ? new Date(f.end_date) : (f.start_date ? new Date(f.start_date) : null);
+  const upcoming = end ? end >= now : false;
+  return {
+    ...f,
+    pillText: getPeriod(f.start_date, f.end_date),
+    pillType: 'default',
+    location: f.city || f.location,
+    upcoming,
+  };
+});
+
+const cityParam = Astro.url.searchParams.get('city');
+let initialCity = 'all';
+if (cityParam) {
+  const matched = citiesPills.find((c) => c.slug === cityParam);
+  if (matched) initialCity = matched.slug;
+}
+---
+
+<Layout 
+  title="Design Fairs Directory | Acceso"
+  description="Discover global design weeks, biennials, and furniture trade shows worldwide."
+>
+  <Navbar />
+  
+  <main class="directory-page">
+    <div class="directory-inner">
+      <header class="directory-hero">
+        <h1 class="directory-title">Fairs</h1>
+        <p class="directory-description">
+          Global design weeks, biennials, and furniture trade shows.
+          Explore the most important design events and exhibitions worldwide.
+        </p>
+      </header>
+
+      {error && (
+        <div role="alert" style="padding: 14px 18px; margin-bottom: 24px; border: 1px solid var(--color-stroke); border-radius: 12px; background: var(--color-bg-secondary); color: var(--color-text-muted); font-family: var(--font-sans); font-size: 15px;">
+          <p style="margin: 0;">We couldn't load the latest fairs. Please try again later.</p>
+        </div>
+      )}
+
+      <div class="search-row hidden" id="search-row">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search fairs..."
+          aria-label="Search fairs"
+          class="search-input"
+        />
+      </div>
+
+      <div class="city-filter-row">
+        <div class="filter-popover-wrapper">
+          <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
+          <div class="filter-popover" id="filter-popover">
+            <div class="filter-popover-header">
+              <span>Filter by location</span>
+              <div class="filter-header-actions">
+                <button class="filter-clear-all" id="filter-clear-all" type="button">Clear all</button>
+                <button class="filter-close-btn" id="filter-close-btn" type="button" aria-label="Close filters">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="filter-popover-content">
+              {orderedFilterData.map((group: any) => (
+                <div class="filter-group">
+                  <label class="filter-item country-item">
+                    <input type="checkbox" class="country-checkbox" data-country={group.name} data-slug={group.slug} />
+                    <span class="filter-name">{group.name}</span>
+                    <span class="filter-count">({group.count})</span>
+                  </label>
+                  <div class="city-items">
+                    {group.cities.map((city: any) => (
+                      <label class="filter-item city-item">
+                        <input type="checkbox" class="city-checkbox" data-city={city.name} data-slug={city.slug} data-country={group.name} />
+                        <span class="filter-name">{city.name}</span>
+                        <span class="filter-count">({city.count})</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <label class="upcoming-toggle">
+          <input type="checkbox" id="upcoming-toggle" />
+          <span class="upcoming-label">Show upcoming</span>
+        </label>
+
+        <div class="directory-toolbar">
+          <button type="button" class="toolbar-btn" id="view-btn" aria-label="Toggle grid size" title="Smaller images" aria-pressed="false">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button type="button" class="toolbar-btn" id="search-toggle" aria-label="Search" aria-expanded="false">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="results-meta">
+        <p class="results-count" id="fairs-count">{processedFairs.length} results</p>
+      </div>
+
+      <div class="fairs-grid" id="fairs-grid">
+        {processedFairs.map((fair: any) => (
+          <div
+            class="fair-card-wrapper"
+            data-city={fair.city_slug || ''}
+            data-name={(fair.name || '').toLowerCase()}
+            data-start={fair.start_date || ''}
+            data-upcoming={fair.upcoming ? 'true' : 'false'}
+          >
+            <EventBasicCard 
+              name={fair.name}
+              slug={fair.slug}
+              type="fair"
+              location={fair.location}
+              image={normalizeImage(fair.image, Astro)}
+              pillText={fair.pillText}
+              pillType={fair.pillType}
+            />
+          </div>
+        ))}
+        {processedFairs.length === 0 && <p class="empty-state">No fairs found.</p>}
+      </div>
+
+      <div class="hidden py-12 text-center text-gray" id="empty-result">
+        <p>No fairs found matching your criteria.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .directory-page { background: var(--color-white); }
+  .directory-inner { max-width: 1600px; margin: 0 auto; padding: var(--page-top-spacing) 40px 80px; }
+  .directory-hero { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-bottom: 28px; max-width: 640px; }
+  .directory-title { font-family: var(--font-sans); font-size: clamp(48px, 5.5vw, 80px); font-weight: 400; line-height: 1; letter-spacing: -0.08em; margin: 0; color: var(--color-black); }
+  .directory-description { font-family: var(--font-sans); font-size: 16px; line-height: 1.55; color: var(--color-text-muted); margin: 0; max-width: 52ch; }
+  @media (min-width: 1025px) {
+    .directory-hero {
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0 48px;
+      max-width: none;
+    }
+    .directory-description {
+      max-width: min(52ch, 42vw);
+    }
+  }
+
+  .hidden { display: none; }
+
+  .directory-toolbar { display: flex; gap: 4px; flex-shrink: 0; margin-left: auto; }
+  .toolbar-btn { width: 40px; height: 40px; border: none; background: transparent; color: var(--color-black); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s; }
+  .toolbar-btn:hover { background: var(--color-bg-secondary); }
+  .search-row { margin-bottom: 20px; max-width: 480px; margin-left: auto; }
+  .search-row:not(.hidden) { display: block; }
+  .search-input { width: 100%; height: 44px; background: transparent; border: none; border-bottom: 1px solid var(--color-stroke); border-radius: 0; padding: 0 4px; color: var(--color-black); font-family: var(--font-sans); font-size: 15px; outline: none; }
+  .search-input::placeholder { color: var(--color-text-muted); }
+  .search-input:focus { border-bottom-color: var(--color-black); }
+
+  .city-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; position: relative; z-index: 200; flex-wrap: wrap; }
+  .filter-popover-wrapper { position: relative; flex-shrink: 0; }
+  .filter-trigger-btn { height: 36px; padding: 1px 16px 0; border-radius: 999px; border: none; background: var(--color-yellow); color: var(--color-black); font-family: var(--font-sans); font-size: 14px; font-weight: 700; cursor: pointer; }
+  .filter-popover { position: absolute; top: calc(100% + 12px); left: 0; width: min(600px, 90vw); background: var(--color-white); border: 1px solid var(--color-stroke); border-radius: 16px; padding: 24px; z-index: 1500; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+  .filter-popover.show { display: block; }
+  .filter-popover-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-family: var(--font-sans); font-size: 16px; font-weight: 600; color: var(--color-black); }
+  .filter-header-actions { display: flex; align-items: center; gap: 16px; }
+  .filter-clear-all { height: 32px; padding: 1px 14px 0; border-radius: 999px; border: 1px solid var(--color-stroke); background: var(--color-bg-secondary); color: var(--color-black); font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); }
+  .filter-close-btn { display: none; background: transparent; border: none; cursor: pointer; color: var(--color-black); }
+  .filter-popover-content { column-count: 3; column-gap: 20px; }
+  .filter-group { break-inside: avoid; margin-bottom: 18px; }
+  .filter-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .filter-name { font-family: var(--font-sans); font-size: 14px; font-weight: 400; color: var(--color-black); }
+  .country-item .filter-name { font-weight: 700; }
+  .filter-count { font-family: var(--font-sans); font-size: 12px; font-weight: 400; color: var(--color-text-muted); }
+  .filter-item input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-stroke);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    background: var(--color-white);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .filter-item input[type="checkbox"]:checked {
+    background: var(--color-black);
+    border-color: var(--color-black);
+  }
+  .filter-item input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: 4px;
+    height: 8px;
+    border: solid var(--color-white);
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+  .city-items { margin-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+
+  .upcoming-toggle { display: flex; align-items: center; gap: 8px; flex-shrink: 0; cursor: pointer; font-family: var(--font-sans); }
+  .upcoming-label { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--color-black); white-space: nowrap; }
+  .upcoming-toggle input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-stroke);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    background: var(--color-white);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .upcoming-toggle input[type="checkbox"]:checked {
+    background: var(--color-black);
+    border-color: var(--color-black);
+  }
+  .upcoming-toggle input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: 4px;
+    height: 8px;
+    border: solid var(--color-white);
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .city-filter-bar { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(to right, black 85%, transparent 100%); }
+  .city-filter-bar::-webkit-scrollbar { display: none; }
+  .city-filter-scroll { display: flex; gap: 8px; padding: 4px 0; width: max-content; }
+  .city-pill { flex-shrink: 0; height: 36px; padding: 1px 16px 0; display: inline-flex; align-items: center; background: transparent; border: 1px solid var(--color-stroke); border-radius: 999px; color: var(--color-text-muted); font-family: var(--font-sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .city-pill:hover { color: var(--color-black); border-color: var(--color-black); }
+  .city-pill.active { background: var(--color-black); border-color: var(--color-black); color: var(--color-white); }
+
+  .results-meta { margin-bottom: 24px; }
+  .results-count { font-family: var(--font-sans); font-size: 15px; color: var(--color-black); margin: 0; }
+
+  .fairs-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+  }
+  .fair-card-wrapper {
+    width: 100%;
+  }
+  .fair-card-wrapper :global(.card-image-wrapper) { aspect-ratio: 1; }
+
+  .fairs-grid.compact {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .fairs-grid.compact .fair-card-wrapper :global(.card-image-wrapper) { border-radius: 8px; }
+  .fairs-grid.compact .fair-card-wrapper :global(.event-title) { font-size: 13px; }
+  .fairs-grid.compact .fair-card-wrapper :global(.event-meta) { font-size: 11px; }
+  .fairs-grid.compact .fair-card-wrapper { gap: 8px; }
+
+  .empty-state { color: var(--color-gray); font-family: var(--font-sans); font-size: 14px; padding: 20px 0; }
+
+  @media (max-width: 1400px) {
+    .fairs-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (max-width: 1200px) {
+    .fairs-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .fairs-grid { grid-template-columns: repeat(2, 1fr); }
+    .filter-popover-content { column-count: 2; }
+    .search-row { margin-left: 0; max-width: none; }
+  }
+  @media (max-width: 1400px) {
+    .fairs-grid.compact { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  }
+  @media (max-width: 1200px) {
+    .fairs-grid.compact { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  }
+  @media (max-width: 900px) {
+    .fairs-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  @media (max-width: 768px) {
+    .fairs-grid { grid-template-columns: 1fr; }
+    .fairs-grid.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .city-filter-row { flex-wrap: wrap; }
+    .directory-toolbar { margin-left: 0; width: 100%; justify-content: flex-end; }
+    .filter-popover {
+      position: fixed;
+      top: var(--navbar-height, 64px);
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: calc(100dvh - var(--navbar-height, 64px));
+      max-width: none;
+      border-radius: 0;
+      padding: 16px 16px 24px;
+      z-index: 9001;
+      border: none;
+      box-shadow: none;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .filter-popover.show { display: flex; animation: filterSlideIn 0.22s ease-out; }
+    .filter-popover-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; margin-top: 0; flex-shrink: 0; }
+    .filter-close-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
+    .filter-clear-all { height: 40px; padding: 0 16px; font-size: 14px; }
+    .filter-popover-content {
+      flex: 1;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      column-count: 2;
+      column-gap: 20px;
+      width: 100%;
+    }
+    .filter-group { margin-bottom: 20px; width: 100%; break-inside: avoid; }
+    .filter-name { font-size: 16px; }
+    .country-item .filter-name { font-size: 17px; }
+    .filter-count { font-size: 14px; }
+    .filter-item { width: 100%; }
+    .filter-item input[type="checkbox"] { width: 22px; height: 22px; flex-shrink: 0; }
+    .city-items { margin-left: 20px; margin-top: 8px; gap: 8px; width: calc(100% - 20px); }
+  }
+  @keyframes filterSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<script is:inline define:vars={{ initialCity }}>
+  (function () {
+    const grid = document.getElementById('fairs-grid');
+    if (!grid) return;
+
+    const wrappers = Array.from(grid.querySelectorAll('.fair-card-wrapper'));
+    const cityCheckboxes = Array.from(document.querySelectorAll('.city-checkbox'));
+    const countryCheckboxes = Array.from(document.querySelectorAll('.country-checkbox'));
+    const clearAllBtn = document.getElementById('filter-clear-all');
+    const filterTrigger = document.getElementById('filter-trigger');
+    const filterPopover = document.getElementById('filter-popover');
+    const filterClose = document.getElementById('filter-close-btn');
+    const searchToggle = document.getElementById('search-toggle');
+    const searchRow = document.getElementById('search-row');
+    const searchInput = document.getElementById('search-input');
+    const upcomingToggle = document.getElementById('upcoming-toggle');
+    const viewBtn = document.getElementById('view-btn');
+    const countEl = document.getElementById('fairs-count');
+    const emptyEl = document.getElementById('empty-result');
+
+    const state = { cities: new Set(), search: '', upcoming: false };
+
+    function syncChecks() {
+      cityCheckboxes.forEach((cb) => { cb.checked = state.cities.has(cb.dataset.slug); });
+      countryCheckboxes.forEach((cb) => {
+        const grp = cb.closest('.filter-group');
+        const cityCbs = Array.from(grp.querySelectorAll('.city-checkbox'));
+        cb.checked = cityCbs.length > 0 && cityCbs.every((c) => c.checked);
+        cb.indeterminate = !cb.checked && cityCbs.some((c) => c.checked);
+      });
+    }
+
+    function apply() {
+      const search = state.search.trim().toLowerCase();
+      const visible = wrappers.filter((w) => {
+        if (state.cities.size > 0 && !state.cities.has(w.dataset.city)) return false;
+        if (state.upcoming && w.dataset.upcoming !== 'true') return false;
+        if (search && !w.dataset.name.includes(search)) return false;
+        return true;
+      });
+
+      visible.forEach((w) => grid.appendChild(w));
+      wrappers.forEach((w) => { w.style.display = visible.includes(w) ? '' : 'none'; });
+
+      countEl.textContent = visible.length + (visible.length === 1 ? ' result' : ' results');
+      emptyEl.classList.toggle('hidden', visible.length !== 0);
+    }
+
+    cityCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) state.cities.add(cb.dataset.slug);
+      else state.cities.delete(cb.dataset.slug);
+      syncChecks();
+      apply();
+    }));
+
+    countryCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
+      const grp = cb.closest('.filter-group');
+      const cityCbs = Array.from(grp.querySelectorAll('.city-checkbox'));
+      cityCbs.forEach((c) => {
+        c.checked = cb.checked;
+        if (cb.checked) state.cities.add(c.dataset.slug);
+        else state.cities.delete(c.dataset.slug);
+      });
+      apply();
+    }));
+
+    clearAllBtn?.addEventListener('click', () => {
+      state.cities = new Set();
+      syncChecks();
+      apply();
+    });
+
+    filterTrigger?.addEventListener('click', () => filterPopover.classList.toggle('show'));
+    filterClose?.addEventListener('click', () => filterPopover.classList.remove('show'));
+    document.addEventListener('click', (e) => {
+      if (filterPopover?.classList.contains('show') &&
+          !filterPopover.contains(e.target) &&
+          !filterTrigger.contains(e.target)) {
+        filterPopover.classList.remove('show');
+      }
+    });
+
+    searchToggle?.addEventListener('click', () => {
+      const hidden = searchRow.classList.toggle('hidden');
+      searchToggle.setAttribute('aria-expanded', String(!hidden));
+      if (!hidden) searchInput.focus();
+    });
+    searchInput?.addEventListener('input', () => {
+      state.search = searchInput.value;
+      apply();
+    });
+
+    upcomingToggle?.addEventListener('change', () => {
+      state.upcoming = upcomingToggle.checked;
+      apply();
+    });
+
+    viewBtn?.addEventListener('click', () => {
+      const compact = grid.classList.toggle('compact');
+      viewBtn.setAttribute('aria-pressed', String(compact));
+      viewBtn.title = compact ? 'Larger images' : 'Smaller images';
+    });
+
+    // Honour an initial ?city= deep link
+    if (initialCity && initialCity !== 'all') {
+      state.cities = new Set([initialCity]);
+    }
+    syncChecks();
+    apply();
+  })();
+</script>

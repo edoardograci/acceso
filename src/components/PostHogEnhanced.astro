@@ -54,6 +54,13 @@ const userCreatedAt = Astro.locals.user?.createdAt;
           // Initialize PostHog
           window.posthog.init(posthogKey, {
             api_host: posthogHost,
+            loaded: function(posthog) {
+              const allowedHosts = ['acceso.design'];
+              const currentHost = window.location.hostname;
+              if (!allowedHosts.includes(currentHost)) {
+                posthog.opt_out_capturing();
+              }
+            },
             capture_pageview: true, // Let PostHog handle pageviews
             capture_pageleave: true,
             persistence: hasConsent ? 'localStorage+cookie' : 'memory',
@@ -65,7 +72,7 @@ const userCreatedAt = Astro.locals.user?.createdAt;
             _request_timeout_ms: 10000,
             batch_size: 20,
             batch_interval_ms: 3000,
-            sanitize_properties: function(properties, event_name) {
+            sanitize_properties: function(properties) {
               ['$current_url', '$referrer'].forEach(prop => {
                 if (properties[prop]) {
                   try {
@@ -135,7 +142,9 @@ const userCreatedAt = Astro.locals.user?.createdAt;
           function getPageType() {
             const path = window.location.pathname;
             if (path === '/') return 'home';
-            if (path === '/designers') return 'designers_index';
+            if (path === '/map') return 'map';
+            if (path === '/discover' || path.startsWith('/discover/')) return 'discover';
+            if (path === '/designers') return 'directory';
             if (path.startsWith('/designers/')) return 'designer_profile';
             if (path === '/moodboard') return 'moodboard_index';
             if (path.startsWith('/moodboard/')) return 'moodboard_detail';

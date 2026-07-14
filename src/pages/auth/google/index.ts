@@ -11,8 +11,10 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
 
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
     console.error('[OAuth] Missing Google OAuth credentials');
-    console.error('[OAuth] GOOGLE_CLIENT_ID:', env.GOOGLE_CLIENT_ID ? 'Set' : 'Missing');
-    console.error('[OAuth] GOOGLE_CLIENT_SECRET:', env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Missing');
+    if (import.meta.env.DEV) {
+      console.error('[OAuth] GOOGLE_CLIENT_ID:', env.GOOGLE_CLIENT_ID ? 'Set' : 'Missing');
+      console.error('[OAuth] GOOGLE_CLIENT_SECRET:', env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Missing');
+    }
     return new Response('Google OAuth not configured', { status: 500 });
   }
 
@@ -21,7 +23,7 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
 
-    const url = await google.createAuthorizationURL(state, codeVerifier, ['email', 'profile']);
+    const url = google.createAuthorizationURL(state, codeVerifier, ['email', 'profile']);
 
     // Set state cookie
     cookies.set('oauth_state', state, {

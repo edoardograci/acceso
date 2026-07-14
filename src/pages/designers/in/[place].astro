@@ -2,12 +2,13 @@
 import PostHogLayout from '../../../layouts/PostHogLayout.astro';
 import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
-import DesignerCard from '../../../components/DesignerCard.astro';
+import DirectoryCard from '../../../components/DirectoryCard.astro';
 import GetListedCard from '../../../components/GetListedCard.astro';
 import { locationTitle, locationDescription, locationIntro } from '../../../lib/seo/copy';
 import { breadcrumbList, itemList } from '../../../lib/seo/schema';
 import { normalizeImage } from '../../../lib/images';
 import type { Studio } from '../../../lib/types';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 
 const { place } = Astro.params;
 
@@ -77,7 +78,7 @@ const where =
 
 const pageTitle = locationTitle(where);
 const pageDesc = locationDescription(where);
-const { paragraphs, h2s } = locationIntro(where);
+const { paragraphs } = locationIntro(where);
 
 const canonical = new URL(`/designers/in/${place}`, Astro.site);
 
@@ -135,7 +136,9 @@ const schema = {
   '@graph': [breadcrumbList(crumbs), listSchema],
 };
 
-const initialStudios = studios.slice(0, 20);
+const placeName = mode === 'city' ? cityName : countryName;
+
+const initialStudios = studios.slice(0, 18);
 const mapStudios = studios.map(s => ({
   id: s.id,
   name: s.name,
@@ -148,9 +151,6 @@ const mapStudios = studios.map(s => ({
 ---
 
 <PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" is:inline />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" is:inline />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" is:inline />
   <Navbar />
 
   <main class="designers-page">
@@ -158,18 +158,16 @@ const mapStudios = studios.map(s => ({
       <!-- Left Column: Results Panel -->
       <aside class="results-panel">
         <div class="results-panel-content">
-          <nav class="breadcrumbs" aria-label="Breadcrumb">
-            <a href="/" class="breadcrumb-item">Home</a>
-            <span class="breadcrumb-separator">/</span>
-            <a href="/designers" class="breadcrumb-item">Designers</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="breadcrumb-current">In {mode === 'city' ? cityName : countryName}</span>
-          </nav>
+          <Breadcrumbs items={[
+            { label: 'Home', href: '/' },
+            { label: 'Designers', href: '/designers' },
+            { label: `In ${mode === 'city' ? cityName : countryName}` }
+          ]} />
 
           <header class="panel-header">
              <h1 class="location-heading">
                 Design studios<br />
-                in <span class="text-yellow">{mode === 'city' ? cityName : countryName}</span>
+                in <span class="location-accent">{mode === 'city' ? cityName : countryName}</span>
              </h1>
              
              {mode === 'city' && countryName && (
@@ -185,7 +183,7 @@ const mapStudios = studios.map(s => ({
 
           <div class="studios-grid" id="studios-grid">
             {initialStudios.map((studio, index) => (
-              <DesignerCard studio={studio} products={[]} index={index} />
+              <DirectoryCard studio={studio} index={index} />
             ))}
           </div>
 
@@ -198,7 +196,12 @@ const mapStudios = studios.map(s => ({
           <!-- New Cards Section -->
           <div class="bottom-cards-section mt-16 pb-12">
             <div class="cards-split-grid">
-               <GetListedCard className="full-height-card" />
+               <GetListedCard
+                 className="full-height-card"
+                 title={`Are you based in ${placeName}?`}
+                 subtitle={`Submit your studio for free. Once approved, it will appear on the ${placeName} design map and directory.`}
+                 ctaLabel="Submit for free"
+               />
                
                <div class="related-locations-card">
                   <div class="rl-header">
@@ -216,10 +219,10 @@ const mapStudios = studios.map(s => ({
           </div>
 
           <!-- SEO Text Section -->
-          <div class="seo-text-area mt-20 pt-16 border-t border-white/5">
+          <div class="seo-text-area mt-20 pt-16 border-t border-stroke">
             <div class="max-w-[70ch] space-y-8">
               {paragraphs.map((p) => (
-                <p class="font-sans text-[16px] leading-[1.8] text-white/60">{p}</p>
+                <p class="font-sans text-[16px] leading-[1.8] text-gray">{p}</p>
               ))}
             </div>
           </div>
@@ -257,12 +260,7 @@ const mapStudios = studios.map(s => ({
 
   <Footer />
 
-  <!-- JS Dependencies -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" is:inline></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" is:inline></script>
-  <script src="/js/map-icons.js" is:inline></script>
-  
-  <script define:vars={{ studios, mapStudios }}>
+  <script is:inline define:vars={{ studios, mapStudios }}>
     window.INITIAL_STUDIOS = studios;
     window.MAP_STUDIOS = mapStudios;
   </script>
@@ -272,27 +270,44 @@ const mapStudios = studios.map(s => ({
 
     const ALL_STUDIOS = (window as any).INITIAL_STUDIOS;
     const MAP_STUDIOS = (window as any).MAP_STUDIOS;
-    const itemsPerPage = 20;
+    const itemsPerPage = 18;
     let currentPage = 1;
     let filteredStudios = [...ALL_STUDIOS];
     let mapInstance: any = null;
 
-    function init() {
+    async function initMap() {
       // Initialize map using exactly the same logic
       if (MAP_STUDIOS?.length > 0) {
-        mapInstance = initializeMap(MAP_STUDIOS);
-        // Automatically focus on the markers for this specific location
-        if (mapInstance && mapInstance.updateStudios) {
-          mapInstance.updateStudios(MAP_STUDIOS, true, true);
+        mapInstance = await initializeMap(MAP_STUDIOS);
+        if (!mapInstance || !mapInstance.map) return;
+
+        // Focus reliably on THIS location's studios. Wait for the map to be
+        // fully loaded and resize first, so fitBounds uses correct dimensions
+        // and the view is framed on the right city/country every time.
+        const focusLocation = () => {
+          mapInstance.map.resize();
+          if (mapInstance.updateStudios) {
+            mapInstance.updateStudios(MAP_STUDIOS, true, true);
+          }
+        };
+
+        if (mapInstance.map.loaded()) {
+          focusLocation();
+        } else {
+          mapInstance.map.once('load', focusLocation);
         }
       }
+    }
+
+    function init() {
+      initMap();
 
       renderGrid();
 
-      // Airbnb behavior: Center on map if on desktop and has coords
+      // Center map on card click (desktop)
       const studiosGrid = document.getElementById('studios-grid');
       studiosGrid?.addEventListener('click', (e) => {
-        const card = (e.target as HTMLElement).closest('.designer-card') as HTMLElement;
+        const card = (e.target as HTMLElement).closest('.directory-card') as HTMLElement;
         if (!card) return;
 
         const lat = card.dataset.lat;
@@ -307,6 +322,12 @@ const mapStudios = studios.map(s => ({
           }
         }
       });
+    }
+
+    function resolveCover(cover?: string | null) {
+      if (!cover) return '';
+      if (cover.startsWith('http')) return cover;
+      return `${window.location.origin}/cdn/${cover.replace(/^\/+/, '')}`;
     }
 
     function renderGrid() {
@@ -328,24 +349,24 @@ const mapStudios = studios.map(s => ({
           const empty = document.getElementById('empty-result');
           if (empty) empty.style.display = 'none';
           
-          grid.innerHTML = pageItems.map((s) => `
-            <a href="/designers/${s.slug}" 
-               class="designer-card block no-underline text-inherit transition-all duration-200 hover:-translate-y-1"
+          grid.innerHTML = pageItems.map((s) => {
+            const cover = resolveCover(s.cover);
+            const location = `${s.city || ''}${s.country ? `, ${s.country}` : ''}`;
+            return `
+            <a href="/designers/${encodeURIComponent(s.slug || '')}"
+               class="directory-card"
                data-lat="${s.latitude || ''}"
                data-lng="${s.longitude || ''}"
                data-slug="${s.slug || ''}"
             >
-              <div class="card-inner">
-                <div class="studio-logo-wrapper">
-                  ${s.cover ? `<img src="${s.cover}" alt="${s.name}" class="studio-logo-img" />` : `<div class="studio-logo-placeholder"></div>`}
-                </div>
-                <div class="header-info">
-                  <h3 class="studio-name">${s.name}</h3>
-                  <p class="studio-location">${s.city || ''}</p>
-                </div>
+              <div class="directory-card-media">
+                ${cover ? `<img src="${cover}" alt="${s.name}" class="directory-card-image" loading="lazy" decoding="async" />` : '<div class="directory-card-placeholder"></div>'}
               </div>
+              <h3 class="directory-card-name">${s.name}</h3>
+              <p class="directory-card-location">${location}</p>
             </a>
-          `).join('');
+          `;
+          }).join('');
         }
       }
 
@@ -355,23 +376,29 @@ const mapStudios = studios.map(s => ({
     function renderPagination() {
       const container = document.getElementById('pagination-container');
       const totalPages = Math.ceil(filteredStudios.length / itemsPerPage);
-      
+
       if (!container) return;
       if (totalPages <= 1) {
         container.innerHTML = '';
         return;
       }
 
-      let html = '';
-      for (let i = 1; i <= totalPages; i++) {
+      let html = `<button class="pagination-btn pagination-arrow" ${currentPage === 1 ? 'disabled' : ''} data-page="prev">‹</button>`;
+      let startPage = Math.max(1, currentPage - 2);
+      let endPage = Math.min(totalPages, startPage + 4);
+      if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+      for (let i = startPage; i <= endPage; i++) {
         html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
       }
+      html += `<button class="pagination-btn pagination-arrow" ${currentPage === totalPages ? 'disabled' : ''} data-page="next">›</button>`;
       container.innerHTML = html;
 
       container.querySelectorAll('.pagination-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const page = (e.currentTarget as HTMLElement).dataset.page;
-          currentPage = parseInt(page!);
+          if (page === 'prev') currentPage--;
+          else if (page === 'next') currentPage++;
+          else currentPage = parseInt(page!);
           renderGrid();
           window.scrollTo({ top: 0, behavior: 'smooth' });
         });
@@ -379,16 +406,100 @@ const mapStudios = studios.map(s => ({
     }
 
     init();
-  </script>
+
+      // Mobile bottom sheet — swipe to expand/collapse list over map
+      const panel = document.querySelector('.results-panel') as HTMLElement;
+      
+      let startY = 0;
+      let currentTranslateY = 0;
+      let isDragging = false;
+      let startTranslateY = 0;
+      let windowHeight = window.innerHeight - 64;
+
+      const collapsedVisibleHeight = 200;
+      let collapsedY = windowHeight - collapsedVisibleHeight;
+      const expandedY = 0;
+      let activeState = 'collapsed';
+
+      window.addEventListener('resize', () => {
+        windowHeight = window.innerHeight - 64;
+        collapsedY = windowHeight - collapsedVisibleHeight;
+        if (window.innerWidth > 1024) {
+          panel.style.transform = '';
+          panel.style.overflowY = '';
+          panel.style.transition = '';
+        } else {
+          setPanelY(activeState === 'expanded' ? expandedY : collapsedY, false);
+          setTimeout(() => mapInstance?.map?.resize(), 100);
+        }
+      });
+
+      function setPanelY(y: number, animate = true) {
+        if (!panel) return;
+        panel.style.transition = animate ? 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)' : 'none';
+        panel.style.transform = `translateY(${y}px)`;
+        currentTranslateY = y;
+
+        if (y === expandedY) {
+          activeState = 'expanded';
+          panel.style.overflowY = 'auto';
+        } else {
+          activeState = 'collapsed';
+          panel.style.overflowY = 'hidden';
+          panel.scrollTop = 0;
+        }
+
+        if (animate) {
+          setTimeout(() => mapInstance?.map?.resize(), 350);
+        }
+      }
+
+      if (window.innerWidth <= 1024) {
+        setPanelY(collapsedY, false);
+      }
+
+      panel?.addEventListener('touchstart', (e) => {
+        if (window.innerWidth > 1024) return;
+        if (activeState === 'expanded' && panel.scrollTop > 0) return;
+
+        startY = e.touches[0].clientY;
+        startTranslateY = currentTranslateY;
+        isDragging = true;
+        panel.style.transition = 'none';
+      }, { passive: true });
+
+      panel?.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const diffY = e.touches[0].clientY - startY;
+        let nextY = startTranslateY + diffY;
+        if (nextY < expandedY) nextY = expandedY + (nextY - expandedY) * 0.15;
+        if (nextY > collapsedY) nextY = collapsedY + (nextY - collapsedY) * 0.15;
+        panel.style.transform = `translateY(${nextY}px)`;
+        currentTranslateY = nextY;
+      }, { passive: true });
+
+      panel?.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        const diffY = currentTranslateY - startTranslateY;
+
+        if (startTranslateY === collapsedY) {
+          setPanelY(diffY < -40 ? expandedY : collapsedY, true);
+        } else if (startTranslateY === expandedY) {
+          setPanelY(diffY > 40 ? collapsedY : expandedY, true);
+        } else {
+          setPanelY(currentTranslateY < windowHeight / 2 ? expandedY : collapsedY, true);
+        }
+      });
+    </script>
 
   <style>
     .designers-page {
-      background: var(--color-black);
+      background: var(--color-white);
     }
 
     .split-container {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      display: flex;
       align-items: flex-start;
       max-width: 1600px;
       margin: 0 auto;
@@ -397,9 +508,10 @@ const mapStudios = studios.map(s => ({
 
     /* Left Column */
     .results-panel {
-      border-right: 1px solid var(--color-stroke);
+      width: clamp(360px, 40%, 620px);
+      flex: 0 0 auto;
       position: relative;
-      background: var(--color-black);
+      background: var(--color-white);
       z-index: 1000;
     }
 
@@ -407,47 +519,30 @@ const mapStudios = studios.map(s => ({
       padding: var(--page-top-spacing) 40px 60px;
     }
 
-    .breadcrumbs {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 13px;
-      margin-bottom: 32px;
-    }
-
-    .breadcrumb-item {
-      color: var(--color-gray);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .breadcrumb-item:hover { color: white; }
-
-    .breadcrumb-separator {
-      color: rgba(255,255,255,0.1);
-    }
-
-    .breadcrumb-current {
-      color: white;
-      font-weight: 400;
-    }
-
     .panel-header {
       margin-bottom: 40px;
     }
 
     .location-heading {
-      font-family: var(--font-mono);
+      font-family: var(--font-sans);
       font-size: clamp(40px, 5vw, 68px);
       font-weight: 400;
       line-height: 0.96;
-      letter-spacing: 0;
-      color: white;
+      letter-spacing: -0.02em;
+      color: var(--color-black);
       margin: 0;
     }
 
+    .location-accent {
+      color: var(--color-black);
+      text-decoration: underline;
+      text-decoration-color: var(--color-stroke);
+      text-underline-offset: 8px;
+      text-decoration-thickness: 2px;
+    }
+
     .country-subtitle {
-       font-family: var(--font-mono);
+       font-family: var(--font-sans);
        font-size: 24px;
        color: var(--color-gray);
        margin-top: 12px;
@@ -472,9 +567,72 @@ const mapStudios = studios.map(s => ({
 
     .studios-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(16px, 2vw, 24px);
       margin-bottom: 40px;
+    }
+
+    :global(.studios-grid .directory-card) {
+      min-width: 0;
+    }
+
+    :global(.directory-card) {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.2s ease;
+    }
+
+    :global(.directory-card:hover) {
+      transform: translateY(-2px);
+      color: inherit;
+    }
+
+    :global(.directory-card-media) {
+      aspect-ratio: 1;
+      overflow: hidden;
+      background: #E8E8EA;
+      border-radius: 12px;
+    }
+
+    :global(.directory-card-image) {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    :global(.directory-card-placeholder) {
+      width: 100%;
+      height: 100%;
+      background: #E8E8EA;
+    }
+
+    :global(.directory-card-name) {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--color-black);
+      margin: 0;
+      line-height: 1.25;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    :global(.directory-card-location) {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--color-text-muted);
+      margin: -6px 0 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* Cards Section */
@@ -485,8 +643,8 @@ const mapStudios = studios.map(s => ({
     }
 
     .related-locations-card {
-       background: rgba(255,255,255,0.04);
-       border: 1px solid rgba(255,255,255,0.08);
+       background: rgba(0,0,0,0.04);
+       border: 1px solid var(--color-stroke);
        border-radius: 24px;
        padding: 24px;
        display: flex;
@@ -494,10 +652,10 @@ const mapStudios = studios.map(s => ({
     }
 
     .rl-title {
-       font-family: var(--font-mono);
+       font-family: var(--font-sans);
        font-size: 22px;
        font-weight: 400;
-       color: #fff;
+       color: var(--color-black);
        margin-bottom: 20px;
        letter-spacing: 0;
     }
@@ -510,11 +668,11 @@ const mapStudios = studios.map(s => ({
 
     .pill-btn {
        height: 36px;
-       padding: 0 16px;
-       background: rgba(255,255,255,0.06);
-       border: 1px solid rgba(255,255,255,0.1);
+       padding: 1px 16px 0;
+       background: rgba(0,0,0,0.04);
+       border: 1px solid var(--color-stroke);
        border-radius: 999px;
-       color: #fff;
+       color: var(--color-black);
        font-family: var(--font-sans);
        font-size: 13px;
        font-weight: 400;
@@ -525,46 +683,21 @@ const mapStudios = studios.map(s => ({
     }
 
     .pill-btn:hover {
-       background: white;
-       color: black;
-       border-color: white;
+       background: #EBEBED;
+       border-color: #D4D4D8;
+       color: var(--color-black);
     }
 
-    /* Copy of DesignerCard styles for dynamic JS rendering */
-    :global(.designer-card) {
-      background: #111315;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.03);
-      overflow: hidden;
-      transition: all 0.2s ease;
-    }
-    :global(.designer-card .card-inner) {
-      padding: 24px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    :global(.studio-logo-wrapper) {
-      width: 64px;
-      height: 64px;
-      background: #1C1E20;
-      border-radius: 10px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    :global(.studio-logo-img) { width: 100%; height: 100%; object-fit: cover; }
-    :global(.studio-logo-placeholder) { width: 100%; height: 100%; background: #1C1E20; }
-    :global(.studio-name) { font-family: var(--font-mono); font-size: 20px; font-weight: 400; color: white; margin: 0; line-height: 1.2; letter-spacing: 0; }
-    :global(.studio-location) { font-family: var(--font-sans); font-size: 14px; color: var(--color-gray); margin: 4px 0 0; }
+    /* Copy removed — using directory card styles */
 
-    /* Pagination */
+    /* Pagination — matches the standard style used on the Designers index */
     .pagination-wrapper {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px;
+      gap: 16px;
       padding: 48px 0;
-      margin-top: 20px;
+      border-top: 1px solid var(--color-stroke);
     }
 
     :global(.pagination-btn) {
@@ -576,42 +709,46 @@ const mapStudios = studios.map(s => ({
       background: transparent;
       border: 1px solid transparent;
       border-radius: 50%;
-      color: var(--color-gray);
+      color: #9ca3af;
       font-family: var(--font-sans);
       font-size: 14px;
-      font-weight: 400;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: color 0.2s ease, background 0.2s ease;
     }
-    :global(.pagination-btn:hover) { color: white; border-color: rgba(255,255,255,0.1); }
-    :global(.pagination-btn.active) { background: white; color: black; border-color: white; }
+    :global(.pagination-btn:hover:not(.active)) { color: var(--color-black); }
+    :global(.pagination-btn.active) { background: var(--color-black); color: var(--color-white); border-color: var(--color-black); cursor: default; }
+    :global(.pagination-btn:disabled) { opacity: 0.3; cursor: not-allowed; }
+    :global(.pagination-arrow) { background: var(--color-bg-secondary) !important; border: 1px solid var(--color-stroke) !important; color: var(--color-black); }
 
     /* Right Column: Map */
     .map-panel {
+      flex: 1;
+      min-width: 0;
       position: sticky;
       top: var(--navbar-height);
       height: calc(100vh - var(--navbar-height));
-      background: var(--color-black);
+      background: var(--color-white);
       padding: 24px 40px 24px 24px;
     }
 
     #map {
       width: 100%;
       height: 100%;
-      border-radius: 24px;
+      border-radius: 20px;
       overflow: hidden;
       border: 1px solid var(--color-stroke);
     }
 
     /* Custom Cluster Styles */
     :global(.cluster-icon) {
-      background: #EDFE44 !important;
+      background: var(--color-yellow) !important;
       color: #000000 !important;
       border-radius: 50% !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-family: 'PP Supply Sans', 'Supply', var(--font-mono) !important;
+      font-family: var(--font-sans) !important;
       font-weight: 700 !important;
       font-size: 15px !important;
       box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.1);
@@ -623,62 +760,151 @@ const mapStudios = studios.map(s => ({
       transform: scale(1.1);
     }
 
-    /* Studio Card on Map */
+    /* Studio Card on Map — positioned by JS (left/top), so it must be a
+       fixed-size box, not a stretched full-width container. */
     .studio-ui-container {
       position: absolute;
-      bottom: 48px;
       left: 0;
-      right: 0;
-      display: flex;
-      justify-content: center;
-      padding: 0 24px;
+      top: 0;
       z-index: 1000;
       pointer-events: none;
       opacity: 0;
       visibility: hidden;
-      transform: translateY(20px);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateY(8px) scale(0.98);
+      transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s;
+      width: min(320px, calc(100% - 32px));
     }
 
     .studio-ui-container.visible {
       opacity: 1;
       visibility: visible;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
 
     .studio-card {
-      background: #1C1E20;
+      background: var(--color-white);
       border: 1px solid var(--color-stroke);
       border-radius: 16px;
       overflow: hidden;
       pointer-events: auto;
       width: 100%;
-      max-width: 320px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.14);
+      transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
     }
 
-    .studio-card-inner { text-decoration: none; display: block; }
-    .studio-card-media { height: 180px; background: #000; overflow: hidden; }
+    .studio-card:hover {
+      box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+      border-color: var(--color-black);
+      transform: translateY(-2px);
+    }
+
+    .studio-card-inner { text-decoration: none; display: flex; flex-direction: column; color: inherit; }
+    .studio-card-media { height: 160px; background: var(--color-bg-secondary); overflow: hidden; }
     .studio-card-image { width: 100%; height: 100%; object-fit: cover; }
     .studio-card-info { padding: 16px; }
-    .studio-card-title { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: white; margin: 0 0 8px; }
-    .studio-card-address-row { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 12px; }
+    .studio-card-title { font-family: var(--font-sans); font-size: 16px; font-weight: 700; color: var(--color-black); margin: 0 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .studio-card-address-row { background: rgba(0,0,0,0.04); border-radius: 8px; padding: 8px 12px; }
     .studio-card-address { font-family: var(--font-sans); font-size: 13px; color: var(--color-gray); margin: 0; }
 
-    /* Tablet: 641px – 1024px */
+    /* ── Tablet & Mobile layout (≤1024px) ────────────────────── */
     @media (max-width: 1024px) {
-      .split-container { grid-template-columns: minmax(0, 1fr); }
-      .map-panel { display: none; }
-      .results-panel { border-right: none; }
-      .results-panel-content { padding: 24px 20px 60px; }
-      .studios-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-      .cards-split-grid { grid-template-columns: 1fr; }
+      .split-container {
+        display: block !important;
+        position: relative;
+        height: calc(100vh - var(--navbar-height));
+        overflow: hidden;
+        max-width: none;
+        width: 100%;
+      }
+      .map-panel {
+        display: block !important;
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 1;
+      }
+      #map {
+        border-radius: 0 !important;
+        border: none !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      .results-panel {
+        position: absolute !important;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100% !important;
+        height: calc(100% - 24px) !important;
+        background: var(--color-white);
+        border-top: 1px solid var(--color-stroke);
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        z-index: 10;
+        transform: translateY(calc(100% - 200px));
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow-y: hidden;
+        border-right: none;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
+      }
+      .results-panel::-webkit-scrollbar {
+        width: 6px;
+      }
+      .results-panel::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .results-panel::-webkit-scrollbar-thumb {
+        background-color: var(--color-stroke);
+        border-radius: 20px;
+      }
+      .results-panel::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: var(--color-gray);
+        opacity: 0.3;
+        border-radius: 2px;
+        margin: 12px auto 8px;
+        cursor: grab;
+      }
+      .results-panel:active::before {
+        cursor: grabbing;
+      }
+      .results-panel-content {
+        padding: 12px 20px 80px !important;
+      }
+      .studios-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .cards-split-grid {
+        grid-template-columns: 1fr;
+      }
+      /* Hide page footer on mobile/tablet viewports to prevent layout bleeding */
+      :global(main.designers-page ~ footer) {
+        display: none !important;
+      }
     }
 
-    /* Mobile: ≤640px */
+    /* ── Mobile: ≤640px ─────────────────────────────────────── */
     @media (max-width: 640px) {
-      .studios-grid { grid-template-columns: 1fr; }
-      .location-heading { font-size: 36px; }
+      .studios-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .results-panel-content {
+        padding: 12px 16px 80px !important;
+      }
+      .location-heading {
+        font-size: 36px;
+      }
     }
   </style>
 </PostHogLayout>

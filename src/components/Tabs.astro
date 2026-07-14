@@ -50,21 +50,20 @@ const { active } = Astro.props;
   }
 
   .tab.active {
-    color: var(--color-yellow);
+    color: var(--color-black);
   }
 
   .tab-indicator {
     position: absolute;
     bottom: -1px; /* Overlap the border */
     height: 1px;
-    background-color: var(--color-yellow);
+    background-color: var(--color-black);
     transition: left 0.3s ease, width 0.3s ease;
     z-index: 10;
   }
 </style>
 
 <script>
-  const tabs = document.querySelectorAll('.tab-button') as NodeListOf<HTMLElement>;
   const tabIndicator = document.querySelector('.tab-indicator') as HTMLElement;
 
   function updateIndicator() {

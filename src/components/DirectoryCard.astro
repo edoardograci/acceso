@@ -1,0 +1,112 @@
+---
+import type { Studio } from '../lib/types';
+import { normalizeImage } from '../lib/images';
+
+interface Props {
+  studio: Studio;
+  index?: number;
+}
+
+const { studio, index = 0 } = Astro.props;
+---
+
+<a
+  href={`/designers/${studio.slug}`}
+  class="directory-card"
+  data-name={studio.name.toLowerCase()}
+  data-city={studio.city}
+  data-country={studio.country}
+  data-id={studio.id}
+  data-index={index}
+  data-lat={studio.latitude}
+  data-lng={studio.longitude}
+  data-slug={studio.slug}
+>
+  <div class="directory-card-media">
+    {studio.cover ? (
+      <img
+        src={normalizeImage(studio.cover, Astro)}
+        alt={studio.name}
+        width="400"
+        height="400"
+        loading="lazy"
+        decoding="async"
+        class="directory-card-image"
+      />
+    ) : (
+      <div class="directory-card-placeholder" aria-hidden="true"></div>
+    )}
+  </div>
+  <h3 class="directory-card-name">{studio.name}</h3>
+  <p class="directory-card-location">
+    {studio.city}{studio.country ? `, ${studio.country}` : ''}
+  </p>
+</a>
+
+<style>
+  .directory-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease;
+  }
+
+  .directory-card:hover {
+    transform: translateY(-4px);
+    color: inherit;
+  }
+
+  .directory-card-media {
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: #E8E8EA;
+    border-radius: 12px;
+  }
+
+  .directory-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .directory-card:hover .directory-card-image {
+    transform: scale(1.03);
+  }
+
+  .directory-card-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #E8E8EA;
+  }
+
+  .directory-card-name {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-black);
+    margin: 0;
+    line-height: 1.25;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .directory-card-location {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    margin: -6px 0 0;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>

@@ -1,10 +1,14 @@
+# NOTE: This file only applies to STATIC asset responses on Cloudflare Pages.
+# Security headers for SSR/HTML pages are set in src/middleware.ts — keep the
+# CSP below in sync with the one in that file.
 /*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   X-Robots-Tag: index, follow
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' eu.i.posthog.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://eu.i.posthog.com https://*.acceso.design https://*.turso.io; frame-ancestors 'none';
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://eu.i.posthog.com https://scripts.simpleanalyticscdn.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://eu.i.posthog.com https://*.acceso.design https://*.turso.io https://*.openfreemap.org https://queue.simpleanalyticscdn.com; worker-src 'self' blob:; frame-ancestors 'none';
 
 /api/*
   X-Robots-Tag: noindex

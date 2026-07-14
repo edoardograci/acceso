@@ -1,0 +1,423 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import SaveButton from '../../components/SaveButton.astro';
+import { normalizeImage } from '../../lib/images';
+
+if (!Astro.locals.user) {
+  return Astro.redirect('/login');
+}
+
+let universities: any[] = [];
+let error = null;
+
+try {
+  const universitiesUrl = new URL('/cdn/universities.json', Astro.url.origin).toString();
+  const response = await fetch(universitiesUrl);
+  if (!response.ok) throw new Error('CDN Proxy Not Ready');
+  const raw = await response.json();
+  universities = Array.isArray(raw) ? raw : (raw.items || []);
+} catch (e) {
+  console.warn('Falling back to local universities.json:', e instanceof Error ? e.message : String(e));
+  try {
+     const localUrl = new URL('/universities.json', Astro.url.origin);
+     const localRes = await fetch(localUrl.toString());
+     const raw = await localRes.json();
+     universities = Array.isArray(raw) ? raw : (raw.items || []);
+  } catch (localErr) {
+     error = localErr;
+     console.error('Total failure to load universities collection:', localErr);
+  }
+}
+---
+
+<Layout title="My Saved Universities - Acceso">
+    <Navbar />
+    
+    <main class="collection-page">
+      <div class="collection-inner">
+        <nav class="collection-back" aria-label="Back navigation">
+          <a href="/profile" class="collection-back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Profile
+          </a>
+        </nav>
+
+        <header class="collection-hero">
+          <h1 class="collection-title">My Universities</h1>
+          <p id="count" class="collection-meta">Loading saved universities...</p>
+        </header>
+
+        <div class="collection-search-wrap">
+          <svg class="collection-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3" stroke-linecap="round"/>
+          </svg>
+          <input 
+            type="search" 
+            id="search-input" 
+            class="collection-search-input"
+            placeholder="Search by name or city..."
+            aria-label="Search saved universities"
+          />
+        </div>
+
+        {!error && (
+          <div id="universities-grid" class="universities-grid" style="opacity: 0; transition: opacity 0.3s ease;">
+            {universities.map((university) => (
+              <div class="university-card-wrapper" data-id={university.id} style="display: none;">
+                <a 
+                  href={`/directory/universities/${university.slug}`} 
+                  class="university-card"
+                >
+                  <div class="university-card-media">
+                    {university.image ? (
+                      <img 
+                        src={normalizeImage(university.image, Astro)} 
+                        alt={university.name} 
+                        class="university-image" 
+                        loading="lazy" 
+                        data-skeleton
+                      />
+                    ) : (
+                      <div class="university-image-placeholder">No image</div>
+                    )}
+                  </div>
+                  <div class="university-info">
+                    <h3>{university.name}</h3>
+                    <p>{university.location}</p>
+                  </div>
+                </a>
+                
+                <div class="save-btn-container">
+                  <SaveButton 
+                    type="university" 
+                    itemId={university.id} 
+                  />
+                </div>
+              </div>
+            ))}
+            <div id="empty-state" class="empty-state" style="display: none;">
+               <p>No saved universities.</p>
+               <a href="/directory/universities" class="browse-link">Browse Universities</a>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+
+    <Footer />
+</Layout>
+
+<style>
+  .collection-page {
+    background: var(--color-white);
+    min-height: calc(100vh - var(--navbar-height));
+    padding: var(--page-top-spacing) 0 80px;
+  }
+
+  .collection-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .collection-back {
+    margin-bottom: 24px;
+  }
+
+  .collection-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 999px;
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .collection-back-link:hover {
+    border-color: var(--color-black);
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+
+  .collection-hero {
+    margin-bottom: 28px;
+    max-width: 640px;
+  }
+
+  .collection-title {
+    font-family: var(--font-sans);
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--color-black);
+    margin: 0 0 10px -2px;
+  }
+
+  .collection-meta {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .collection-search-wrap {
+    position: relative;
+    max-width: 480px;
+    margin-bottom: 32px;
+  }
+
+  .collection-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+
+  .collection-search-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px 0 44px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .collection-search-input:focus {
+    border-color: var(--color-black);
+    background: var(--color-white);
+    box-shadow: 0 0 0 3px rgba(15, 17, 19, 0.06);
+  }
+
+  .collection-search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .universities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  .university-card-wrapper {
+    position: relative;
+  }
+
+  .university-card {
+    text-decoration: none;
+    display: block;
+    color: inherit;
+    transition: transform 0.2s ease;
+  }
+
+  .university-card:hover {
+    transform: translateY(-2px);
+    color: inherit;
+  }
+
+  .university-card-media {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    margin-bottom: 10px;
+  }
+
+  .university-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .university-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    letter-spacing: -0.01em;
+  }
+
+  .university-info h3 {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+    color: var(--color-black);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .university-info p {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    letter-spacing: -0.005em;
+    color: var(--color-text-muted);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .save-btn-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--color-text-muted);
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+  }
+
+  .browse-link {
+    display: inline-block;
+    margin-top: 16px;
+    color: var(--color-black);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 768px) {
+    .collection-inner {
+      padding: 0 20px;
+    }
+
+    .universities-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .collection-inner {
+      padding: 0 16px;
+    }
+  }
+</style>
+
+<script>
+  const filterGrid = () => {
+    const grid = document.getElementById('universities-grid');
+    const emptyState = document.getElementById('empty-state');
+    const countLabel = document.getElementById('count');
+    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+    const query = searchInput?.value.toLowerCase() || '';
+    
+    if (!grid || !window.collectionsState) {
+      return;
+    }
+
+    if (!window.collectionsState.loaded) {
+      if (countLabel) countLabel.textContent = 'Loading collections...';
+      return;
+    }
+
+    const allCards = grid.querySelectorAll('.university-card-wrapper');
+    allCards.forEach(card => (card as HTMLElement).style.display = 'none');
+
+    let visibleCount = 0;
+    const savedIDs = window.collectionsState.universities;
+
+    for (const id of savedIDs) {
+      const card = grid.querySelector(`.university-card-wrapper[data-id="${id}"]`);
+      
+      if (card) {
+        const name = (card.querySelector('h3')?.textContent || '').toLowerCase();
+        const city = (card.querySelector('p')?.textContent || '').toLowerCase();
+        const matchesSearch = name.includes(query) || city.includes(query);
+
+        if (matchesSearch) {
+          (card as HTMLElement).style.display = 'block';
+          grid.appendChild(card);
+          visibleCount++;
+        }
+      }
+    }
+
+    if (visibleCount === 0) {
+      if (emptyState) {
+        emptyState.style.display = 'block';
+        emptyState.querySelector('p')!.textContent = query ? 'No universities match your search.' : 'No saved universities.';
+      }
+      if (countLabel) countLabel.textContent = '0 saved';
+    } else {
+      if (emptyState) emptyState.style.display = 'none';
+      if (countLabel) countLabel.textContent = `${visibleCount} saved`;
+    }
+
+    grid.style.opacity = '1';
+  };
+
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', filterGrid);
+  }
+
+  const waitForState = () => {
+    let attempts = 0;
+    const maxAttempts = 200;
+    
+    const checkState = setInterval(() => {
+      attempts++;
+      
+      if (window.collectionsState?.loaded) {
+        filterGrid();
+        clearInterval(checkState);
+      } else if (attempts >= maxAttempts) {
+        const countLabel = document.getElementById('count');
+        if (countLabel) {
+          countLabel.textContent = 'Failed to load collections. Please refresh.';
+          countLabel.style.color = '#ef4444';
+        }
+        clearInterval(checkState);
+      }
+    }, 50);
+  };
+
+  waitForState();
+
+  window.addEventListener('collections-changed', () => {
+    filterGrid();
+  });
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'collections_state_v1') {
+      filterGrid();
+    }
+  });
+</script>

@@ -1,0 +1,804 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Navbar from '../../../components/Navbar.astro';
+import Footer from '../../../components/Footer.astro';
+import SaveButton from '../../../components/SaveButton.astro';
+import EventBasicCard from '../../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../../lib/images';
+import { ensureProtocol } from '../../../lib/url';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+
+const { slug } = Astro.params;
+
+// R2 URLs
+const isDev = import.meta.env.DEV;
+const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+
+let museum: any = null;
+let relatedMuseums: any[] = [];
+let citiesMapping: any[] = [];
+let countriesMapping: any[] = [];
+
+try {
+  const [musRes, citiesRes, countriesRes] = await Promise.all([
+    fetch(`${domain}/museums.json`),
+    fetch(`${domain}/test-cities.json`),
+    fetch(`${domain}/test-countries.json`)
+  ]);
+
+  if (musRes.ok) {
+    const rawData = await musRes.json();
+    const allMuseums = Array.isArray(rawData) ? rawData : (rawData.items || []);
+    
+    const processedMuseums = allMuseums;
+
+    museum = processedMuseums.find((m: any) => m.slug === slug) || null;
+
+    if (museum) {
+      // Discovery: a generic set of other museums, prioritising the same
+      // country then city so every slug still shows recommendations even
+      // when there aren't many museums.
+      relatedMuseums = processedMuseums
+        .filter((m: any) => m.slug !== slug)
+        .sort((a: any, b: any) => {
+          const aCountry = a.country_slug === museum.country_slug ? 0 : 1;
+          const bCountry = b.country_slug === museum.country_slug ? 0 : 1;
+          if (aCountry !== bCountry) return aCountry - bCountry;
+          const aCity = a.city_slug === museum.city_slug ? 0 : 1;
+          const bCity = b.city_slug === museum.city_slug ? 0 : 1;
+          if (aCity !== bCity) return aCity - bCity;
+          return 0;
+        })
+        .slice(0, 10);
+    }
+  }
+
+  if (citiesRes.ok) citiesMapping = await citiesRes.json();
+  if (countriesRes.ok) countriesMapping = await countriesRes.json();
+
+} catch (e) {
+  console.error('[Museum Slug] Fail to fetch data:', e);
+}
+
+if (!museum) {
+  return Astro.redirect('/404');
+}
+
+const countryName = museum.country || countriesMapping.find(c => c.slug === museum.country_slug)?.name || museum.country_slug;
+const cityName = museum.city || citiesMapping.find(c => c.slug === museum.city_slug)?.name || museum.city_slug;
+
+// ── Location / embed data ───────────────────────────────────────────────
+const museumLat = museum ? parseFloat(museum.latitude) : NaN;
+const museumLng = museum ? parseFloat(museum.longitude) : NaN;
+const museumHasLocation = !!museum && !!museum.address && !isNaN(museumLat) && !isNaN(museumLng);
+
+const gmapsUrl = museumHasLocation
+  ? (museum.gmaps || `https://www.google.com/maps/search/?api=1&query=${museumLat},${museumLng}`)
+  : '';
+
+const aboutParagraphs = (museum.long_description || '')
+  .split(/\n+/)
+  .map((p: string) => p.trim())
+  .filter((p: string) => p.length > 0);
+
+const pageTitle = `${museum.name} — Design Museum in ${cityName}`;
+const pageDesc = museum.description || `Explore ${museum.name}, a prominent design institution in ${cityName}, ${countryName}.`;
+---
+
+<Layout title={pageTitle} description={pageDesc}>
+  <Navbar />
+
+  <div class="breadcrumbs-container">
+    <Breadcrumbs items={[
+      { label: 'Directory', href: '/directory' },
+      { label: 'Museums', href: '/directory/museums' },
+      { label: museum.name }
+    ]} />
+  </div>
+
+  <main class="detail-container">
+    <div class="hero-row">
+      <div class="hero-image-wrapper">
+        {museum.image ? (
+          <img 
+            src={normalizeImage(museum.image, Astro, { width: 1200 })} 
+            alt={museum.name} 
+            class="hero-image" 
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          />
+        ) : (
+          <div class="hero-image-placeholder">No image available</div>
+        )}
+      </div>
+
+      <aside class="info-card">
+        <div class="info-card-content">
+          <h1 class="item-name">{museum.name}</h1>
+          <div class="description-wrapper">
+            <p class="item-description" id="museumDescription">
+              {museum.description}
+            </p>
+            <button class="description-toggle" id="descriptionToggle" type="button" hidden>Read more</button>
+          </div>
+
+          <div class="social-links">
+            {museum.website && (
+              <a href={ensureProtocol(museum.website)} target="_blank" rel="noopener noreferrer" class="card-social-btn">
+                <img src="/icons/source.svg" alt="" width="16" height="16" />
+                <span>Website</span>
+              </a>
+            )}
+            {museum.instagram && (
+              <a href={ensureProtocol(museum.instagram)} target="_blank" rel="noopener noreferrer" class="card-social-btn">
+                <img src="/icons/instagram.svg" alt="" width="16" height="16" />
+                <span>Instagram</span>
+              </a>
+            )}
+            {museum.facebook && (
+              <a href={ensureProtocol(museum.facebook)} target="_blank" rel="noopener noreferrer" class="card-social-btn">
+                <img src="/icons/facebook.svg" alt="" width="16" height="16" />
+                <span>Facebook</span>
+              </a>
+            )}
+          </div>
+
+          <div class="details-section">
+            <div class="details-row">
+              <span class="detail-label">Country</span>
+              {museum.country_slug ? (
+                <a href={`/directory/museums/in/${museum.country_slug}`} class="detail-value underlined detail-link">{countryName}</a>
+              ) : (
+                <span class="detail-value">{countryName}</span>
+              )}
+            </div>
+            <div class="details-divider"></div>
+            <div class="details-row">
+              <span class="detail-label">Location</span>
+              {museum.city_slug ? (
+                <a href={`/directory/museums/in/${museum.city_slug}`} class="detail-value underlined detail-link">{cityName}</a>
+              ) : (
+                <span class="detail-value underlined">{cityName}</span>
+              )}
+            </div>
+          </div>
+
+          <div class="contacts-group" id="contactsSection">
+            {museum.contact ? (
+              museum.contact.split(/[/,|;]/).map((part: string, index: number, array: string[]) => {
+                const val = part.trim();
+                if (!val) return null;
+                const isEmail = val.includes('@');
+                return (
+                  <>
+                    <div class="details-row">
+                      <span class="detail-label">{isEmail ? 'Email' : 'Phone'}</span>
+                      <a
+                        href={isEmail ? `mailto:${val}` : `tel:${val.replace(/\s/g, '')}`}
+                        class="detail-value underlined"
+                      >
+                        {val}
+                      </a>
+                    </div>
+                    {index < array.length - 1 && val && array[index + 1]?.trim() && <div class="details-divider"></div>}
+                  </>
+                );
+              })
+            ) : (
+              <span class="detail-value">No contact available</span>
+            )}
+          </div>
+        </div>
+
+        <div class="card-footer-actions">
+          <button class="footer-btn share-btn" id="shareButton">
+            <img src="/icons/share.svg" alt="" width="18" height="18" />
+            <span>Share</span>
+          </button>
+
+          <SaveButton type="museum" itemId={museum.id || museum.slug} itemName={museum.name} buttonClass="footer-btn save-btn" />
+        </div>
+      </aside>
+    </div>
+
+    {museumHasLocation && (
+      <section class="museum-location-section">
+        <div class="location-grid">
+          <div class="location-info">
+            <h2 class="location-title">Location</h2>
+            <p class="location-studio-name">{museum.name}</p>
+            <p class="location-address">{museum.address}</p>
+            {museum.opening_hours && (
+              <p class="location-hours">{museum.opening_hours}</p>
+            )}
+            <p class="location-meta">
+              {cityName}{countryName && <>, {countryName}</>}
+            </p>
+            <div class="location-actions">
+              <a class="location-cta location-directions" href={gmapsUrl} target="_blank" rel="noopener">
+                <img src="/icons/googlemaps.svg" alt="" width="18" height="18" />
+                <span>Google Maps</span>
+              </a>
+              <button class="location-wrong-link" id="locationReport" type="button">
+                Something wrong?
+              </button>
+            </div>
+          </div>
+          <div class="location-map-col">
+            <iframe
+              class="location-map"
+              src={`/embed/museum/${museum.slug}`}
+              title={`Map of ${museum.name}`}
+              loading="lazy"
+            ></iframe>
+          </div>
+        </div>
+      </section>
+    )}
+
+    {aboutParagraphs.length > 0 && (
+      <section class="museum-about-section">
+        <div class="section-top">
+          <h2 class="discovery-title">More about {museum.name}</h2>
+        </div>
+        <div class={`about-columns${aboutParagraphs.length > 1 ? '' : ' single-column'}`}>
+          {aboutParagraphs.map((para: string) => (
+            <p class="about-paragraph">{para}</p>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section class="discovery-area">
+      <div class="discovery-content">
+        {relatedMuseums.length > 0 && (
+          <div class="discovery-section">
+            <div class="section-top">
+              <h2 class="discovery-title">Explore design museums</h2>
+              <a href="/directory/museums" class="discovery-see-all pill-link">
+                Explore museums
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                  <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+            </div>
+            <div class="discovery-grid">
+              {relatedMuseums.map(m => (
+                <div class="grid-item">
+                  <EventBasicCard 
+                    name={m.name}
+                    slug={m.slug}
+                    type="museum"
+                    location={m.city || cityName}
+                    image={normalizeImage(m.image, Astro)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  </main>
+
+  {museumHasLocation && (
+    <div class="embed-modal" id="reportModal" hidden>
+      <div class="embed-modal-backdrop" id="reportBackdrop"></div>
+      <div class="embed-modal-box" role="dialog" aria-modal="true" aria-label="Report this information">
+        <button class="embed-modal-close" id="reportClose" type="button" aria-label="Close">&times;</button>
+        <h3 class="embed-modal-title">Report this information</h3>
+        <p class="embed-modal-desc">
+          Something wrong with the address, map, or links? Tell us and we'll fix it.
+        </p>
+        <textarea class="embed-modal-code" id="reportText" placeholder="Describe the issue (optional)..."></textarea>
+        <div class="embed-modal-actions">
+          <button class="embed-modal-copy" id="reportSend" type="button">Send report</button>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <Footer />
+</Layout>
+
+<script>
+  const shareButton = document.getElementById('shareButton');
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      const shareData = {
+        title: document.title,
+        url: window.location.href,
+        text: `Check out ${document.title.split('—')[0]} on Acceso`
+      };
+      try {
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          alert('Link copied to clipboard');
+        }
+      } catch (err) { }
+    });
+  }
+
+  // Report popup (email to hello@acceso.design)
+  const reportBtn = document.getElementById('locationReport');
+  const reportModal = document.getElementById('reportModal');
+  const reportClose = document.getElementById('reportClose');
+  const reportBackdrop = document.getElementById('reportBackdrop');
+  const reportSend = document.getElementById('reportSend');
+  const reportText = document.getElementById('reportText') as HTMLTextAreaElement | null;
+  const museumName = document.querySelector('.location-studio-name')?.textContent?.trim() || '';
+
+  function openReportModal() {
+    if (!reportModal) return;
+    reportModal.hidden = false;
+    reportText?.focus();
+  }
+  function closeReportModal() {
+    if (reportModal) reportModal.hidden = true;
+  }
+
+  if (reportBtn) reportBtn.addEventListener('click', openReportModal);
+  if (reportClose) reportClose.addEventListener('click', closeReportModal);
+  if (reportBackdrop) reportBackdrop.addEventListener('click', closeReportModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeReportModal();
+  });
+  if (reportSend && reportText) {
+    reportSend.addEventListener('click', () => {
+      const note = reportText.value.trim();
+      const body = `Museum: ${museumName}\nURL: ${window.location.href}\n\n${note}`;
+      window.location.href = `mailto:hello@acceso.design?subject=${encodeURIComponent('Report: ' + museumName)}&body=${encodeURIComponent(body)}`;
+      closeReportModal();
+    });
+  }
+
+  // Description read more / less — only revealed when the clamped text
+  // is actually truncated.
+  const description = document.getElementById('museumDescription');
+  const descriptionToggle = document.getElementById('descriptionToggle');
+  if (description && descriptionToggle) {
+    const checkTruncation = () => {
+      if (description.classList.contains('expanded')) return;
+      descriptionToggle.hidden = description.scrollHeight <= description.clientHeight + 1;
+    };
+
+    checkTruncation();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(checkTruncation);
+    }
+    window.addEventListener('resize', checkTruncation);
+
+    descriptionToggle.addEventListener('click', () => {
+      const expanded = description.classList.toggle('expanded');
+      descriptionToggle.textContent = expanded ? 'Read less' : 'Read more';
+    });
+  }
+</script>
+
+<style>
+  .detail-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  .breadcrumbs-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--page-top-spacing) 40px 0;
+  }
+
+  .hero-row {
+    display: flex;
+    gap: 40px;
+    margin-top: var(--page-hero-gap);
+    align-items: stretch;
+    justify-content: flex-end;
+    --hero-card-height: clamp(500px, 75vh, 700px);
+  }
+
+  .hero-image-wrapper {
+    height: var(--hero-card-height);
+    max-height: var(--hero-card-height);
+    width: auto;
+    max-width: 100%;
+    background: var(--color-bg-secondary);
+    border-radius: 20px;
+    overflow: hidden;
+    flex-shrink: 1;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .hero-image {
+    max-height: 100%;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+  }
+
+  .hero-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray);
+    font-family: var(--font-sans);
+  }
+
+  .info-card {
+    width: 400px;
+    height: var(--hero-card-height);
+    max-height: var(--hero-card-height);
+    background: var(--color-bg-secondary);
+    border-radius: 20px;
+    padding: clamp(20px, 3vh, 32px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .info-card-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    padding-right: 8px;
+    margin-right: -8px;
+    min-height: 0;
+  }
+  
+  .info-card-content::-webkit-scrollbar { display: none; }
+  .info-card::-webkit-scrollbar { display: none; }
+
+  .item-name {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: 0;
+    color: var(--color-black);
+    margin: 0 0 24px -2px;
+  }
+
+  .description-wrapper {
+    margin-bottom: 24px;
+  }
+
+  .item-description {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+    color: var(--color-text-muted);
+    margin: 0 0 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .item-description.expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+
+  .description-toggle {
+    margin-top: 6px;
+    padding: 0;
+    background: none;
+    border: none;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-black);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .description-toggle:hover {
+    opacity: 0.6;
+  }
+
+  .social-links { display: flex; gap: 8px; margin-bottom: 24px; }
+
+  .details-section { background: var(--color-btn-bg); border-radius: 10px; padding: 16px 0; margin-bottom: 16px; }
+  .details-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .details-row.top-align { align-items: flex-start; }
+  .detail-label { font-size: 15px; color: var(--color-gray); }
+  .detail-value { font-size: 15px; font-weight: 700; color: var(--color-black); text-align: right; text-decoration: none; line-height: 1.4; word-break: break-word; }
+  .detail-value.underlined { text-decoration: underline; }
+  .detail-value.underlined:hover { color: var(--color-black); }
+  .detail-link { transition: opacity 0.2s ease; }
+  .detail-link:hover { opacity: 0.6; }
+  .detail-value-group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+  .detail-separator { color: var(--color-gray); margin: 0 2px; font-weight: 400; }
+  .details-divider { height: 1px; background: var(--color-stroke); margin: 12px 0; }
+
+  .details-group,
+  .contacts-group {
+    background: var(--color-btn-bg);
+    border-radius: 10px;
+    padding: 16px 0;
+    margin-bottom: 16px;
+  }
+
+  .card-footer-actions {
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+
+  save-button {
+    display: contents;
+  }
+
+  .discovery-area { margin-top: 120px; padding-bottom: 40px; }
+  .section-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; padding-bottom: 0; }
+  .discovery-title { font-family: var(--font-sans); font-size: 24px; font-weight: 400; color: var(--color-black); letter-spacing: -0.02em; }
+  .discovery-see-all { flex-shrink: 0; }
+
+  .discovery-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(16px, 2vw, 24px); }
+
+  /* Force the discovery cards to be squared, like the designers & fairs slugs. */
+  .discovery-grid :global(.card-image-wrapper) { aspect-ratio: 1; }
+
+
+  @media (max-width: 1300px) {
+    .discovery-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  @media (max-width: 1100px) {
+    .discovery-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 1024px) {
+    .hero-row { flex-direction: column; align-items: center; }
+    .hero-image-wrapper { width: 100%; height: auto; min-height: auto; }
+    .info-card { width: 100%; height: auto; max-width: 800px; }
+    .detail-container { padding: 0 20px 40px; }
+    .breadcrumbs-container { padding: 32px 20px 0; }
+  }
+
+  @media (max-width: 640px) {
+    .discovery-grid { grid-template-columns: repeat(2, 1fr); }
+    .discovery-title { font-size: 20px; }
+  }
+
+  /* ── Museum about (long description) section ───────────────────── */
+  .museum-about-section {
+    margin-top: 120px;
+  }
+
+  .about-columns {
+    column-count: 2;
+    column-gap: 40px;
+    column-rule: 1px solid var(--color-stroke);
+  }
+
+  .about-columns.single-column {
+    column-count: 1;
+    column-rule: none;
+  }
+
+  .about-paragraph {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    margin: 0 0 18px;
+    break-inside: avoid-column;
+  }
+
+  .about-paragraph:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 768px) {
+    .about-columns { column-count: 1; column-rule: none; }
+  }
+
+  /* ── Museum location section ────────────────────────────────────── */
+  .museum-location-section {
+    margin-top: var(--page-hero-gap);
+  }
+
+  .location-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .location-title {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-gray);
+    margin: 0 0 20px;
+  }
+
+  .location-studio-name {
+    font-family: var(--font-sans);
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+    margin: 0 0 12px;
+  }
+
+  .location-address {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    color: var(--color-black);
+    margin: 0 0 4px;
+  }
+
+  .location-hours {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    color: var(--color-text-muted);
+    margin: 0 0 4px;
+  }
+
+  .location-meta {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    color: var(--color-text-muted);
+    margin: 0 0 28px;
+  }
+
+  .location-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .location-cta {
+    height: 46px;
+    padding: 0 24px;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .location-directions {
+    background: var(--color-black);
+    color: var(--color-white);
+    border-radius: 10px;
+  }
+  .location-directions:hover { opacity: 0.85; }
+  .location-directions img { position: relative; top: -1px; }
+  .location-directions span { margin-left: 3px; }
+  .location-wrong-link {
+    background: transparent;
+    border: 0;
+    padding: 2px 0 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .location-wrong-link:hover { color: var(--color-black); }
+
+  .location-map-col { min-width: 0; }
+  .location-map {
+    width: 100%;
+    height: 380px;
+    border: 0;
+    border-radius: 16px;
+    display: block;
+    background: transparent;
+  }
+
+  @media (max-width: 768px) {
+    .museum-location-section { margin-top: 40px; }
+    .location-grid { grid-template-columns: 1fr; gap: 24px; }
+    .location-map-col { order: -1; }
+    .location-map { height: 300px; }
+  }
+
+  /* ── Embed modal ──────────────────────────────────────────────────── */
+  .embed-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .embed-modal[hidden] { display: none; }
+  .embed-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+  }
+  .embed-modal-box {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    background: var(--color-white);
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  }
+  .embed-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--color-gray);
+    cursor: pointer;
+  }
+  .embed-modal-title {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--color-black);
+    margin: 0 0 8px;
+  }
+  .embed-modal-desc {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    margin: 0 0 16px;
+  }
+  .embed-modal-code {
+    width: 100%;
+    height: 96px;
+    resize: none;
+    border-radius: 10px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    padding: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--color-black);
+    box-sizing: border-box;
+  }
+  .embed-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+  .embed-modal-copy {
+    height: 44px;
+    padding: 0 24px;
+    border-radius: 999px;
+    border: none;
+    background: var(--color-yellow);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .embed-modal-copy:hover { opacity: 0.9; }
+</style>

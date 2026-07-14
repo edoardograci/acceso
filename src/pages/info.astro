@@ -7,7 +7,7 @@ import Footer from '../components/Footer.astro';
   <Layout 
     title="Acceso | Independent Furniture & Industrial Design Studios"
     description="Curated directory of independent furniture and industrial design studios. Explore studios, objects, and projects across Milan, London, Berlin, Seoul, and more."
-    keywords="independent design studios, furniture design studios, industrial design studios, design studios directory, design studio map, design studios Milan, design studios London, design studios Seoul, design inspiration objects" type="website">
+    keywords="independent design studios, furniture design studios, industrial design studios, design studios directory, design studio map, design studios Milan, design studios London, design studios Seoul, design inspiration objects" ogType="website">
     <Navbar />
     
     {/* Page Hero */}
@@ -15,124 +15,46 @@ import Footer from '../components/Footer.astro';
       <div class="info-hero-container reveal-on-scroll">
         <div class="info-hero-content">
           <div class="info-hero-kicker">
-            <span class="pill">300+ designers 8+ countries</span>
+            <span class="pill">WE MAP DESIGN IN 300+ CITIES</span>
           </div>
-          <h1 class="info-hero-title">Design lives<br/>in cities</h1>
+          <h1 class="info-hero-title">Your local<br/>design infopoint</h1>
           <p class="info-hero-sub">
-            Explore independent studios through the places they belong to, and the objects they create.
+            Acceso is a curated directory of local design communities.
           </p>
           <div class="info-hero-ctas">
-            <a href="/designers" class="btn-primary">
-              Explore studios
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 8px;">
-                <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+            <a href="/map" class="btn-primary">
+              Explore map
             </a>
-            <a href="/projects" class="btn-secondary">Browse projects</a>
+            <a href="/designers" class="btn-secondary">Browse designers</a>
           </div>
         </div>
         <div class="info-hero-image">
           <div class="info-hero-img-wrapper">
-             <img src="/images/hero-image-grid.webp" alt="Design objects grid" class="info-hero-img" />
+             <img src="/images/projects-grid.webp" alt="Design projects grid" class="info-hero-img" />
           </div>
         </div>
       </div>
     </section>
 
-    {/* Why Acceso Section */}
-    <section class="why-acceso-section">
-      <div class="why-header">
-        <span class="showcase-label reveal-on-scroll">WHY ACCESO</span>
-        <h2 class="why-title reveal-on-scroll">A different way to explore design studios</h2>
-      </div>
-
-      <div class="why-comparison">
-        {/* Left Column */}
-        <div class="why-column why-column-left reveal-on-scroll">
-          <h3 class="comparison-title">Common design platforms</h3>
-          <ul class="card-features">
-            <li>Renderings without context</li>
-            <li>Catalog images</li>
-            <li>Brands over studios</li>
-            <li>Articles instead of objects</li>
-            <li>No geographic context</li>
-          </ul>
-        </div>
-
-        {/* Divider */}
-        <div class="why-divider"></div>
-
-        {/* Right Column */}
-        <div class="why-column why-column-right reveal-on-scroll">
-          <h3 class="comparison-title">What Acceso shows</h3>
-          <ul class="card-features">
-            <li>Manufactured objects</li>
-            <li>Real product photography</li>
-            <li>Independent studios</li>
-            <li>Objects connected to the studios</li>
-            <li>Organized by city</li>
-          </ul>
-        </div>
-      </div>
-      </section>
-
-    {/* Feature Showcase: Map Discovery */}
-    <section class="feature-showcase">
-      <div class="showcase-container">
-        <div class="showcase-content">
-          <span class="showcase-label reveal-on-scroll">Explore by city</span>
-          <h2 class="showcase-title reveal-on-scroll">Your design<br/>neighborhood</h2>
-          <p class="showcase-description reveal-on-scroll">
-            Navigate the city through its designers. Find studios, discover hidden projects, and see where creativity happens in Milan, London, Paris, Berlin, and beyond.
+    {/* What is Acceso Section */}
+    <section class="what-is-acceso-section">
+      <div class="what-is-grid">
+        <div class="what-is-header">
+          <span class="showcase-label reveal-on-scroll">WHAT IS ACCESO</span>
+          <h2 class="what-is-title reveal-on-scroll">Mapping the<br/>design ecosystem</h2>
+          <p class="what-is-desc reveal-on-scroll">
+            Acceso is a curated directory of local design communities. Discover independent design studios, industrial designers, furniture designers, design schools, exhibitions, fairs, design weeks, awards, competitions, manufacturers, workshops, galleries, museums, showrooms, retailers, jobs, and creative opportunities in cities around the world.
           </p>
-          <a href="/map" class="showcase-btn reveal-on-scroll">Explore map</a>
-        </div>
-        <div class="showcase-image">
-          <div class="showcase-image-wrapper">
-            <img src="/images/map.webp" alt="Acceso Map Interface" class="showcase-img" />
-          </div>
-        </div>
-      </div>
-    </section>
-
-    {/* Feature Showcase: Designer (Mirrored) */}
-    <section class="feature-showcase feature-showcase--reversed">
-      <div class="showcase-container">
-        <div class="showcase-content">
-          <span class="showcase-label reveal-on-scroll">Design studios</span>
-          <h2 class="showcase-title reveal-on-scroll">Meet the<br/>designers</h2>
-          <p class="showcase-description reveal-on-scroll">
-            Explore the studios behind the objects you love. Learn their stories and see the projects shaping local and global design today.
+          <p class="what-is-desc reveal-on-scroll">
+            Each city page includes interactive maps, curated listings, and practical information to help you explore the local design scene. Whether you're looking for design inspiration, planning a visit, searching for a studio, hiring a designer, or researching a city's creative ecosystem, Acceso provides a single place to discover and navigate local design.
           </p>
-          <a href="/designers" class="showcase-btn reveal-on-scroll">Browse designers</a>
         </div>
-        <div class="showcase-image">
-          <div class="showcase-image-wrapper">
-            <img src="/images/designers.webp" alt="Acceso Designers Interface" class="showcase-img" />
-          </div>
+        <div class="what-is-image">
+          <img src="/images/map.webp" alt="Acceso map of local design" class="what-is-img" />
         </div>
       </div>
     </section>
 
-
-    {/* Feature Showcase: Moodboard */}
-    <section class="feature-showcase">
-      <div class="showcase-container">
-        <div class="showcase-content">
-          <span class="showcase-label reveal-on-scroll">Visual inspiration</span>
-          <h2 class="showcase-title reveal-on-scroll">Curate your<br/>moodboard</h2>
-          <p class="showcase-description reveal-on-scroll">
-            Gather inspiration from objects, projects, and ideas handpicked from studios worldwide. Build moodboards, save items into collections, and capture visual references for your next project.
-          </p>
-          <a href="/projects" class="showcase-btn reveal-on-scroll">Browse projects</a>
-        </div>
-        <div class="showcase-image">
-          <div class="showcase-image-wrapper">
-            <img src="/images/moodboard.webp" alt="Acceso Moodboard Interface" class="showcase-img" />
-          </div>
-        </div>
-      </div>
-    </section>
     {/* 
     <main class="spotlight-page">
       <Spotlight 
@@ -147,21 +69,9 @@ import Footer from '../components/Footer.astro';
     <section class="community-section">
       <div class="community-content">
         <span class="showcase-label reveal-on-scroll">Your personal space</span>
-        <h2 class="community-title reveal-on-scroll">Start building your</br>design references</h2>
-        <p class="community-subtitle reveal-on-scroll">Create an account to save studios, collect objects, and build your own reference library. Acceso works better when it remembers what you care about.</p>
-        <a href="/login" class="btn-primary community-btn reveal-on-scroll">Start collecting</a>
-      </div>
-    </section>
-
-    {/* Contributors Section */}
-    <section class="contributors-section">
-      <div class="contributors-content reveal-on-scroll">
-        <h2 class="contributors-title">Contributors</h2>
-        <p class="contributors-text">
-          Thanks to the contributors for making this resource free to use for anyone in the field: 
-          <strong>Edoardo Graci</strong>, <strong>Hyeji Shin</strong> from Acceso and <strong>A.doc Team</strong> members 
-          Andrea Pedulli, Agnese De Angelis, Luca Pinotti, Andrea Lorenzo, Mattia Cenedese and Nicola Capelli.
-        </p>
+        <h2 class="community-title reveal-on-scroll">Start building<br/>your map</h2>
+        <p class="community-subtitle reveal-on-scroll">Create an account to save studios, objects, universities, museums and build your own map of local design references. Make it completely personalized to reflect your taste.</p>
+        <a href="/login" class="btn-primary community-btn reveal-on-scroll">Build my map</a>
       </div>
     </section>
 
@@ -200,9 +110,9 @@ import Footer from '../components/Footer.astro';
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.75);
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--color-gray);
+    background: rgba(0,0,0,0.04);
+    border: 1px solid var(--color-stroke);
     padding: 8px 12px;
     border-radius: 999px;
     backdrop-filter: blur(10px);
@@ -210,20 +120,20 @@ import Footer from '../components/Footer.astro';
   }
 
   .info-hero-title {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: clamp(48px, 6vw, 84px);
     font-weight: 400;
     line-height: 0.98;
-    letter-spacing: 0;
+    letter-spacing: -0.08em;
     margin: 0 0 24px;
-    color: var(--color-white);
+    color: var(--color-black);
   }
 
   .info-hero-sub {
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.6;
-    color: rgba(255,255,255,0.6);
+    color: var(--color-gray);
     margin: 0 0 32px;
     max-width: 500px;
   }
@@ -260,631 +170,104 @@ import Footer from '../components/Footer.astro';
     white-space: nowrap;
   }
 
-  @media (max-width: 1024px) {
-    .info-hero-container {
-      gap: 40px;
-    }
-    .info-hero-title {
-      font-size: 56px;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .info-hero {
-      padding: var(--page-top-spacing) 24px 60px;
-    }
-    .info-hero-container {
-      grid-template-columns: 1fr;
-      gap: 48px;
-    }
-    .info-hero-title {
-      font-size: 42px;
-    }
-    .info-hero-sub {
-      font-size: 16px;
-    }
-    .info-hero-image {
-      aspect-ratio: 4 / 3;
-    }
-  }
-
-  /* Hero Section */
-  .hero-section {
-    padding: 24px var(--spacing-page) 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    background: var(--color-black);
-    height: auto;
-    min-height: 100vh;
-    min-height: 100dvh;
-    position: relative;
-  }
-
-  .hero-content {
-    max-width: 1000px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 40px;
-  }
-
-  /* Hero Static Image */
-  .hero-image-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 1100px;
-    margin-bottom: 64px;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    border: none !important;
-    outline: none !important;
-    background: var(--color-black);
-  }
-
-  .hero-static-image {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    top: -1px;
-  }
-
-  .hero-gradient-overlay {
-    display: none;
-  }
-
-  .hero-title {
-    margin-top: 0;
-    font-family: var(--font-mono);
-    font-size: 56px;
-    font-weight: 400;
-    line-height: 1.1;
-    margin-bottom: 16px;
-    letter-spacing: 0;
-    color: var(--color-white);
-  }
-
-  .hero-subtitle {
-    font-family: var(--font-sans);
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--color-gray);
-    max-width: 600px;
-    margin: 0 auto 24px;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 48px;
-    padding: 0 32px;
-    background: #ffffff;
-    color: var(--color-black);
-    border-radius: 999px;
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 700;
-    text-decoration: none;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-  }
-
-  .btn-primary:hover {
-    background: #f3f4f6;
-    color: var(--color-black);
-  }
-
-  .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 48px;
-    padding: 0 32px;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-stroke);
-    color: var(--color-white);
-    border-radius: 999px;
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 700;
-    text-decoration: none;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--color-white);
-    background: rgba(255,255,255,0.1);
-  }
-
-  /* Why Acceso Section */
-  .why-acceso-section {
+  /* What is Acceso Section */
+  .what-is-acceso-section {
     width: 100%;
     max-width: 1600px;
-    margin: 80px auto 120px;
+    margin: 80px auto 0;
     padding: 0 40px;
     position: relative;
     z-index: 10;
   }
 
-  .why-header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 24px;
-    text-align: left;
-    margin-bottom: 100px;
-  }
-
-  .why-title {
-    font-family: var(--font-mono);
-    font-size: 64px;
-    font-weight: 400;
-    line-height: 1.05;
-    color: var(--color-white);
-    letter-spacing: 0;
-    max-width: 900px;
-    margin: 0;
-  }
-
-  .why-comparison {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 80px;
-    align-items: start;
-  }
-
-  .why-column {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-  }
-
-  .why-column-left {
-    opacity: 0.7;
-  }
-
-  .why-column-right {
-    opacity: 1;
-  }
-
-  .why-divider {
-    width: 1px;
-    background: var(--color-stroke);
-    min-height: 300px;
-  }
-
-  .comparison-title {
-    font-family: var(--font-sans);
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--color-white);
-    margin: 0;
-    letter-spacing: 0;
-  }
-
-  .why-column-left .comparison-title {
-    color: var(--color-gray);
-    opacity: 0.8;
-  }
-
-  .card-features {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .card-features li {
-    font-family: var(--font-sans);
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--color-white);
-    position: relative;
-    padding-left: 20px;
-  }
-
-  .why-column-left .card-features li {
-    color: var(--color-gray);
-    opacity: 0.75;
-  }
-
-  .why-column-right .card-features li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    background-color: var(--color-yellow);
-    border-radius: 50%;
-  }
-
-  @media (max-width: 1024px) {
-    .why-acceso-section,
-    .feature-showcase,
-    .community-section {
-      padding-left: 24px;
-      padding-right: 24px;
-    }
-    .why-title {
-      font-size: 48px;
-    }
-    .why-comparison {
-      gap: 60px;
-    }
-    .why-divider {
-      min-height: 250px;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .why-acceso-section {
-      margin: var(--page-top-spacing) auto 80px;
-      padding: 0 20px;
-    }
-    .why-header {
-      margin-bottom: 64px;
-    }
-    .why-title {
-      font-size: 32px;
-    }
-    .why-comparison {
-      grid-template-columns: 1fr;
-      gap: 80px;
-    }
-    .why-divider {
-      display: none;
-    }
-    .why-column-left {
-      opacity: 0.7;
-      padding-bottom: 40px;
-      border-bottom: 1px solid var(--color-stroke);
-    }
-  }
-
-  .hero-lower {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto 64px;
-    position: relative;
-    z-index: 10;
-  }
-
-  .lower-title {
-    font-family: var(--font-mono);
-    font-size: 18px;
-    font-weight: 400;
-    margin-bottom: 32px;
-    color: var(--color-white);
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  /* Carousel */
-  .carousel-container {
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-    padding: 12px 0;
-  }
-
-  .carousel-container::before,
-  .carousel-container::after {
-    content: "";
-    position: absolute;
-    top: -2px;
-    bottom: -2px;
-    width: 100px;
-    z-index: 2;
-    pointer-events: none;
-  }
-
-  .carousel-container::before {
-    left: -2px;
-    background: transparent;
-  }
-
-  .carousel-container::after {
-    right: -2px;
-    background: transparent;
-  }
-
-  .carousel-track {
-    display: flex;
-    gap: 16px;
-    width: max-content;
-    will-change: transform;
-    user-select: none;
-    -webkit-user-drag: none;
-  }
-
-  @media (min-width: 769px) {
-    .hero-section {
-      padding-top: 80px;
-      height: auto;
-      min-height: 100vh;
-      overflow: visible;
-      justify-content: flex-start;
-    }
-    
-    .hero-content {
-      display: grid !important;
-      grid-template-columns: 1fr;
-      justify-items: center;
-      gap: 0;
-    }
-
-    .hero-title {
-      grid-row: 1;
-      font-size: 64px;
-      margin-bottom: 24px;
-    }
-
-    .hero-subtitle {
-      grid-row: 2;
-      margin-bottom: 32px;
-    }
-
-    .hero-actions {
-      grid-row: 3;
-      margin-bottom: 80px;
-    }
-
-    .hero-image-wrapper {
-      grid-row: 4;
-      margin-top: 0;
-      margin-bottom: 0;
-      box-shadow: none;
-      max-width: 1100px;
-      width: 100%;
-      inset: 0;
-    }
-  }
-
-  .carousel-container {
-    margin-top: 0px;
-  }
-
-  .city-pill {
-    padding: 12px 32px;
-    background: var(--color-bg-secondary);
-    box-shadow: inset 0 0 0 1.5px var(--color-stroke);
-    border: none;
-    color: var(--color-white);
-    font-family: var(--font-sans);
-    font-size: 16px;
-    border-radius: 9999px;
-    text-transform: uppercase;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-  }
-
-  .city-pill:hover {
-    border-color: var(--color-yellow);
-    color: var(--color-yellow);
-  }
-
-  .spotlight-page {
-    position: relative;
-    padding-top: 80px;
-    min-height: auto;
-    background: var(--color-black);
-  }
-
-  @media (max-width: 768px) {
-    .hero-section {
-      justify-content: flex-start;
-      padding: 24px var(--spacing-page) 32px;
-      min-height: auto;
-      height: auto;
-    }
-
-    .hero-content {
-      margin-bottom: 32px;
-      width: 100%;
-      max-width: 100%;
-      padding: 0;
-    }
-
-    .hero-title {
-      margin-bottom: 24px;
-      font-size: 32px;
-      max-width: 100%;
-      overflow-wrap: break-word;
-    }
-
-    .hero-subtitle {
-      margin-bottom: 32px;
-      font-size: 18px;
-      width: 100%;
-      max-width: 100%;
-      padding: 0 16px;
-      box-sizing: border-box;
-      white-space: normal;
-      overflow-wrap: break-word;
-      word-wrap: break-word;
-      line-height: 1.4;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .hero-image-wrapper {
-      margin-bottom: 0px;
-      box-shadow: none;
-      border: none;
-      outline: none;
-    }
-
-    .hero-image-wrapper .hero-gradient-overlay {
-      height: 60%; 
-      bottom: -3px;
-      background: transparent;
-    }
-
-    .lower-title {
-      font-size: 16px;
-    }
-
-    .carousel-track {
-      animation-duration: 40s;
-    }
-  }
-
-  /* Reveal on Scroll Animation */
-  @media (prefers-reduced-motion: no-preference) {
-    .reveal-on-scroll {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-      will-change: opacity, transform;
-    }
-    
-    .reveal-on-scroll.is-visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Feature Showcase Sections */
-  .feature-showcase {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 80px 40px;
-  }
-
-  .showcase-container {
+  .what-is-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 80px;
     align-items: center;
   }
 
-  .feature-showcase--reversed .showcase-container {
-    direction: rtl;
-  }
-
-  .feature-showcase--reversed .showcase-content,
-  .feature-showcase--reversed .showcase-image {
-    direction: ltr;
-  }
-
-  .showcase-content {
+  .what-is-header {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 24px;
+    text-align: left;
   }
 
-  .showcase-label {
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 400;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.75);
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    padding: 8px 12px;
-    border-radius: 999px;
-    backdrop-filter: blur(10px);
-  }
-
-  .showcase-title {
-    font-family: var(--font-mono);
-    font-size: 56px;
-    font-weight: 400;
-    line-height: 1.05;
-    color: var(--color-white);
-    letter-spacing: 0;
-    margin: 0;
-  }
-
-  .showcase-description {
-    font-family: var(--font-sans);
-    font-size: 18px;
-    line-height: 1.6;
-    color: var(--color-gray);
-    max-width: 500px;
-    margin: 0;
-  }
-
-  .showcase-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 48px;
-    padding: 0 32px;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-stroke);
-    color: var(--color-white);
-    border-radius: 999px;
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 400;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    margin-top: 8px;
-  }
-
-  .showcase-btn:hover {
-    border-color: var(--color-white);
-    background: #f3f4f6;
-    color: #0b0d0f;
-  }
-
-  .showcase-image {
+  .what-is-image {
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 3;
+    border-radius: 24px;
     overflow: hidden;
-    position: relative;
-    border-radius: 20px;
     border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
   }
 
-  .showcase-image-wrapper {
-    width: 100%;
-    height: 100%;
-    position: relative;
-  }
-
-  .showcase-img {
+  .what-is-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
 
-  .showcase-gradient-overlay {
-    display: none;
+  .what-is-title {
+    font-family: var(--font-sans);
+    font-size: 64px;
+    font-weight: 400;
+    line-height: 1.05;
+    color: var(--color-black);
+    letter-spacing: -0.04em;
+    max-width: 900px;
+    margin: 0;
+  }
+
+  .what-is-desc {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    max-width: 720px;
+    margin: 0;
+  }
+
+  @media (max-width: 1024px) {
+    .what-is-grid {
+      gap: 48px;
+    }
+    .what-is-title {
+      font-size: 48px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .what-is-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+    .what-is-title {
+      font-size: 32px;
+    }
+  }
+
+  /* Showcase Label (shared pill) */
+  .showcase-label {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-gray);
+    background: rgba(0,0,0,0.04);
+    border: 1px solid var(--color-stroke);
+    padding: 8px 12px;
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
   }
 
   /* Modern CTA styling (align with current site buttons) */
   .btn-primary,
   .btn-secondary,
-  .showcase-btn,
   .community-btn {
     display: inline-flex;
     align-items: center;
@@ -897,93 +280,40 @@ import Footer from '../components/Footer.astro';
     font-size: 14px;
     letter-spacing: 0.01em;
     text-decoration: none;
-    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-  }
-  .btn-primary:hover,
-  .btn-secondary:hover,
-  .showcase-btn:hover,
-  .community-btn:hover {
-    transform: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease, background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
   }
 
   .btn-primary,
-  .showcase-btn,
   .community-btn {
-    background: #ffffff;
-    color: #0b0d0f;
-    border: 1px solid rgba(255,255,255,0.18);
+    background: var(--color-black);
+    color: var(--color-white);
+    border: 1px solid var(--color-black);
+  }
+
+  .btn-primary:hover,
+  .community-btn:hover {
+    opacity: 0.9;
   }
 
   .btn-secondary {
-    background: rgba(255,255,255,0.06);
-    color: #ffffff;
-    border: 1px solid rgba(255,255,255,0.10);
-    backdrop-filter: blur(10px);
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    border: 1px solid var(--color-stroke);
   }
 
-  /* Tablet */
-  @media (max-width: 1024px) {
-    .feature-showcase {
-      padding: 60px var(--spacing-page);
-    }
-
-    .showcase-container {
-      gap: 48px;
-    }
-
-    .showcase-title {
-      font-size: 44px;
-    }
-
-    .showcase-description {
-      font-size: 16px;
-    }
+  .btn-secondary:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
   }
 
-  /* Mobile */
-  @media (max-width: 768px) {
-    .feature-showcase {
-      padding: 48px 20px;
-    }
-
-    .showcase-container {
-      grid-template-columns: 1fr;
-      gap: 40px;
-    }
-
-    .feature-showcase--reversed .showcase-container {
-      direction: ltr;
-    }
-
-    .showcase-content {
-      text-align: center;
-      align-items: center;
-    }
-
-    .showcase-title {
-      font-size: 36px;
-    }
-
-    .showcase-description {
-      font-size: 16px;
-      max-width: 100%;
-    }
-
-    .showcase-image {
-      aspect-ratio: 16 / 10;
-    }
-
-    .placeholder-icon {
-      font-size: 48px;
-    }
-  }
   /* Community Section */
   .community-section {
     max-width: 1600px;
     margin: 0 auto;
     padding: 120px 40px;
     text-align: center;
-    background: var(--color-black);
+    background: var(--color-white);
   }
 
   .community-content {
@@ -996,13 +326,13 @@ import Footer from '../components/Footer.astro';
   }
 
   .community-title {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 56px;
     font-weight: 400;
     line-height: 1.1;
-    color: var(--color-white);
+    color: var(--color-black);
     margin: 0;
-    letter-spacing: 0;
+    letter-spacing: -0.04em;
   }
 
   .community-subtitle {
@@ -1031,172 +361,5 @@ import Footer from '../components/Footer.astro';
       font-size: 16px;
     }
   }
-
-  /* Contributors Section */
-  .contributors-section {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 0 40px 120px;
-    text-align: center;
-  }
-
-  .contributors-content {
-    max-width: 800px;
-    margin: 0 auto;
-    border-top: 1px solid var(--color-stroke);
-    padding-top: 80px;
-  }
-
-  .contributors-title {
-    font-family: var(--font-mono);
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--color-white);
-    margin-bottom: 24px;
-    letter-spacing: 0;
-    text-transform: uppercase;
-  }
-
-  .contributors-text {
-    font-family: var(--font-sans);
-    font-size: 16px;
-    line-height: 1.8;
-    color: var(--color-gray);
-    margin: 0;
-  }
-
-  .contributors-text strong {
-    color: var(--color-white);
-    font-weight: 400;
-  }
-
-  @media (max-width: 768px) {
-    .contributors-section {
-      padding: 0 20px 80px;
-    }
-    .contributors-content {
-      padding-top: 60px;
-    }
-  }
 </style>
 
-<script>
-  const observerOptions = {
-    root: null,
-    rootMargin: '0px 0px -50px 0px',
-    threshold: 0.05
-  };
-
-  const observer = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, observerOptions);
-
-  const elements = document.querySelectorAll('.reveal-on-scroll');
-  elements.forEach(el => observer.observe(el));
-
-  // Infinite Carousel with Drag
-  const track = document.querySelector('.carousel-track') as HTMLElement;
-  const container = document.querySelector('.carousel-container') as HTMLElement;
-
-  if (track && container) {
-    let x = 0;
-    let isDragging = false;
-    let startX = 0;
-    let prevX = 0;
-    let speed = 0.6; // Slightly faster for better feel
-    
-    const getTrackWidth = () => track.scrollWidth;
-    const getLoopThreshold = () => getTrackWidth() / 4;
-
-    const animate = () => {
-      if (!isDragging) {
-        x -= speed;
-        
-        const threshold = getLoopThreshold();
-        if (Math.abs(x) >= threshold) {
-          x += threshold; // Seamless loop
-        }
-        
-        track.style.transform = `translate3d(${x}px, 0, 0)`;
-      }
-      requestAnimationFrame(animate);
-    };
-
-    const handleStart = (clientX: number) => {
-      isDragging = true;
-      startX = clientX;
-      prevX = x;
-      container.style.cursor = 'grabbing';
-      // Disable smooth transitions during drag if any
-      track.style.transition = 'none';
-    };
-
-    const handleMove = (clientX: number) => {
-      if (!isDragging) return;
-      
-      const dx = clientX - startX;
-      x = prevX + dx;
-
-      // Handle loop while dragging to keep x within bounds
-      const threshold = getLoopThreshold();
-      while (x > 0) x -= threshold;
-      while (x < -threshold) x += threshold;
-
-      track.style.transform = `translate3d(${x}px, 0, 0)`;
-    };
-
-    const handleEnd = () => {
-      if (!isDragging) return;
-      isDragging = false;
-      container.style.cursor = 'grab';
-    };
-
-    // Mouse Events
-    container.addEventListener('mousedown', (e) => {
-      handleStart(e.clientX);
-      e.preventDefault(); // Prevent text selection/drag ghosts
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      handleMove(e.clientX);
-    });
-
-    window.addEventListener('mouseup', handleEnd);
-
-    // Touch Events
-    container.addEventListener('touchstart', (e) => {
-      handleStart(e.touches[0].clientX);
-    }, { passive: true });
-
-    window.addEventListener('touchmove', (e) => {
-      if (isDragging) {
-        handleMove(e.touches[0].clientX);
-        // Only prevent default if we are moving enough horizontally
-        // to clearly distinguish from a vertical page scroll
-        if (Math.abs(e.touches[0].clientX - startX) > 5) {
-          // e.preventDefault(); // Cannot prevent default on passive listener, but we use {passive: true} for start
-        }
-      }
-    });
-
-    window.addEventListener('touchend', handleEnd);
-
-    // Handle clicks vs drags
-    container.addEventListener('click', (e) => {
-      // If we moved more than 5px, it was a drag, so prevent the click
-      if (Math.abs(x - prevX) > 5) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, true);
-
-    // Initial state
-    container.style.cursor = 'grab';
-    animate();
-  }
-</script>

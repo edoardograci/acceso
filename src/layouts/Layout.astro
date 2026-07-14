@@ -52,7 +52,7 @@ const mergedSchema =
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
   <head>
     <PostHogEnhanced />
     <slot name="head" />
@@ -99,21 +99,12 @@ const mergedSchema =
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="canonical" href={canonical} />
 
-    <!-- Performance -->
-    <link rel="preconnect" href="https://mood.acceso.design" crossorigin />
-
+    <!-- Performance: preload the self-hosted variable font used site-wide -->
     <link
       rel="preload"
-      href="/fonts/PPSupplySans-Variable.ttf"
+      href="/fonts/Geist-Variable.woff2"
       as="font"
-      type="font/ttf"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/PPFraktionSans-Variable.ttf"
-      as="font"
-      type="font/ttf"
+      type="font/woff2"
       crossorigin
     />
 
@@ -129,11 +120,21 @@ const mergedSchema =
        * Collections Engine v6.0 (High Priority)
        */
       (function() {
-        const state = { designers: new Set(), objects: new Set(), loaded: false, subs: new Set() };
+        const state = { designers: new Set<string>(), objects: new Set<string>(), museums: new Set<string>(), universities: new Set<string>(), loaded: false, subs: new Set<() => void>() };
 
         const notify = () => {
-          state.subs.forEach(fn => { try { fn(); } catch(e) {} });
-          window.dispatchEvent(new CustomEvent('collections-changed', { detail: { designers: Array.from(state.designers), objects: Array.from(state.objects) } }));
+          state.subs.forEach((fn: any) => { try { fn(); } catch(e) {} });
+          window.dispatchEvent(new CustomEvent('collections-changed', { detail: { designers: Array.from(state.designers), objects: Array.from(state.objects), museums: Array.from(state.museums), universities: Array.from(state.universities) } }));
+        };
+
+        const collectionConfig = (type: string) => {
+          switch (type) {
+            case 'designer': return { set: state.designers, endpoint: 'designers', idKey: 'studio_id' };
+            case 'object':   return { set: state.objects,   endpoint: 'objects',   idKey: 'product_id' };
+            case 'museum':   return { set: state.museums,   endpoint: 'museums',   idKey: 'museum_id' };
+            case 'university': return { set: state.universities, endpoint: 'universities', idKey: 'university_id' };
+            default:         return { set: state.objects,   endpoint: 'objects',   idKey: 'product_id' };
+          }
         };
 
         const sync = async () => {
@@ -141,10 +142,12 @@ const mergedSchema =
             const res = await fetch('/api/collections/status', { credentials: 'include', cache: 'no-store' });
             if (!res.ok) return;
             const data = await res.json();
-            
+
             // Only update if we aren't currently waiting for a mutation to finish
             if (Array.isArray(data.designers)) state.designers = new Set(data.designers);
             if (Array.isArray(data.objects)) state.objects = new Set(data.objects);
+            if (Array.isArray(data.museums)) state.museums = new Set(data.museums);
+            if (Array.isArray(data.universities)) state.universities = new Set(data.universities);
           } catch (e) {} finally {
             state.loaded = true;
             notify();
@@ -156,41 +159,43 @@ const mergedSchema =
           get loaded() { return state.loaded; },
           get designers() { return state.designers; },
           get objects() { return state.objects; },
-          isSaved: (t: any, i: any) => (t === 'designer' ? state.designers : state.objects).has(i),
-          getCount: (t: any) => (t === 'designer' ? state.designers : state.objects).size,
+          get museums() { return state.museums; },
+          get universities() { return state.universities; },
+          isSaved: (t: any, i: any) => collectionConfig(t).set.has(i),
+          getCount: (t: any) => collectionConfig(t).set.size,
           subscribe: (fn: any) => { state.subs.add(fn); return () => state.subs.delete(fn); },
-          addItem: async (type: 'designer'|'object', id: string) => {
-            const col = type === 'designer' ? state.designers : state.objects;
-            if (col.has(id)) return;
-            col.add(id); notify();
+          addItem: async (type: string, id: string) => {
+            const { set, endpoint, idKey } = collectionConfig(type);
+            if (set.has(id)) return;
+            set.add(id); notify();
             try {
-              const res = await fetch(`/api/collections/${type === 'designer' ? 'designers' : 'objects'}`, {
+              const res = await fetch(`/api/collections/${endpoint}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', body: JSON.stringify({ [type === 'designer' ? 'studio_id' : 'product_id']: id })
+                credentials: 'include', body: JSON.stringify({ [idKey]: id })
               });
               if (!res.ok) throw new Error('Add failed');
             } catch (e) {
-              col.delete(id); notify();
+              set.delete(id); notify();
               throw e;
             }
           },
-          removeItem: async (type: 'designer'|'object', id: string) => {
-            const col = type === 'designer' ? state.designers : state.objects;
-            if (!col.has(id)) return;
-            col.delete(id); notify();
+          removeItem: async (type: string, id: string) => {
+            const { set, endpoint } = collectionConfig(type);
+            if (!set.has(id)) return;
+            set.delete(id); notify();
             try {
-              const res = await fetch(`/api/collections/${type === 'designer' ? 'designers' : 'objects'}/${encodeURIComponent(id)}`, {
+              const res = await fetch(`/api/collections/${endpoint}/${encodeURIComponent(id)}`, {
                 method: 'DELETE', credentials: 'include'
               });
               if (!res.ok) throw new Error('Remove failed');
             } catch (e) {
-              col.add(id); notify();
+              set.add(id); notify();
               throw e;
             }
           },
           init: sync
         };
-        window.collectionsState.init();
+        window.collectionsState?.init();
       })();
     </script>
 
@@ -228,6 +233,7 @@ const mergedSchema =
     <!-- JSON-LD (explicit only) -->
     {mergedSchema && (
       <script
+        is:inline
         type="application/ld+json"
         set:html={JSON.stringify(mergedSchema).replace(/</g, '\\u003c')}
       />
@@ -237,5 +243,8 @@ const mergedSchema =
   <body>
     <slot />
     <CookieBanner />
+    <!-- 100% privacy-first analytics -->
+    <script is:inline data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif?collect-dnt=true" alt="" referrerpolicy="no-referrer-when-downgrade"/></noscript>
   </body>
 </html>

@@ -1,0 +1,548 @@
+---
+import PostHogLayout from '../../../../layouts/PostHogLayout.astro';
+import Navbar from '../../../../components/Navbar.astro';
+import Footer from '../../../../components/Footer.astro';
+import EventBasicCard from '../../../../components/EventBasicCard.astro';
+import DirectoryCard from '../../../../components/DirectoryCard.astro';
+import { normalizeImage } from '../../../../lib/images';
+import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
+
+const place = Astro.params.place!;
+
+const isDev = import.meta.env.DEV;
+const origin = Astro.url.origin;
+const domain = isDev ? 'https://json.acceso.design' : `${origin}/cdn`;
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const u = `${domain}${path.startsWith('/') ? '' : '/'}${path}`;
+  const r = await fetch(u);
+  if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`);
+  return (await r.json()) as T;
+}
+
+function asArray(d: any): any[] {
+  return Array.isArray(d) ? d : (d && d.items) ? d.items : [];
+}
+function slugify(s: any): string {
+  return (s || '').toString().toLowerCase().replace(/\s+/g, '-');
+}
+// Match an item to the current location. In city mode we compare city_slug
+// (falling back to a slugified city); in country mode we compare country_slug.
+function inLocation(items: any[], slug: string, byCity: boolean): any[] {
+  return asArray(items).filter(it => {
+    if (!it) return false;
+    const s = byCity
+      ? (it.city_slug || slugify(it.city))
+      : (it.country_slug || slugify(it.country));
+    return s === slug;
+  });
+}
+
+type City = { slug: string; name: string; country?: string };
+type Country = { slug: string; name: string };
+
+let cities: City[] = [];
+let countries: Country[] = [];
+let allMuseums: any[] = [];
+let mode: 'city' | 'country' | 'unknown' = 'unknown';
+let cityName: string | null = null;
+let countryName: string | null = null;
+
+// Related ecosystems for this same location, used for the intro and the
+// internal-linking sections below. Declared up here (and assigned
+// inside the try) so a failed fetch leaves them empty rather than throwing.
+let relFairs: any[] = [];
+let relStudios: any[] = [];
+let relProjects: any[] = [];
+let relUniversities: any[] = [];
+let relAwards: any[] = [];
+// Lead items for this page (museums in this location).
+let leadMuseums: any[] = [];
+
+try {
+  const [citiesData, countriesData, museumsData, fairsData, studiosData, universitiesData, awardsData] = await Promise.all([
+    fetchJson<City[]>('/test-cities.json'),
+    fetchJson<Country[]>('/test-countries.json'),
+    fetchJson<any[]>('/museums.json'),
+    fetchJson<any[]>('/fairs.json'),
+    fetchJson<any[]>('/test-studios.json'),
+    fetchJson<any[]>('/universities.json'),
+    fetchJson<any[]>('/awards.json'),
+  ]);
+
+  cities = citiesData;
+  countries = countriesData;
+  allMuseums = asArray(museumsData);
+
+  // Determine the location from the actual item data rather than the
+  // reference table, so pages don't 404 when test-cities.json is incomplete
+  // or its slugs don't match the city_slug stored on items. The reference
+  // table is only used to enrich the country name.
+  const leadCity = allMuseums.filter((m) => m.city_slug === place);
+  const leadCountry = allMuseums.filter((m) => m.country_slug === place);
+
+  if (leadCity.length > 0) {
+    mode = 'city';
+    cityName = leadCity[0].city || place;
+    const meta = cities.find((c) => c.slug === place);
+    const countrySlug = meta?.country ?? leadCity[0].country_slug ?? null;
+    countryName = (countrySlug && countries.find((x) => x.slug === countrySlug)?.name) || leadCity[0].country || null;
+  } else if (leadCountry.length > 0) {
+    mode = 'country';
+    countryName = leadCountry[0].country || place;
+  } else {
+    return Astro.redirect('/404');
+  }
+
+  relFairs = inLocation(fairsData, place, mode === 'city');
+  relStudios = inLocation(studiosData, place, mode === 'city');
+  relUniversities = inLocation(universitiesData, place, mode === 'city');
+  relAwards = inLocation(awardsData, place, mode === 'city');
+
+  // Moodboard (Projects) is optional and may 404 on the CDN.
+  // Isolate it so a failed fetch never blanks the whole page.
+  let moodboardData: any = null;
+  try {
+    moodboardData = await fetchJson<any[]>('/moodboard.json');
+  } catch (e) {
+    console.error('[Museum Location] Moodboard fetch failed:', e);
+  }
+  relProjects = inLocation(moodboardData ?? [], place, mode === 'city');
+
+  // Lead items for this page (museums in this location), filtered from the
+  // actual data using the same city/country slug logic as the fairs page.
+  leadMuseums = allMuseums.filter((m) =>
+    mode === 'city' ? m.city_slug === place : m.country_slug === place
+  );
+} catch (e) {
+  console.error('[Museum Location] Fetch failed:', e);
+}
+
+const isCity = mode === 'city';
+const locName = isCity ? (cityName ?? place) : (countryName ?? place);
+
+const totalMuseums = leadMuseums.length;
+
+function getPeriod(startStr: string, endStr: string) {
+  if (!startStr) return "";
+  const start = new Date(startStr);
+  const end = endStr ? new Date(endStr) : null;
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const startDay = start.getDate();
+  const startMonth = monthNames[start.getMonth()];
+  if (!end || isNaN(end.getTime()) || startStr === endStr) return `${startMonth} ${startDay}, ${start.getFullYear()}`;
+  const endDay = end.getDate();
+  if (start.getMonth() === end.getMonth()) return `${startMonth} ${startDay}-${endDay}, ${start.getFullYear()}`;
+  const endMonth = monthNames[end.getMonth()];
+  return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${start.getFullYear()}`;
+}
+
+// Data-driven intro: location-specific (real counts + names), so each
+// page is unique rather than identical boilerplate.
+function buildIntro(): string {
+  const parts: string[] = [];
+  parts.push(`${locName} holds a recognised place on the global design map, valued for the character of its local design scene.`);
+
+  if (totalMuseums > 0) {
+    const noun = totalMuseums === 1 ? 'museum' : 'museums';
+    const notable = leadMuseums.slice(0, 2).map((m: any) => m.name).filter(Boolean).join(' and ');
+    parts.push(`The ${isCity ? 'city' : 'country'} currently lists ${totalMuseums} ${noun}${notable ? `, including ${notable}` : ''}.`);
+  } else {
+    parts.push(`No museums are listed here yet, but ${locName} remains an active part of the wider design community.`);
+  }
+
+  const eco: string[] = [];
+  if (relFairs.length) eco.push(`${relFairs.length} design fair${relFairs.length === 1 ? '' : 's'}`);
+  if (relStudios.length) eco.push(`${relStudios.length} designer${relStudios.length === 1 ? '' : 's'}`);
+  if (relProjects.length) eco.push(`${relProjects.length} project${relProjects.length === 1 ? '' : 's'}`);
+  if (relUniversities.length) eco.push(`${relUniversities.length} universit${relUniversities.length === 1 ? 'y' : 'ies'}`);
+  if (relAwards.length) eco.push(`${relAwards.length} award${relAwards.length === 1 ? '' : 's'}`);
+
+  if (eco.length) {
+    parts.push(`Beyond museums, ${locName} is also home to ${eco.join(', ')} — all explorable below and across Acceso.`);
+  }
+  return parts.join(' ');
+}
+const introText = buildIntro();
+
+const designersLink = isCity ? `/designers?city=${place}` : `/designers?country=${place}`;
+
+const canonical = new URL(`/directory/museums/in/${place}`, Astro.site);
+
+const pageTitle = `Museums in ${locName} | Acceso`;
+const pageDesc = `Museums in ${locName}${countryName && isCity ? `, ${countryName}` : ''}: ${totalMuseums} listed${relStudios.length || relFairs.length ? `, alongside ${relStudios.length} designers and ${relFairs.length} fairs` : ''}. Explore the global design directory on Acceso.`;
+---
+
+<PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical}>
+  <Navbar />
+
+  <main class="location-events-page">
+    <div class="page-container">
+      <Breadcrumbs items={[
+        { label: 'Home', href: '/' },
+        { label: 'Directory', href: '/directory' },
+        { label: 'Museums', href: '/directory/museums' },
+        { label: `In ${locName}` }
+      ]} />
+
+      <header class="page-header">
+        <h1 class="location-heading">
+          Museums<br />
+          in <span class="location-accent">{locName}</span>
+        </h1>
+        {isCity && countryName && (
+          <div class="country-subtitle">({countryName})</div>
+        )}
+      </header>
+
+      <p class="location-intro">{introText}</p>
+
+      <div class="results-meta">
+        <h2 class="results-count">
+          {totalMuseums} {totalMuseums === 1 ? 'museum' : 'museums'} found
+        </h2>
+      </div>
+
+      <div class="events-grid">
+        {leadMuseums.map((m: any) => (
+          <EventBasicCard
+            name={m.name}
+            slug={m.slug}
+            type="museum"
+            location={m.city || locName}
+            image={normalizeImage(m.image, Astro)}
+          />
+        ))}
+      </div>
+
+      {leadMuseums.length === 0 && (
+        <div class="empty-state">
+          <p>No museums found in this location at the moment.</p>
+          <a href="/directory/museums" class="pill-btn">Browse all museums</a>
+        </div>
+      )}
+
+      {/* Related ecosystems — each section only renders when it has items,
+          maximising internal linking without creating empty stubs. Museums
+          stay the lead section above. */}
+      {relStudios.length > 0 && (
+        <section class="related-section">
+          <div class="section-top">
+            <h2 class="discovery-title">Designers in {locName}</h2>
+            <a href={designersLink} class="discovery-see-all pill-link">
+              Explore designers
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          <div class="related-grid">
+            {relStudios.slice(0, 5).map((s: any, i: number) => (
+              <DirectoryCard studio={s} index={i} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {relProjects.length > 0 && (
+        <section class="related-section">
+          <div class="section-top">
+            <h2 class="discovery-title">Projects from {locName}</h2>
+            <a href="/discover" class="discovery-see-all pill-link">
+              Explore projects
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          <div class="related-grid">
+            {relProjects.slice(0, 5).map((p: any) => (
+              <a href={`/discover/${p.slug}`} class="project-card">
+                <div class="project-card-media">
+                  {p.cover ? (
+                    <img src={normalizeImage(p.cover, Astro, { width: 600 })} alt={p.name} loading="lazy" decoding="async" class="project-card-image" />
+                  ) : (
+                    <div class="project-card-placeholder"></div>
+                  )}
+                </div>
+                <h3 class="project-card-name">{p.name}</h3>
+                {p.designer && <p class="project-card-designer">{p.designer}</p>}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {relFairs.length > 0 && (
+        <section class="related-section">
+          <div class="section-top">
+            <h2 class="discovery-title">Design Fairs in {locName}</h2>
+            <a href={`/directory/fairs/in/${place}`} class="discovery-see-all pill-link">
+              Explore fairs
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          <div class="related-grid">
+            {relFairs.slice(0, 5).map((f: any) => (
+              <EventBasicCard
+                name={f.name}
+                slug={f.slug}
+                type="fair"
+                location={f.city || locName}
+                date={getPeriod(f.start_date, f.end_date)}
+                image={normalizeImage(f.image, Astro)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {relUniversities.length > 0 && (
+        <section class="related-section">
+          <div class="section-top">
+            <h2 class="discovery-title">Universities in {locName}</h2>
+            <a href={`/directory/universities/in/${place}`} class="discovery-see-all pill-link">
+              Explore universities
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          <div class="related-grid">
+            {relUniversities.slice(0, 5).map((u: any) => (
+              <EventBasicCard
+                name={u.name}
+                slug={u.slug}
+                type="university"
+                location={u.city || locName}
+                image={normalizeImage(u.image, Astro)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {relAwards.length > 0 && (
+        <section class="related-section">
+          <div class="section-top">
+            <h2 class="discovery-title">Awards in {locName}</h2>
+            <a href={`/directory/awards/in/${place}`} class="discovery-see-all pill-link">
+              Explore awards
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+          <div class="related-grid">
+            {relAwards.slice(0, 5).map((a: any) => (
+              <EventBasicCard
+                name={a.name}
+                slug={a.slug}
+                type="award"
+                location={a.city || locName}
+                image={normalizeImage(a.image, Astro)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </main>
+
+  <Footer />
+</PostHogLayout>
+
+<style>
+  .location-events-page {
+    background: var(--color-white);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  .page-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--page-top-spacing) 40px 60px;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+  }
+
+  .location-heading {
+    font-family: var(--font-sans);
+    font-size: clamp(40px, 5vw, 68px);
+    font-weight: 400;
+    line-height: 0.96;
+    letter-spacing: 0;
+    color: var(--color-black);
+    margin: 0;
+  }
+
+  .location-accent {
+    color: var(--color-black);
+    text-decoration: underline;
+    text-decoration-color: var(--color-stroke);
+    text-underline-offset: 8px;
+    text-decoration-thickness: 2px;
+  }
+
+  .country-subtitle {
+     font-family: var(--font-sans);
+     font-size: 24px;
+     color: var(--color-gray);
+     margin-top: 12px;
+     font-weight: 400;
+     letter-spacing: 0;
+  }
+
+  .location-intro {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    max-width: 70ch;
+    margin: 0 0 40px;
+  }
+
+  .results-meta {
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--color-stroke);
+    padding-bottom: 16px;
+  }
+
+  .results-count {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  .events-grid :global(.card-image-wrapper) { aspect-ratio:1; }
+
+  .empty-state {
+    text-align: center;
+    padding: 100px 0;
+    color: var(--color-gray);
+    font-family: var(--font-sans);
+  }
+
+  .empty-state p {
+    margin-bottom: 24px;
+    font-size: 18px;
+  }
+
+  .pill-btn {
+     height: 44px;
+     padding: 1px 24px 0;
+     background: var(--color-yellow);
+     color: var(--color-black);
+     border-radius: 999px;
+     font-family: var(--font-sans);
+     font-size: 15px;
+     font-weight: 700;
+     text-decoration: none;
+     display: inline-flex;
+     align-items: center;
+     transition: all 0.2s;
+  }
+
+  .pill-btn:hover {
+     opacity: 0.9;
+  }
+
+  /* Shared section header (mirrors designers/discover) */
+  .section-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+    padding-bottom: 0;
+  }
+  .discovery-title {
+    font-family: var(--font-sans);
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--color-black);
+    letter-spacing: -0.02em;
+  }
+  .discovery-see-all { flex-shrink: 0; }
+
+  .related-section { margin-top: 80px; }
+  .related-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(16px, 2vw, 24px); }
+  .related-grid :global(.card-image-wrapper) { aspect-ratio:1; }
+
+  .project-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease;
+  }
+  .project-card:hover { transform: translateY(-2px); }
+  .project-card-media {
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: #E8E8EA;
+    border-radius: 12px;
+    border: 1px solid var(--color-stroke);
+  }
+  .project-card-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .project-card-placeholder { width: 100%; height: 100%; background: #E8E8EA; }
+  .project-card-name {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--color-black);
+    margin: 0;
+    line-height: 1.25;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .project-card-designer {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin: -6px 0 0;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1300px) {
+    .related-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  @media (max-width: 1200px) {
+    .events-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 1100px) {
+    .related-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 900px) {
+    .events-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    .events-grid { grid-template-columns: 1fr; }
+    .related-grid { grid-template-columns: repeat(2, 1fr); }
+    .page-container { padding: 24px 20px 60px; }
+    .location-heading { font-size: 36px; }
+    .discovery-title { font-size: 20px; }
+  }
+</style>

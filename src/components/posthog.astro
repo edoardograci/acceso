@@ -32,6 +32,13 @@ const userId = Astro.locals.user?.id;
           
           window.posthog.init(posthogKey, {
             api_host: posthogHost,
+            loaded: function(posthog) {
+              const allowedHosts = ['acceso.design'];
+              const currentHost = window.location.hostname;
+              if (!allowedHosts.includes(currentHost)) {
+                posthog.opt_out_capturing();
+              }
+            },
             capture_pageview: true,
             persistence: hasConsent ? 'localStorage+cookie' : 'memory',
             autocapture: false,

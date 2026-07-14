@@ -36,7 +36,7 @@
     height: 56px;
     display: flex;
     align-items: center;
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(8px);
   }
 
@@ -68,14 +68,14 @@
   .cookie-banner-text {
     font-family: var(--font-sans);
     font-size: 14px;
-    color: var(--color-white);
+    color: var(--color-black);
     margin: 0;
     flex: 1;
     line-height: 1.5;
   }
 
   .cookie-banner-link {
-    color: var(--color-white);
+    color: var(--color-black);
     opacity: 0.6;
     text-decoration: underline;
     text-underline-offset: 2px;
@@ -100,7 +100,9 @@
     font-size: 14px;
     font-weight: 500;
     height: 100%;
-    color: var(--color-yellow);
+    color: var(--color-black);
+    text-decoration: underline;
+    text-underline-offset: 2px;
     white-space: nowrap;
   }
 
@@ -123,7 +125,7 @@
   }
 
   .cookie-btn-close:hover {
-    color: var(--color-white);
+    color: var(--color-black);
   }
 
   /* Mobile adjustments */
@@ -183,10 +185,6 @@
     const expires = `expires=${date.toUTCString()}`;
     const secure = window.location.protocol === 'https:' ? 'Secure;' : '';
     document.cookie = `${name}=${value};${expires};path=/;SameSite=Lax;${secure}`;
-  }
-  
-  function hasConsent(): boolean {
-    return getCookie(CONSENT_COOKIE_NAME) === 'true';
   }
   
   function showBanner(): void {

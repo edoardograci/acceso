@@ -1,0 +1,1759 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import type { Studio, Museum, University } from '../../lib/types';
+import { breadcrumbList, itemList } from '../../lib/seo/schema';
+import { getFullCollectionStatus } from '../../lib/db';
+import type { Env } from '../../env.d';
+
+if (!Astro.locals.user) {
+  return Astro.redirect('/login');
+}
+
+let typeParam = Astro.url.searchParams.get('type') || 'designers';
+let itemType = typeParam === 'universities' ? 'university' : typeParam === 'museums' ? 'museum' : 'studio';
+const mine = true;
+
+let studios: Studio[] = [];
+let museums: Museum[] = [];
+let universities: University[] = [];
+let error = null;
+
+try {
+  const isDev = import.meta.env.DEV;
+  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+  
+  // Fetch all data types upfront for client-side switching
+  const [studiosRes, museumsRes, universitiesRes] = await Promise.all([
+    fetch(`${domain}/test-studios.json`),
+    fetch(`${domain}/museums.json`),
+    fetch(`${domain}/universities.json`)
+  ]);
+  
+  if (studiosRes.ok) {
+    studios = await studiosRes.json();
+  }
+  if (museumsRes.ok) {
+    const rawData = await museumsRes.json();
+    museums = Array.isArray(rawData) ? rawData : (rawData.items || []);
+  }
+  if (universitiesRes.ok) {
+    const rawData = await universitiesRes.json();
+    universities = Array.isArray(rawData) ? rawData : (rawData.items || []);
+  }
+} catch (e) {
+  error = e;
+  console.error('[Map] Failed to fetch data:', e);
+}
+
+// Personal mode: keep only the items the user has saved.
+try {
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const saved = await getFullCollectionStatus(Astro.locals.user!.id, env) as any;
+  const designers = saved.designers || [];
+  const museumsSaved = saved.museums || [];
+  const universitiesSaved = saved.universities || [];
+
+  studios = studios.filter((s: any) => designers.includes(s.id));
+  museums = museums.filter((m: any) => museumsSaved.includes(m.id));
+  universities = universities.filter((u: any) => universitiesSaved.includes(u.id));
+} catch (e) {
+  error = e;
+  console.error('[My Map] Failed to filter saved items:', e);
+}
+
+// If the default landing type (designers) has nothing saved but
+// another type does, start on that type so the map is never empty.
+if (typeParam === 'designers' && studios.length === 0) {
+  const fallback =
+    museums.length > 0 ? 'museum' :
+    universities.length > 0 ? 'university' : null;
+  if (fallback) {
+    typeParam = fallback === 'museum' ? 'museums' : 'universities';
+    itemType = fallback;
+  }
+}
+
+// Filter all data types for coordinates
+const studiosWithCoords = studios.filter((s) => {
+  const lat = typeof s.latitude === 'string' ? parseFloat(s.latitude) : s.latitude;
+  const lng = typeof s.longitude === 'string' ? parseFloat(s.longitude) : s.longitude;
+  return lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng);
+});
+
+const museumsWithCoords = museums.filter((s) => {
+  const lat = typeof s.latitude === 'string' ? parseFloat(s.latitude) : s.latitude;
+  const lng = typeof s.longitude === 'string' ? parseFloat(s.longitude) : s.longitude;
+  return lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng);
+});
+
+const universitiesWithCoords = universities.filter((s) => {
+  const lat = typeof s.latitude === 'string' ? parseFloat(s.latitude) : s.latitude;
+  const lng = typeof s.longitude === 'string' ? parseFloat(s.longitude) : s.longitude;
+  return lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng);
+});
+
+// Select current data based on type
+let currentDataWithCoords: any[] = [];
+if (itemType === 'museum') {
+  currentDataWithCoords = museumsWithCoords;
+} else if (itemType === 'university') {
+  currentDataWithCoords = universitiesWithCoords;
+} else {
+  currentDataWithCoords = studiosWithCoords;
+}
+
+const itemSlug = Astro.url.searchParams.get('item') || null;
+
+let cityBrowseList: { name: string; slug: string; country: string; count: number; hidden: boolean }[] = [];
+
+try {
+  const isDev = import.meta.env.DEV;
+  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+  const [ciRes, coRes] = await Promise.all([
+    fetch(`${domain}/test-cities.json`),
+    fetch(`${domain}/test-countries.json`),
+  ]);
+
+  // Curated metadata is only used to enrich display name/country; the actual
+  // set of cities is derived from the data so no city gets dropped.
+  const citiesList: any[] = ciRes.ok ? await ciRes.json() : [];
+  const countriesList: any[] = coRes.ok ? await coRes.json() : [];
+  const cityMeta = Object.fromEntries(citiesList.map((c: any) => [c.slug, c]));
+  const countryNames = Object.fromEntries(countriesList.map((c: any) => [c.slug, c.name]));
+
+  // Derive city slug + a representative item for each entry, per data type
+  const buildCityIndex = (data: any[]) => {
+    const index: Record<string, { count: number; sample: any }> = {};
+    data.forEach((item: any) => {
+      let slug = item.city_slug;
+      if (!slug && item.city) slug = item.city.toLowerCase().replace(/\s+/g, '-');
+      if (!slug && item.slug) slug = item.slug;
+      if (!slug) return;
+      if (!index[slug]) index[slug] = { count: 0, sample: item };
+      index[slug].count += 1;
+    });
+    return index;
+  };
+
+  const studioIndex = buildCityIndex(studios);
+  const museumIndex = buildCityIndex(museums);
+  const universityIndex = buildCityIndex(universities);
+
+  // Union of cities that have items in ANY type, so switching types
+  // never loses cities that only exist for another type.
+  const unionSlugs = new Set<string>([
+    ...Object.keys(studioIndex),
+    ...Object.keys(museumIndex),
+    ...Object.keys(universityIndex),
+  ]);
+
+  const currentIndex =
+    itemType === 'museum' ? museumIndex : itemType === 'university' ? universityIndex : studioIndex;
+
+  cityBrowseList = [...unionSlugs]
+    .map((slug) => {
+      const meta = cityMeta[slug];
+      const sample = currentIndex[slug]?.sample ?? museumIndex[slug]?.sample ?? universityIndex[slug]?.sample ?? studioIndex[slug]?.sample;
+      const count = currentIndex[slug]?.count || 0;
+      const name = meta?.name || (sample ? sample.city : slug);
+      const countrySlug = meta?.country || (sample ? sample.country_slug : '');
+      const country = (countrySlug && countryNames[countrySlug]) || (sample ? sample.country : '') || '';
+      return { name, slug, country, count, hidden: count === 0 };
+    })
+    .sort((a: any, b: any) => b.count - a.count);
+} catch (e) {
+  error = e;
+  console.error('[Map] Failed to fetch city metadata:', e);
+}
+
+const quickNavCities = [
+  { label: 'Milan, Italy', city: 'Milan', href: '/designers?city=milan', image: '/images/quick-nav/milan.webp', isMore: false },
+  { label: 'Seoul, Korea', city: 'Seoul', href: '/designers?city=seoul', image: '/images/quick-nav/seoul.webp', isMore: false },
+  { label: 'London, UK', city: 'London', href: '/designers?city=london', image: '/images/quick-nav/london.webp', isMore: false },
+  { label: 'More Cities →', city: null, href: null, image: '/images/quick-nav/more.webp', isMore: true },
+] as const;
+
+const quickNavImageWidth = 640;
+const quickNavImageHeight = 176;
+
+const mapFilters = [
+  { label: 'Designers', href: '/map/mine?type=designers', active: typeParam === 'designers', type: 'designers' },
+  { label: 'Universities', href: '/map/mine?type=universities', active: typeParam === 'universities', type: 'universities' },
+  { label: 'Museums', href: '/map/mine?type=museums', active: typeParam === 'museums', type: 'museums' },
+];
+
+const pageTitle = mine ? 'My Map' : (itemType === 'museum' ? 'Explore Museums & Foundations' : itemType === 'university' ? 'Explore Design Universities' : 'Explore Local Design');
+const titleLead = mine ? 'My' : 'Explore';
+const titleRest = pageTitle.replace(/^(Explore|My)\s+/, '');
+const pageDescription = mine
+  ? 'Your personal map — every studio, museum, and university you have saved, plotted by city.'
+  : (itemType === 'museum' ? 'Interactive map of design museums and foundations worldwide.' : itemType === 'university' ? 'Interactive map of design universities and institutions worldwide.' : 'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.');
+const exploreDescription = mine
+  ? 'Your saved studios, museums, and universities — plotted on the map and listed by city, just like the main directory.'
+  : (itemType === 'museum'
+      ? 'A directory of permanent collections and institutions preserving design culture and history.'
+      : itemType === 'university'
+      ? 'A directory of design universities and institutions shaping the future of design education.'
+      : 'A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.');
+
+const seoTypeLabel = itemType === 'museum' ? 'design museum' : itemType === 'university' ? 'design university' : 'design studio';
+const seoTypePlural = itemType === 'museum' ? 'design museums' : itemType === 'university' ? 'design universities' : 'design studios';
+const seoTypePluralCap = seoTypePlural.charAt(0).toUpperCase() + seoTypePlural.slice(1);
+
+const SITE = Astro.site?.toString() || 'https://acceso.design';
+const mapUrl = new URL('/map/mine', SITE).toString();
+
+const breadcrumbs = breadcrumbList([
+  { name: 'My Map', url: mapUrl },
+]);
+
+const topCities = cityBrowseList.filter((c) => !c.hidden).slice(0, 24);
+const cityItemListSchema = itemList({
+  url: mapUrl,
+  name: `${pageTitle} — cities with ${seoTypePlural}`,
+  items: topCities.map((c) => ({
+    url: new URL(`/map?type=${typeParam}&city=${c.slug}`, SITE).toString(),
+    name: c.name,
+  })),
+});
+
+const pageSchema = { '@graph': [breadcrumbs, cityItemListSchema] };
+
+const seoTypeKeyword = itemType === 'museum' ? 'museums and foundations' : itemType === 'university' ? 'design universities and schools' : 'furniture and industrial design studios';
+const seoKeywords = `${seoTypePlural}, ${seoTypeKeyword}, design map, browse designers by city, ${topCities.slice(0, 6).map((c) => c.name).join(', ')}`;
+
+const faqs = [
+  {
+    q: `What is the Acceso ${seoTypeLabel} map?`,
+    a: `The Acceso ${seoTypeLabel} map is an interactive, filterable directory of ${seoTypePlural} around the world. Explore pins on the map or browse the full list of cities to discover practices, foundations, and institutions by location.`,
+  },
+  {
+    q: `How do I browse ${seoTypePlural} by city?`,
+    a: `Use the category tabs at the bottom of the map, then open the browse panel to see every city where we list ${seoTypePlural}. Each city links to its own filtered view with the complete directory.`,
+  },
+  {
+    q: `Can I suggest a ${seoTypeLabel} to be added?`,
+    a: `Yes. If a studio, museum, or institution is missing, you can submit it through the <a href="/submission">submission page</a> and our team will review it for inclusion in the directory.`,
+  },
+];
+---
+
+<Layout
+  title={`${pageTitle} | Acceso Map`}
+  description={pageDescription}
+  keywords={seoKeywords}
+  schema={pageSchema}
+>
+    <Navbar />
+
+    <main class="map-explore-page">
+      {error && (
+        <div role="alert" style="padding: 14px 18px; margin: 0 0 24px; border: 1px solid var(--color-stroke); border-radius: 12px; background: var(--color-bg-secondary); color: var(--color-text-muted); font-family: var(--font-sans); font-size: 15px;">
+          <p style="margin: 0;">We couldn't load the map data. Please try again later.</p>
+        </div>
+      )}
+      <div class="map-page-inner">
+      <div class="split-container">
+        <div class="explore-panel-backdrop" id="explore-panel-backdrop" aria-hidden="true"></div>
+
+        <aside class="explore-panel explore-panel--navigated" id="explore-panel">
+          <button type="button" class="explore-panel-handle" id="explore-panel-handle" aria-label="Drag to resize explore panel">
+            <span class="explore-panel-handle-bar"></span>
+          </button>
+          <div class="explore-panel-inner">
+            <header class="explore-header" id="explore-header">
+              <h1 class="explore-title">{titleLead}<br>{titleRest}</h1>
+              <p class="explore-description">
+                {exploreDescription}
+              </p>
+            </header>
+
+            <section class="quick-nav" aria-labelledby="quick-nav-label">
+              <p id="quick-nav-label" class="quick-nav-label">Quick navigation</p>
+
+              <div class="quick-nav-list hidden" id="quick-nav-default">
+                {quickNavCities.map((item) => (
+                  item.isMore ? (
+                    <button type="button" class="quick-nav-card quick-nav-card--more" id="more-cities-btn">
+                      <img
+                        src={item.image}
+                        alt=""
+                        class="quick-nav-card-bg"
+                        width={quickNavImageWidth}
+                        height={quickNavImageHeight}
+                        loading="lazy"
+                        decoding="async"
+                        fetchpriority="low"
+                      />
+                      <span class="quick-nav-card-label">{item.label}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      class="quick-nav-card"
+                      data-city={item.city}
+                    >
+                      <img
+                        src={item.image}
+                        alt=""
+                        class="quick-nav-card-bg"
+                        width={quickNavImageWidth}
+                        height={quickNavImageHeight}
+                        loading="lazy"
+                        decoding="async"
+                        fetchpriority="low"
+                      />
+                      <span class="quick-nav-card-label">{item.label}</span>
+                    </button>
+                  )
+                ))}
+              </div>
+
+              <div class="city-browse" id="city-browse">
+                <div class="panel-nav-row">
+                  <a href="/profile" class="city-browse-back" id="map-back-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Back
+                  </a>
+                  <button type="button" class="city-browse-back" id="city-browse-back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Back
+                  </button>
+                  <nav class="breadcrumbs explore-breadcrumb" id="breadcrumb-browse" aria-label="Breadcrumb"></nav>
+                </div>
+                <div class="city-search-wrap">
+                  <svg class="city-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3" stroke-linecap="round"/>
+                  </svg>
+                  <input
+                    type="search"
+                    id="city-search"
+                    class="city-search-input"
+                    placeholder="Search cities..."
+                    aria-label="Search cities"
+                  />
+                </div>
+                <div class="city-browse-list" id="city-browse-list">
+                  {cityBrowseList.map((city, index) => (
+                    <button
+                      type="button"
+                      class:list={['city-browse-item', { hidden: city.hidden }]}
+                      data-city={city.name}
+                      data-slug={city.slug}
+                      style={`--city-hue: ${(index * 47 + 180) % 360}`}
+                    >
+                      <span class="city-browse-badge" aria-hidden="true">{city.name.charAt(0)}</span>
+                      <span class="city-browse-body">
+                        <span class="city-browse-name">{city.name} · {city.count} {itemType === 'museum' ? 'museums' : itemType === 'university' ? 'universities' : 'studios'}</span>
+                        <span class="city-browse-meta">{city.country || 'Worldwide'}</span>
+                      </span>
+                      <svg class="city-browse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div class="city-studios hidden" id="city-studios">
+                <div class="panel-nav-row">
+                  <button type="button" class="city-browse-back" id="city-studios-back">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Back
+                  </button>
+                  <nav class="breadcrumbs explore-breadcrumb" id="breadcrumb-studios" aria-label="Breadcrumb"></nav>
+                </div>
+                <header class="city-studios-header">
+                  <h2 class="city-studios-title" id="city-studios-title"></h2>
+                </header>
+                <div class="city-studios-body">
+                  <div class="city-studios-grid" id="city-studios-grid"></div>
+                  <div class="city-studios-pagination hidden" id="city-studios-pagination">
+                    <button type="button" class="city-studios-page-btn" id="city-studios-prev" aria-label="Previous page" disabled>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <span class="city-studios-page-info" id="city-studios-page-info"></span>
+                    <button type="button" class="city-studios-page-btn" id="city-studios-next" aria-label="Next page">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <section class="map-panel" id="map-panel">
+          <div class="map-canvas-wrap">
+          <div class="map-filters" role="tablist" aria-label="Map categories">
+            {mapFilters.map((filter) => (
+              <a
+                href={filter.href}
+                class:list={['map-filter-btn', { active: filter.active }]}
+                data-type={filter.type}
+                role="tab"
+                aria-selected={filter.active}
+              >
+                {filter.label}
+              </a>
+            ))}
+          </div>
+
+          <button type="button" class="map-browse-fab" id="map-browse-fab" aria-label="Browse cities">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 22V12h6v10" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Browse
+          </button>
+
+          <div id="map"></div>
+
+          <button type="button" class="map-fullscreen-btn" id="map-fullscreen-btn" aria-label="Toggle fullscreen map">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <div class="map-credits">
+            <button type="button" class="map-info-btn" id="mapInfoBtn" aria-label="Legal information" aria-expanded="false">i</button>
+            <div class="map-info-popover" id="mapInfoPopover" hidden>
+              <p class="map-info-text"><strong>Map data.</strong> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, served by <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>. Tiles and geocoding are openly licensed community contributions.</p>
+            </div>
+          </div>
+
+          <div class="studio-ui-container" id="studio-ui-container">
+            <div class="studio-card" id="studio-card">
+              <a href="#" class="studio-card-inner" id="studio-card-link">
+                <div class="studio-card-media">
+                  <img src="" alt="" class="studio-card-image" id="studio-card-image" />
+                </div>
+                <div class="studio-card-info">
+                  <h3 class="studio-card-title" id="studio-card-title"></h3>
+                  <p class="studio-card-city" id="studio-card-city"></p>
+                  <p class="studio-card-address" id="studio-card-address"></p>
+                </div>
+              </a>
+            </div>
+          </div>
+          </div>
+        </section>
+      </div>
+      </div>
+
+      <div class="sr-only" id="seo-content">
+        <div class="map-seo-inner">
+          <h2 id="seo-heading">About the {seoTypeLabel} map</h2>
+          <p>
+            The Acceso {seoTypeLabel} map is a living, interactive directory of {seoTypePlural} from cities
+            around the world. Whether you are researching a collaboration, planning a studio visit, or simply
+            exploring the global design landscape, the map lets you move from a world view down to a single
+            neighbourhood in just a few clicks.
+          </p>
+          <p>
+            Every entry is placed on the map by city, so you can discover {seoTypePlural} exactly where they
+            are based. Switch between {seoTypePluralCap} and other categories using the tabs, then open the
+            browse panel to see the full list of covered cities with live counts.
+          </p>
+
+          <h2>Browse {seoTypePlural} by city</h2>
+          <p class="map-seo-lead">
+            {seoTypePluralCap} are currently listed in {topCities.length} {topCities.length === 1 ? 'city' : 'cities'}.
+            Select a city to open its dedicated directory view.
+          </p>
+          <ul class="seo-city-list">
+            {topCities.map((c) => (
+              <li>
+                <a href={`/map?type=${typeParam}&city=${c.slug}`}>
+                  {c.name}
+                  <span class="seo-city-count">{c.count}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          <h2>Frequently asked questions</h2>
+          <div class="seo-faq">
+            {faqs.map((f) => (
+              <details class="seo-faq-item">
+                <summary>{f.q}</summary>
+                <p set:html={f.a}></p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script is:inline define:vars={{ studios: currentDataWithCoords, allStudiosDataByType: { studio: studios, museum: museums, university: universities }, studioSlug: itemSlug, itemType, isMyMap: true }}>
+      window.studiosData = studios;
+      window.allStudiosDataByType = allStudiosDataByType;
+      window.studioSlug = studioSlug;
+      window.itemType = itemType;
+      window.isMyMap = isMyMap;
+    </script>
+
+    <script src="../../scripts/map-client.ts"></script>
+
+    <script is:inline>
+      (function () {
+        const infoBtn = document.getElementById('mapInfoBtn');
+        const infoPopover = document.getElementById('mapInfoPopover');
+        if (!infoBtn || !infoPopover) return;
+        infoBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const open = infoPopover.hidden;
+          infoPopover.hidden = !open;
+          infoBtn.setAttribute('aria-expanded', String(open));
+        });
+        document.addEventListener('click', (e) => {
+          if (!infoPopover.hidden && !infoBtn.contains(e.target) && !infoPopover.contains(e.target)) {
+            infoPopover.hidden = true;
+            infoBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      })();
+    </script>
+
+    <Footer />
+</Layout>
+
+<style is:global>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+</style>
+
+<style>
+  .map-explore-page {
+    background: var(--color-white);
+    height: calc(100vh - var(--navbar-height));
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .map-page-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 40px;
+    width: 100%;
+    box-sizing: border-box;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .panel-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  :global(.explore-breadcrumb) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-gray);
+  }
+
+  :global(.explore-breadcrumb .breadcrumb-item) {
+    flex: none;
+    color: var(--color-gray);
+    text-decoration: none;
+  }
+
+  :global(.explore-breadcrumb .breadcrumb-item:hover) {
+    color: var(--color-black);
+  }
+
+  :global(.explore-breadcrumb .breadcrumb-separator) {
+    flex: none;
+    color: var(--color-gray);
+    display: inline-flex;
+    align-items: center;
+    font-size: 0;
+  }
+
+  :global(.explore-breadcrumb .breadcrumb-current) {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-black);
+    font-weight: 600;
+  }
+
+  .split-container {
+    display: flex;
+    width: 100%;
+    margin: 0;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .explore-panel {
+    background: var(--color-white);
+    width: clamp(300px, 32%, 440px);
+    flex: 0 0 auto;
+    align-self: stretch;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .map-panel {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--color-white);
+    padding: 24px 0 24px 16px;
+  }
+
+  .explore-panel-inner {
+    padding: var(--page-top-spacing) 24px 32px 0;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    overflow-x: hidden;
+  }
+
+  .quick-nav {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .quick-nav::-webkit-scrollbar { display: none; }
+
+  .explore-panel--navigated .quick-nav {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .explore-panel-backdrop {
+    display: none;
+  }
+
+  .explore-panel-handle,
+  .explore-panel-mobile-header,
+  .explore-panel-close {
+    display: none;
+  }
+
+  .explore-panel--navigated .explore-header,
+  .explore-panel--navigated .quick-nav-label {
+    display: none;
+  }
+
+  .explore-header {
+    margin-bottom: 48px;
+    transition: opacity 0.2s ease, max-height 0.25s ease, margin 0.25s ease;
+  }
+
+  .explore-title {
+    font-family: var(--font-sans);
+    font-size: clamp(48px, 5.5vw, 80px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.08em;
+    color: var(--color-black);
+    margin: 0 0 16px;
+  }
+
+  .explore-description {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    margin: 0;
+    max-width: 42ch;
+  }
+
+  .quick-nav-label {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 16px;
+  }
+
+  .quick-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .quick-nav-card {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    min-height: 88px;
+    padding: 20px 24px;
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    background: #3a3a3a;
+    color: #fff;
+    text-align: left;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .quick-nav-card:hover {
+    transform: translateY(-2px);
+    color: #fff;
+  }
+
+  .quick-nav-card-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  .quick-nav-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.1) 55%, rgba(0, 0, 0, 0.25) 100%);
+    z-index: 1;
+  }
+
+  .quick-nav-card-label {
+    position: relative;
+    z-index: 2;
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: #fff;
+  }
+
+  .quick-nav-card--more {
+    min-height: 88px;
+  }
+
+  /* Shorter desktop screens (e.g. laptops): shrink the header and the cards
+     so all quick-nav buttons stay visible and nothing gets cut off.
+     Height-based (not width-gated) because longer category titles like
+     "Design Universities" wrap to a 3rd line and push the cards down. */
+  @media (min-width: 1025px) and (max-height: 880px) {
+    .explore-header {
+      margin-bottom: 22px;
+    }
+
+    .explore-title {
+      font-size: clamp(32px, 3.8vw, 52px);
+      margin: 0 0 10px;
+    }
+
+    .explore-description {
+      font-size: 14px;
+      line-height: 1.45;
+      max-width: 40ch;
+    }
+
+    .quick-nav-label {
+      margin: 0 0 10px;
+    }
+
+    .quick-nav-list {
+      gap: 8px;
+    }
+
+    .quick-nav-card,
+    .quick-nav-card--more {
+      min-height: 68px;
+      padding: 16px 22px;
+    }
+  }
+
+  @media (min-width: 1025px) and (max-height: 680px) {
+    .explore-header {
+      margin-bottom: 16px;
+    }
+
+    .explore-title {
+      font-size: clamp(28px, 3.2vw, 44px);
+    }
+
+    .quick-nav-card,
+    .quick-nav-card--more {
+      min-height: 56px;
+      padding: 12px 20px;
+    }
+
+    .quick-nav-card-label {
+      font-size: 16px;
+    }
+  }
+
+  .city-browse {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .city-browse.hidden {
+    display: none;
+  }
+
+  .quick-nav-list.hidden {
+    display: none;
+  }
+
+  .city-browse-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 999px;
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .city-browse-back:hover {
+    border-color: var(--color-black);
+    background: var(--color-white);
+  }
+
+  .city-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .city-search-icon {
+    position: absolute;
+    left: 16px;
+    color: var(--color-text-muted);
+    pointer-events: none;
+  }
+
+  .city-search-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px 0 44px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .city-search-input:focus {
+    border-color: var(--color-black);
+    background: var(--color-white);
+    box-shadow: 0 0 0 3px rgba(15, 17, 19, 0.06);
+  }
+
+  .city-search-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .city-browse-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-stroke) transparent;
+  }
+
+  .city-browse-list::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .city-browse-list::-webkit-scrollbar-thumb {
+    background: var(--color-stroke);
+    border-radius: 10px;
+  }
+
+  .city-browse-item.hidden {
+    display: none;
+  }
+
+  .city-browse-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 14px;
+    background: linear-gradient(135deg, hsl(var(--city-hue, 200) 18% 97%) 0%, var(--color-white) 55%);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .city-browse-item:hover {
+    border-color: var(--color-black);
+    background: linear-gradient(135deg, hsl(var(--city-hue, 200) 28% 94%) 0%, var(--color-bg-secondary) 60%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  .city-browse-badge {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-black);
+    background: hsl(var(--city-hue, 200) 65% 88%);
+    border: 1px solid hsl(var(--city-hue, 200) 40% 80%);
+  }
+
+  .city-browse-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .city-browse-name {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-black);
+    line-height: 1.2;
+  }
+
+  .city-browse-meta {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    line-height: 1.3;
+  }
+
+  .city-browse-count {
+    display: none;
+  }
+
+  .city-studios {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .city-studios.hidden {
+    display: none;
+  }
+
+  .city-browse-arrow {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  .city-browse-item:hover .city-browse-arrow {
+    color: var(--color-black);
+    transform: translateX(2px);
+  }
+
+  .city-studios-header {
+    flex-shrink: 0;
+  }
+
+  .city-studios-title {
+    font-family: var(--font-sans);
+    font-size: clamp(22px, 3vw, 28px);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+    margin: 0;
+  }
+
+  .city-studios-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .explore-panel--navigated .city-studios-grid {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .city-studios-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding-top: 4px;
+    flex-shrink: 0;
+  }
+
+  .city-studios-pagination.hidden {
+    display: none;
+  }
+
+  .city-studios-page-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+  }
+
+  .city-studios-page-btn:hover:not(:disabled) {
+    border-color: var(--color-black);
+    background: var(--color-white);
+  }
+
+  .city-studios-page-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .city-studios-page-info {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    min-width: 72px;
+    text-align: center;
+  }
+
+  .city-studios-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 2px;
+    scrollbar-width: thin;
+  }
+
+  .city-studios-grid::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .city-studios-grid::-webkit-scrollbar-thumb {
+    background: var(--color-stroke);
+    border-radius: 10px;
+  }
+
+  :global(.city-studio-card) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+    transition: transform 0.2s ease;
+  }
+
+  :global(.city-studio-card:hover) {
+    transform: translateY(-2px);
+    color: inherit;
+  }
+
+  :global(.city-studio-card-media) {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+  }
+
+  :global(.city-studio-card-media img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  :global(.city-studio-card-name) {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--color-black);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.city-studio-card-location) {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin: -4px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .city-studios-empty {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .map-browse-fab {
+    display: none;
+  }
+
+  .map-canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--color-stroke);
+  }
+
+  .map-panel--fullscreen .map-canvas-wrap {
+    border-radius: 0;
+    border: none;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    overflow: hidden;
+    border: none;
+  }
+
+  .map-panel--fullscreen {
+    position: fixed;
+    inset: var(--navbar-height) 0 0 0;
+    z-index: 1500;
+    padding: 0;
+    height: calc(100vh - var(--navbar-height));
+  }
+
+  .map-filters {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    pointer-events: none;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 999px;
+    border: 1px solid var(--color-stroke);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  }
+
+  .map-filter-btn {
+    pointer-events: auto;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.2s ease, background 0.2s ease;
+    box-shadow: none;
+    white-space: nowrap;
+  }
+
+  .map-filter-btn:hover {
+    color: var(--color-black);
+    background: var(--color-bg-secondary);
+  }
+
+  .map-filter-btn.active {
+    background: var(--color-yellow);
+    color: var(--color-black);
+  }
+
+  /* Per-type active colors matching pin colors */
+  .map-filter-btn[data-type="universities"].active {
+    background: #EAD8FE;
+  }
+
+  .map-filter-btn[data-type="museums"].active {
+    background: #C6F6D6;
+  }
+
+  .map-fullscreen-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-white);
+    color: var(--color-black);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.2s ease;
+  }
+
+  .map-fullscreen-btn:hover {
+    border-color: var(--color-black);
+  }
+
+  .map-panel--fullscreen .map-fullscreen-btn {
+    top: 16px;
+    right: 16px;
+  }
+
+  .studio-ui-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px) scale(0.98);
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s;
+    width: min(320px, calc(100% - 32px));
+  }
+
+  .studio-ui-container.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+
+  .studio-card {
+    background: var(--color-white);
+    border: 1px solid var(--color-stroke);
+    border-radius: 16px;
+    overflow: hidden;
+    pointer-events: auto;
+    width: 100%;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .studio-card:hover {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+    border-color: var(--color-black);
+    transform: translateY(-2px);
+  }
+
+  .studio-card-inner {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .studio-card-media {
+    height: 160px;
+    background: var(--color-bg-secondary);
+    overflow: hidden;
+  }
+
+  .studio-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .studio-card-info {
+    padding: 16px;
+  }
+
+  .studio-card-title {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-black);
+    margin: 0 0 4px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .studio-card-city {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    margin: 0 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .studio-card-address {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.85;
+  }
+
+  .map-panel :global(.maplibregl-ctrl-top-right) {
+    top: auto !important;
+    bottom: 24px !important;
+    right: 16px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .map-panel :global(.maplibregl-ctrl-group) {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--color-stroke);
+    margin: 0 !important;
+  }
+
+  .map-panel :global(.maplibregl-ctrl-group:not(:last-child)) {
+    margin-bottom: 0 !important;
+  }
+
+  .map-panel :global(.maplibregl-ctrl-group button) {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Map data credits "i" button — small, tucked in the bottom-left corner */
+  .map-credits {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+  }
+
+  .map-info-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid #ffffff;
+    background: rgba(255, 255, 255, 0.92);
+    color: #000;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-style: italic;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .map-info-btn:hover { background: #ffffff; }
+
+  .map-info-popover {
+    position: absolute;
+    left: 0;
+    bottom: 42px;
+    width: 264px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.28);
+    z-index: 6;
+  }
+  .map-info-popover[hidden] { display: none; }
+  .map-info-text {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.55;
+    color: #52525B;
+  }
+  .map-info-text strong { color: #000; font-weight: 700; }
+  .map-info-text a { color: #000; text-decoration: underline; }
+
+  :global(.cluster-icon) {
+      background: var(--color-yellow) !important;
+    color: #000000 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    border: 2.5px solid #FFFFFF;
+  }
+
+  @media (max-width: 1024px) {
+    .explore-description {
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .map-explore-page {
+      min-height: calc(100vh - var(--navbar-height));
+      overflow: visible;
+    }
+
+    .map-page-inner {
+      padding: 0;
+      max-width: none;
+    }
+
+    .map-explore-page :global(footer) {
+      display: none;
+    }
+
+    .split-container {
+      grid-template-columns: 1fr;
+      min-height: calc(100vh - var(--navbar-height));
+    }
+
+    .explore-panel-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 1999;
+      background: rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      pointer-events: none;
+    }
+
+    .explore-panel-backdrop.is-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .explore-panel {
+      display: block !important;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2000;
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      background: var(--color-white);
+      border-top: 1px solid var(--color-stroke);
+      border-radius: 24px 24px 0 0;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.12);
+      max-height: 88vh;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .explore-panel.is-open {
+      transform: translateY(0);
+    }
+
+    .explore-panel.is-compact {
+      max-height: 52vh;
+    }
+
+    .explore-panel-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px 0 8px;
+      border: none;
+      background: transparent;
+      cursor: grab;
+      flex-shrink: 0;
+      touch-action: none;
+    }
+
+    .explore-panel-handle:active {
+      cursor: grabbing;
+    }
+
+    .explore-panel-handle-bar {
+      display: block;
+      width: 40px;
+      height: 4px;
+      background: var(--color-stroke);
+      border-radius: 999px;
+    }
+
+    .explore-panel-inner {
+      padding: 0 20px 24px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .explore-header {
+      display: block;
+    }
+
+    .explore-panel--navigated .explore-header,
+    .explore-panel--navigated .quick-nav-label {
+      display: none;
+    }
+
+  .map-fullscreen-btn {
+      display: none;
+    }
+
+    .map-browse-fab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 12;
+      height: 40px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid var(--color-stroke);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--color-black);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .map-panel :global(.maplibregl-ctrl-top-right) {
+      display: none !important;
+    }
+
+    .city-studios-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow-y: auto;
+    }
+
+    /* On mobile the city list scrolls inside the sheet (the desktop pattern),
+       so keep the studio grid bounded and scrollable instead of relying on
+       the whole sheet overflowing. */
+    .explore-panel--navigated .city-studios,
+    .explore-panel--navigated .city-studios-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow: visible;
+    }
+
+    /* quick-nav / city-browse still let the whole sheet scroll */
+    .quick-nav,
+    .city-browse,
+    .city-browse-list {
+      flex: 0 0 auto;
+      min-height: 0;
+      max-height: none;
+      overflow-y: visible;
+    }
+
+    .map-panel {
+      position: relative;
+      top: 0;
+      height: calc(100vh - var(--navbar-height));
+      min-height: 0;
+      padding: 0;
+    }
+
+    .map-canvas-wrap {
+      border-radius: 0;
+      border: none;
+    }
+
+    #map {
+      border-radius: 0;
+      border: none;
+    }
+
+    .map-filters {
+      bottom: max(28px, env(safe-area-inset-bottom, 0px) + 20px);
+      max-width: calc(100% - 24px);
+      padding: 6px;
+      gap: 8px;
+    }
+
+    .map-filter-btn {
+      padding: 12px 16px;
+      font-size: 13px;
+    }
+
+    .map-panel :global(.maplibregl-ctrl-top-right) {
+      bottom: calc(max(28px, env(safe-area-inset-bottom, 0px) + 20px) + 72px) !important;
+    }
+
+    .studio-ui-container {
+      width: min(320px, calc(100% - 24px));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .map-filters {
+      bottom: max(32px, env(safe-area-inset-bottom, 0px) + 24px);
+      padding: 6px;
+      gap: 8px;
+    }
+
+    .map-filter-btn {
+      padding: 11px 14px;
+      font-size: 13px;
+    }
+
+    .map-panel :global(.maplibregl-ctrl-top-right) {
+      display: none !important;
+    }
+
+    .city-search-input {
+      height: 52px;
+      font-size: 16px;
+      border-radius: 14px;
+    }
+
+    .city-browse-item {
+      padding: 16px;
+      border-radius: 16px;
+      gap: 12px;
+    }
+
+    .city-browse-badge {
+      width: 48px;
+      height: 48px;
+      font-size: 20px;
+    }
+
+    .city-browse-count {
+      display: none;
+    }
+
+    .city-browse-name {
+      font-size: 17px;
+    }
+
+    .city-browse-meta {
+      font-size: 14px;
+    }
+
+    .city-browse-back {
+      height: 44px;
+      padding: 0 18px;
+      font-size: 15px;
+    }
+  }
+</style>

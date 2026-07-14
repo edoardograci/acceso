@@ -1,12 +1,10 @@
 ---
-import PostHogLayout from '../layouts/PostHogLayout.astro';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<PostHogLayout>
-  <Layout title="Privacy Policy | Acceso"
+<Layout title="Privacy Policy | Acceso"
   description="Read how Acceso collects, uses, and protects personal data when browsing independent design studios and content."
   keywords="privacy policy acceso, privacy policy, privacy, policy">
   
@@ -106,13 +104,12 @@ import Footer from '../components/Footer.astro';
     </main>
 
     <Footer />
-  </Layout>
-</PostHogLayout>
+</Layout>
 
 <style>
   .legal-page {
     min-height: 100vh;
-    background: var(--color-black);
+    background: var(--color-white);
   }
 
   .legal-container {
@@ -122,10 +119,10 @@ import Footer from '../components/Footer.astro';
   }
 
   .legal-title {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 48px;
     font-weight: 400;
-    color: var(--color-white);
+    color: var(--color-black);
     margin-bottom: 16px;
     letter-spacing: 0;
   }
@@ -145,7 +142,7 @@ import Footer from '../components/Footer.astro';
     font-family: var(--font-sans);
     font-size: 20px;
     font-weight: 400;
-    color: var(--color-white);
+    color: var(--color-black);
     margin-bottom: 16px;
   }
 
@@ -167,19 +164,19 @@ import Footer from '../components/Footer.astro';
   }
 
   strong {
-    color: var(--color-white);
+    color: var(--color-black);
     font-weight: 400;
   }
 
   a {
-    color: var(--color-white);
+    color: var(--color-black);
     text-decoration: underline;
     text-underline-offset: 4px;
     transition: color 0.2s ease;
   }
 
   a:hover {
-    color: var(--color-yellow);
+    color: var(--color-gray);
   }
 
   @media (max-width: 768px) {

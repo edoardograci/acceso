@@ -1,0 +1,309 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import Navbar from '../../../components/Navbar.astro';
+import Footer from '../../../components/Footer.astro';
+import EventBasicCard from '../../../components/EventBasicCard.astro';
+import { normalizeImage } from '../../../lib/images';
+
+// R2 URLs
+const isDev = import.meta.env.DEV;
+const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+
+let awards = [];
+let error = null;
+
+try {
+  const [aRes] = await Promise.all([
+    fetch(`${domain}/awards.json`)
+  ]);
+
+  if (aRes.ok) {
+    const data = await aRes.json();
+    awards = Array.isArray(data) ? data : (data.items || []);
+  }
+} catch (e) {
+  error = e;
+  console.error('[Awards Index] Fail to fetch data:', e);
+}
+
+function getAwardStatus(deadlinesStr: string) {
+  if (!deadlinesStr) return null;
+  const now = new Date();
+  const dates = deadlinesStr.split(',').map(d => new Date(d.trim())).filter(d => !isNaN(d.getTime()));
+  if (dates.length === 0) return null;
+  const lastDeadline = new Date(Math.max(...dates.map(d => d.getTime())));
+  const deadlineEnd = new Date(lastDeadline);
+  deadlineEnd.setHours(23, 59, 59, 999);
+  return deadlineEnd > now ? 'status-open' : 'status-closed';
+}
+
+const processedAwards = awards.map((a: any) => {
+  const st = getAwardStatus(a.deadlines);
+  const open = st === 'status-open';
+  return {
+    ...a,
+    pillText: open ? 'OPEN' : 'CLOSED',
+    pillType: st,
+    location: a.city || a.location || undefined,
+    open,
+  };
+});
+
+---
+
+
+<Layout 
+  title="Design Awards Directory | Acceso"
+  description="Discover prestigious design awards and recognitions in industrial and furniture design worldwide."
+>
+  <Navbar />
+  
+  <main class="directory-page">
+    <div class="directory-inner">
+      <header class="directory-hero">
+        <h1 class="directory-title">Awards</h1>
+        <p class="directory-description">
+          The most prestigious recognitions in industrial design worldwide.
+          Explore awards celebrating excellence in furniture, product, and industrial design.
+        </p>
+      </header>
+
+      {error && (
+        <div role="alert" style="padding: 14px 18px; margin-bottom: 24px; border: 1px solid var(--color-stroke); border-radius: 12px; background: var(--color-bg-secondary); color: var(--color-text-muted); font-family: var(--font-sans); font-size: 15px;">
+          <p style="margin: 0;">We couldn't load the latest awards. Please try again later.</p>
+        </div>
+      )}
+
+      <div class="search-row hidden" id="search-row">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search awards..."
+          aria-label="Search awards"
+          class="search-input"
+        />
+      </div>
+
+      <div class="city-filter-row">
+        <label class="upcoming-toggle">
+          <input type="checkbox" id="upcoming-toggle" />
+          <span class="upcoming-label">Open for submissions</span>
+        </label>
+
+        <div class="directory-toolbar">
+          <button type="button" class="toolbar-btn" id="view-btn" aria-label="Toggle grid size" title="Smaller images" aria-pressed="false">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button type="button" class="toolbar-btn" id="search-toggle" aria-label="Search" aria-expanded="false">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="results-meta">
+        <p class="results-count" id="awards-count">{processedAwards.length} results</p>
+      </div>
+
+      <div class="awards-grid" id="awards-grid">
+        {processedAwards.map((award: any) => (
+          <div
+            class="award-card-wrapper"
+            data-name={(award.name || '').toLowerCase()}
+            data-open={award.open ? 'true' : 'false'}
+          >
+            <EventBasicCard 
+              name={award.name}
+              slug={award.slug}
+              type="award"
+              location={award.location}
+              image={normalizeImage(award.image, Astro)}
+              pillText={award.pillText}
+              pillType={award.pillType}
+            />
+          </div>
+        ))}
+        {processedAwards.length === 0 && <p class="empty-state">No awards found.</p>}
+      </div>
+
+      <div class="hidden py-12 text-center text-gray" id="empty-result">
+        <p>No awards found matching your criteria.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .directory-page { background: var(--color-white); }
+  .directory-inner { max-width: 1600px; margin: 0 auto; padding: var(--page-top-spacing) 40px 80px; }
+  .directory-hero { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-bottom: 28px; max-width: 640px; }
+  .directory-title { font-family: var(--font-sans); font-size: clamp(48px, 5.5vw, 80px); font-weight: 400; line-height: 1; letter-spacing: -0.08em; margin: 0; color: var(--color-black); }
+  .directory-description { font-family: var(--font-sans); font-size: 16px; line-height: 1.55; color: var(--color-text-muted); margin: 0; max-width: 52ch; }
+  @media (min-width: 1025px) {
+    .directory-hero {
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0 48px;
+      max-width: none;
+    }
+    .directory-description {
+      max-width: min(52ch, 42vw);
+    }
+  }
+
+  .hidden { display: none; }
+
+  .directory-toolbar { display: flex; gap: 4px; flex-shrink: 0; margin-left: auto; }
+  .toolbar-btn { width: 40px; height: 40px; border: none; background: transparent; color: var(--color-black); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: background 0.2s; }
+  .toolbar-btn:hover { background: var(--color-bg-secondary); }
+  .search-row { margin-bottom: 20px; max-width: 480px; margin-left: auto; }
+  .search-row:not(.hidden) { display: block; }
+  .search-input { width: 100%; height: 44px; background: transparent; border: none; border-bottom: 1px solid var(--color-stroke); border-radius: 0; padding: 0 4px; color: var(--color-black); font-family: var(--font-sans); font-size: 15px; outline: none; }
+  .search-input::placeholder { color: var(--color-text-muted); }
+  .search-input:focus { border-bottom-color: var(--color-black); }
+
+  .city-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+
+  .upcoming-toggle { display: flex; align-items: center; gap: 8px; flex-shrink: 0; cursor: pointer; font-family: var(--font-sans); }
+  .upcoming-label { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--color-black); white-space: nowrap; }
+  .upcoming-toggle input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-stroke);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    background: var(--color-white);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .upcoming-toggle input[type="checkbox"]:checked {
+    background: var(--color-black);
+    border-color: var(--color-black);
+  }
+  .upcoming-toggle input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: 4px;
+    height: 8px;
+    border: solid var(--color-white);
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .results-meta { margin-bottom: 24px; }
+  .results-count { font-family: var(--font-sans); font-size: 15px; color: var(--color-black); margin: 0; }
+
+  .awards-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+  }
+  .award-card-wrapper {
+    width: 100%;
+  }
+  .award-card-wrapper :global(.card-image-wrapper) { aspect-ratio: 1; }
+
+  .awards-grid.compact {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .awards-grid.compact .award-card-wrapper :global(.card-image-wrapper) { border-radius: 8px; }
+  .awards-grid.compact .award-card-wrapper :global(.event-title) { font-size: 13px; }
+  .awards-grid.compact .award-card-wrapper :global(.event-meta) { font-size: 11px; }
+  .awards-grid.compact .award-card-wrapper { gap: 8px; }
+
+  .empty-state { color: var(--color-gray); font-family: var(--font-sans); font-size: 14px; padding: 20px 0; }
+
+  @media (max-width: 1400px) {
+    .awards-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (max-width: 1200px) {
+    .awards-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 900px) {
+    .awards-grid { grid-template-columns: repeat(2, 1fr); }
+    .search-row { margin-left: 0; max-width: none; }
+  }
+  @media (max-width: 1400px) {
+    .awards-grid.compact { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  }
+  @media (max-width: 1200px) {
+    .awards-grid.compact { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  }
+  @media (max-width: 900px) {
+    .awards-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  @media (max-width: 768px) {
+    .awards-grid { grid-template-columns: 1fr; }
+    .awards-grid.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .city-filter-row { flex-wrap: wrap; }
+    .directory-toolbar { margin-left: 0; width: 100%; justify-content: flex-end; }
+  }
+</style>
+
+<script>
+  (function () {
+    const grid = document.getElementById('awards-grid');
+    if (!grid) return;
+
+    const wrappers = Array.from(grid.querySelectorAll('.award-card-wrapper'));
+    const searchToggle = document.getElementById('search-toggle');
+    const searchRow = document.getElementById('search-row');
+    const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+    const upcomingToggle = document.getElementById('upcoming-toggle') as HTMLInputElement | null;
+    const viewBtn = document.getElementById('view-btn');
+    const countEl = document.getElementById('awards-count');
+    const emptyEl = document.getElementById('empty-result');
+
+    const state = { search: '', open: false };
+
+    function apply() {
+      const search = state.search.trim().toLowerCase();
+      const visible = wrappers.filter((w) => {
+        const el = w as HTMLElement;
+        if (state.open && el.dataset.open !== 'true') return false;
+        if (search && !el.dataset.name?.includes(search)) return false;
+        return true;
+      });
+
+      visible.forEach((w) => grid!.appendChild(w));
+      wrappers.forEach((w) => { (w as HTMLElement).style.display = visible.includes(w) ? '' : 'none'; });
+
+      countEl!.textContent = visible.length + (visible.length === 1 ? ' result' : ' results');
+      emptyEl!.classList.toggle('hidden', visible.length !== 0);
+    }
+
+    searchToggle?.addEventListener('click', () => {
+      const hidden = searchRow!.classList.toggle('hidden');
+      searchToggle!.setAttribute('aria-expanded', String(!hidden));
+      if (!hidden) searchInput!.focus();
+    });
+    searchInput?.addEventListener('input', () => {
+      state.search = searchInput!.value;
+      apply();
+    });
+
+    upcomingToggle?.addEventListener('change', () => {
+      state.open = upcomingToggle!.checked;
+      apply();
+    });
+
+    viewBtn?.addEventListener('click', () => {
+      const compact = grid.classList.toggle('compact');
+      viewBtn.setAttribute('aria-pressed', String(compact));
+      viewBtn.title = compact ? 'Larger images' : 'Smaller images';
+    });
+
+    apply();
+  })();
+</script>

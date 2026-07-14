@@ -23,6 +23,43 @@ export interface Studio {
   updated_at: string;
 }
 
+export interface Museum {
+  id: string;
+  slug: string;
+  name: string;
+  city: string | null;
+  city_slug: string | null;
+  country: string | null;
+  country_slug: string | null;
+  address: string | null;
+  image: string | null;
+  description: string | null;
+  website: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  contact: string | null;
+  opening_hours: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+export interface University {
+  id: string;
+  slug: string;
+  name: string;
+  city: string | null;
+  city_slug: string | null;
+  country: string | null;
+  country_slug: string | null;
+  address: string | null;
+  image: string | null;
+  description: string | null;
+  website: string | null;
+  instagram: string | null;
+  contact: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}
 
 export interface NavLink {
   label: string;

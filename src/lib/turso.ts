@@ -87,7 +87,11 @@ export class TursoHttpClient {
         const data: TursoHttpResponse = await response.json();
         const pipelineResult = data.results?.[0];
         if (!pipelineResult || pipelineResult.type !== 'ok') {
-            throw new Error('No valid pipeline result in Turso API response');
+            const tursoError = (pipelineResult as any)?.error;
+            const detail = tursoError?.message
+                ? `${tursoError.message}${tursoError.code ? ` (${tursoError.code})` : ''}`
+                : JSON.stringify(tursoError || pipelineResult || data);
+            throw new Error(`Turso query failed: ${detail} | SQL: ${query.sql}`);
         }
 
         const result = pipelineResult.response.result;

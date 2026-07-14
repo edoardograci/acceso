@@ -63,7 +63,9 @@ async function queryTurso(url: string, authToken: string, sql: string, args: any
   const data: TursoHttpResponse = await response.json();
   const pipelineResult = data.results?.[0];
   if (!pipelineResult || pipelineResult.type !== 'ok') {
-    throw new Error('No valid pipeline result in Turso API response');
+    const tursoError = (pipelineResult as any)?.error;
+    const detail = tursoError?.message || JSON.stringify(tursoError || pipelineResult || data);
+    throw new Error(`Turso query failed: ${detail} | SQL: ${sql}`);
   }
 
   return pipelineResult.response.result;
@@ -132,6 +134,20 @@ async function setupAuthTables() {
       )
     `);
     console.log('✓ Magic link tokens table created');
+
+    // Create rate_limits table (persistent rate limiting across serverless instances)
+    console.log('Creating rate_limits table...');
+    await queryTurso(url, authToken, `
+      CREATE TABLE IF NOT EXISTS rate_limits (
+        key TEXT PRIMARY KEY,
+        count INTEGER NOT NULL,
+        reset_time INTEGER NOT NULL
+      )
+    `);
+    await queryTurso(url, authToken, `
+      CREATE INDEX IF NOT EXISTS idx_rate_limits_reset ON rate_limits(reset_time)
+    `);
+    console.log('✓ Rate limits table created');
 
     // Create indexes
     console.log('Creating indexes...');

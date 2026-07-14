@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { TursoHttpClient } from '../../../lib/turso';
 import type { Env } from '../../../env.d';
+import { checkRateLimit, createRateLimitResponse, getClientIdentifier, RateLimits } from '../../../lib/rate-limiter';
 
 export const POST: APIRoute = async ({ request, locals }) => {
     try {
@@ -28,6 +29,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
             });
+        }
+
+        // Abuse protection: throttle studio requests per client/IP
+        const clientId = getClientIdentifier(request);
+        const env = { TURSO_DATABASE_URL: dbUrl, TURSO_AUTH_TOKEN: dbToken } as unknown as Env;
+        const rateLimitResult = await checkRateLimit(clientId, RateLimits.AUTH, env);
+        if (!rateLimitResult.success && rateLimitResult.retryAfter) {
+            return createRateLimitResponse(rateLimitResult.retryAfter, rateLimitResult.limit);
         }
 
         const data = await request.json();

@@ -29,7 +29,13 @@ preview_bucket_name = "json-preview"
 [[r2_buckets]]
 binding = "EVENTS_BUCKET"
 bucket_name = "events"
-remote = true
+preview_bucket_name = "events-preview"
 
 [images]
 binding = "IMAGES"
+
+# KV binding used by @astrojs/cloudflare for Astro's built-in Sessions feature.
+# (App auth itself uses Turso; this is required by the adapter at runtime.)
+[[kv_namespaces]]
+binding = "SESSION"
+id = "f798f9f5df004151afaa7c10e309109d"

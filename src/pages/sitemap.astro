@@ -1,0 +1,270 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const origin = Astro.url.origin;
+
+async function getJson<T = any>(path: string): Promise<T[]> {
+  try {
+    const res = await fetch(new URL(path, origin).toString());
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (Array.isArray(data)) return data as T[];
+    if (Array.isArray((data as any).items)) return (data as any).items as T[];
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+type Studio = { slug?: string; name?: string; city?: string | null };
+type Project = { slug?: string; name?: string; designer?: string | null };
+type Place = { slug?: string; name?: string };
+type EventItem = {
+  slug?: string;
+  name?: string;
+  city_slug?: string | null;
+  country_slug?: string | null;
+};
+
+const [studios, projects, cities, countries, fairs, museums, awards] = await Promise.all([
+  getJson<Studio>('/cdn/test-studios.json'),
+  getJson<Project>('/cdn/moodboard.json'),
+  getJson<Place>('/cdn/test-cities.json'),
+  getJson<Place>('/cdn/test-countries.json'),
+  getJson<EventItem>('/cdn/fairs.json'),
+  getJson<EventItem>('/cdn/museums.json'),
+  getJson<EventItem>('/cdn/awards.json'),
+]);
+
+const designerSlugs = studios.filter((s) => s?.slug).map((s) => s.slug as string);
+const totalDesigners = designerSlugs.length;
+const perPage = 18;
+const totalDesignerPages = Math.max(1, Math.ceil(totalDesigners / perPage));
+
+const projectSlugs = projects.filter((p) => p?.slug).map((p) => p.slug as string);
+
+const placeName = new Map<string, string>();
+for (const c of [...cities, ...countries]) {
+  if (c?.slug) placeName.set(c.slug, c.name || c.slug);
+}
+
+const designerPlaces = [
+  ...new Set([
+    ...cities.filter((c) => c?.slug).map((c) => c.slug as string),
+    ...countries.filter((c) => c?.slug).map((c) => c.slug as string),
+  ]),
+];
+
+// A location URL only resolves if at least one item of that type carries a
+// matching city_slug or country_slug (mirrors event-locations.xml.ts).
+function validPlaces(items: EventItem[]): string[] {
+  const places = new Set<string>();
+  for (const it of items) {
+    if (it?.city_slug) places.add(it.city_slug);
+    if (it?.country_slug) places.add(it.country_slug);
+  }
+  return [...places];
+}
+
+const eventTypes: { type: string; label: string; items: EventItem[] }[] = [
+  { type: 'fairs', label: 'Fairs', items: fairs },
+  { type: 'museums', label: 'Museums', items: museums },
+  { type: 'awards', label: 'Awards', items: awards },
+];
+
+const link = (href: string, label: string, count?: number) => ({ href, label, count });
+
+const sections: { title: string; links: { href: string; label: string; count?: number }[] }[] = [
+  {
+    title: 'Main Pages',
+    links: [
+      link('/', 'Home'),
+      link('/map', 'Map'),
+      link('/designers', 'Designers'),
+      link('/discover', 'Discover'),
+      link('/directory', 'Directory'),
+      link('/info', 'Info'),
+      link('/submission', 'Submission'),
+      link('/privacy', 'Privacy Policy'),
+      link('/terms', 'Terms of Service'),
+    ],
+  },
+  {
+    title: `Designers (${totalDesigners})`,
+    links: designerSlugs.map((slug) => {
+      const studio = studios.find((s) => s.slug === slug);
+      return link(`/designers/${encodeURIComponent(slug)}`, studio?.name || slug);
+    }),
+  },
+  {
+    title: 'Designer Directory Pages',
+    links: Array.from({ length: totalDesignerPages }, (_, i) =>
+      link(`/designers/page/${i + 1}`, `Designers — Page ${i + 1}`)
+    ),
+  },
+  {
+    title: 'Designer Locations',
+    links: designerPlaces.map((slug) =>
+      link(`/designers/in/${encodeURIComponent(slug)}`, placeName.get(slug) || slug)
+    ),
+  },
+  {
+    title: `Discover — Projects (${projectSlugs.length})`,
+    links: projectSlugs.map((slug) => {
+      const project = projects.find((p) => p.slug === slug);
+      const label = project?.designer ? `${project.name} — ${project.designer}` : (project?.name || slug);
+      return link(`/discover/${encodeURIComponent(slug)}`, label);
+    }),
+  },
+  ...eventTypes.map(({ type, label, items }) => ({
+    title: `${label} (${items.filter((e) => e?.slug).length})`,
+    links: items
+      .filter((e) => e?.slug)
+      .map((e) => link(`/directory/${type}/${encodeURIComponent(e.slug as string)}`, e.name || (e.slug as string))),
+  })),
+  {
+    title: 'Event Locations',
+    links: eventTypes.flatMap(({ type, items }) =>
+      validPlaces(items).map((slug) =>
+        link(`/directory/${type}/in/${encodeURIComponent(slug)}`, placeName.get(slug) || slug)
+      )
+    ),
+  },
+];
+
+const totalUrls = sections.reduce((sum, s) => sum + s.links.length, 0);
+---
+
+<Layout
+  title="Sitemap | Acceso"
+  description="A complete index of every page on Acceso — designers, projects, directory entries, and locations — for easy browsing and discovery."
+  keywords="sitemap, acceso sitemap, site index, design directory index"
+>
+  <Navbar />
+
+  <main class="sitemap-page">
+    <div class="sitemap-container">
+      <h1 class="sitemap-title">Sitemap</h1>
+      <p class="sitemap-sub">
+        A complete index of all {totalUrls} pages on Acceso, generated from the same data as the XML sitemap.
+      </p>
+
+      <div class="sitemap-grid">
+        {sections.map((section) => (
+          <section class="sitemap-group">
+            <h2 class="sitemap-group-title">{section.title}</h2>
+            <ul class="sitemap-list">
+              {section.links.map((item) => (
+                <li>
+                  <a href={item.href} class="sitemap-link">{item.label}</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .sitemap-page {
+    min-height: 100vh;
+    background: var(--color-white);
+  }
+
+  .sitemap-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--page-top-spacing) 40px 120px;
+  }
+
+  .sitemap-title {
+    font-family: var(--font-sans);
+    font-size: 56px;
+    font-weight: 400;
+    color: var(--color-black);
+    margin: 0 0 12px;
+    letter-spacing: 0;
+  }
+
+  .sitemap-sub {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-gray);
+    margin: 0 0 64px;
+  }
+
+  .sitemap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 48px;
+  }
+
+  .sitemap-group-title {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-black);
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-stroke);
+  }
+
+  .sitemap-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .sitemap-link {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--color-gray);
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sitemap-link:hover {
+    color: var(--color-black);
+  }
+
+  @media (max-width: 768px) {
+    .sitemap-container {
+      padding: var(--page-top-spacing) 24px 80px;
+    }
+
+    .sitemap-title {
+      font-size: 40px;
+    }
+
+    .sitemap-sub {
+      margin-bottom: 48px;
+    }
+
+    .sitemap-grid {
+      gap: 40px;
+    }
+
+    .sitemap-list {
+      max-height: none;
+    }
+  }
+</style>
