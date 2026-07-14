@@ -204,6 +204,7 @@ const faqs = [
 >
     <Navbar />
 
+    <div class="map-page-root">
     <main class="map-explore-page">
       {error && (
         <div role="alert" style="padding: 14px 18px; margin: 0 0 24px; border: 1px solid var(--color-stroke); border-radius: 12px; background: var(--color-bg-secondary); color: var(--color-text-muted); font-family: var(--font-sans); font-size: 15px;">
@@ -481,6 +482,7 @@ const faqs = [
     </script>
 
     <Footer />
+    </div>
 </Layout>
 
 <style is:global>
@@ -1168,7 +1170,7 @@ const faqs = [
     inset: var(--navbar-height) 0 0 0;
     z-index: 1500;
     padding: 0;
-    height: calc(100vh - var(--navbar-height));
+    height: calc(100dvh - var(--navbar-height));
   }
 
   .map-filters {
@@ -1449,7 +1451,8 @@ const faqs = [
     }
 
     .map-explore-page {
-      min-height: calc(100vh - var(--navbar-height));
+      height: calc(100dvh - var(--navbar-height));
+      min-height: calc(100dvh - var(--navbar-height));
       overflow: visible;
     }
 
@@ -1458,13 +1461,13 @@ const faqs = [
       max-width: none;
     }
 
-    .map-explore-page :global(footer) {
-      display: none;
-    }
-
     .split-container {
       grid-template-columns: 1fr;
-      min-height: calc(100vh - var(--navbar-height));
+      min-height: calc(100dvh - var(--navbar-height));
+    }
+
+    .map-page-root :global(footer) {
+      display: none;
     }
 
     .explore-panel-backdrop {
@@ -1622,7 +1625,7 @@ const faqs = [
     .map-panel {
       position: relative;
       top: 0;
-      height: calc(100vh - var(--navbar-height));
+      height: calc(100dvh - var(--navbar-height));
       min-height: 0;
       padding: 0;
     }
