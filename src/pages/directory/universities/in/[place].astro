@@ -59,7 +59,7 @@ let relAwards: any[] = [];
 let leadUniversities: any[] = [];
 
 try {
-  const [citiesData, countriesData, , fairsData, studiosData, museumsData, awardsData] = await Promise.all([
+  const [citiesData, countriesData, universitiesData, fairsData, studiosData, museumsData, awardsData] = await Promise.all([
     fetchJson<City[]>('/test-cities.json'),
     fetchJson<Country[]>('/test-countries.json'),
     fetchJson<any[]>('/universities.json'),
@@ -87,6 +87,7 @@ try {
     return Astro.redirect('/404');
   }
 
+  leadUniversities = inLocation(universitiesData, place, mode === 'city');
   relFairs = inLocation(fairsData, place, mode === 'city');
   relStudios = inLocation(studiosData, place, mode === 'city');
   relMuseums = inLocation(museumsData, place, mode === 'city');
@@ -174,7 +175,7 @@ const pageDesc = `Universities in ${locName}${countryName && isCity ? `, ${count
       <header class="page-header">
         <h1 class="location-heading">
           Universities<br />
-          in <span class="text-yellow">{locName}</span>
+          in <span class="location-accent">{locName}</span>
         </h1>
         {isCity && countryName && (
           <div class="country-subtitle">({countryName})</div>
@@ -367,8 +368,12 @@ const pageDesc = `Universities in ${locName}${countryName && isCity ? `, ${count
     margin: 0;
   }
 
-  .text-yellow {
+  .location-accent {
     color: var(--color-black);
+    text-decoration: underline;
+    text-decoration-color: var(--color-stroke);
+    text-underline-offset: 8px;
+    text-decoration-thickness: 2px;
   }
 
   .country-subtitle {
