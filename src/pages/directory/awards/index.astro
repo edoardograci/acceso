@@ -244,10 +244,14 @@ const processedAwards = awards.map((a: any) => {
     .awards-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
   @media (max-width: 768px) {
+    .directory-inner { padding: var(--page-top-spacing) 20px 60px; }
     .awards-grid { grid-template-columns: 1fr; }
     .awards-grid.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .city-filter-row { flex-wrap: wrap; }
     .directory-toolbar { margin-left: 0; width: 100%; justify-content: flex-end; }
+  }
+  @media (max-width: 640px) {
+    .directory-inner { padding: var(--page-top-spacing) 16px 48px; }
   }
 </style>
 

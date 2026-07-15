@@ -393,6 +393,9 @@ if (cityParam) {
     .filter-item input[type="checkbox"] { width: 22px; height: 22px; flex-shrink: 0; }
     .city-items { margin-left: 20px; margin-top: 8px; gap: 8px; width: calc(100% - 20px); }
   }
+  @media (max-width: 640px) {
+    .directory-inner { padding: var(--page-top-spacing) 16px 48px; }
+  }
   @keyframes filterSlideIn {
     from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
