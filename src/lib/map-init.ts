@@ -16,7 +16,7 @@ interface MapInstance {
   updateStudios: (filteredStudios: MapItem[], autoCenter?: boolean, shouldCluster?: boolean) => void;
   replaceAllStudios: (studios: MapItem[]) => void;
   showAllStudios: () => void;
-  navigateToStudio: (studio: MapItem, state: MapInstance, isBack?: boolean) => void;
+  navigateToStudio: (studio: MapItem, state?: MapInstance, isBack?: boolean) => void;
   itemType: 'studio' | 'museum' | 'university';
 }
 

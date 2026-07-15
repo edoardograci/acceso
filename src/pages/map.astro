@@ -452,8 +452,11 @@ const faqs = [
       </div>
     </main>
 
-    <script is:inline define:vars={{ studios: currentDataWithCoords, allStudiosDataByType: { studio: studios, museum: museums, university: universities }, studioSlug: itemSlug, itemType }}>
-      window.studiosData = studios;
+    <script is:inline define:vars={{ allStudios: studios, studiosWithCoords: currentDataWithCoords, allStudiosDataByType: { studio: studios, museum: museums, university: universities }, studioSlug: itemSlug, itemType }}>
+      // Full dataset (every studio, with or without coordinates) powers the
+      // list/lists. Only the coordinate-bearing subset is shown on the map.
+      window.allStudiosData = allStudios;
+      window.studiosData = studiosWithCoords;
       window.allStudiosDataByType = allStudiosDataByType;
       window.studioSlug = studioSlug;
       window.itemType = itemType;

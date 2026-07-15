@@ -219,8 +219,10 @@ function init() {
       .map((s) => {
         const cover = resolveCover(s.cover || s.image);
         const location = `${s.city || ''}${s.country ? `, ${s.country}` : ''}`;
+        const lat = typeof s.latitude === 'string' ? s.latitude : (s.latitude != null ? String(s.latitude) : '');
+        const lng = typeof s.longitude === 'string' ? s.longitude : (s.longitude != null ? String(s.longitude) : '');
         return `
-          <a href="${basePath}/${encodeURIComponent(s.slug || '')}" class="city-studio-card">
+          <a href="${basePath}/${encodeURIComponent(s.slug || '')}" class="city-studio-card" data-lat="${lat}" data-lng="${lng}" data-slug="${s.slug || ''}">
             <div class="city-studio-card-media">
               ${cover ? `<img src="${cover}" alt="${s.name || ''}" loading="lazy" decoding="async" />` : ''}
             </div>
@@ -653,6 +655,28 @@ function init() {
       currentStudiosPage += 1;
       renderCityStudiosPage();
       cityStudiosGrid?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  // Clicking a list card: if the item is on the map (has coordinates) center
+  // its pin and reveal the card above it (which links to the slug). If it's
+  // list-only (no coordinates) let the card navigate straight to the slug.
+  cityStudiosGrid?.addEventListener('click', (e) => {
+    const card = (e.target as HTMLElement).closest('.city-studio-card') as HTMLElement | null;
+    if (!card) return;
+
+    const lat = card.dataset.lat;
+    const lng = card.dataset.lng;
+    const slug = card.dataset.slug;
+
+    if (window.innerWidth > 1024 && lat && lng && mapInstance) {
+      e.preventDefault();
+      const studio =
+        mapInstance.studiosData.find((s: any) => s.slug === slug) ||
+        allStudios.find((s: any) => s.slug === slug);
+      if (studio) {
+        mapInstance.navigateToStudio(studio);
+      }
     }
   });
 

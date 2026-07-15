@@ -89,6 +89,11 @@ declare global {
       clear: () => void;
     };
     studiosData?: any[];
+    allStudiosData?: any[];
+    allStudiosDataByType?: any;
+    studioSlug?: string | null;
+    itemType?: string;
+    isMyMap?: boolean;
     __posthog_loaded?: boolean;
   }
 }
