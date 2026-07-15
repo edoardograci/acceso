@@ -164,7 +164,7 @@ function loadIcons(map: any, callback: () => void, itemType: 'studio' | 'museum'
 }
 
 const UNCLUSTERED_ICON_SIZE_DESKTOP = 0.85;
-const UNCLUSTERED_ICON_SIZE_MOBILE = 0.7;
+const UNCLUSTERED_ICON_SIZE_MOBILE = 0.8;
 
 // Base stroke width drawn on the single-pin canvas. Both single pins and
 // clusters scale their stroke by the icon size, so the two always render at
