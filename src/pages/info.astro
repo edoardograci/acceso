@@ -165,6 +165,29 @@ import Footer from '../components/Footer.astro';
     display: block;
   }
 
+  @media (max-width: 900px) {
+    .info-hero {
+      padding: var(--page-top-spacing) 24px 60px;
+    }
+    .info-hero-container {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+    .info-hero-content {
+      order: 2;
+    }
+    .info-hero-image {
+      aspect-ratio: 4 / 3;
+      order: 1;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .info-hero {
+      padding: var(--page-top-spacing) 20px 48px;
+    }
+  }
+
   /* Shared Button Extensions */
   .btn-primary, .btn-secondary {
     white-space: nowrap;
@@ -174,7 +197,7 @@ import Footer from '../components/Footer.astro';
   .what-is-acceso-section {
     width: 100%;
     max-width: 1600px;
-    margin: 80px auto 0;
+    margin: 0 auto;
     padding: 0 40px;
     position: relative;
     z-index: 10;
@@ -240,10 +263,22 @@ import Footer from '../components/Footer.astro';
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 900px) {
+    .what-is-acceso-section {
+      padding: 0 24px;
+    }
     .what-is-grid {
       grid-template-columns: 1fr;
       gap: 40px;
+    }
+    .what-is-title {
+      font-size: 40px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .what-is-acceso-section {
+      padding: 0 20px;
     }
     .what-is-title {
       font-size: 32px;
@@ -312,16 +347,16 @@ import Footer from '../components/Footer.astro';
     max-width: 1600px;
     margin: 0 auto;
     padding: 120px 40px;
-    text-align: center;
+    text-align: left;
     background: var(--color-white);
   }
 
   .community-content {
     max-width: 600px;
-    margin: 0 auto;
+    margin: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 24px;
   }
 
