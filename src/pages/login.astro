@@ -2,6 +2,11 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 
+// Already signed in? Skip the login screen.
+if (Astro.locals.user) {
+  return Astro.redirect('/profile');
+}
+
 const url = Astro.url;
 const error = url.searchParams.get('error');
 const errorMessage = url.searchParams.get('message');
