@@ -100,11 +100,9 @@ function createLetterIcon(map: any, key: string, color: string = '#EDFF77', item
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
-  // The stroke is drawn on a canvas that MapLibre then scales by icon-size,
-  // whereas cluster strokes are a fixed pixel width. Divide by the icon size
-  // so the single-pin stroke renders at the same pixel weight as the clusters.
-  const PIN_STROKE = 2.5;
-  ctx.lineWidth = PIN_STROKE / getUnclusteredIconSize();
+  // Single pins scale with icon-size, so draw a constant base stroke here and
+  // scale the cluster stroke by the same factor (see setupMapLayers / syncPinSize).
+  ctx.lineWidth = PIN_STROKE_BASE;
   ctx.strokeStyle = '#FFFFFF';
   ctx.stroke();
 
@@ -151,6 +149,11 @@ function loadIcons(map: any, callback: () => void, itemType: 'studio' | 'museum'
 
 const UNCLUSTERED_ICON_SIZE_DESKTOP = 0.85;
 const UNCLUSTERED_ICON_SIZE_MOBILE = 0.7;
+
+// Base stroke width drawn on the single-pin canvas. Both single pins and
+// clusters scale their stroke by the icon size, so the two always render at
+// the same pixel weight on every viewport.
+const PIN_STROKE_BASE = 3;
 
 // Single (unclustered) pins read a touch large on phones, so shrink them
 // on narrow viewports. The icon image is generated once, so we scale it via
@@ -203,7 +206,7 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance) {
         50,
         44,   // ≥ 50 points
       ],
-      'circle-stroke-width': 2.5,
+      'circle-stroke-width': PIN_STROKE_BASE * getUnclusteredIconSize(),
       'circle-stroke-color': '#FFFFFF',
     },
   });
@@ -448,10 +451,15 @@ export async function initializeMap(studiosData: MapItem[], targetStudioSlug?: s
   setupStudioCard(state);
   setupNavigation(state);
 
-  // Keep single-pin size correct when crossing the mobile/desktop breakpoint.
+  // Keep single-pin size and the cluster stroke consistent when crossing the
+  // mobile/desktop breakpoint (both scale with icon-size).
   const syncPinSize = () => {
+    const size = getUnclusteredIconSize();
     if (state.map.getLayer('unclustered-point')) {
-      state.map.setLayoutProperty('unclustered-point', 'icon-size', getUnclusteredIconSize());
+      state.map.setLayoutProperty('unclustered-point', 'icon-size', size);
+    }
+    if (state.map.getLayer('clusters')) {
+      state.map.setPaintProperty('clusters', 'circle-stroke-width', PIN_STROKE_BASE * size);
     }
   };
   window.addEventListener('resize', syncPinSize);
