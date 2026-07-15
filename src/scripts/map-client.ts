@@ -173,6 +173,8 @@ function init() {
 
     if (mode === 'compact') {
       explorePanel?.classList.add('is-compact');
+      const inner = explorePanel?.querySelector('.explore-panel-inner') as HTMLElement | null;
+      if (inner) inner.scrollTop = 0;
     } else {
       explorePanel?.classList.remove('is-compact');
     }
@@ -372,14 +374,18 @@ function init() {
     let startY = 0;
     let startMaxH = 0;
     let currentMaxH = 0;
+    let startedOnHandle = false;
     let isDragging = false;
 
     const onTouchStart = (e: TouchEvent) => {
       if (!isMobilePanel() || !explorePanel!.classList.contains('is-open')) return;
-      // Only the grab handle drives the drag, so scrolling the list content
-      // (touching anywhere else on the sheet) is never intercepted.
       const target = e.target as HTMLElement | null;
-      if (!target || !target.closest('.explore-panel-handle')) return;
+      const onHandle = !!(target && target.closest('.explore-panel-handle'));
+      const inner = explorePanel!.querySelector('.explore-panel-inner') as HTMLElement | null;
+      // Only start a drag from the body when the list is scrolled to the very
+      // top — otherwise the gesture belongs to scrolling the list.
+      if (!onHandle && !(inner && inner.scrollTop <= 0)) return;
+      startedOnHandle = onHandle;
       startY = e.touches[0].clientY;
       startMaxH = explorePanel!.classList.contains('is-compact') ? compactHeight() : fullHeight();
       currentMaxH = startMaxH;
@@ -388,8 +394,15 @@ function init() {
 
     const onTouchMove = (e: TouchEvent) => {
       if (!isDragging) return;
-      // Drag up (negative delta) grows the sheet; drag down shrinks it.
+      const inner = explorePanel!.querySelector('.explore-panel-inner') as HTMLElement | null;
+      if (!startedOnHandle && inner && inner.scrollTop > 0) return;
+
       const delta = e.touches[0].clientY - startY;
+      // When expanded (not compact), an upward gesture scrolls the list rather
+      // than expanding further — only a downward gesture collapses it.
+      if (!startedOnHandle && delta < 0 && !explorePanel!.classList.contains('is-compact')) return;
+
+      // Drag up (negative delta) grows the sheet; drag down shrinks it.
       let next = startMaxH - delta;
       const full = fullHeight();
       if (next > full) next = full + (next - full) * 0.15;

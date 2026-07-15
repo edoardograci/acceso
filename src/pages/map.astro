@@ -1492,7 +1492,6 @@ const faqs = [
     }
 
     .explore-panel {
-      display: block !important;
       position: fixed;
       left: 0;
       right: 0;
@@ -1519,6 +1518,12 @@ const faqs = [
 
     .explore-panel.is-compact {
       max-height: 52vh;
+    }
+
+    /* When collapsed, the peek must not scroll — that way an upward swipe on
+       the sheet expands it instead of scrolling the list. */
+    .explore-panel.is-compact .explore-panel-inner {
+      overflow-y: hidden;
     }
 
     .explore-panel-handle {
