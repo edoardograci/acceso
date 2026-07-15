@@ -157,6 +157,7 @@ const mapStudios = studios.map(s => ({
     <div class="split-container">
       <!-- Left Column: Results Panel -->
       <aside class="results-panel">
+        <div class="panel-handle" aria-hidden="true"><span class="panel-handle-bar"></span></div>
         <div class="results-panel-content">
           <Breadcrumbs items={[
             { label: 'Home', href: '/' },
@@ -552,6 +553,9 @@ const mapStudios = studios.map(s => ({
       z-index: 1000;
     }
 
+    /* Sheet grip only exists on the mobile bottom sheet */
+    .panel-handle { display: none; }
+
     .results-panel-content {
       padding: var(--page-top-spacing) 40px 60px;
     }
@@ -890,25 +894,32 @@ const mapStudios = studios.map(s => ({
         border-right: none;
         box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
         transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        touch-action: pan-y;
       }
-      .results-panel.is-expanded {
-        max-height: 88vh;
+      .panel-handle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 12px 0 8px;
+        border: none;
+        background: transparent;
+        cursor: grab;
+        flex-shrink: 0;
+        touch-action: none;
       }
-      .results-panel::before {
-        content: '';
+      .panel-handle:active {
+        cursor: grabbing;
+      }
+      .panel-handle-bar {
         display: block;
         width: 40px;
         height: 4px;
         background: var(--color-gray);
         opacity: 0.3;
         border-radius: 2px;
-        margin: 12px auto 8px;
-        flex-shrink: 0;
-        cursor: grab;
       }
-      .results-panel:active::before {
-        cursor: grabbing;
+      .results-panel.is-expanded {
+        max-height: 88vh;
       }
       .results-panel-content {
         padding: 8px 20px 24px !important;
