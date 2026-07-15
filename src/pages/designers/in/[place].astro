@@ -190,8 +190,6 @@ const mapStudios = studios.map(s => ({
           <div class="hidden py-12 text-center text-gray" id="empty-result">
             <p>No designers found matching your criteria.</p>
           </div>
-
-          <div id="pagination-container" class="pagination-wrapper"></div>
           
           <!-- New Cards Section -->
           <div class="bottom-cards-section mt-16 pb-12">
@@ -227,6 +225,9 @@ const mapStudios = studios.map(s => ({
             </div>
           </div>
         </div>
+
+        <!-- Pagination: pinned footer of the panel on mobile (like the homepage) -->
+        <div id="pagination-container" class="pagination-wrapper"></div>
       </aside>
 
       <!-- Right Column: Map Panel -->
@@ -380,8 +381,10 @@ const mapStudios = studios.map(s => ({
       if (!container) return;
       if (totalPages <= 1) {
         container.innerHTML = '';
+        container.style.display = 'none';
         return;
       }
+      container.style.display = '';
 
       let html = `<button class="pagination-btn pagination-arrow" ${currentPage === 1 ? 'disabled' : ''} data-page="prev">‹</button>`;
       let startPage = Math.max(1, currentPage - 2);
@@ -400,97 +403,115 @@ const mapStudios = studios.map(s => ({
           else if (page === 'next') currentPage++;
           else currentPage = parseInt(page!);
           renderGrid();
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          // On mobile the list scrolls inside the panel, not the window.
+          const inner = document.querySelector('.results-panel-content') as HTMLElement | null;
+          if (inner && window.innerWidth <= 1024) {
+            inner.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         });
       });
     }
 
     init();
 
-      // Mobile bottom sheet — swipe to expand/collapse list over map
-      const panel = document.querySelector('.results-panel') as HTMLElement;
-      
-      let startY = 0;
-      let currentTranslateY = 0;
-      let isDragging = false;
-      let startTranslateY = 0;
-      let windowHeight = window.innerHeight - 64;
+      // Mobile bottom sheet — swipe to expand/collapse the list over the map.
+      // Mirrors the smooth, scroll-aware snap used on the map (homepage):
+      // the panel snaps between a collapsed peek and an expanded sheet, and a
+      // drag only hijacks the gesture when the list is scrolled to the very
+      // top (otherwise the swipe scrolls the list natively).
+      const panel = document.querySelector('.results-panel') as HTMLElement | null;
+      const panelInner = panel ? panel.querySelector('.results-panel-content') as HTMLElement | null : null;
 
-      const collapsedVisibleHeight = 200;
-      let collapsedY = windowHeight - collapsedVisibleHeight;
-      const expandedY = 0;
-      let activeState = 'collapsed';
+      const COLLAPSED_PEEK = 240; // keep in sync with the CSS collapsed max-height
+      const isMobilePanel = () => window.innerWidth <= 1024;
+
+      let startY = 0;
+      let startMaxH = 0;
+      let currentMaxH = 0;
+      let startedOnHandle = false;
+      let isDragging = false;
+      let collapsed = true;
+
+      const collapsedHeight = () => COLLAPSED_PEEK;
+      const expandedHeight = () => Math.round(window.innerHeight * 0.88);
+
+      function setSnap(expanded: boolean, animate = true) {
+        if (!panel) return;
+        collapsed = !expanded;
+        panel.style.transition = animate ? 'max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1)' : 'none';
+        panel.style.maxHeight = expanded ? `${expandedHeight()}px` : `${collapsedHeight()}px`;
+        panel.classList.toggle('is-expanded', expanded);
+        if (!expanded && panelInner) panelInner.scrollTop = 0;
+        if (animate) setTimeout(() => mapInstance?.map?.resize(), 350);
+      }
+
+      if (panel && isMobilePanel()) {
+        setSnap(false, false);
+      }
 
       window.addEventListener('resize', () => {
-        windowHeight = window.innerHeight - 64;
-        collapsedY = windowHeight - collapsedVisibleHeight;
-        if (window.innerWidth > 1024) {
-          panel.style.transform = '';
-          panel.style.overflowY = '';
+        if (!panel) return;
+        if (!isMobilePanel()) {
           panel.style.transition = '';
-        } else {
-          setPanelY(activeState === 'expanded' ? expandedY : collapsedY, false);
-          setTimeout(() => mapInstance?.map?.resize(), 100);
+          panel.style.maxHeight = '';
+          panel.classList.remove('is-expanded');
+          return;
         }
+        setSnap(!collapsed, false);
+        setTimeout(() => mapInstance?.map?.resize(), 100);
       });
 
-      function setPanelY(y: number, animate = true) {
-        if (!panel) return;
-        panel.style.transition = animate ? 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)' : 'none';
-        panel.style.transform = `translateY(${y}px)`;
-        currentTranslateY = y;
-
-        if (y === expandedY) {
-          activeState = 'expanded';
-          panel.style.overflowY = 'auto';
-        } else {
-          activeState = 'collapsed';
-          panel.style.overflowY = 'hidden';
-          panel.scrollTop = 0;
-        }
-
-        if (animate) {
-          setTimeout(() => mapInstance?.map?.resize(), 350);
-        }
-      }
-
-      if (window.innerWidth <= 1024) {
-        setPanelY(collapsedY, false);
-      }
-
       panel?.addEventListener('touchstart', (e) => {
-        if (window.innerWidth > 1024) return;
-        if (activeState === 'expanded' && panel.scrollTop > 0) return;
-
+        if (!isMobilePanel()) return;
+        const target = e.target as HTMLElement | null;
+        const onHandle = !!(target && target.closest('.panel-handle'));
+        if (!onHandle && panelInner && panelInner.scrollTop > 0) return;
+        startedOnHandle = onHandle;
         startY = e.touches[0].clientY;
-        startTranslateY = currentTranslateY;
+        startMaxH = collapsed ? collapsedHeight() : expandedHeight();
+        currentMaxH = startMaxH;
         isDragging = true;
         panel.style.transition = 'none';
       }, { passive: true });
 
       panel?.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
-        const diffY = e.touches[0].clientY - startY;
-        let nextY = startTranslateY + diffY;
-        if (nextY < expandedY) nextY = expandedY + (nextY - expandedY) * 0.15;
-        if (nextY > collapsedY) nextY = collapsedY + (nextY - collapsedY) * 0.15;
-        panel.style.transform = `translateY(${nextY}px)`;
-        currentTranslateY = nextY;
+        if (!startedOnHandle && panelInner && panelInner.scrollTop > 0) return;
+
+        const delta = e.touches[0].clientY - startY;
+        // When expanded, an upward swipe scrolls the list instead of growing
+        // the sheet further — only a downward swipe collapses it.
+        if (!startedOnHandle && delta < 0 && !collapsed) return;
+
+        let next = startMaxH - delta;
+        const full = expandedHeight();
+        if (next > full) next = full + (next - full) * 0.15;
+        if (next < collapsedHeight() * 0.5) next = collapsedHeight() * 0.5 + (next - collapsedHeight() * 0.5) * 0.3;
+
+        currentMaxH = next;
+        panel.style.maxHeight = `${Math.max(0, next)}px`;
       }, { passive: true });
 
-      panel?.addEventListener('touchend', () => {
+      const endDrag = () => {
         if (!isDragging) return;
         isDragging = false;
-        const diffY = currentTranslateY - startTranslateY;
-
-        if (startTranslateY === collapsedY) {
-          setPanelY(diffY < -40 ? expandedY : collapsedY, true);
-        } else if (startTranslateY === expandedY) {
-          setPanelY(diffY > 40 ? collapsedY : expandedY, true);
+        panel!.style.transition = '';
+        const full = expandedHeight();
+        const mid = (collapsedHeight() + full) / 2;
+        panel!.style.maxHeight = '';
+        if (currentMaxH <= collapsedHeight() * 0.6) {
+          setSnap(false, true);
+        } else if (currentMaxH >= mid) {
+          setSnap(true, true);
         } else {
-          setPanelY(currentTranslateY < windowHeight / 2 ? expandedY : collapsedY, true);
+          setSnap(false, true);
         }
-      });
+      };
+
+      panel?.addEventListener('touchend', endDrag);
+      panel?.addEventListener('touchcancel', endDrag);
     </script>
 
   <style>
@@ -841,27 +862,22 @@ const mapStudios = studios.map(s => ({
         right: 0;
         bottom: 0;
         width: 100% !important;
-        height: calc(100% - 24px) !important;
         background: var(--color-white);
         border-top: 1px solid var(--color-stroke);
         border-top-left-radius: 24px;
         border-top-right-radius: 24px;
         z-index: 10;
-        transform: translateY(calc(100% - 200px));
-        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        overflow-y: hidden;
+        max-height: 240px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
         border-right: none;
         box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
+        transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        touch-action: pan-y;
       }
-      .results-panel::-webkit-scrollbar {
-        width: 6px;
-      }
-      .results-panel::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .results-panel::-webkit-scrollbar-thumb {
-        background-color: var(--color-stroke);
-        border-radius: 20px;
+      .results-panel.is-expanded {
+        max-height: 88vh;
       }
       .results-panel::before {
         content: '';
@@ -872,13 +888,46 @@ const mapStudios = studios.map(s => ({
         opacity: 0.3;
         border-radius: 2px;
         margin: 12px auto 8px;
+        flex-shrink: 0;
         cursor: grab;
       }
       .results-panel:active::before {
         cursor: grabbing;
       }
       .results-panel-content {
-        padding: 12px 20px 80px !important;
+        padding: 8px 20px 24px !important;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .results-panel:not(.is-expanded) .results-panel-content {
+        overflow: hidden;
+      }
+      .results-panel-content::-webkit-scrollbar {
+        width: 6px;
+      }
+      .results-panel-content::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .results-panel-content::-webkit-scrollbar-thumb {
+        background-color: var(--color-stroke);
+        border-radius: 20px;
+      }
+      /* Pagination is pinned to the bottom of the panel (like the homepage),
+         always visible while expanded, with a gap from the phone's bottom. */
+      #pagination-container {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: var(--color-white);
+        border-top: 1px solid var(--color-stroke);
+        padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
+      }
+      .results-panel:not(.is-expanded) #pagination-container {
+        display: none;
       }
       .studios-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -900,7 +949,7 @@ const mapStudios = studios.map(s => ({
         gap: 14px;
       }
       .results-panel-content {
-        padding: 12px 16px 80px !important;
+        padding: 12px 16px 24px !important;
       }
       .location-heading {
         font-size: 36px;
