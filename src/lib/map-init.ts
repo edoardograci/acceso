@@ -100,7 +100,11 @@ function createLetterIcon(map: any, key: string, color: string = '#EDFF77', item
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
-  ctx.lineWidth = 2.5;
+  // The stroke is drawn on a canvas that MapLibre then scales by icon-size,
+  // whereas cluster strokes are a fixed pixel width. Divide by the icon size
+  // so the single-pin stroke renders at the same pixel weight as the clusters.
+  const PIN_STROKE = 2.5;
+  ctx.lineWidth = PIN_STROKE / getUnclusteredIconSize();
   ctx.strokeStyle = '#FFFFFF';
   ctx.stroke();
 
@@ -199,7 +203,7 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance) {
         50,
         44,   // ≥ 50 points
       ],
-      'circle-stroke-width': 2,
+      'circle-stroke-width': 2.5,
       'circle-stroke-color': '#FFFFFF',
     },
   });
