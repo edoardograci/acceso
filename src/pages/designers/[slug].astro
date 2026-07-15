@@ -8,7 +8,6 @@ import { normalizeImage } from '../../lib/images';
 import { ensureProtocol } from '../../lib/url';
 import type { Studio } from '../../lib/types';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
-import DesignerMoodboard from '../../components/DesignerMoodboard.astro';
 
 const { slug } = Astro.params;
 
@@ -30,7 +29,6 @@ const isLoggedIn = !!user;
 
 let studio: Studio | null = null;
 let error = null;
-let hasProjects = false;
 let sameCityStudios: Studio[] = [];
 let sameCountryStudios: Studio[] = [];
 let worldStudios: Studio[] = [];
@@ -39,7 +37,6 @@ try {
   const isDev = import.meta.env.DEV;
   const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
   const studiosUrl = `${domain}/test-studios.json`;
-  const moodboardUrl = `${domain}/moodboard.json`;
   
   const response = await fetch(studiosUrl);
   if (response.ok) {
@@ -49,16 +46,6 @@ try {
 
     if (studio) {
       const currentStudio = studio;
-      // 1. Fetch Projects for this studio to check if section should exist
-      const moodboardRes = await fetch(moodboardUrl);
-      if (moodboardRes.ok) {
-        const moodboardItems = await moodboardRes.json();
-        const projects = moodboardItems.filter(
-          (item: any) => item.designer && item.designer.toLowerCase() === currentStudio.name.toLowerCase() && item.cover
-        );
-        hasProjects = projects.length > 0;
-      }
-
       // 2. Suggested studios in three tiers: same city, same country, worldwide.
       sameCityStudios = mappedStudios
         .filter((s: any) => s.slug !== slug && s.city_slug === currentStudio.city_slug)
@@ -232,15 +219,6 @@ const gmapsDirections = studioHasLocation
             </div>
           </aside>
         </div>
-
-        {hasProjects && (
-          <section class="projects-section">
-            <h2 class="projects-title">Projects</h2>
-            <div class="projects-grid-wrapper">
-              <DesignerMoodboard studio={studio} />
-            </div>
-          </section>
-        )}
 
         {studioHasLocation && (
           <section class="designer-location-section">
@@ -626,9 +604,6 @@ const gmapsDirections = studioHasLocation
   .card-footer-actions {
     margin-top: auto;
   }
-
-  .projects-section { margin-top: 120px; }
-  .projects-title { font-family: var(--font-sans); font-size: 31px; font-weight: 400; color: var(--color-black); margin-bottom: 40px; }
 
   /* Discovery Area Styling */
   .discovery-area {
