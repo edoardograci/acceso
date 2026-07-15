@@ -80,8 +80,16 @@ function convertToGeoJSON(items: MapItem[], itemType: 'studio' | 'museum' | 'uni
 }
 
 function createLetterIcon(map: any, key: string, color: string = '#EDFF77', itemType: 'studio' | 'museum' | 'university' = 'studio') {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const logicalSize = 44; // increased from 30 for bigger pins
+  // Rasterize at the REAL device pixel ratio (don't cap at 2). Capping forces
+  // MapLibre to upscale the baked pin image on high-DPR phones, which smears the
+  // white stroke with anti-aliasing so it looks much thicker than the crisp,
+  // vector cluster stroke. Full DPR keeps the pin stroke as sharp as the cluster.
+  const dpr = window.devicePixelRatio || 1;
+  // Enlarging logicalSize makes the pin circle bigger WITHOUT changing the
+  // stroke: lineWidth is in logical units, and natural CSS size == logicalSize,
+  // so the displayed stroke stays PIN_STROKE_BASE × icon-size no matter the
+  // logicalSize. This keeps the stroke matched to the (untouched) clusters.
+  const logicalSize = 56; // circle size only; stroke unaffected
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(logicalSize * dpr);
   canvas.height = Math.round(logicalSize * dpr);
@@ -108,7 +116,7 @@ function createLetterIcon(map: any, key: string, color: string = '#EDFF77', item
 
   const letter = key === 'DEFAULT' ? 'A' : String(key).charAt(0);
   ctx.fillStyle = '#000000';
-  ctx.font = '700 15px system-ui, -apple-system, "Segoe UI", sans-serif';
+  ctx.font = '700 19px system-ui, -apple-system, "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(letter, cx, cy + 0.5);
@@ -116,12 +124,20 @@ function createLetterIcon(map: any, key: string, color: string = '#EDFF77', item
   const imageId = `icon-${itemType}-${key}`;
   if (!map.hasImage(imageId)) {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    map.addImage(imageId, {
-      width: canvas.width,
-      height: canvas.height,
-      data: imageData.data,
-      pixelRatio: dpr,
-    });
+    // pixelRatio MUST be passed as the 3rd (options) argument. If put inside the
+    // image object it is ignored and defaults to 1, so on high-DPR phones the
+    // icon renders at canvas.width (44 × dpr) px — a huge pin with a fat stroke.
+    // As the options arg it normalizes the icon to 44 CSS px on every device,
+    // making the stroke a crisp 3 × icon-size (matching the cluster stroke).
+    map.addImage(
+      imageId,
+      {
+        width: canvas.width,
+        height: canvas.height,
+        data: imageData.data,
+      },
+      { pixelRatio: dpr }
+    );
 
   } else {
 
