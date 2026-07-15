@@ -294,7 +294,12 @@ function cleanMapBorders(map: MapLibreMap) {
   }
 }
 
-export async function initializeMap(studiosData: MapItem[], targetStudioSlug?: string | null, itemType: 'studio' | 'museum' | 'university' = 'studio'): Promise<MapInstance | null> {
+export async function initializeMap(
+  studiosData: MapItem[],
+  targetStudioSlug?: string | null,
+  itemType: 'studio' | 'museum' | 'university' = 'studio',
+  initialBounds?: [[number, number], [number, number]] | null
+): Promise<MapInstance | null> {
 
   
   const mapContainer = document.getElementById('map');
@@ -333,11 +338,21 @@ export async function initializeMap(studiosData: MapItem[], targetStudioSlug?: s
 
   const styleUrl = 'https://tiles.openfreemap.org/styles/positron';
 
+  // When a location is known up-front (e.g. a /designers/in/<place> page),
+  // start the map framed on that area instead of the default Europe view so
+  // there is no visible recenter animation after the tiles load.
+  const initialCenter: [number, number] = initialBounds
+    ? [
+        (initialBounds[0][0] + initialBounds[1][0]) / 2,
+        (initialBounds[0][1] + initialBounds[1][1]) / 2,
+      ]
+    : [12.0, 48.0];
+
   // Instantiate MapLibre Map
   state.map = new maplibregl.Map({
     container: 'map',
     style: styleUrl,
-    center: [12.0, 48.0],
+    center: initialCenter,
     zoom: 4,
     minZoom: 2,
     maxZoom: 18,
@@ -392,6 +407,17 @@ export async function initializeMap(studiosData: MapItem[], targetStudioSlug?: s
 
       updateMapData(initialStudios, fit, cluster);
       pendingData = null;
+
+      // If a location was supplied up-front, frame the view on it immediately
+      // (no animation) so the map is already centered on load.
+      if (initialBounds) {
+        state.map.resize();
+        const camera = state.map.cameraForBounds(initialBounds, { padding: 50 });
+        if (camera) {
+          const zoom = camera.zoom != null ? Math.min(camera.zoom, 13) : 13;
+          state.map.jumpTo({ center: camera.center, zoom });
+        }
+      }
     }, itemType);
   });
 

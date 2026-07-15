@@ -277,18 +277,34 @@ const mapStudios = studios.map(s => ({
     let mapInstance: any = null;
 
     async function initMap() {
-      // Initialize map using exactly the same logic
       if (MAP_STUDIOS?.length > 0) {
-        mapInstance = await initializeMap(MAP_STUDIOS);
+        // Build the bounding box of this location's studios so the map can be
+        // framed on it immediately (no recenter animation from the default
+        // Europe view after the tiles load).
+        const bounds: [[number, number], [number, number]] | null = (() => {
+          let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+          MAP_STUDIOS.forEach((s: any) => {
+            const lat = typeof s.latitude === 'string' ? parseFloat(s.latitude) : s.latitude;
+            const lng = typeof s.longitude === 'string' ? parseFloat(s.longitude) : s.longitude;
+            if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return;
+            minLng = Math.min(minLng, lng);
+            minLat = Math.min(minLat, lat);
+            maxLng = Math.max(maxLng, lng);
+            maxLat = Math.max(maxLat, lat);
+          });
+          if (minLng === Infinity) return null;
+          return [[minLng, minLat], [maxLng, maxLat]];
+        })();
+
+        mapInstance = await initializeMap(MAP_STUDIOS, null, 'studio', bounds);
         if (!mapInstance || !mapInstance.map) return;
 
-        // Focus reliably on THIS location's studios. Wait for the map to be
-        // fully loaded and resize first, so fitBounds uses correct dimensions
-        // and the view is framed on the right city/country every time.
+        // Refresh the studios without re-centering: the map is already framed
+        // on this location by initializeMap (instant jump, no animation).
         const focusLocation = () => {
           mapInstance.map.resize();
           if (mapInstance.updateStudios) {
-            mapInstance.updateStudios(MAP_STUDIOS, true, true);
+            mapInstance.updateStudios(MAP_STUDIOS, false, true);
           }
         };
 
