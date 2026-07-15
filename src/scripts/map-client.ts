@@ -586,6 +586,18 @@ function init() {
     }
   }
 
+  function openCityFromUrl() {
+    if ((window as any).isMyMap) return;
+    const params = new URLSearchParams(window.location.search);
+    const citySlug = params.get('city');
+    if (!citySlug || !mapInstance) return;
+    // Resolve the display name from the city browse list when available.
+    const itemEl = document.querySelector(`.city-browse-item[data-slug="${citySlug}"]`) as HTMLElement | null;
+    const cityName = itemEl?.dataset.city || citySlug;
+    const countryMeta = itemEl?.querySelector('.city-browse-meta')?.textContent?.trim() || undefined;
+    showCityStudios(cityName, citySlug, countryMeta, 'browse');
+  }
+
   async function tryInitMap() {
     try {
       mapInstance = await initializeMap(mapStudios, (window as any).studioSlug, currentItemType);
@@ -602,6 +614,7 @@ function init() {
     }
     if (!(window as any).isMyMap) {
       refreshStudiosFromApi();
+      openCityFromUrl();
     }
   }
 

@@ -75,6 +75,7 @@ async function getDesignerSlug(designerName: string | null): Promise<string | nu
 
 const designerSlug = item ? await getDesignerSlug(item.designer) : null;
 const hasMultipleImages = item ? item.images.length > 1 : false;
+const citySlug = item?.city ? item.city.toLowerCase().replace(/\s+/g, '-') : null;
 ---
 
 <Layout 
@@ -183,7 +184,7 @@ const hasMultipleImages = item ? item.images.length > 1 : false;
               {item.city && (
                 <div class="details-row">
                   <span class="detail-label">Location</span>
-                  <a href="/designers" class="detail-value underlined">{item.city}</a>
+                  <a href={citySlug ? `/map?type=designers&city=${citySlug}` : '/designers'} class="detail-value underlined">{item.city}</a>
                 </div>
               )}
             </div>
