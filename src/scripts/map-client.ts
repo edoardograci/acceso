@@ -146,6 +146,13 @@ function init() {
     return window.innerWidth <= 1024;
   }
 
+  // Hide the floating studio card overlay (shown when a pin is focused).
+  // Any panel transition means we've left that studio's context, so the card
+  // must be dismissed — otherwise it lingers over the map in other cities.
+  function hideStudioCardUI() {
+    document.getElementById('studio-ui-container')?.classList.remove('visible');
+  }
+
   function isOnQuickNavDefault() {
     return quickNavDefault && !quickNavDefault.classList.contains('hidden');
   }
@@ -286,6 +293,7 @@ function init() {
   }
 
   function showCityStudios(cityName: string, slug: string, country?: string, from: 'quick' | 'browse' = 'browse') {
+    hideStudioCardUI();
     panelOrigin = from;
     panelView = 'studios';
     currentCityName = cityName;
@@ -306,6 +314,7 @@ function init() {
     // paragraph + quick-link cards) must never appear, so it's a
     // hard no-op there.
     if ((window as any).isMyMap) return;
+    hideStudioCardUI();
     panelView = 'quick';
     currentCityName = '';
     hideAllPanelViews();
@@ -316,6 +325,7 @@ function init() {
   }
 
   function showCityBrowse() {
+    hideStudioCardUI();
     panelOrigin = 'browse';
     panelView = 'browse';
     currentCityName = '';
