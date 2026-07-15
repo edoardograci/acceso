@@ -369,75 +369,41 @@ function init() {
     const compactHeight = () => Math.round(window.innerHeight * 0.52);
     const fullHeight = () => Math.round(window.innerHeight * 0.88);
 
-    const currentMaxHeightPx = () => {
-      const raw = getComputedStyle(explorePanel!).maxHeight;
-      if (raw === 'none') return explorePanel!.offsetHeight;
-      return parseFloat(raw);
-    };
-
     let startY = 0;
     let startMaxH = 0;
     let currentMaxH = 0;
-    let startedOnHandle = false;
-    let isCandidate = false;
-    let didDrag = false;
-
-    // Begin a drag from the grab handle at any time, or from the panel body
-    // only when its content is scrolled to the very top — otherwise the touch
-    // belongs to scrolling the list and we leave it alone.
-    const canStart = (target: EventTarget | null) => {
-      if (!isMobilePanel() || !explorePanel!.classList.contains('is-open')) return false;
-      const el = target as HTMLElement | null;
-      if (el && el.closest('.explore-panel-handle')) return 'handle';
-      const inner = explorePanel!.querySelector('.explore-panel-inner') as HTMLElement | null;
-      if (inner && inner.scrollTop <= 0) return 'body';
-      return null;
-    };
+    let isDragging = false;
 
     const onTouchStart = (e: TouchEvent) => {
-      const where = canStart(e.target);
-      if (!where) {
-        isCandidate = false;
-        return;
-      }
-      startedOnHandle = where === 'handle';
+      if (!isMobilePanel() || !explorePanel!.classList.contains('is-open')) return;
+      // Only the grab handle drives the drag, so scrolling the list content
+      // (touching anywhere else on the sheet) is never intercepted.
+      const target = e.target as HTMLElement | null;
+      if (!target || !target.closest('.explore-panel-handle')) return;
       startY = e.touches[0].clientY;
-      startMaxH = currentMaxHeightPx();
+      startMaxH = explorePanel!.classList.contains('is-compact') ? compactHeight() : fullHeight();
       currentMaxH = startMaxH;
-      isCandidate = true;
-      didDrag = false;
+      isDragging = true;
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      if (!isCandidate) return;
-      const inner = explorePanel!.querySelector('.explore-panel-inner') as HTMLElement | null;
-      const delta = e.touches[0].clientY - startY;
-
-      // From the body, only a downward gesture (collapse) is a drag; an upward
-      // gesture should scroll the content instead.
-      if (!startedOnHandle) {
-        if (delta < 0) return;
-        if (inner && inner.scrollTop > 0) return;
-      }
-
+      if (!isDragging) return;
       // Drag up (negative delta) grows the sheet; drag down shrinks it.
+      const delta = e.touches[0].clientY - startY;
       let next = startMaxH - delta;
       const full = fullHeight();
       if (next > full) next = full + (next - full) * 0.15;
       if (next < 0) next = next * 0.35;
 
       currentMaxH = next;
-      didDrag = true;
       explorePanel!.style.transition = 'none';
       explorePanel!.style.maxHeight = `${Math.max(0, next)}px`;
     };
 
     const onTouchEnd = () => {
-      if (!isCandidate) return;
-      isCandidate = false;
+      if (!isDragging) return;
+      isDragging = false;
       explorePanel!.style.transition = '';
-
-      if (!didDrag) return;
 
       const compact = compactHeight();
       const full = fullHeight();
@@ -669,13 +635,16 @@ function init() {
     const lng = card.dataset.lng;
     const slug = card.dataset.slug;
 
-    if (window.innerWidth > 1024 && lat && lng && mapInstance) {
+    if (lat && lng && mapInstance) {
       e.preventDefault();
       const studio =
         mapInstance.studiosData.find((s: any) => s.slug === slug) ||
         allStudios.find((s: any) => s.slug === slug);
       if (studio) {
         mapInstance.navigateToStudio(studio);
+        // On mobile the sheet covers the map, so collapse it to reveal the
+        // centered pin and the card above it.
+        if (isMobilePanel()) closeMobilePanel();
       }
     }
   });
