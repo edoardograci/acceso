@@ -125,7 +125,6 @@ function init() {
 
   const explorePanel = document.getElementById('explore-panel') as HTMLElement | null;
   const explorePanelBackdrop = document.getElementById('explore-panel-backdrop');
-  const explorePanelHandle = document.getElementById('explore-panel-handle');
   const quickNavDefault = document.getElementById('quick-nav-default');
   const cityBrowse = document.getElementById('city-browse');
   const cityStudios = document.getElementById('city-studios');
@@ -365,49 +364,98 @@ function init() {
   function setupPanelSwipe() {
     if (!explorePanel) return;
 
-    let touchStartY = 0;
-    let touchStartTime = 0;
+    const compactHeight = () => Math.round(window.innerHeight * 0.52);
+    const fullHeight = () => Math.round(window.innerHeight * 0.88);
+
+    const currentMaxHeightPx = () => {
+      const raw = getComputedStyle(explorePanel!).maxHeight;
+      if (raw === 'none') return explorePanel!.offsetHeight;
+      return parseFloat(raw);
+    };
+
+    let startY = 0;
+    let startMaxH = 0;
+    let currentMaxH = 0;
+    let startedOnHandle = false;
+    let isCandidate = false;
+    let didDrag = false;
+
+    // Begin a drag from the grab handle at any time, or from the panel body
+    // only when its content is scrolled to the very top — otherwise the touch
+    // belongs to scrolling the list and we leave it alone.
+    const canStart = (target: EventTarget | null) => {
+      if (!isMobilePanel() || !explorePanel!.classList.contains('is-open')) return false;
+      const el = target as HTMLElement | null;
+      if (el && el.closest('.explore-panel-handle')) return 'handle';
+      const inner = explorePanel!.querySelector('.explore-panel-inner') as HTMLElement | null;
+      if (inner && inner.scrollTop <= 0) return 'body';
+      return null;
+    };
 
     const onTouchStart = (e: TouchEvent) => {
-      if (!isMobilePanel()) return;
-      // Only treat as a drag when the gesture begins on the grab handle,
-      // so scrolling the panel content never triggers a swipe.
-      const target = e.target as HTMLElement | null;
-      if (!target || !target.closest('.explore-panel-handle')) {
-        touchStartY = 0;
-        touchStartTime = 0;
+      const where = canStart(e.target);
+      if (!where) {
+        isCandidate = false;
         return;
       }
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
+      startedOnHandle = where === 'handle';
+      startY = e.touches[0].clientY;
+      startMaxH = currentMaxHeightPx();
+      currentMaxH = startMaxH;
+      isCandidate = true;
+      didDrag = false;
     };
 
-    const onTouchEnd = (e: TouchEvent) => {
-      if (!isMobilePanel() || !explorePanel.classList.contains('is-open')) return;
-      // Ignore if the drag didn't start on the handle.
-      if (touchStartTime === 0) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isCandidate) return;
+      const inner = explorePanel!.querySelector('.explore-panel-inner') as HTMLElement | null;
+      const delta = e.touches[0].clientY - startY;
 
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaY = touchEndY - touchStartY;
-      const elapsed = Date.now() - touchStartTime;
-      const velocity = Math.abs(deltaY) / Math.max(elapsed, 1);
+      // From the body, only a downward gesture (collapse) is a drag; an upward
+      // gesture should scroll the content instead.
+      if (!startedOnHandle) {
+        if (delta < 0) return;
+        if (inner && inner.scrollTop > 0) return;
+      }
 
-      const threshold = velocity > 0.6 ? 24 : 56;
-      if (Math.abs(deltaY) < threshold) return;
+      // Drag up (negative delta) grows the sheet; drag down shrinks it.
+      let next = startMaxH - delta;
+      const full = fullHeight();
+      if (next > full) next = full + (next - full) * 0.15;
+      if (next < 0) next = next * 0.35;
 
-      if (deltaY > 0) {
-        if (explorePanel.classList.contains('is-compact')) {
-          closeMobilePanel();
-        } else {
-          setPanelSnap('compact');
-        }
-      } else {
+      currentMaxH = next;
+      didDrag = true;
+      explorePanel!.style.transition = 'none';
+      explorePanel!.style.maxHeight = `${Math.max(0, next)}px`;
+    };
+
+    const onTouchEnd = () => {
+      if (!isCandidate) return;
+      isCandidate = false;
+      explorePanel!.style.transition = '';
+
+      if (!didDrag) return;
+
+      const compact = compactHeight();
+      const full = fullHeight();
+      const mid = (compact + full) / 2;
+
+      explorePanel!.style.maxHeight = '';
+
+      if (currentMaxH <= compact * 0.45) {
+        closeMobilePanel();
+      } else if (currentMaxH >= mid) {
         setPanelSnap('full');
+      } else {
+        setPanelSnap('compact');
       }
     };
 
-    explorePanelHandle?.addEventListener('touchstart', onTouchStart, { passive: true });
-    explorePanelHandle?.addEventListener('touchend', onTouchEnd, { passive: true });
+    explorePanel.addEventListener('touchstart', onTouchStart, { passive: true });
+    explorePanel.addEventListener('touchmove', onTouchMove, { passive: true });
+    explorePanel.addEventListener('touchend', onTouchEnd, { passive: true });
+    explorePanel.addEventListener('touchcancel', onTouchEnd, { passive: true });
   }
 
   const r2Domain = import.meta.env.DEV
