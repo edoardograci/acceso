@@ -132,7 +132,7 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance, maplibregl: any) {
     layout: {
       visibility: isDesigner ? 'visible' : 'none',
       'text-field': '{point_count_abbreviated}',
-      'text-font': ['Noto Sans Bold'],
+      'text-font': ['Geist_Bold'],
       'text-size': 13,
     },
     paint: {
@@ -299,6 +299,28 @@ export async function initializeMap(
         styleJson.layers = styleJson.layers.filter(
           (l: any) => !STRIP_LAYERS.has(l.id)
         );
+        // Use our self-hosted Geist glyphs (R2 /cdn/fonts) instead of
+        // OpenFreeMap's Noto Sans. Rewrite every text layer's font stack and
+        // the style's glyphs URL so all labels render in Geist.
+        // Use our self-hosted Geist glyphs (R2 public domain) instead of
+        // OpenFreeMap's Noto Sans. Rewrite every text layer's font stack and
+        // the style's glyphs URL so all labels render in Geist.
+        // Serve Geist glyphs from our own origin (public/fonts) instead of
+        // OpenFreeMap's Noto Sans. Fontstack names use underscores to match
+        // the on-disk folder names (Geist_Regular / Geist_Bold), since
+        // MapLibre URL-encodes the stack and won't resolve spaces otherwise.
+        styleJson.glyphs = `${window.location.origin}/fonts/{fontstack}/{range}.pbf`;
+        const FONT_MAP: Record<string, string> = {
+          'Noto Sans Regular': 'Geist_Regular',
+          'Noto Sans Bold': 'Geist_Bold',
+          'Noto Sans Italic': 'Geist_Regular',
+        };
+        for (const layer of styleJson.layers) {
+          const tf = layer?.layout?.['text-font'];
+          if (Array.isArray(tf)) {
+            layer.layout['text-font'] = tf.map((f: string) => FONT_MAP[f] || f);
+          }
+        }
         mapStyle = styleJson;
       }
     }
