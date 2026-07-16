@@ -5,6 +5,7 @@ import Footer from '../../components/Footer.astro';
 import type { Studio, Museum, University } from '../../lib/types';
 import { breadcrumbList, itemList } from '../../lib/seo/schema';
 import { getFullCollectionStatus } from '../../lib/db';
+import { readJsonFromBucket, toArray, trimArrayForMap } from '../../lib/readJson';
 import type { Env } from '../../env.d';
 
 if (!Astro.locals.user) {
@@ -21,27 +22,17 @@ let universities: University[] = [];
 let error = null;
 
 try {
-  const isDev = import.meta.env.DEV;
-  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  
-  // Fetch all data types upfront for client-side switching
-  const [studiosRes, museumsRes, universitiesRes] = await Promise.all([
-    fetch(`${domain}/test-studios.json`),
-    fetch(`${domain}/museums.json`),
-    fetch(`${domain}/universities.json`)
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  // Read directly from the JSON R2 bucket (no self-fetch hop); always fresh.
+  const [studiosData, museumsData, universitiesData] = await Promise.all([
+    readJsonFromBucket('test-studios.json', env, Astro.url.origin),
+    readJsonFromBucket('museums.json', env, Astro.url.origin),
+    readJsonFromBucket('universities.json', env, Astro.url.origin),
   ]);
-  
-  if (studiosRes.ok) {
-    studios = await studiosRes.json();
-  }
-  if (museumsRes.ok) {
-    const rawData = await museumsRes.json();
-    museums = Array.isArray(rawData) ? rawData : (rawData.items || []);
-  }
-  if (universitiesRes.ok) {
-    const rawData = await universitiesRes.json();
-    universities = Array.isArray(rawData) ? rawData : (rawData.items || []);
-  }
+
+  studios = trimArrayForMap(toArray(studiosData)) as Studio[];
+  museums = trimArrayForMap(toArray(museumsData)) as Museum[];
+  universities = trimArrayForMap(toArray(universitiesData)) as University[];
 } catch (e) {
   error = e;
   console.error('[Map] Failed to fetch data:', e);
@@ -109,17 +100,16 @@ const itemSlug = Astro.url.searchParams.get('item') || null;
 let cityBrowseList: { name: string; slug: string; country: string; count: number; hidden: boolean }[] = [];
 
 try {
-  const isDev = import.meta.env.DEV;
-  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  const [ciRes, coRes] = await Promise.all([
-    fetch(`${domain}/test-cities.json`),
-    fetch(`${domain}/test-countries.json`),
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const [citiesData, countriesData] = await Promise.all([
+    readJsonFromBucket('test-cities.json', env, Astro.url.origin),
+    readJsonFromBucket('test-countries.json', env, Astro.url.origin),
   ]);
 
   // Curated metadata is only used to enrich display name/country; the actual
   // set of cities is derived from the data so no city gets dropped.
-  const citiesList: any[] = ciRes.ok ? await ciRes.json() : [];
-  const countriesList: any[] = coRes.ok ? await coRes.json() : [];
+  const citiesList: any[] = toArray(citiesData);
+  const countriesList: any[] = toArray(countriesData);
   const cityMeta = Object.fromEntries(citiesList.map((c: any) => [c.slug, c]));
   const countryNames = Object.fromEntries(countriesList.map((c: any) => [c.slug, c.name]));
 

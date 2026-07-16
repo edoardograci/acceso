@@ -102,7 +102,11 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     if (!path.endsWith('.json')) {
       headers.set('Cache-Control', 'public, max-age=31536000, immutable');
     } else {
-      headers.set('Cache-Control', 'no-cache');
+      // JSON is CMS-driven: a short max-age speeds up repeat loads, while
+      // stale-while-revalidate keeps things fast even right after an update.
+      // A Cloudflare cache purge on publish invalidates immediately, so this
+      // never shows stale data for more than a few minutes if a purge is missed.
+      headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
     }
 
     let body: any = await object.arrayBuffer();
