@@ -31,22 +31,7 @@ function resolveItemCover(cover?: string | null): string {
   return `${window.location.origin}/cdn/${cover.replace(/^\/+/, '')}`;
 }
 
-function resolveIconName(name?: string | null, itemType: 'studio' | 'museum' | 'university' = 'studio'): string {
-  // Pins are drawn on a canvas per letter (see loadIcons/createLetterIcon), and
-  // loadIcons always registers icons for A-Z + DEFAULT, so we only need to check
-  // that the first character is A-Z here.
-  const letter = (name || 'D').trim().charAt(0).toUpperCase();
-  if (/^[A-Z]$/.test(letter)) {
-    const result = `icon-${itemType}-${letter}`;
-
-    return result;
-  }
-  const result = `icon-${itemType}-DEFAULT`;
-
-  return result;
-}
-
-function convertToGeoJSON(items: MapItem[], itemType: 'studio' | 'museum' | 'university' = 'studio'): any {
+function convertToGeoJSON(items: MapItem[]): any {
   const result = {
     type: 'FeatureCollection',
     features: items
@@ -57,6 +42,7 @@ function convertToGeoJSON(items: MapItem[], itemType: 'studio' | 'museum' | 'uni
 
         return {
           type: 'Feature',
+          id: s.id,
           properties: {
             id: s.id,
             name: s.name,
@@ -64,7 +50,6 @@ function convertToGeoJSON(items: MapItem[], itemType: 'studio' | 'museum' | 'uni
             city: s.city,
             address: s.address,
             cover: (s as any).cover || (s as any).image,
-            iconName: resolveIconName(s.name, itemType)
           },
           geometry: {
             type: 'Point',
@@ -74,112 +59,23 @@ function convertToGeoJSON(items: MapItem[], itemType: 'studio' | 'museum' | 'uni
       })
       .filter(Boolean)
   };
-  
+
 
   return result;
 }
 
-function createLetterIcon(map: any, key: string, color: string = '#EDFF77', itemType: 'studio' | 'museum' | 'university' = 'studio') {
-  // Rasterize at the REAL device pixel ratio (don't cap at 2). Capping forces
-  // MapLibre to upscale the baked pin image on high-DPR phones, which smears the
-  // white stroke with anti-aliasing so it looks much thicker than the crisp,
-  // vector cluster stroke. Full DPR keeps the pin stroke as sharp as the cluster.
-  const dpr = window.devicePixelRatio || 1;
-  // Enlarging logicalSize makes the pin circle bigger WITHOUT changing the
-  // stroke: lineWidth is in logical units, and natural CSS size == logicalSize,
-  // so the displayed stroke stays PIN_STROKE_BASE × icon-size no matter the
-  // logicalSize. This keeps the stroke matched to the (untouched) clusters.
-  const logicalSize = 56; // circle size only; stroke unaffected
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(logicalSize * dpr);
-  canvas.height = Math.round(logicalSize * dpr);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.scale(dpr, dpr);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  const cx = logicalSize / 2;
-  const cy = logicalSize / 2;
-  const radius = logicalSize / 2 - 4;
-
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-  // Single pins scale with icon-size, so draw a constant base stroke here and
-  // scale the cluster stroke by the same factor (see setupMapLayers / syncPinSize).
-  ctx.lineWidth = PIN_STROKE_BASE;
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.stroke();
-
-  const letter = key === 'DEFAULT' ? 'A' : String(key).charAt(0);
-  ctx.fillStyle = '#000000';
-  ctx.font = '700 19px system-ui, -apple-system, "Segoe UI", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(letter, cx, cy + 0.5);
-
-  const imageId = `icon-${itemType}-${key}`;
-  if (!map.hasImage(imageId)) {
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    // pixelRatio MUST be passed as the 3rd (options) argument. If put inside the
-    // image object it is ignored and defaults to 1, so on high-DPR phones the
-    // icon renders at canvas.width (44 × dpr) px — a huge pin with a fat stroke.
-    // As the options arg it normalizes the icon to 44 CSS px on every device,
-    // making the stroke a crisp 3 × icon-size (matching the cluster stroke).
-    map.addImage(
-      imageId,
-      {
-        width: canvas.width,
-        height: canvas.height,
-        data: imageData.data,
-      },
-      { pixelRatio: dpr }
-    );
-
-  } else {
-
-  }
-}
-
-function loadIcons(map: any, callback: () => void, itemType: 'studio' | 'museum' | 'university' = 'studio') {
-  const keys = new Set([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), 'DEFAULT']);
-  
-  const color = itemType === 'museum' ? '#C6F6D6' : itemType === 'university' ? '#EAD8FE' : '#EDFF77';
-
-
-
-  keys.forEach((key) => {
-    try {
-      createLetterIcon(map, key, color, itemType);
-    } catch (e) {
-      console.warn(`Failed to create canvas icon for: ${key}`, e);
-    }
-  });
-
-
-  callback();
-}
-
-const UNCLUSTERED_ICON_SIZE_DESKTOP = 0.85;
-const UNCLUSTERED_ICON_SIZE_MOBILE = 0.8;
-
-// Base stroke width drawn on the single-pin canvas. Both single pins and
-// clusters scale their stroke by the icon size, so the two always render at
-// the same pixel weight on every viewport.
+// Base stroke width shared between single pins and clusters so the two always
+// render at the same pixel weight on every viewport.
 const PIN_STROKE_BASE = 3;
 
 // Single (unclustered) pins read a touch large on phones, so shrink them
-// on narrow viewports. The icon image is generated once, so we scale it via
-// the layer's icon-size and keep it in sync on resize.
-function getUnclusteredIconSize(): number {
-  if (typeof window === 'undefined') return UNCLUSTERED_ICON_SIZE_DESKTOP;
-  return window.innerWidth <= 768 ? UNCLUSTERED_ICON_SIZE_MOBILE : UNCLUSTERED_ICON_SIZE_DESKTOP;
+// on narrow viewports via the layer's circle-radius interpolation.
+// Returns [zoom3Radius, zoom12Radius, zoom18Radius].
+function getUnclusteredRadius(): [number, number, number] {
+  return window.innerWidth <= 768 ? [8, 9, 12] : [9, 10, 13];
 }
 
-function setupMapLayers(map: MapLibreMap, state: MapInstance) {
+function setupMapLayers(map: MapLibreMap, state: MapInstance, maplibregl: any) {
   // Always tear down existing layers/source so we can rebuild with the correct
   // cluster setting for the current itemType.
   if (map.getLayer('clusters')) map.removeLayer('clusters');
@@ -192,7 +88,7 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance) {
 
   map.addSource('studios', {
     type: 'geojson',
-    data: convertToGeoJSON(state.studiosData as MapItem[], state.itemType),
+    data: convertToGeoJSON(state.studiosData as MapItem[]),
     cluster: isDesigner,
     // Keep clusters coarse: only merge when pins are very close on screen.
     // clusterMaxZoom 9 means clusters dissolve above zoom 9 (city level).
@@ -222,12 +118,12 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance) {
         50,
         44,   // ≥ 50 points
       ],
-      'circle-stroke-width': PIN_STROKE_BASE * getUnclusteredIconSize(),
+      'circle-stroke-width': PIN_STROKE_BASE,
       'circle-stroke-color': '#FFFFFF',
     },
   });
 
-  // Cluster count label — only visible for designers
+  // Cluster count label — only visible for designers (uses Noto Sans glyphs)
   map.addLayer({
     id: 'cluster-count',
     type: 'symbol',
@@ -244,20 +140,46 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance) {
     },
   });
 
-  // Individual pin layer
+  // Individual pin layer — plain yellow circle (no baked letter glyphs),
+  // tinted per item type, same sizing/stroke as the previous letter pins.
+  const [r3, r12, r18] = getUnclusteredRadius();
   map.addLayer({
     id: 'unclustered-point',
-    type: 'symbol',
+    type: 'circle',
     source: 'studios',
     filter: ['!', ['has', 'point_count']],
-    layout: {
-      'icon-image': ['get', 'iconName'],
-      'icon-size': getUnclusteredIconSize(),
-      'icon-allow-overlap': true,
-      'icon-ignore-placement': true,
-      'text-field': '',
+    paint: {
+      'circle-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        3, r3,
+        12, r12,
+        18, r18,
+      ],
+      'circle-color': state.itemType === 'museum' ? '#C6F6D6' : state.itemType === 'university' ? '#EAD8FE' : '#EDFF77',
+      'circle-stroke-width': PIN_STROKE_BASE,
+      'circle-stroke-color': '#FFFFFF',
     },
   });
+
+  // Hover pill: shows the item name above a single pin on hover only.
+  // Desktop/touch-capable devices skip it (no hover on touch). Created
+  // lazily on interaction, so it adds nothing to the initial load.
+  const isTouch = window.matchMedia('(hover: none)').matches;
+  let hoverPill: any = null;
+  let hoverMarker: any = null;
+  const showPill = (text: string, lngLat: any) => {
+    if (isTouch) return;
+    if (!hoverMarker) {
+      hoverPill = document.createElement('div');
+      hoverPill.className = 'map-hover-pill';
+      hoverMarker = new maplibregl.Marker({ element: hoverPill, anchor: 'bottom', offset: [0, -16] });
+    }
+    hoverPill.textContent = text;
+    hoverMarker.setLngLat(lngLat).addTo(state.map);
+  };
+  const hidePill = () => {
+    if (hoverMarker) hoverMarker.remove();
+  };
 
   // Event listeners — registered once; guard with layer-existence checks
   map.on('click', 'unclustered-point', (e: any) => {
@@ -267,11 +189,22 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance) {
     if (studio) navigateToStudio(studio, state);
   });
 
-  map.on('mouseenter', 'unclustered-point', () => {
+  map.on('mouseenter', 'unclustered-point', (e: any) => {
+    if (isTouch) return;
     state.map.getCanvas().style.cursor = 'pointer';
+    const f = e.features && e.features[0];
+    if (f) {
+      // Don't show the pill on the specific pin that is currently focused
+      // (its card is open) — avoids two elements stacked on top of each
+      // other. Other pins still show their pill normally.
+      const focused = state.currentStudio;
+      if (focused && String(f.properties.id) === String(focused.id)) return;
+      showPill(f.properties.name || '', f.geometry.coordinates);
+    }
   });
   map.on('mouseleave', 'unclustered-point', () => {
     state.map.getCanvas().style.cursor = '';
+    hidePill();
   });
 }
 
@@ -373,7 +306,7 @@ export async function initializeMap(
 
     const source: any = state.map.getSource('studios');
     if (source) {
-      source.setData(convertToGeoJSON(studios, state.itemType));
+      source.setData(convertToGeoJSON(studios));
     }
 
     if (autoCenter && studios.length > 0) {
@@ -396,17 +329,16 @@ export async function initializeMap(
     // Clean borders immediately — don't wait for icons
     cleanMapBorders(state.map);
 
-    loadIcons(state.map, () => {
-      isMapLoaded = true;
-      setupMapLayers(state.map, state);
+    isMapLoaded = true;
+    setupMapLayers(state.map, state, maplibregl);
 
-      // Update dynamic layers
-      const initialStudios = pendingData ? pendingData.studios : state.studiosData;
-      const fit = pendingData ? pendingData.autoCenter : false;
-      const cluster = pendingData ? pendingData.shouldCluster : true;
+    // Update dynamic layers
+    const initialStudios = pendingData ? pendingData.studios : state.studiosData;
+    const fit = pendingData ? pendingData.autoCenter : false;
+    const cluster = pendingData ? pendingData.shouldCluster : true;
 
-      updateMapData(initialStudios, fit, cluster);
-      pendingData = null;
+    updateMapData(initialStudios, fit, cluster);
+    pendingData = null;
 
       // If a location was supplied up-front, frame the view on it immediately
       // (no animation) so the map is already centered on load.
@@ -418,7 +350,6 @@ export async function initializeMap(
           state.map.jumpTo({ center: camera.center, zoom });
         }
       }
-    }, itemType);
   });
 
   // Track interaction
@@ -459,49 +390,14 @@ export async function initializeMap(
     }
   });
 
-  // Click on an individual point
-  state.map.on('click', 'unclustered-point', (e: any) => {
-    if (!state.map.getLayer('unclustered-point')) return;
-    const features = state.map.queryRenderedFeatures(e.point, { layers: ['unclustered-point'] });
-    if (!features.length) return;
-
-    const props = features[0].properties;
-    const target =
-      state.allStudiosData.find(s => s.slug === props.slug) ||
-      state.studiosData.find(s => s.slug === props.slug);
-    if (target) {
-      navigateToStudio(target as MapItem, state);
-    }
-  });
-
-  // Cursor pointers
-  state.map.on('mouseenter', 'unclustered-point', () => {
-    if (!state.map.getLayer('unclustered-point')) return;
-    state.map.getCanvas().style.cursor = 'pointer';
-  });
-  state.map.on('mouseleave', 'unclustered-point', () => {
-    state.map.getCanvas().style.cursor = '';
-  });
-  state.map.on('mouseenter', 'clusters', () => {
-    if (!state.map.getLayer('clusters')) return;
-    state.map.getCanvas().style.cursor = 'pointer';
-  });
-  state.map.on('mouseleave', 'clusters', () => {
-    state.map.getCanvas().style.cursor = '';
-  });
-
   setupStudioCard(state);
   setupNavigation(state);
 
-  // Keep single-pin size and the cluster stroke consistent when crossing the
-  // mobile/desktop breakpoint (both scale with icon-size).
+  // Keep single-pin stroke and the cluster stroke consistent when crossing the
+  // mobile/desktop breakpoint.
   const syncPinSize = () => {
-    const size = getUnclusteredIconSize();
-    if (state.map.getLayer('unclustered-point')) {
-      state.map.setLayoutProperty('unclustered-point', 'icon-size', size);
-    }
     if (state.map.getLayer('clusters')) {
-      state.map.setPaintProperty('clusters', 'circle-stroke-width', PIN_STROKE_BASE * size);
+      state.map.setPaintProperty('clusters', 'circle-stroke-width', PIN_STROKE_BASE);
     }
   };
   window.addEventListener('resize', syncPinSize);
@@ -514,34 +410,10 @@ export async function initializeMap(
   state.replaceAllStudios = (studios: MapItem[]) => {
     state.allStudiosData = studios;
     state.studiosData = studios;
-    
-    // Remove ALL existing icons for all types
-    const keys = new Set([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), 'DEFAULT']);
-    const types = ['studio', 'museum', 'university'] as const;
-    
-    types.forEach((type) => {
-      keys.forEach((key) => {
-        const imageId = `icon-${type}-${key}`;
-        if (state.map.hasImage(imageId)) {
-          state.map.removeImage(imageId);
-        }
-      });
-    });
-    
-    // Also remove any old-style icons without type prefix (for backward compatibility)
-    keys.forEach((key) => {
-      const oldImageId = `icon-${key}`;
-      if (state.map.hasImage(oldImageId)) {
-        state.map.removeImage(oldImageId);
-      }
-    });
-    
-    // Reload icons with current item type color, then rebuild layers with correct cluster setting
-    loadIcons(state.map, () => {
-      // Rebuild source + layers so cluster:true/false matches the new itemType
-      setupMapLayers(state.map, state);
-      updateMapData(studios, false, true);
-    }, state.itemType);
+
+    // Rebuild source + layers so cluster:true/false matches the new itemType
+    setupMapLayers(state.map, state, maplibregl);
+    updateMapData(studios, false, true);
   };
 
   state.showAllStudios = () => {
@@ -586,7 +458,7 @@ function setupStudioCard(state: MapInstance): void {
       layers: ['clusters', 'unclustered-point']
     });
     if (features.length === 0) {
-      hideStudioCard();
+      hideStudioCard(state);
     }
   });
 
@@ -740,9 +612,11 @@ function showStudioCard(studio: MapItem, state: MapInstance): void {
   });
 }
 
-function hideStudioCard(): void {
+function hideStudioCard(state: MapInstance): void {
   const container = document.getElementById('studio-ui-container');
   if (container) {
     container.classList.remove('visible');
   }
+  // Release focus so the pin's hover pill works again after closing the card.
+  state.currentStudio = null;
 }
