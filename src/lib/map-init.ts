@@ -269,7 +269,42 @@ export async function initializeMap(
     itemType
   };
 
-  const styleUrl = 'https://tiles.openfreemap.org/styles/positron';
+  const STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+
+  // Fetch the base style and drop layers we don't need: those that only use
+  // the "Noto Sans Italic" font (water-body names, state/region labels,
+  // generic "other" POIs) plus all road/highway name + shield labels. This
+  // removes an entire glyph stack from the critical path and cuts visual
+  // clutter, while keeping useful geographic context (villages, towns,
+  // cities, capitals, countries, airports).
+  // Falls back to the raw style URL if the fetch/parse fails.
+  const STRIP_LAYERS = new Set([
+    // Italic-only decorative layers
+    'waterway_line_label',
+    'water_name_point_label',
+    'water_name_line_label',
+    'label_other',
+    'label_state',
+    // Route shields / highway badges (clutter for a directory map)
+    'highway-shield-non-us',
+    'highway-shield-us-interstate',
+    'road_shield_us',
+  ]);
+  let mapStyle: any = STYLE_URL;
+  try {
+    const styleRes = await fetch(STYLE_URL);
+    if (styleRes.ok) {
+      const styleJson = await styleRes.json();
+      if (styleJson && Array.isArray(styleJson.layers)) {
+        styleJson.layers = styleJson.layers.filter(
+          (l: any) => !STRIP_LAYERS.has(l.id)
+        );
+        mapStyle = styleJson;
+      }
+    }
+  } catch (e) {
+    console.warn('[map] failed to pre-process style, using raw URL:', e);
+  }
 
   // When a location is known up-front (e.g. a /designers/in/<place> page),
   // start the map framed on that area instead of the default Europe view so
@@ -284,7 +319,7 @@ export async function initializeMap(
   // Instantiate MapLibre Map
   state.map = new maplibregl.Map({
     container: 'map',
-    style: styleUrl,
+    style: mapStyle,
     center: initialCenter,
     zoom: 4,
     minZoom: 2,
