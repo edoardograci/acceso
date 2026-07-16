@@ -81,7 +81,7 @@ const aboutParagraphs = (university.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
-const pageTitle = `${university.name} — Design University in ${cityName}`;
+const pageTitle = `${university.name} — Design School in ${cityName}`;
 const pageDesc = university.description || `Explore ${university.name}, a prominent design institution in ${cityName}, ${countryName}.`;
 ---
 
@@ -91,7 +91,7 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
   <div class="breadcrumbs-container">
     <Breadcrumbs items={[
       { label: 'Directory', href: '/directory' },
-      { label: 'Universities', href: '/directory/universities' },
+      { label: 'Schools', href: '/directory/schools' },
       { label: university.name }
     ]} />
   </div>
@@ -117,7 +117,7 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
         <div class="info-card-content">
           <h1 class="item-name">{university.name}</h1>
           <div class="description-wrapper">
-            <p class="item-description" id="universityDescription">
+            <p class="item-description" id="schoolDescription">
               {university.description}
             </p>
             <button class="description-toggle" id="descriptionToggle" type="button" hidden>Read more</button>
@@ -148,7 +148,7 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
             <div class="details-row">
               <span class="detail-label">Country</span>
               {university.country_slug ? (
-                <a href={`/directory/universities/in/${university.country_slug}`} class="detail-value underlined detail-link">{countryName}</a>
+                <a href={`/directory/schools/in/${university.country_slug}`} class="detail-value underlined detail-link">{countryName}</a>
               ) : (
                 <span class="detail-value">{countryName}</span>
               )}
@@ -157,7 +157,7 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
             <div class="details-row">
               <span class="detail-label">Location</span>
               {university.city_slug ? (
-                <a href={`/directory/universities/in/${university.city_slug}`} class="detail-value underlined detail-link">{cityName}</a>
+                <a href={`/directory/schools/in/${university.city_slug}`} class="detail-value underlined detail-link">{cityName}</a>
               ) : (
                 <span class="detail-value underlined">{cityName}</span>
               )}
@@ -203,7 +203,7 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
     </div>
 
     {universityHasLocation && (
-      <section class="university-location-section">
+      <section class="school-location-section">
         <div class="location-grid">
           <div class="location-info">
             <h2 class="location-title">Location</h2>
@@ -238,7 +238,7 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
     )}
 
     {aboutParagraphs.length > 0 && (
-      <section class="university-about-section">
+      <section class="school-about-section">
         <div class="section-top">
           <h2 class="discovery-title">More about {university.name}</h2>
         </div>
@@ -255,9 +255,9 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
         {relatedUniversities.length > 0 && (
           <div class="discovery-section">
             <div class="section-top">
-              <h2 class="discovery-title">Explore design universities</h2>
-              <a href="/directory/universities" class="discovery-see-all pill-link">
-                Explore universities
+               <h2 class="discovery-title">Explore design schools</h2>
+              <a href="/directory/schools" class="discovery-see-all pill-link">
+                Explore schools
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                   <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -357,7 +357,7 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
 
   // Description read more / less — only revealed when the clamped text
   // is actually truncated.
-  const description = document.getElementById('universityDescription');
+  const description = document.getElementById('schoolDescription');
   const descriptionToggle = document.getElementById('descriptionToggle');
   if (description && descriptionToggle) {
     const checkTruncation = () => {
@@ -574,8 +574,8 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
     .discovery-title { font-size: 20px; }
   }
 
-  /* ── University about (long description) section ───────────────────── */
-  .university-about-section {
+  /* ── School about (long description) section ─────────────────────── */
+  .school-about-section {
     margin-top: 120px;
   }
 
@@ -607,8 +607,8 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
     .about-columns { column-count: 1; column-rule: none; }
   }
 
-  /* ── University location section ────────────────────────────────────── */
-  .university-location-section {
+  /* ── School location section ─────────────────────────────────────── */
+  .school-location-section {
     margin-top: var(--page-hero-gap);
   }
 
@@ -713,7 +713,7 @@ const pageDesc = university.description || `Explore ${university.name}, a promin
   }
 
   @media (max-width: 768px) {
-    .university-location-section { margin-top: 40px; }
+    .school-location-section { margin-top: 40px; }
     .location-grid { grid-template-columns: 1fr; gap: 24px; }
     .location-map-col { order: -1; }
     .location-map { height: 300px; }

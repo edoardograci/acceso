@@ -8,7 +8,7 @@ import { readJsonFromBucket, toArray, trimArrayForMap } from '../lib/readJson';
 import type { Env } from '../env.d';
 
 const typeParam = Astro.url.searchParams.get('type') || 'designers';
-const itemType = typeParam === 'universities' ? 'university' : typeParam === 'museums' ? 'museum' : 'studio';
+const itemType = typeParam === 'schools' ? 'university' : typeParam === 'museums' ? 'museum' : 'studio';
 
 const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
 
@@ -136,17 +136,17 @@ const quickNavImageHeight = 176;
 
 const mapFilters = [
   { label: 'Designers', href: '/map?type=designers', active: typeParam === 'designers', type: 'designers' },
-  { label: 'Universities', href: '/map?type=universities', active: typeParam === 'universities', type: 'universities' },
+  { label: 'Schools', href: '/map?type=schools', active: typeParam === 'schools', type: 'universities' },
   { label: 'Museums', href: '/map?type=museums', active: typeParam === 'museums', type: 'museums' },
 ];
 
-const pageTitle = itemType === 'museum' ? 'Explore Museums & Foundations' : itemType === 'university' ? 'Explore Design Universities' : 'Explore Local Design';
+const pageTitle = itemType === 'museum' ? 'Explore Museums & Foundations' : itemType === 'university' ? 'Explore Design Schools' : 'Explore Local Design';
 const titleLead = 'Explore';
 const titleRest = pageTitle.replace(/^Explore\s+/, '');
-const pageDescription = itemType === 'museum' ? 'Interactive map of design museums and foundations worldwide.' : itemType === 'university' ? 'Interactive map of design universities and institutions worldwide.' : 'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.';
+const pageDescription = itemType === 'museum' ? 'Interactive map of design museums and foundations worldwide.' : itemType === 'university' ? 'Interactive map of design schools and institutions worldwide.' : 'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.';
 
-const seoTypeLabel = itemType === 'museum' ? 'design museum' : itemType === 'university' ? 'design university' : 'design studio';
-const seoTypePlural = itemType === 'museum' ? 'design museums' : itemType === 'university' ? 'design universities' : 'design studios';
+const seoTypeLabel = itemType === 'museum' ? 'design museum' : itemType === 'university' ? 'design school' : 'design studio';
+const seoTypePlural = itemType === 'museum' ? 'design museums' : itemType === 'university' ? 'design schools' : 'design studios';
 const seoTypePluralCap = seoTypePlural.charAt(0).toUpperCase() + seoTypePlural.slice(1);
 
 const SITE = Astro.site?.toString() || 'https://acceso.design';
@@ -168,7 +168,7 @@ const cityItemListSchema = itemList({
 
 const pageSchema = { '@graph': [breadcrumbs, cityItemListSchema] };
 
-const seoTypeKeyword = itemType === 'museum' ? 'museums and foundations' : itemType === 'university' ? 'design universities and schools' : 'furniture and industrial design studios';
+const seoTypeKeyword = itemType === 'museum' ? 'museums and foundations' : itemType === 'university' ? 'design schools' : 'furniture and industrial design studios';
 const seoKeywords = `${seoTypePlural}, ${seoTypeKeyword}, design map, browse designers by city, ${topCities.slice(0, 6).map((c) => c.name).join(', ')}`;
 
 const faqs = [
@@ -223,7 +223,7 @@ const faqs = [
                 {itemType === 'museum' 
                   ? 'A directory of permanent collections and institutions preserving design culture and history.'
                   : itemType === 'university'
-                  ? 'A directory of design universities and institutions shaping the future of design education.'
+                  ? 'A directory of design schools and institutions shaping the future of design education.'
                   : 'A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.'
                 }
               </p>
@@ -303,7 +303,7 @@ const faqs = [
                     >
                       <span class="city-browse-badge" aria-hidden="true">{city.name.charAt(0)}</span>
                       <span class="city-browse-body">
-                        <span class="city-browse-name">{city.name} · {city.count} {itemType === 'museum' ? 'museums' : itemType === 'university' ? 'universities' : 'studios'}</span>
+                        <span class="city-browse-name">{city.name} · {city.count} {itemType === 'museum' ? 'museums' : itemType === 'university' ? 'schools' : 'studios'}</span>
                         <span class="city-browse-meta">{city.country || 'Worldwide'}</span>
                       </span>
                       <svg class="city-browse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

@@ -13,7 +13,7 @@ if (!Astro.locals.user) {
 }
 
 let typeParam = Astro.url.searchParams.get('type') || 'designers';
-let itemType = typeParam === 'universities' ? 'university' : typeParam === 'museums' ? 'museum' : 'studio';
+let itemType = typeParam === 'schools' ? 'university' : typeParam === 'museums' ? 'museum' : 'studio';
 const mine = true;
 
 let studios: Studio[] = [];
@@ -61,7 +61,7 @@ if (typeParam === 'designers' && studios.length === 0) {
     museums.length > 0 ? 'museum' :
     universities.length > 0 ? 'university' : null;
   if (fallback) {
-    typeParam = fallback === 'museum' ? 'museums' : 'universities';
+    typeParam = fallback === 'museum' ? 'museums' : 'schools';
     itemType = fallback;
   }
 }
@@ -170,26 +170,26 @@ const quickNavImageHeight = 176;
 
 const mapFilters = [
   { label: 'Designers', href: '/map/mine?type=designers', active: typeParam === 'designers', type: 'designers' },
-  { label: 'Universities', href: '/map/mine?type=universities', active: typeParam === 'universities', type: 'universities' },
+  { label: 'Schools', href: '/map/mine?type=schools', active: typeParam === 'schools', type: 'universities' },
   { label: 'Museums', href: '/map/mine?type=museums', active: typeParam === 'museums', type: 'museums' },
 ];
 
-const pageTitle = mine ? 'My Map' : (itemType === 'museum' ? 'Explore Museums & Foundations' : itemType === 'university' ? 'Explore Design Universities' : 'Explore Local Design');
+const pageTitle = mine ? 'My Map' : (itemType === 'museum' ? 'Explore Museums & Foundations' : itemType === 'university' ? 'Explore Design Schools' : 'Explore Local Design');
 const titleLead = mine ? 'My' : 'Explore';
 const titleRest = pageTitle.replace(/^(Explore|My)\s+/, '');
 const pageDescription = mine
-  ? 'Your personal map — every studio, museum, and university you have saved, plotted by city.'
-  : (itemType === 'museum' ? 'Interactive map of design museums and foundations worldwide.' : itemType === 'university' ? 'Interactive map of design universities and institutions worldwide.' : 'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.');
+  ? 'Your personal map — every studio, museum, and school you have saved, plotted by city.'
+  : (itemType === 'museum' ? 'Interactive map of design museums and foundations worldwide.' : itemType === 'university' ? 'Interactive map of design schools and institutions worldwide.' : 'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.');
 const exploreDescription = mine
-  ? 'Your saved studios, museums, and universities — plotted on the map and listed by city, just like the main directory.'
+  ? 'Your saved studios, museums, and schools — plotted on the map and listed by city, just like the main directory.'
   : (itemType === 'museum'
       ? 'A directory of permanent collections and institutions preserving design culture and history.'
       : itemType === 'university'
-      ? 'A directory of design universities and institutions shaping the future of design education.'
+      ? 'A directory of design schools and institutions shaping the future of design education.'
       : 'A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.');
 
-const seoTypeLabel = itemType === 'museum' ? 'design museum' : itemType === 'university' ? 'design university' : 'design studio';
-const seoTypePlural = itemType === 'museum' ? 'design museums' : itemType === 'university' ? 'design universities' : 'design studios';
+const seoTypeLabel = itemType === 'museum' ? 'design museum' : itemType === 'university' ? 'design school' : 'design studio';
+const seoTypePlural = itemType === 'museum' ? 'design museums' : itemType === 'university' ? 'design schools' : 'design studios';
 const seoTypePluralCap = seoTypePlural.charAt(0).toUpperCase() + seoTypePlural.slice(1);
 
 const SITE = Astro.site?.toString() || 'https://acceso.design';
@@ -211,7 +211,7 @@ const cityItemListSchema = itemList({
 
 const pageSchema = { '@graph': [breadcrumbs, cityItemListSchema] };
 
-const seoTypeKeyword = itemType === 'museum' ? 'museums and foundations' : itemType === 'university' ? 'design universities and schools' : 'furniture and industrial design studios';
+const seoTypeKeyword = itemType === 'museum' ? 'museums and foundations' : itemType === 'university' ? 'design schools' : 'furniture and industrial design studios';
 const seoKeywords = `${seoTypePlural}, ${seoTypeKeyword}, design map, browse designers by city, ${topCities.slice(0, 6).map((c) => c.name).join(', ')}`;
 
 const faqs = [
@@ -340,7 +340,7 @@ const faqs = [
                     >
                       <span class="city-browse-badge" aria-hidden="true">{city.name.charAt(0)}</span>
                       <span class="city-browse-body">
-                        <span class="city-browse-name">{city.name} · {city.count} {itemType === 'museum' ? 'museums' : itemType === 'university' ? 'universities' : 'studios'}</span>
+                        <span class="city-browse-name">{city.name} · {city.count} {itemType === 'museum' ? 'museums' : itemType === 'university' ? 'schools' : 'studios'}</span>
                         <span class="city-browse-meta">{city.country || 'Worldwide'}</span>
                       </span>
                       <svg class="city-browse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -780,7 +780,7 @@ const faqs = [
   /* Shorter desktop screens (e.g. laptops): shrink the header and the cards
      so all quick-nav buttons stay visible and nothing gets cut off.
      Height-based (not width-gated) because longer category titles like
-     "Design Universities" wrap to a 3rd line and push the cards down. */
+     "Design Schools" wrap to a 3rd line and push the cards down. */
   @media (min-width: 1025px) and (max-height: 880px) {
     .explore-header {
       margin-bottom: 22px;

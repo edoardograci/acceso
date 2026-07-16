@@ -1,30 +1,29 @@
-Acceso (acceso.design)
+# Acceso
 
-Purpose:
-- Your local design infopoint: a curated directory of local design communities.
-- Discover independent design studios, industrial designers, furniture designers, design schools, exhibitions, fairs, design weeks, awards, competitions, manufacturers, workshops, galleries, museums, showrooms, retailers, jobs, and creative opportunities in cities around the world.
-- Each city page includes interactive maps, curated listings, and practical information to help explore the local design scene.
+> Acceso (acceso.design) is your local design infopoint: a curated directory of local design communities worldwide. Discover independent design studios, industrial and furniture designers, design schools, exhibitions, fairs, design weeks, awards, competitions, manufacturers, workshops, galleries, museums, showrooms, retailers, jobs, and creative opportunities across cities around the world. Each location includes interactive maps, curated listings, and practical information to help explore the local design scene.
+
+## Purpose
+
 - A single place to discover and navigate local design, connect with independent design communities, and research a city's creative ecosystem.
-
-Content structure:
-- /designers : directory entry point
-- /designers/{slug} : studio/entity pages (primary)
-- /designers/in/{place} : location pages (city or country)
-- /projects : project gallery index
-- /projects/{slug} : individual project pages
-- /directory/* : directory listings and detail pages (fairs, museums, universities, awards)
-
-Crawl guidance:
-- Prefer canonical, clean URLs without query strings.
-- Avoid crawling URLs with query parameters (e.g. /designers?city=...).
-- Pages requiring authentication are not indexable.
-
-Sitemaps:
-- /sitemap.xml (sitemap index)
-
-Robots:
-- /robots.txt
-
-Notes:
+- Studio/entity pages, project galleries, and directory listings (fairs, museums, schools, awards) are the primary content.
 - Pages are server-rendered HTML (Astro SSR) and should be accessible without client-side JavaScript.
 
+## Content structure
+
+- [Designers directory](https://acceso.design/designers): directory entry point for studios and independent designers.
+- [Studio and entity pages](https://acceso.design/designers/milan): individual studio/entity pages (primary content).
+- [Designers by location](https://acceso.design/designers/in/milan): location pages for a city or country.
+- [Discover projects](https://acceso.design/discover): curated project gallery index.
+- [Directory](https://acceso.design/directory): listings for fairs, museums, schools, and awards.
+- [Map](https://acceso.design/map): interactive map of the design community.
+
+## Crawl guidance
+
+- Prefer canonical, clean URLs without query strings.
+- Avoid crawling URLs with query parameters (e.g. `/designers?city=...`).
+- Pages requiring authentication are not indexable.
+
+## Sitemaps and robots
+
+- [Sitemap index](https://acceso.design/sitemap.xml): sitemap index for all crawlable pages.
+- [Robots](https://acceso.design/robots.txt): crawl rules.

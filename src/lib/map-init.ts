@@ -656,7 +656,7 @@ function showStudioCard(studio: MapItem, state: MapInstance): void {
   if (itemType === 'museum') {
     link.href = `/directory/museums/${studio.slug}`;
   } else if (itemType === 'university') {
-    link.href = `/directory/universities/${studio.slug}`;
+    link.href = `/directory/schools/${studio.slug}`;
   } else {
     link.href = `/designers/${studio.slug}`;
   }

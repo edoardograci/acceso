@@ -3,9 +3,9 @@ import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
 
 import { normalizeImage } from '../../lib/images';
 
-type EventItem = { slug: string; image?: string | null; updated_at?: string | null };
+type DirectoryItem = { slug: string; image?: string | null; updated_at?: string | null };
 
-async function fetchEventList(origin: string, path: string): Promise<EventItem[]> {
+async function fetchList(origin: string, path: string): Promise<DirectoryItem[]> {
   const url = new URL(path, origin).toString();
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${path}: ${res.status}`);
@@ -18,14 +18,15 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
   const lastmod = toW3CDate(new Date());
 
-  const [fairs, museums, awards] = await Promise.allSettled([
-    fetchEventList(requestUrl.origin, '/cdn/fairs.json'),
-    fetchEventList(requestUrl.origin, '/cdn/museums.json'),
-    fetchEventList(requestUrl.origin, '/cdn/awards.json'),
+  const [fairs, museums, awards, schools] = await Promise.allSettled([
+    fetchList(requestUrl.origin, '/cdn/fairs.json'),
+    fetchList(requestUrl.origin, '/cdn/museums.json'),
+    fetchList(requestUrl.origin, '/cdn/awards.json'),
+    fetchList(requestUrl.origin, '/cdn/universities.json'),
   ]);
 
   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = [];
-  const add = (base: string, list: EventItem[]) => {
+  const add = (base: string, list: DirectoryItem[]) => {
     for (const e of list) {
       if (!e?.slug) continue;
       const loc = new URL(`${base}/${encodeURIComponent(e.slug)}`, site).toString();
@@ -39,6 +40,7 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
   if (fairs.status === 'fulfilled') add('/directory/fairs', fairs.value);
   if (museums.status === 'fulfilled') add('/directory/museums', museums.value);
   if (awards.status === 'fulfilled') add('/directory/awards', awards.value);
+  if (schools.status === 'fulfilled') add('/directory/schools', schools.value);
 
   return new Response(renderUrlSet(urls), {
     status: 200,

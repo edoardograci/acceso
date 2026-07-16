@@ -113,13 +113,13 @@ const sections = [
     coverImage: normalizeImage('museums-cover.webp', Astro)
   },
   { 
-    title: 'Universities', 
+    title: 'Schools', 
     items: universities.map((u: any) => ({
       ...u,
       location: u.city || u.location
     })), 
-    slug: 'universities',
-    description: "Design universities and institutions shaping the future of design education.",
+    slug: 'schools',
+    description: "Design schools and institutions shaping the future of design education.",
     coverImage: normalizeImage('universities-cover.webp', Astro)
   },
   { 
@@ -143,7 +143,7 @@ const sections = [
 
 <Layout 
   title="Design Directory | Acceso"
-  description="Discover the world of design through a curated index of Fairs, Museums, Universities, and Awards."
+  description="Discover the world of design through a curated index of Fairs, Museums, Schools, and Awards."
 >
   <Navbar />
   
@@ -152,7 +152,7 @@ const sections = [
       <header class="directory-hero">
         <h1 class="directory-title">Directory</h1>
         <p class="directory-description">
-          Design fairs, museums, universities, awards, and institutions worldwide. Find the places and organizations that support, celebrate, and connect the global design community.
+          Design fairs, museums, schools, awards, and institutions worldwide. Find the places and organizations that support, celebrate, and connect the global design community.
         </p>
       </header>
 
@@ -211,7 +211,7 @@ const sections = [
                   <EventBasicCard 
                     name={item.name}
                     slug={item.slug}
-                    type={section.slug === 'fairs' ? 'fair' : section.slug === 'museums' ? 'museum' : section.slug === 'universities' ? 'university' : 'award'}
+                    type={section.slug === 'fairs' ? 'fair' : section.slug === 'museums' ? 'museum' : section.slug === 'schools' ? 'university' : 'award'}
                     location={item.location}
                     image={normalizeImage(item.image, Astro)}
                     pillText={item.pillText}
@@ -255,13 +255,13 @@ const sections = [
     grid-template-rows: 340px 340px;
     gap: 20px;
     grid-template-areas:
-      "museum universities universities"
+      "museum schools      schools"
       "museum fairs       awards";
     margin-bottom: 80px;
   }
 
   .quick-nav-card--museums { grid-area: museum; }
-  .quick-nav-card--universities { grid-area: universities; }
+  .quick-nav-card--schools { grid-area: schools; }
   .quick-nav-card--fairs { grid-area: fairs; }
   .quick-nav-card--awards { grid-area: awards; }
 
@@ -397,7 +397,7 @@ const sections = [
       grid-template-areas: none;
     }
     .quick-nav-card--museums,
-    .quick-nav-card--universities,
+    .quick-nav-card--schools,
     .quick-nav-card--fairs,
     .quick-nav-card--awards { grid-area: auto; }
   }

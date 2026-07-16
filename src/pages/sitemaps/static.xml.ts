@@ -10,6 +10,10 @@ export const GET: APIRoute = ({ site }) => {
     { loc: new URL('/designers', site).toString(), lastmod, changefreq: 'daily' as const, priority: 0.9 },
     { loc: new URL('/discover', site).toString(), lastmod, changefreq: 'daily' as const, priority: 0.8 },
     { loc: new URL('/directory', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.7 },
+    { loc: new URL('/directory/fairs', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
+    { loc: new URL('/directory/museums', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
+    { loc: new URL('/directory/awards', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
+    { loc: new URL('/directory/schools', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
     // Discover is the homepage ("/"); keep "/discover" only if it exists as a route.
     // Homepage redirects to /map
     { loc: new URL('/', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.7 },

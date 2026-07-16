@@ -139,7 +139,7 @@ const isLoggedIn = !!Astro.locals.user;
         // @ts-ignore
         const isSaved = window.collectionsState.isSaved(this.type, this.id);
         const count = window.collectionsState.getCount(this.type);
-        const limitType = this.type === 'designer' ? 'designers' : this.type === 'museum' ? 'museums' : this.type === 'university' ? 'universities' : 'moodboards';
+        const limitType = this.type === 'designer' ? 'designers' : this.type === 'museum' ? 'museums' : this.type === 'university' ? 'schools' : 'moodboards';
 
         if (!isSaved) {
           if (count >= 100) {

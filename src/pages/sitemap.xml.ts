@@ -6,8 +6,8 @@ const SITEMAPS = [
   { loc: '/sitemaps/designer-directory.xml' },
   { loc: '/sitemaps/designer-locations.xml' },
   { loc: '/sitemaps/projects.xml' },
-  { loc: '/sitemaps/events.xml' },
-  { loc: '/sitemaps/event-locations.xml' },
+  { loc: '/sitemaps/directory-items.xml' },
+  { loc: '/sitemaps/directory-locations.xml' },
 ] as const;
 
 export const GET: APIRoute = ({ site }) => {

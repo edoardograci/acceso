@@ -32,7 +32,7 @@ try {
 }
 ---
 
-<Layout title="My Saved Universities - Acceso">
+<Layout title="My Saved Schools - Acceso">
     <Navbar />
     
     <main class="collection-page">
@@ -47,8 +47,8 @@ try {
         </nav>
 
         <header class="collection-hero">
-          <h1 class="collection-title">My Universities</h1>
-          <p id="count" class="collection-meta">Loading saved universities...</p>
+          <h1 class="collection-title">My Schools</h1>
+          <p id="count" class="collection-meta">Loading saved schools...</p>
         </header>
 
         <div class="collection-search-wrap">
@@ -60,32 +60,32 @@ try {
             id="search-input" 
             class="collection-search-input"
             placeholder="Search by name or city..."
-            aria-label="Search saved universities"
+            aria-label="Search saved schools"
           />
         </div>
 
         {!error && (
-          <div id="universities-grid" class="universities-grid" style="opacity: 0; transition: opacity 0.3s ease;">
+          <div id="schools-grid" class="schools-grid" style="opacity: 0; transition: opacity 0.3s ease;">
             {universities.map((university) => (
-              <div class="university-card-wrapper" data-id={university.id} style="display: none;">
+              <div class="school-card-wrapper" data-id={university.id} style="display: none;">
                 <a 
-                  href={`/directory/universities/${university.slug}`} 
-                  class="university-card"
+                  href={`/directory/schools/${university.slug}`} 
+                  class="school-card"
                 >
-                  <div class="university-card-media">
+                  <div class="school-card-media">
                     {university.image ? (
                       <img 
                         src={normalizeImage(university.image, Astro)} 
                         alt={university.name} 
-                        class="university-image" 
+                        class="school-image" 
                         loading="lazy" 
                         data-skeleton
                       />
                     ) : (
-                      <div class="university-image-placeholder">No image</div>
+                      <div class="school-image-placeholder">No image</div>
                     )}
                   </div>
-                  <div class="university-info">
+                  <div class="school-info">
                     <h3>{university.name}</h3>
                     <p>{university.location}</p>
                   </div>
@@ -100,8 +100,8 @@ try {
               </div>
             ))}
             <div id="empty-state" class="empty-state" style="display: none;">
-               <p>No saved universities.</p>
-               <a href="/directory/universities" class="browse-link">Browse Universities</a>
+               <p>No saved schools.</p>
+               <a href="/directory/schools" class="browse-link">Browse Schools</a>
             </div>
           </div>
         )}
@@ -215,29 +215,29 @@ try {
     color: var(--color-text-muted);
   }
 
-  .universities-grid {
+  .schools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 20px;
   }
 
-  .university-card-wrapper {
+  .school-card-wrapper {
     position: relative;
   }
 
-  .university-card {
+  .school-card {
     text-decoration: none;
     display: block;
     color: inherit;
     transition: transform 0.2s ease;
   }
 
-  .university-card:hover {
+  .school-card:hover {
     transform: translateY(-2px);
     color: inherit;
   }
 
-  .university-card-media {
+  .school-card-media {
     aspect-ratio: 1;
     border-radius: 12px;
     overflow: hidden;
@@ -245,14 +245,14 @@ try {
     margin-bottom: 10px;
   }
 
-  .university-image {
+  .school-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
 
-  .university-image-placeholder {
+  .school-image-placeholder {
     width: 100%;
     height: 100%;
     display: flex;
@@ -263,7 +263,7 @@ try {
     letter-spacing: -0.01em;
   }
 
-  .university-info h3 {
+  .school-info h3 {
     font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 500;
@@ -276,7 +276,7 @@ try {
     white-space: nowrap;
   }
 
-  .university-info p {
+  .school-info p {
     font-family: var(--font-sans);
     font-size: 13px;
     letter-spacing: -0.005em;
@@ -317,7 +317,7 @@ try {
       padding: 0 20px;
     }
 
-    .universities-grid {
+    .schools-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
     }
@@ -332,7 +332,7 @@ try {
 
 <script>
   const filterGrid = () => {
-    const grid = document.getElementById('universities-grid');
+    const grid = document.getElementById('schools-grid');
     const emptyState = document.getElementById('empty-state');
     const countLabel = document.getElementById('count');
     const searchInput = document.getElementById('search-input') as HTMLInputElement;
@@ -347,14 +347,14 @@ try {
       return;
     }
 
-    const allCards = grid.querySelectorAll('.university-card-wrapper');
+    const allCards = grid.querySelectorAll('.school-card-wrapper');
     allCards.forEach(card => (card as HTMLElement).style.display = 'none');
 
     let visibleCount = 0;
     const savedIDs = window.collectionsState.universities;
 
     for (const id of savedIDs) {
-      const card = grid.querySelector(`.university-card-wrapper[data-id="${id}"]`);
+      const card = grid.querySelector(`.school-card-wrapper[data-id="${id}"]`);
       
       if (card) {
         const name = (card.querySelector('h3')?.textContent || '').toLowerCase();
@@ -372,7 +372,7 @@ try {
     if (visibleCount === 0) {
       if (emptyState) {
         emptyState.style.display = 'block';
-        emptyState.querySelector('p')!.textContent = query ? 'No universities match your search.' : 'No saved universities.';
+        emptyState.querySelector('p')!.textContent = query ? 'No schools match your search.' : 'No saved schools.';
       }
       if (countLabel) countLabel.textContent = '0 saved';
     } else {

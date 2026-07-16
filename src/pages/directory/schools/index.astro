@@ -108,24 +108,24 @@ if (cityParam) {
 ---
 
 <Layout
-  title="Design Universities Directory | Acceso"
-  description="Discover design universities and institutions shaping the future of design education."
+  title="Design Schools Directory | Acceso"
+  description="Discover design schools and institutions shaping the future of design education."
 >
   <Navbar />
 
   <main class="directory-page">
     <div class="directory-inner">
       <header class="directory-hero">
-        <h1 class="directory-title">Universities</h1>
+        <h1 class="directory-title">Schools</h1>
         <p class="directory-description">
-          Design universities and institutions shaping the future of design education.
+          Design schools and institutions shaping the future of design education.
           Explore schools offering programs in industrial, furniture, and product design.
         </p>
       </header>
 
       {error && (
         <div role="alert" style="padding: 14px 18px; margin-bottom: 24px; border: 1px solid var(--color-stroke); border-radius: 12px; background: var(--color-bg-secondary); color: var(--color-text-muted); font-family: var(--font-sans); font-size: 15px;">
-          <p style="margin: 0;">We couldn't load the latest universities. Please try again later.</p>
+          <p style="margin: 0;">We couldn't load the latest schools. Please try again later.</p>
         </div>
       )}
 
@@ -133,8 +133,8 @@ if (cityParam) {
         <input
           type="text"
           id="search-input"
-          placeholder="Search universities..."
-          aria-label="Search universities"
+          placeholder="Search schools..."
+          aria-label="Search schools"
           class="search-input"
         />
       </div>
@@ -192,13 +192,13 @@ if (cityParam) {
       </div>
 
       <div class="results-meta">
-        <p class="results-count" id="universities-count">{processedUniversities.length} results</p>
+        <p class="results-count" id="schools-count">{processedUniversities.length} results</p>
       </div>
 
-      <div class="universities-grid" id="universities-grid">
+      <div class="schools-grid" id="schools-grid">
         {processedUniversities.map((university: any) => (
           <div
-            class="university-card-wrapper"
+            class="school-card-wrapper"
             data-city={university.city_slug || ''}
             data-name={(university.name || '').toLowerCase()}
           >
@@ -211,11 +211,11 @@ if (cityParam) {
             />
           </div>
         ))}
-        {processedUniversities.length === 0 && <p class="empty-state">No universities found.</p>}
+        {processedUniversities.length === 0 && <p class="empty-state">No schools found.</p>}
       </div>
 
       <div class="hidden py-12 text-center text-gray" id="empty-result">
-        <p>No universities found matching your criteria.</p>
+        <p>No schools found matching your criteria.</p>
       </div>
     </div>
   </main>
@@ -307,50 +307,50 @@ if (cityParam) {
   .results-meta { margin-bottom: 24px; }
   .results-count { font-family: var(--font-sans); font-size: 15px; color: var(--color-black); margin: 0; }
 
-  .universities-grid {
+  .schools-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 20px;
   }
-  .university-card-wrapper {
+  .school-card-wrapper {
     width: 100%;
   }
 
-  .universities-grid.compact {
+  .schools-grid.compact {
     grid-template-columns: repeat(8, minmax(0, 1fr));
     gap: 12px;
   }
-  .universities-grid.compact .university-card-wrapper :global(.card-image-wrapper) { border-radius: 8px; }
-  .universities-grid.compact .university-card-wrapper :global(.event-title) { font-size: 13px; }
-  .universities-grid.compact .university-card-wrapper :global(.event-meta) { font-size: 11px; }
-  .universities-grid.compact .university-card-wrapper { gap: 8px; }
+  .schools-grid.compact .school-card-wrapper :global(.card-image-wrapper) { border-radius: 8px; }
+  .schools-grid.compact .school-card-wrapper :global(.event-title) { font-size: 13px; }
+  .schools-grid.compact .school-card-wrapper :global(.event-meta) { font-size: 11px; }
+  .schools-grid.compact .school-card-wrapper { gap: 8px; }
 
   .empty-state { color: var(--color-gray); font-family: var(--font-sans); font-size: 14px; padding: 20px 0; }
 
   @media (max-width: 1400px) {
-    .universities-grid { grid-template-columns: repeat(4, 1fr); }
+    .schools-grid { grid-template-columns: repeat(4, 1fr); }
   }
   @media (max-width: 1200px) {
-    .universities-grid { grid-template-columns: repeat(3, 1fr); }
+    .schools-grid { grid-template-columns: repeat(3, 1fr); }
   }
   @media (max-width: 900px) {
-    .universities-grid { grid-template-columns: repeat(2, 1fr); }
+    .schools-grid { grid-template-columns: repeat(2, 1fr); }
     .filter-popover-content { column-count: 2; }
     .search-row { margin-left: 0; max-width: none; }
   }
   @media (max-width: 1400px) {
-    .universities-grid.compact { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    .schools-grid.compact { grid-template-columns: repeat(7, minmax(0, 1fr)); }
   }
   @media (max-width: 1200px) {
-    .universities-grid.compact { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .schools-grid.compact { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   }
   @media (max-width: 900px) {
-    .universities-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .schools-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
   @media (max-width: 768px) {
     .directory-inner { padding: var(--page-top-spacing) 20px 60px; }
-    .universities-grid { grid-template-columns: 1fr; }
-    .universities-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .schools-grid { grid-template-columns: 1fr; }
+    .schools-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .city-filter-row { flex-wrap: wrap; row-gap: 12px; }
     .directory-toolbar { margin-left: auto; flex-shrink: 0; }
     .filter-popover {
@@ -404,10 +404,10 @@ if (cityParam) {
 
 <script is:inline define:vars={{ initialCity }}>
   (function () {
-    const grid = document.getElementById('universities-grid');
+    const grid = document.getElementById('schools-grid');
     if (!grid) return;
 
-    const wrappers = Array.from(grid.querySelectorAll('.university-card-wrapper'));
+    const wrappers = Array.from(grid.querySelectorAll('.school-card-wrapper'));
     const cityCheckboxes = Array.from(document.querySelectorAll('.city-checkbox'));
     const countryCheckboxes = Array.from(document.querySelectorAll('.country-checkbox'));
     const clearAllBtn = document.getElementById('filter-clear-all');
@@ -418,7 +418,7 @@ if (cityParam) {
     const searchRow = document.getElementById('search-row');
     const searchInput = document.getElementById('search-input');
     const viewBtn = document.getElementById('view-btn');
-    const countEl = document.getElementById('universities-count');
+    const countEl = document.getElementById('schools-count');
     const emptyEl = document.getElementById('empty-result');
 
     const state = { cities: new Set(), search: '' };

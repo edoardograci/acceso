@@ -188,7 +188,7 @@ try {
               </div>
             </a>
 
-            <a href="/collections/universities" class="collection-card">
+            <a href="/collections/schools" class="collection-card">
               <div class="collection-card-media">
                 {universityCover ? (
                   <img src={normalizeImage(universityCover, Astro)} alt="" class="collection-card-image" loading="lazy" />
@@ -202,10 +202,10 @@ try {
               </div>
               <div class="collection-card-body">
                 <div class="collection-card-head">
-                  <h3 class="collection-card-title">Universities</h3>
-                  <span id="saved-universities-count" class="collection-count">{savedUniversitiesCount >= 100 ? 'MAXED' : savedUniversitiesCount}</span>
+                  <h3 class="collection-card-title">Schools</h3>
+                  <span id="saved-schools-count" class="collection-count">{savedUniversitiesCount >= 100 ? 'MAXED' : savedUniversitiesCount}</span>
                 </div>
-                <p class="collection-card-text">Saved design universities</p>
+                <p class="collection-card-text">Saved design schools</p>
               </div>
             </a>
           </div>
@@ -251,7 +251,7 @@ try {
         const dEl = document.getElementById('saved-designers-count');
         const oEl = document.getElementById('saved-objects-count');
         const mEl = document.getElementById('saved-museums-count');
-        const uEl = document.getElementById('saved-universities-count');
+        const uEl = document.getElementById('saved-schools-count');
         
         if (dEl) dEl.textContent = dCount >= 100 ? 'MAXED' : String(dCount);
         if (oEl) oEl.textContent = oCount >= 100 ? 'MAXED' : String(oCount);

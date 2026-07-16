@@ -14,7 +14,7 @@ interface Props {
 
 const { name, slug, type, image, location, date, pillText, pillType = 'default' } = Astro.props;
 
-const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/directory/${type === 'fair' ? 'fairs' : type === 'museum' ? 'museums' : type === 'university' ? 'universities' : 'awards'}/${slug}`) : null;
+const href = slug && type ? (type === 'designer' ? `/designers/${slug}` : `/directory/${type === 'fair' ? 'fairs' : type === 'museum' ? 'museums' : type === 'university' ? 'schools' : 'awards'}/${slug}`) : null;
 ---
 
 <a href={href} class="event-basic-card">

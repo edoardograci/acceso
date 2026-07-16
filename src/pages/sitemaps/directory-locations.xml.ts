@@ -26,18 +26,21 @@ export const GET: APIRoute = async ({ site, url }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
   const lastmod = toW3CDate(new Date());
 
-  const [fairsRes, museumsRes] = await Promise.allSettled([
+  const [fairsRes, museumsRes, schoolsRes] = await Promise.allSettled([
     fetchList(url.origin, '/cdn/fairs.json'),
     fetchList(url.origin, '/cdn/museums.json'),
+    fetchList(url.origin, '/cdn/universities.json'),
   ]);
 
   const fairPlaces = fairsRes.status === 'fulfilled' ? validPlaces(fairsRes.value) : new Set<string>();
   const museumPlaces = museumsRes.status === 'fulfilled' ? validPlaces(museumsRes.value) : new Set<string>();
+  const schoolPlaces = schoolsRes.status === 'fulfilled' ? validPlaces(schoolsRes.value) : new Set<string>();
   // Awards carry no location fields, so their /in/<place> pages always 404.
 
   const types: { type: string; places: Set<string> }[] = [
     { type: 'fairs', places: fairPlaces },
     { type: 'museums', places: museumPlaces },
+    { type: 'schools', places: schoolPlaces },
   ];
 
   const urls = [];

@@ -131,11 +131,11 @@ function buildIntro(): string {
   parts.push(`${locName} holds a recognised place on the global design map, valued for the character of its local design scene.`);
 
   if (totalUniversities > 0) {
-    const noun = totalUniversities === 1 ? 'university' : 'universities';
+    const noun = totalUniversities === 1 ? 'school' : 'schools';
     const notable = leadUniversities.slice(0, 2).map((u: any) => u.name).filter(Boolean).join(' and ');
     parts.push(`The ${isCity ? 'city' : 'country'} currently lists ${totalUniversities} ${noun}${notable ? `, including ${notable}` : ''}.`);
   } else {
-    parts.push(`No universities are listed here yet, but ${locName} remains an active part of the wider design community.`);
+    parts.push(`No schools are listed here yet, but ${locName} remains an active part of the wider design community.`);
   }
 
   const eco: string[] = [];
@@ -146,7 +146,7 @@ function buildIntro(): string {
   if (relAwards.length) eco.push(`${relAwards.length} award${relAwards.length === 1 ? '' : 's'}`);
 
   if (eco.length) {
-    parts.push(`Beyond universities, ${locName} is also home to ${eco.join(', ')} — all explorable below and across Acceso.`);
+    parts.push(`Beyond schools, ${locName} is also home to ${eco.join(', ')} — all explorable below and across Acceso.`);
   }
   return parts.join(' ');
 }
@@ -154,10 +154,10 @@ const introText = buildIntro();
 
 const designersLink = isCity ? `/designers?city=${place}` : `/designers?country=${place}`;
 
-const canonical = new URL(`/directory/universities/in/${place}`, Astro.site);
+const canonical = new URL(`/directory/schools/in/${place}`, Astro.site);
 
-const pageTitle = `Universities in ${locName} | Acceso`;
-const pageDesc = `Universities in ${locName}${countryName && isCity ? `, ${countryName}` : ''}: ${totalUniversities} listed${relStudios.length || relMuseums.length ? `, alongside ${relStudios.length} designers and ${relMuseums.length} museums` : ''}. Explore the global design directory on Acceso.`;
+const pageTitle = `Schools in ${locName} | Acceso`;
+const pageDesc = `Schools in ${locName}${countryName && isCity ? `, ${countryName}` : ''}: ${totalUniversities} listed${relStudios.length || relMuseums.length ? `, alongside ${relStudios.length} designers and ${relMuseums.length} museums` : ''}. Explore the global design directory on Acceso.`;
 ---
 
 <PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical}>
@@ -168,13 +168,13 @@ const pageDesc = `Universities in ${locName}${countryName && isCity ? `, ${count
       <Breadcrumbs items={[
         { label: 'Home', href: '/' },
         { label: 'Directory', href: '/directory' },
-        { label: 'Universities', href: '/directory/universities' },
+        { label: 'Schools', href: '/directory/schools' },
         { label: `In ${locName}` }
       ]} />
 
       <header class="page-header">
         <h1 class="location-heading">
-          Universities<br />
+          Schools<br />
           in <span class="location-accent">{locName}</span>
         </h1>
         {isCity && countryName && (
@@ -186,7 +186,7 @@ const pageDesc = `Universities in ${locName}${countryName && isCity ? `, ${count
 
       <div class="results-meta">
         <h2 class="results-count">
-          {totalUniversities} {totalUniversities === 1 ? 'university' : 'universities'} found
+          {totalUniversities} {totalUniversities === 1 ? 'school' : 'schools'} found
         </h2>
       </div>
 
@@ -204,8 +204,8 @@ const pageDesc = `Universities in ${locName}${countryName && isCity ? `, ${count
 
       {leadUniversities.length === 0 && (
         <div class="empty-state">
-          <p>No universities found in this location at the moment.</p>
-          <a href="/directory/universities" class="pill-btn">Browse all universities</a>
+          <p>No schools found in this location at the moment.</p>
+          <a href="/directory/schools" class="pill-btn">Browse all schools</a>
         </div>
       )}
 

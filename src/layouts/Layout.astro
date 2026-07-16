@@ -24,6 +24,11 @@ const {
   keywords
 } = Astro.props;
 
+const DEFAULT_DESCRIPTION =
+  'Acceso is your local design infopoint — a curated directory of independent design studios, designers, schools, museums, fairs, and awards across cities worldwide.';
+
+const metaDescription = description || DEFAULT_DESCRIPTION;
+
 // Pass user ID to client-side for collections state
 const userId = Astro.locals.user?.id || null;
 
@@ -201,8 +206,33 @@ const mergedSchema =
 
     <title>{title}</title>
 
-    {description && (
-      <meta name="description" content={description} />
+    {metaDescription && (
+      <meta name="description" content={metaDescription} />
+    )}
+
+    {keywords && (
+      <meta name="keywords" content={keywords} />
+    )}
+
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    {metaDescription && (
+      <meta property="og:description" content={metaDescription} />
+    )}
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    {metaDescription && (
+      <meta name="twitter:description" content={metaDescription} />
     )}
     {keywords && (
       <meta name="keywords" content={keywords} />

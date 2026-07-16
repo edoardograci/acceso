@@ -221,7 +221,7 @@ function init() {
 
     const basePath =
       currentItemType === 'museum' ? '/directory/museums'
-      : currentItemType === 'university' ? '/directory/universities'
+      : currentItemType === 'university' ? '/directory/schools'
       : '/designers';
 
     cityStudiosGrid.innerHTML = pageItems
@@ -264,7 +264,7 @@ function init() {
       const itemTypeLabel = currentItemType === 'museum'
         ? (count === 1 ? 'museum' : 'museums')
         : currentItemType === 'university'
-        ? (count === 1 ? 'university' : 'universities')
+        ? (count === 1 ? 'school' : 'schools')
         : (count === 1 ? 'studio' : 'studios');
       cityStudiosTitle.textContent = `${location} · ${count} ${itemTypeLabel}`;
     }
@@ -537,7 +537,7 @@ function init() {
     
     // Update URL without refresh
     const url = new URL(window.location.href);
-    url.searchParams.set('type', newType === 'studio' ? 'designers' : newType === 'museum' ? 'museums' : 'universities');
+      url.searchParams.set('type', newType === 'studio' ? 'designers' : newType === 'museum' ? 'museums' : 'schools');
     window.history.replaceState({}, '', url.toString());
     
     // Update filter button states
@@ -552,14 +552,14 @@ function init() {
     const descEl = document.querySelector('.explore-description');
     if (titleEl) {
       titleEl.textContent = newType === 'museum' ? 'Explore Museums & Foundations' : 
-                           newType === 'university' ? 'Explore Design Universities' : 
+                           newType === 'university' ? 'Explore Design Schools' : 
                            'Explore Local Design';
     }
     if (descEl) {
       descEl.textContent = newType === 'museum' ? 
         'A directory of permanent collections and institutions preserving design culture and history.' :
         newType === 'university' ?
-        'A directory of design universities and institutions shaping the future of design education.' :
+        'A directory of design schools and institutions shaping the future of design education.' :
         'A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.';
     }
     
@@ -580,7 +580,7 @@ function init() {
         }
       });
       
-      const itemTypeLabel = newType === 'museum' ? 'museums' : newType === 'university' ? 'universities' : 'studios';
+      const itemTypeLabel = newType === 'museum' ? 'museums' : newType === 'university' ? 'schools' : 'studios';
       cityBrowseListEl.querySelectorAll('.city-browse-item').forEach(item => {
         const el = item as HTMLElement;
         const slug = el.dataset.slug;
@@ -741,7 +741,7 @@ function init() {
         switchItemType('studio');
       } else if (href.includes('museums')) {
         switchItemType('museum');
-      } else if (href.includes('universities')) {
+      } else if (href.includes('schools')) {
         switchItemType('university');
       }
     });
