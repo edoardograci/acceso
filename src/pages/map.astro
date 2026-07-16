@@ -194,6 +194,11 @@ const faqs = [
   schema={pageSchema}
 >
   <link slot="head" rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
+  {/* Warm the same-origin Geist glyph PBFs so MapLibre doesn't
+      wait until after the style/tiles load (~2.3s) to fetch them. */}
+  <link slot="head" rel="preload" as="fetch" type="application/x-protobuf" href="/fonts/Geist_Regular/0-255.pbf" crossorigin />
+  <link slot="head" rel="preload" as="fetch" type="application/x-protobuf" href="/fonts/Geist_Regular/256-511.pbf" crossorigin />
+  <link slot="head" rel="preload" as="fetch" type="application/x-protobuf" href="/fonts/Geist_Bold/0-255.pbf" crossorigin />
   <Navbar />
 
     <div class="map-page-root">
