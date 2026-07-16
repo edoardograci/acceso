@@ -148,9 +148,26 @@ const lng = parseFloat(university.longitude);
           import('maplibre-gl/dist/maplibre-gl.css'),
         ]);
 
+        // Serve Geist glyphs from our own origin (public/fonts) instead of
+        // OpenFreeMap's Noto Sans, matching the main map.
+        const styleRes = await fetch('https://tiles.openfreemap.org/styles/positron');
+        const styleJson = await styleRes.json();
+        styleJson.glyphs = `${window.location.origin}/fonts/{fontstack}/{range}.pbf`;
+        const FONT_MAP: Record<string, string> = {
+          'Noto Sans Regular': 'Geist_Regular',
+          'Noto Sans Bold': 'Geist_Bold',
+          'Noto Sans Italic': 'Geist_Regular',
+        };
+        for (const layer of styleJson.layers || []) {
+          const tf = layer?.layout?.['text-font'];
+          if (Array.isArray(tf)) {
+            layer.layout['text-font'] = tf.map((f: string) => FONT_MAP[f] || f);
+          }
+        }
+
         const map = new maplibregl.Map({
           container: 'embed-map',
-          style: 'https://tiles.openfreemap.org/styles/positron',
+          style: styleJson,
           center: [lng, lat],
           zoom: 15,
           minZoom: 2,
