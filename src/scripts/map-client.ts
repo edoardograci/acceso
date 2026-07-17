@@ -309,6 +309,16 @@ function init() {
     if (isMobilePanel()) openMobilePanel(true);
   }
 
+  function showAllStudios() {
+    if (!mapInstance) return;
+    // Restore the full dataset on the map and zoom back out to the world view
+    // so going "back" from a city no longer leaves only that city's pins shown.
+    mapInstance.updateStudios(mapStudios, false, true);
+    if (mapInstance.map) {
+      mapInstance.map.flyTo({ center: [12.0, 48.0], zoom: 4, duration: 800 });
+    }
+  }
+
   function showQuickNav(open = true) {
     // In personal "my map" mode the quick-nav default (title +
     // paragraph + quick-link cards) must never appear, so it's a
@@ -319,6 +329,7 @@ function init() {
     currentCityName = '';
     hideAllPanelViews();
     quickNavDefault?.classList.remove('hidden');
+    showAllStudios();
     updatePanelNavState();
     updateBreadcrumb();
     if (open && isMobilePanel()) openMobilePanel(true);
@@ -332,6 +343,7 @@ function init() {
     hideAllPanelViews();
     cityBrowse?.classList.remove('hidden');
     citySearch?.focus();
+    showAllStudios();
     updatePanelNavState();
     updateBreadcrumb();
     if (isMobilePanel()) openMobilePanel(true);
@@ -766,6 +778,15 @@ function init() {
       explorePanel?.classList.remove('is-compact');
     } else {
       updatePanelNavState();
+    }
+  });
+
+  // Browser back/forward: if the URL no longer carries a city, reset the
+  // map to show every studio again instead of keeping the previous city's pins.
+  window.addEventListener('popstate', () => {
+    const citySlug = new URLSearchParams(window.location.search).get('city');
+    if (!citySlug) {
+      (window as any).isMyMap ? showCityBrowse() : showQuickNav();
     }
   });
 
