@@ -259,11 +259,8 @@ const user = Astro.locals.user;
             </div>
           </section>
           </div>
-        </div>
 
-        <div class="sub-fixed-map" aria-hidden="true">
-          <div class="sub-fixed-map-inner">
-            <div class="sub-fixed-spacer"></div>
+          <div class="sub-sticky-map">
             <aside class="sub-hero-image">
               <div class="sub-hero-img-wrapper">
                 <img src="/images/submission.webp" alt="Submission" class="sub-hero-img" />
@@ -291,7 +288,7 @@ const user = Astro.locals.user;
       color: var(--color-black);
       min-height: 100vh;
       position: relative;
-      overflow-x: hidden;
+      overflow-x: clip;
       font-family: var(--font-sans);
     }
 
@@ -324,20 +321,28 @@ const user = Astro.locals.user;
 
     /* LOGGED-OUT SPLIT (mirrors the homepage map layout) */
     .sub-split {
+      position: relative;
+      z-index: 10;
       display: flex;
       align-items: flex-start;
       width: 100%;
       max-width: 1600px;
-      margin: 0 auto;
+      margin:0 auto;
       padding: var(--page-top-spacing) 40px 120px;
       box-sizing: border-box;
     }
 
     .sub-left {
       width: 50%;
-      flex: 0 0 auto;
+      flex: 0 0 50%;
       box-sizing: border-box;
       padding-right: 24px;
+    }
+
+    .sub-sticky-map {
+      flex: 0 0 50%;
+      min-width: 0;
+      align-self: flex-start;
     }
 
     .sub-hero {
@@ -413,14 +418,15 @@ const user = Astro.locals.user;
     }
 
     .sub-hero-image {
-      flex: 1;
-      min-width: 0;
-      margin: calc(var(--navbar-height) + 24px) 0 24px 16px;
+      position: sticky;
+      top: calc(var(--navbar-height) + 24px);
+      width: 100%;
+      height: calc(100vh - var(--navbar-height) - 48px - 120px);
+      margin-left: 16px;
       border-radius: 24px;
       overflow: hidden;
       border: 1px solid var(--color-stroke);
       background: var(--color-bg-secondary);
-      z-index: 10;
     }
     .sub-hero-img-wrapper {
       width: 100%;
@@ -431,29 +437,6 @@ const user = Astro.locals.user;
       height: 100%;
       object-fit: cover;
       display: block;
-    }
-
-    /* Fixed map-style image frame (mirrors homepage map panel) */
-    .sub-fixed-map {
-      position: fixed;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 1600px;
-      height: 100vh;
-      padding: 0 40px;
-      box-sizing: border-box;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .sub-fixed-map-inner {
-      display: flex;
-      height: 100%;
-    }
-    .sub-fixed-spacer {
-      width: 50%;
-      flex: 0 0 auto;
     }
 
     /* CONTENT SECTIONS */
@@ -543,24 +526,14 @@ const user = Astro.locals.user;
         width: 100%;
         padding-right: 0;
       }
-      .sub-fixed-map {
-        position: static;
-        order: -1;
-        left: auto;
-        transform: none;
+      .sub-sticky-map {
+        flex: none;
         width: 100%;
-        height: auto;
-        padding: var(--page-top-spacing) 24px 0;
-      }
-      .sub-fixed-map-inner {
-        display: block;
-        height: auto;
-      }
-      .sub-fixed-spacer {
-        display: none;
+        order: -1;
       }
       .sub-hero-image {
-        flex: none;
+        position: static;
+        top: auto;
         width: 100%;
         height: auto;
         margin: 0;
