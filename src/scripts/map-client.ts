@@ -563,7 +563,19 @@ function init() {
         'A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.';
     }
     
-    // Update city browse list: recalculate counts and hide cities with 0 items for this type
+    // Update quick-nav card labels to reflect the current type
+    // (e.g. "Designers in Milan" -> "Design museums in Milan")
+    const typePhrase =
+      newType === 'museum' ? 'Design museums in' :
+      newType === 'university' ? 'Design schools in' : 'Designers in';
+    document.querySelectorAll('.quick-nav-card[data-city]').forEach((btn) => {
+      const el = btn as HTMLElement;
+      const cityName = el.dataset.city;
+      if (!cityName) return;
+      const labelEl = el.querySelector('.quick-nav-card-label');
+      if (labelEl) labelEl.textContent = `${typePhrase} ${cityName}`;
+    });
+
     const cityBrowseListEl = document.getElementById('city-browse-list');
     if (cityBrowseListEl) {
       const cityCounts: Record<string, number> = {};

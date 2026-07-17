@@ -124,12 +124,18 @@ try {
   console.error('[Map] Failed to fetch city metadata:', e);
 }
 
+const quickNavTypePhrase = itemType === 'museum' ? 'Design museums in' : itemType === 'university' ? 'Design schools in' : 'Designers in';
+
 const quickNavCities = [
-  { label: 'Milan, Italy', city: 'Milan', href: '/designers?city=milan', image: '/images/quick-nav/milan.webp', isMore: false },
-  { label: 'Seoul, Korea', city: 'Seoul', href: '/designers?city=seoul', image: '/images/quick-nav/seoul.webp', isMore: false },
-  { label: 'London, UK', city: 'London', href: '/designers?city=london', image: '/images/quick-nav/london.webp', isMore: false },
-  { label: 'More Cities →', city: null, href: null, image: '/images/quick-nav/more.webp', isMore: true },
-] as const;
+  { name: 'Milan, Italy', city: 'Milan', slug: 'milan', image: '/images/quick-nav/milan.webp', isMore: false },
+  { name: 'Seoul, Korea', city: 'Seoul', slug: 'seoul', image: '/images/quick-nav/seoul.webp', isMore: false },
+  { name: 'London, UK', city: 'London', slug: 'london', image: '/images/quick-nav/london.webp', isMore: false },
+  { name: 'More Cities →', city: null, slug: null, image: '/images/quick-nav/more.webp', isMore: true },
+].map((c) => ({
+  ...c,
+  label: c.isMore ? c.name : `${quickNavTypePhrase} ${c.name}`,
+  href: c.isMore ? null : `/map?type=${typeParam}&city=${c.slug}`,
+}));
 
 const quickNavImageWidth = 640;
 const quickNavImageHeight = 176;
