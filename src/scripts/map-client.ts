@@ -70,6 +70,7 @@ function flyToCity(
   city: string
 ) {
   if (!mapInstance?.map) return;
+  mapInstance.hideRecenter?.();
 
   const toNum = (v: unknown) => {
     const n = typeof v === 'string' ? parseFloat(v) : (v as number);
@@ -313,6 +314,7 @@ function init() {
     if (!mapInstance) return;
     // Restore the full dataset on the map and zoom back out to the world view
     // so going "back" from a city no longer leaves only that city's pins shown.
+    mapInstance.hideRecenter?.();
     mapInstance.updateStudios(mapStudios, false, true);
     if (mapInstance.map) {
       mapInstance.map.flyTo({ center: [12.0, 48.0], zoom: 4, duration: 800 });
@@ -752,6 +754,12 @@ function init() {
   fullscreenBtn?.addEventListener('click', () => {
     mapPanel?.classList.toggle('map-panel--fullscreen');
     setTimeout(() => mapInstance?.map?.resize(), 300);
+  });
+
+  // Recenter pill: glide back to the map's original loaded framing.
+  const recenterBtn = document.getElementById('map-recenter-btn');
+  recenterBtn?.addEventListener('click', () => {
+    mapInstance?.recenter();
   });
 
   // Handle map filter button clicks for client-side switching

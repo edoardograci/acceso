@@ -17,6 +17,9 @@ interface MapInstance {
   replaceAllStudios: (studios: MapItem[]) => void;
   showAllStudios: () => void;
   navigateToStudio: (studio: MapItem, state?: MapInstance, isBack?: boolean) => void;
+  recenter: () => void;
+  showRecenter: () => void;
+  hideRecenter: () => void;
   itemType: 'studio' | 'museum' | 'university';
 }
 
@@ -266,6 +269,9 @@ export async function initializeMap(
     replaceAllStudios: () => { },
     showAllStudios: () => { },
     navigateToStudio: () => { },
+    recenter: () => { },
+    showRecenter: () => { },
+    hideRecenter: () => { },
     itemType
   };
 
@@ -352,6 +358,40 @@ export async function initializeMap(
 
   state.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
+  // "Recenter" pill — appears only after the user moves the map away from its
+  // loaded framing, and disappears once they recenter. We capture the camera
+  // exactly as the map first settles, so recentering restores the initial view
+  // (homepage world view, or the city the designers page was framed on).
+  const recenterBtn = document.getElementById('map-recenter-btn');
+  let loadedCamera: { center: [number, number]; zoom: number; bearing: number; pitch: number } | null = null;
+  let isProgrammaticMove = false;
+  let recenterVisible = false;
+
+  const showRecenter = () => {
+    if (!recenterBtn || recenterVisible) return;
+    recenterVisible = true;
+    recenterBtn.classList.add('visible');
+  };
+  const hideRecenter = () => {
+    if (!recenterBtn || !recenterVisible) return;
+    recenterVisible = false;
+    recenterBtn.classList.remove('visible');
+  };
+
+  // Track movements triggered by the user (drag, scroll, pinch, cluster zoom)
+  // vs. movements our own code performs (recenter / flyTo / fitBounds). The
+  // latter must not pop the button back up.
+  // Show the button as soon as the user starts a non-programmatic move, so
+  // even a tiny pan reveals it (a small drag can change center by < 0.001°,
+  // which a post-hoc threshold check would wrongly ignore).
+  state.map.on('mousedown touchstart', () => { isProgrammaticMove = false; });
+  state.map.on('wheel', () => { isProgrammaticMove = false; });
+  state.map.on('moveend', () => { isProgrammaticMove = false; });
+  state.map.on('movestart', () => {
+    if (isProgrammaticMove || !loadedCamera) return;
+    if (!recenterVisible) showRecenter();
+  });
+
   let isMapLoaded = false;
   let pendingData: { studios: MapItem[], autoCenter: boolean, shouldCluster: boolean } | null = null;
 
@@ -407,11 +447,31 @@ export async function initializeMap(
           state.map.jumpTo({ center: camera.center, zoom });
         }
       }
+
+      // Capture the just-loaded camera as the "home" view once everything has
+      // settled. We wait for `idle` so the initial fitBounds (if any) or the
+      // up-front framing is fully applied before we snapshot the position.
+      const captureLoadedCamera = () => {
+        if (loadedCamera) return;
+        const c = state.map.getCenter();
+        loadedCamera = {
+          center: [c.lng, c.lat],
+          zoom: state.map.getZoom(),
+          bearing: state.map.getBearing(),
+          pitch: state.map.getPitch(),
+        };
+      };
+      if (state.map.loaded()) {
+        captureLoadedCamera();
+      } else {
+        state.map.once('idle', captureLoadedCamera);
+      }
   });
 
   // Track interaction
   state.map.on('mousedown touchstart', () => {
     state.isUserInteracting = true;
+    isProgrammaticMove = false;
   });
 
   state.map.on('mouseup touchend dragend', () => {
@@ -450,6 +510,8 @@ export async function initializeMap(
         center: (features[0].geometry as any).coordinates,
         zoom: nextZoom
       });
+      // Zooming into a cluster moves the camera off the loaded framing.
+      showRecenter();
     } catch (err) {
       console.warn('getClusterExpansionZoom failed:', err);
     }
@@ -490,6 +552,32 @@ export async function initializeMap(
     navigateToStudio(studio, state);
   };
 
+  state.recenter = () => {
+    if (!loadedCamera) return;
+    // Mark the move as programmatic so the button doesn't reappear while we
+    // glide back to the loaded framing.
+    isProgrammaticMove = true;
+    hideRecenter();
+    state.map.easeTo({
+      center: loadedCamera.center,
+      zoom: loadedCamera.zoom,
+      bearing: loadedCamera.bearing,
+      pitch: loadedCamera.pitch,
+      duration: 700,
+      essential: true,
+    });
+  };
+
+  state.showRecenter = () => {
+    if (!loadedCamera) return;
+    showRecenter();
+  };
+
+  state.hideRecenter = () => {
+    isProgrammaticMove = true;
+    hideRecenter();
+  };
+
   // If target studio provided, center on it and show card
   if (targetStudio && targetStudio.latitude && targetStudio.longitude) {
     const lat = typeof targetStudio.latitude === 'string' ? parseFloat(targetStudio.latitude) : targetStudio.latitude;
@@ -501,6 +589,9 @@ export async function initializeMap(
           state.map.jumpTo({ center: [lng, lat] });
           state.map.flyTo({ center: [lng, lat], zoom: 16, duration: 600 });
         }
+        // Clicking a pin moves the camera off the loaded framing — reveal the
+        // recenter pill so the user can return to the original view.
+        showRecenter();
         showStudioCard(targetStudio!, state);
 
         // Clean up URL parameter
@@ -584,6 +675,8 @@ function navigateToStudio(studio: MapItem, state: MapInstance, isBack: boolean =
         essential: true
       });
     }
+    // Focusing a pin moves the camera off the loaded framing.
+    state.showRecenter();
     showStudioCard(studio, state);
   }
 }

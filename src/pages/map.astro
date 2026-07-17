@@ -369,6 +369,14 @@ const faqs = [
             ))}
           </div>
 
+          <button type="button" class="map-recenter-btn" id="map-recenter-btn" aria-label="Recenter map">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="6"/>
+              <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/>
+            </svg>
+            RECENTER
+          </button>
+
           <button type="button" class="map-browse-fab" id="map-browse-fab" aria-label="Browse cities">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1235,6 +1243,42 @@ const faqs = [
     background: #C6F6D6;
   }
 
+  .map-recenter-btn {
+    position: absolute;
+    bottom: calc(28px + 64px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    z-index: 11;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    pointer-events: auto;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-white);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s;
+  }
+
+  .map-recenter-btn svg {
+    display: block;
+  }
+
+  .map-recenter-btn.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
   .map-fullscreen-btn {
     position: absolute;
     top: 16px;
@@ -1677,6 +1721,16 @@ const faqs = [
       gap: 8px;
     }
 
+    .map-recenter-btn {
+      bottom: auto;
+      top: 16px;
+      height: 40px;
+      transform: translateX(-50%) translateY(-6px);
+    }
+    .map-recenter-btn.visible {
+      transform: translateX(-50%) translateY(0);
+    }
+
     .map-filter-btn {
       padding: 12px 16px;
       font-size: 13px;
@@ -1696,6 +1750,17 @@ const faqs = [
       bottom: max(32px, env(safe-area-inset-bottom, 0px) + 24px);
       padding: 6px;
       gap: 8px;
+    }
+
+    .map-recenter-btn {
+      bottom: auto;
+      top: 16px;
+      height: 40px;
+      transform: translateX(-50%) translateY(-6px);
+      padding: 0 16px;
+    }
+    .map-recenter-btn.visible {
+      transform: translateX(-50%) translateY(0);
     }
 
     .map-filter-btn {
