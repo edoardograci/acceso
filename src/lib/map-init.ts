@@ -444,7 +444,7 @@ export async function initializeMap(
       // split point so each click unfolds the cluster further and stray pins
       // get revealed in far fewer clicks. The coarse overview clusters (set by
       // clusterRadius/clusterMaxZoom) are untouched; we only zoom in more per tap.
-      const clickZoomDelta = 3.5;
+      const clickZoomDelta = 2.75;
       const nextZoom = Math.min(expansionZoom + clickZoomDelta, 18);
       state.map.easeTo({
         center: (features[0].geometry as any).coordinates,
