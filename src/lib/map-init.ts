@@ -135,7 +135,7 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance, maplibregl: any) {
     layout: {
       visibility: isDesigner ? 'visible' : 'none',
       'text-field': '{point_count_abbreviated}',
-      'text-font': ['Geist_Bold'],
+      'text-font': ['Geist_Bold', 'Noto Sans Bold'],
       'text-size': 13,
     },
     paint: {
@@ -305,26 +305,31 @@ export async function initializeMap(
         styleJson.layers = styleJson.layers.filter(
           (l: any) => !STRIP_LAYERS.has(l.id)
         );
-        // Use our self-hosted Geist glyphs (R2 /cdn/fonts) instead of
-        // OpenFreeMap's Noto Sans. Rewrite every text layer's font stack and
-        // the style's glyphs URL so all labels render in Geist.
-        // Use our self-hosted Geist glyphs (R2 public domain) instead of
-        // OpenFreeMap's Noto Sans. Rewrite every text layer's font stack and
-        // the style's glyphs URL so all labels render in Geist.
-        // Serve Geist glyphs from our own origin (public/fonts) instead of
-        // OpenFreeMap's Noto Sans. Fontstack names use underscores to match
-        // the on-disk folder names (Geist_Regular / Geist_Bold), since
-        // MapLibre URL-encodes the stack and won't resolve spaces otherwise.
-        styleJson.glyphs = `${window.location.origin}/fonts/{fontstack}/{range}.pbf`;
-        const FONT_MAP: Record<string, string> = {
-          'Noto Sans Regular': 'Geist_Regular',
-          'Noto Sans Bold': 'Geist_Bold',
-          'Noto Sans Italic': 'Geist_Regular',
+        // Serve glyphs through our own origin. The /api/fonts proxy serves
+        // our self-hosted Geist glyphs locally (fast, no extra network call)
+        // and lazily proxies any other fontstack (Noto Sans) from
+        // OpenFreeMap — but ONLY for the codepoint ranges a visible label
+        // actually needs, so non-Latin glyphs are never fetched until the
+        // user pans over a region that uses them. This keeps the Europe-first
+        // homepage load as fast as it already is.
+        // Fontstack names use underscores to match the on-disk folder names
+        // (Geist_Regular / Geist_Bold); MapLibre URL-encodes the stack and
+        // won't resolve spaces otherwise.
+        styleJson.glyphs = `${window.location.origin}/api/fonts/{fontstack}/{range}.pbf`;
+        // Each label layer gets a fallback stack: Latin/covered codepoints
+        // render in Geist (local), everything else falls back to Noto Sans
+        // (proxied on demand). MapLibre picks the first font that has the
+        // glyph, so we never mix fonts within a single label.
+        const FONT_MAP: Record<string, string[]> = {
+          'Noto Sans Regular': ['Geist_Regular', 'Noto Sans Regular'],
+          'Noto Sans Bold': ['Geist_Bold', 'Noto Sans Bold'],
+          'Noto Sans Italic': ['Geist_Regular', 'Noto Sans Regular'],
         };
         for (const layer of styleJson.layers) {
           const tf = layer?.layout?.['text-font'];
           if (Array.isArray(tf)) {
-            layer.layout['text-font'] = tf.map((f: string) => FONT_MAP[f] || f);
+            const mapped = tf.flatMap((f: string) => FONT_MAP[f] || [f]);
+            layer.layout['text-font'] = Array.from(new Set(mapped));
           }
         }
         mapStyle = styleJson;
