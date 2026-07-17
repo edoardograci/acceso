@@ -1,5 +1,15 @@
 type BreadcrumbItem = { name: string; url: string };
 
+const SITE = 'https://acceso.design';
+
+function toAbsoluteUrl(url: string): string {
+  try {
+    return new URL(url, SITE).toString();
+  } catch {
+    return url;
+  }
+}
+
 export function breadcrumbList(items: BreadcrumbItem[]) {
   return {
     '@context': 'https://schema.org',
@@ -8,7 +18,7 @@ export function breadcrumbList(items: BreadcrumbItem[]) {
       '@type': 'ListItem',
       position: idx + 1,
       name: it.name,
-      item: it.url,
+      item: toAbsoluteUrl(it.url),
     })),
   };
 }
