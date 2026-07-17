@@ -431,16 +431,24 @@ export async function initializeMap(
       // MapLibre GL JS v4+ returns a Promise; v3 uses a callback.
       // Support both to be safe.
       const zoomResult = source.getClusterExpansionZoom(clusterId);
-      const zoom = zoomResult instanceof Promise
+      const expansionZoom = zoomResult instanceof Promise
         ? await zoomResult
         : await new Promise<number>((resolve, reject) =>
           source.getClusterExpansionZoom(clusterId, (err: any, z: number) =>
             err ? reject(err) : resolve(z)
           )
         );
+      // expansionZoom is the *minimum* zoom at which the cluster first splits,
+      // so zooming to exactly that leaves any slightly-outlier pins in a fresh
+      // edge cluster — forcing the user to click repeatedly. Overshoot the
+      // split point so each click unfolds the cluster further and stray pins
+      // get revealed in far fewer clicks. The coarse overview clusters (set by
+      // clusterRadius/clusterMaxZoom) are untouched; we only zoom in more per tap.
+      const clickZoomDelta = 3.5;
+      const nextZoom = Math.min(expansionZoom + clickZoomDelta, 18);
       state.map.easeTo({
         center: (features[0].geometry as any).coordinates,
-        zoom: zoom + 0.5 // slight extra zoom ensures the cluster actually splits
+        zoom: nextZoom
       });
     } catch (err) {
       console.warn('getClusterExpansionZoom failed:', err);
