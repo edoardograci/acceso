@@ -347,16 +347,16 @@ import Footer from '../components/Footer.astro';
     max-width: 1600px;
     margin: 0 auto;
     padding: 120px 40px;
-    text-align: left;
+    text-align: center;
     background: var(--color-white);
   }
 
   .community-content {
     max-width: 600px;
-    margin: 0;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 24px;
   }
 
@@ -385,6 +385,12 @@ import Footer from '../components/Footer.astro';
   @media (max-width: 768px) {
     .community-section {
       padding: 80px 20px;
+      text-align: left;
+    }
+
+    .community-content {
+      margin: 0;
+      align-items: flex-start;
     }
     
     .community-title {
