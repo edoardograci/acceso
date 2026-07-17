@@ -271,11 +271,7 @@ function getPostHog() {
 export function getPageType(pathname?: string): PageType {
     const path = pathname || (typeof window !== 'undefined' ? window.location.pathname : '/');
 
-    if (path === '/') return PageType.HOME;
-    if (path === '/designers') return PageType.DESIGNERS_INDEX;
-    if (path.startsWith('/designers/')) return PageType.DESIGNER_PROFILE;
-    if (path === '/moodboard') return PageType.MOODBOARD_INDEX;
-    if (path.startsWith('/moodboard/')) return PageType.MOODBOARD_DETAIL;
+    if (path === '/') return PageType.MAP;
     if (path === '/map') return PageType.MAP;
     if (path === '/pricing') return PageType.PRICING;
     if (path === '/info') return PageType.INFO;

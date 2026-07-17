@@ -275,7 +275,7 @@ function init() {
 
   function updateBreadcrumb() {
     const sep = '<span class="breadcrumb-separator" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>';
-    const mapLink = '<a href="/map" class="breadcrumb-item">Map</a>';
+    const mapLink = '<a href="/" class="breadcrumb-item">Map</a>';
     let html = mapLink;
 
     if (panelView === 'browse') {

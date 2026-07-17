@@ -210,7 +210,7 @@ const cityItemListSchema = itemList({
   url: mapUrl,
   name: `${pageTitle} — cities with ${seoTypePlural}`,
   items: topCities.map((c) => ({
-    url: new URL(`/map?type=${typeParam}&city=${c.slug}`, SITE).toString(),
+    url: new URL(`/?type=${typeParam}&city=${c.slug}`, SITE).toString(),
     name: c.name,
   })),
 });
@@ -479,7 +479,7 @@ const faqs = [
           <ul class="seo-city-list">
             {topCities.map((c) => (
               <li>
-                <a href={`/map?type=${typeParam}&city=${c.slug}`}>
+                <a href={`/?type=${typeParam}&city=${c.slug}`}>
                   {c.name}
                   <span class="seo-city-count">{c.count}</span>
                 </a>

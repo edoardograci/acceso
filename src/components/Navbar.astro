@@ -2,7 +2,7 @@
 import type { NavLink } from '../lib/types';
 
 const navLinks: NavLink[] = [
-  { label: 'Map', href: '/map' },
+  { label: 'Map', href: '/' },
   { label: 'Designers', href: '/designers' },
   { label: 'Discover', href: '/discover' },
   { label: 'Directory', href: '/directory' },
@@ -12,7 +12,7 @@ const navLinks: NavLink[] = [
 const currentPath = Astro.url.pathname;
 
 function isActive(href: string): boolean {
-  if (href === '/map') return currentPath === '/map' || currentPath === '/';
+  if (href === '/') return currentPath === '/' || currentPath.startsWith('/?');
   if (href === '/discover') return currentPath === '/discover' || currentPath.startsWith('/discover/');
   if (href === '/directory') return currentPath === '/directory' || currentPath.startsWith('/directory/');
   if (href === '/designers') return currentPath === '/designers' || currentPath.startsWith('/designers/');
@@ -25,7 +25,7 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
 
 <nav class="navbar">
   <div class="navbar-inner">
-    <a href="/map" class="navbar-logo" aria-label="Acceso Home">
+    <a href="/" class="navbar-logo" aria-label="Acceso Home">
       <svg width="76" height="20" viewBox="0 0 108 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M98.2954 0C104.519 0 108 4.1523 108 9.85292C108 15.5184 104.519 19.7058 98.2954 19.7058C92.0718 19.7058 88.5908 15.5184 88.5908 9.85292C88.5908 4.1523 92.0718 0 98.2954 0ZM98.2954 16.2925C101.214 16.2925 102.972 13.8645 102.972 9.85292C102.972 5.80619 101.214 3.41333 98.2954 3.41333C95.377 3.41333 93.6189 5.80619 93.6189 9.85292C93.6189 13.8645 95.377 16.2925 98.2954 16.2925Z" fill="black"/>
       <path d="M11.9198 19.3807L11.5682 16.636L10.654 18.6418C9.35299 19.5215 7.77072 19.8734 6.01264 19.8734C2.77777 19.8734 0 17.9732 0 14.4191C0 10.302 3.51616 7.97948 10.3024 7.97948H11.4978V7.59241C11.4978 7.02938 11.4978 6.46636 11.4275 5.83295C11.2869 4.53096 10.443 3.58086 8.54427 3.58086C6.61038 3.58086 5.55554 4.70691 5.41489 6.74787L0.703232 6.78306C0.843879 2.56038 4.25456 0.167526 8.72008 0.167526C13.9592 0.167526 15.9282 2.45481 16.2095 5.6922C16.2798 6.57192 16.315 7.55722 16.315 8.5777V14.6302C16.315 16.0378 16.3853 17.3046 16.6666 19.3807H11.9198ZM7.8762 16.46C9.84525 16.46 11.4978 15.0877 11.4978 12.4837V10.9705C7.63007 10.689 5.02811 11.5688 5.02811 14.032C5.02811 15.6859 6.15328 16.46 7.8762 16.46Z" fill="black"/>

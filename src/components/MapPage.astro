@@ -134,16 +134,16 @@ const quickNavCities = [
 ].map((c) => ({
   ...c,
   label: c.isMore ? c.name : `${quickNavTypePhrase} ${c.name}`,
-  href: c.isMore ? null : `/map?type=${typeParam}&city=${c.slug}`,
+  href: c.isMore ? null : `/?type=${typeParam}&city=${c.slug}`,
 }));
 
 const quickNavImageWidth = 640;
 const quickNavImageHeight = 176;
 
 const mapFilters = [
-  { label: 'Designers', href: '/map?type=designers', active: typeParam === 'designers', type: 'designers' },
-  { label: 'Schools', href: '/map?type=schools', active: typeParam === 'schools', type: 'universities' },
-  { label: 'Museums', href: '/map?type=museums', active: typeParam === 'museums', type: 'museums' },
+  { label: 'Designers', href: '/?type=designers', active: typeParam === 'designers', type: 'designers' },
+  { label: 'Schools', href: '/?type=schools', active: typeParam === 'schools', type: 'universities' },
+  { label: 'Museums', href: '/?type=museums', active: typeParam === 'museums', type: 'museums' },
 ];
 
 const pageTitle = itemType === 'museum' ? 'Explore Museums & Foundations' : itemType === 'university' ? 'Explore Design Schools' : 'Explore Local Design';
@@ -156,7 +156,7 @@ const seoTypePlural = itemType === 'museum' ? 'design museums' : itemType === 'u
 const seoTypePluralCap = seoTypePlural.charAt(0).toUpperCase() + seoTypePlural.slice(1);
 
 const SITE = Astro.site?.toString() || 'https://acceso.design';
-const mapUrl = new URL('/map', SITE).toString();
+const mapUrl = new URL('/', SITE).toString();
 
 const breadcrumbs = breadcrumbList([
   { name: 'Map', url: mapUrl },
@@ -167,7 +167,7 @@ const cityItemListSchema = itemList({
   url: mapUrl,
   name: `${pageTitle} — cities with ${seoTypePlural}`,
   items: topCities.map((c) => ({
-    url: new URL(`/map?type=${typeParam}&city=${c.slug}`, SITE).toString(),
+    url: new URL(`/?type=${typeParam}&city=${c.slug}`, SITE).toString(),
     name: c.name,
   })),
 });
@@ -194,7 +194,7 @@ const faqs = [
 ---
 
 <Layout
-  title={`${pageTitle} | Acceso Map`}
+  title={`Acceso — ${pageTitle}`}
   description={pageDescription}
   keywords={seoKeywords}
   schema={pageSchema}
@@ -226,7 +226,7 @@ const faqs = [
             <header class="explore-header" id="explore-header">
               <h1 class="explore-title">{titleLead}<br>{titleRest}</h1>
               <p class="explore-description">
-                {itemType === 'museum' 
+                {itemType === 'museum'
                   ? 'A directory of permanent collections and institutions preserving design culture and history.'
                   : itemType === 'university'
                   ? 'A directory of design schools and institutions shaping the future of design education.'
@@ -442,7 +442,7 @@ const faqs = [
           <ul class="seo-city-list">
             {topCities.map((c) => (
               <li>
-                <a href={`/map?type=${typeParam}&city=${c.slug}`}>
+                <a href={`/?type=${typeParam}&city=${c.slug}`}>
                   {c.name}
                   <span class="seo-city-count">{c.count}</span>
                 </a>

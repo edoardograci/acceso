@@ -595,7 +595,7 @@ export async function initializeMap(
         showStudioCard(targetStudio!, state);
 
         // Clean up URL parameter
-        window.history.replaceState({}, '', '/map');
+        window.history.replaceState({}, '', '/');
       }, 300);
     }
   }

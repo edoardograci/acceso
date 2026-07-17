@@ -15,7 +15,7 @@
 - [Designers by location](https://acceso.design/designers/in/milan): location pages for a city or country.
 - [Discover projects](https://acceso.design/discover): curated project gallery index.
 - [Directory](https://acceso.design/directory): listings for fairs, museums, schools, and awards.
-- [Map](https://acceso.design/map): interactive map of the design community.
+- [Map](https://acceso.design/): interactive map of the design community (homepage).
 
 ## Crawl guidance
 

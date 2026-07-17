@@ -141,14 +141,12 @@ const userCreatedAt = Astro.locals.user?.createdAt;
           
           function getPageType() {
             const path = window.location.pathname;
-            if (path === '/') return 'home';
-            if (path === '/map') return 'map';
+            if (path === '/' || path === '/map') return 'map';
             if (path === '/discover' || path.startsWith('/discover/')) return 'discover';
             if (path === '/designers') return 'directory';
             if (path.startsWith('/designers/')) return 'designer_profile';
             if (path === '/moodboard') return 'moodboard_index';
             if (path.startsWith('/moodboard/')) return 'moodboard_detail';
-            if (path === '/map') return 'map';
             if (path === '/login') return 'login';
             if (path === '/profile') return 'profile';
             if (path.startsWith('/collections/')) return 'collections';

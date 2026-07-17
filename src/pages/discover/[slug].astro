@@ -184,7 +184,7 @@ const citySlug = item?.city ? item.city.toLowerCase().replace(/\s+/g, '-') : nul
               {item.city && (
                 <div class="details-row">
                   <span class="detail-label">Location</span>
-                  <a href={citySlug ? `/map?type=designers&city=${citySlug}` : '/designers'} class="detail-value underlined">{item.city}</a>
+                  <a href={citySlug ? `/?type=designers&city=${citySlug}` : '/designers'} class="detail-value underlined">{item.city}</a>
                 </div>
               )}
             </div>
