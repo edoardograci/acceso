@@ -1,11 +1,11 @@
-const CACHE_NAME = 'acceso-static-v3';
-const API_CACHE_NAME = 'acceso-api-v3';
+const CACHE_NAME = 'acceso-static-v4';
+const API_CACHE_NAME = 'acceso-api-v4';
 const URL_CACHE_EXCLUDES = ['/api/', '/js/', '/css/'];
 
 const URLS_TO_CACHE = [
     '/',
-    '/manifest.webmanifest',
-    '/icon.svg'
+    '/manifest.webmanifest?v=2',
+    '/icon.svg?v=2'
 ];
 
 self.addEventListener('install', (event) => {
