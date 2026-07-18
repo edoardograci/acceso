@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar.astro';
 import DirectoryCard from '../../components/DirectoryCard.astro';
 import Footer from '../../components/Footer.astro';
 import type { Studio} from '../../lib/types';
+import { itemList } from '../../lib/seo/schema';
 
 // Fetch Data
 let studios: Studio[] = [];
@@ -114,11 +115,24 @@ if (cityParam) {
   if (matched) initialCity = matched;
 }
 
+// ── SEO: Canonical + ItemList hub schema ──────────────────────────────────────
+const canonical = new URL('/designers', Astro.site);
+const hubSchema = itemList({
+  url: canonical.toString(),
+  name: 'Independent Industrial Design Studios | Acceso',
+  items: studios.map((s) => ({
+    name: s.name,
+    url: new URL(`/designers/${s.slug}`, Astro.site).toString(),
+  })),
+});
+
 ---
 
 <PostHogLayout 
-  title="Independent Design Studios Directory | Acceso"
+  title="Independent Design Studios Worldwide | Acceso"
   description="Browse independent industrial and furniture design studios. Explore local design scenes across global cities."
+  canonical={canonical}
+  schema={hubSchema}
 >
   <Navbar />
   
@@ -127,7 +141,7 @@ if (cityParam) {
       <header class="directory-hero">
         <h1 class="directory-title">Designers</h1>
         <p class="directory-description">
-          Independent furniture and industrial design studios from around the world. Browse curated profiles by city and discover the designers shaping local design scenes.
+          Independent furniture and industrial design studios from around the world. Browse our design studios directory by city and discover the industrial designers shaping local design scenes.
         </p>
       </header>
 

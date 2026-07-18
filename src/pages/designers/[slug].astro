@@ -8,6 +8,7 @@ import { normalizeImage } from '../../lib/images';
 import { ensureProtocol } from '../../lib/url';
 import type { Studio } from '../../lib/types';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { breadcrumbList } from '../../lib/seo/schema';
 
 const { slug } = Astro.params;
 
@@ -51,7 +52,7 @@ try {
         .filter((s: any) => s.slug !== slug && s.city_slug === currentStudio.city_slug)
         .slice(0, 10);
       sameCountryStudios = mappedStudios
-        .filter((s: any) => s.slug !== slug && s.country_slug === currentStudio.city_slug && s.city_slug !== currentStudio.city_slug)
+        .filter((s: any) => s.slug !== slug && s.country_slug === currentStudio.country_slug && s.city_slug !== currentStudio.city_slug)
         .slice(0, 10);
       // Worldwide: diversify so it isn't dominated by the largest city
       // (e.g. Milan). Pick at most one studio per city, deterministically.
@@ -85,7 +86,6 @@ if (!studio && !error) {
   return Astro.redirect('/404');
 }
 
-// Event fetching has been removed
 
 // ── Location / embed data ───────────────────────────────────────────────
 // The location section only renders when the studio has an address AND a
@@ -97,11 +97,38 @@ const studioHasLocation = !!studio && !!studio.address && !isNaN(studioLat) && !
 const gmapsDirections = studioHasLocation
   ? `https://www.google.com/maps/dir/?api=1&destination=${studioLat},${studioLng}`
   : '';
+
+// ── SEO: Canonical URL & LocalBusiness schema ────────────────────────────────
+const canonical = new URL(`/designers/${slug}`, Astro.site);
+
+const studioSchema = studio ? {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'LocalBusiness',
+      '@id': `${canonical}#business`,
+      name: studio.name,
+      description: studio.description || undefined,
+      image: studio.cover || undefined,
+      url: canonical.toString(),
+      ...(studio.address ? { address: { '@type': 'PostalAddress', streetAddress: studio.address, addressLocality: studio.city } } : {}),
+      ...(studioHasLocation ? { geo: { '@type': 'GeoCoordinates', latitude: studioLat, longitude: studioLng } } : {}),
+      sameAs: [studio.website, studio.instagram].filter(Boolean),
+    },
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Designers', url: '/designers' },
+      { name: studio.name, url: `/designers/${slug}` },
+    ]),
+  ],
+} : null;
 ---
 
 <Layout 
   title={studio ? `${studio.name} — Independent Design Studio in ${studio.city}` : 'Loading...'}
   description={studio ? `${studio.name} is an independent design studio based in ${studio.city}. Explore projects, objects, and studio information.` : ''}
+  canonical={canonical}
+  schema={studioSchema || undefined}
 >
   <Navbar />
   

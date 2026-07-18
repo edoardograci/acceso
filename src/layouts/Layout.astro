@@ -12,6 +12,7 @@ interface Props {
   ogType?: 'website' | 'article';
   schema?: Record<string, any>;
   keywords?: string;
+  robots?: string;
 }
 
 const {
@@ -21,7 +22,8 @@ const {
   canonical = new URL(Astro.url.pathname, Astro.site),
   ogType = 'website',
   schema,
-  keywords
+  keywords,
+  robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
 } = Astro.props;
 
 const DEFAULT_DESCRIPTION =
@@ -105,6 +107,9 @@ const mergedSchema =
     <link rel="canonical" href={canonical} />
 
     <!-- Performance: preload the self-hosted variable font used site-wide -->
+    <link rel="preconnect" href="https://img.acceso.design" />
+    <link rel="preconnect" href="https://mood.acceso.design" />
+
     <link
       rel="preload"
       href="/fonts/Geist-Variable.woff2"
@@ -214,49 +219,26 @@ const mergedSchema =
       <meta name="keywords" content={keywords} />
     )}
 
-    <meta
-      name="robots"
-      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-    />
+    <meta name="robots" content={robots} />
 
     <!-- Open Graph -->
     <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content="Acceso" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content={title} />
     {metaDescription && (
       <meta property="og:description" content={metaDescription} />
     )}
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     {metaDescription && (
       <meta name="twitter:description" content={metaDescription} />
-    )}
-    {keywords && (
-      <meta name="keywords" content={keywords} />
-    )}
-
-    <meta
-      name="robots"
-      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-    />
-
-    <!-- Open Graph -->
-    <meta property="og:type" content={ogType} />
-    <meta property="og:title" content={title} />
-    {description && (
-      <meta property="og:description" content={description} />
-    )}
-    <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL(image, Astro.site)} />
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    {description && (
-      <meta name="twitter:description" content={description} />
     )}
     <meta name="twitter:image" content={new URL(image, Astro.site)} />
 

@@ -6,6 +6,7 @@ import EventBasicCard from '../../../components/EventBasicCard.astro';
 import { normalizeImage } from '../../../lib/images';
 import { ensureProtocol } from '../../../lib/url';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { breadcrumbList } from '../../../lib/seo/schema';
 
 const { slug } = Astro.params;
 
@@ -105,11 +106,47 @@ function getPeriod(startStr: string, endStr: string) {
 const countryName = fair.country || countriesMapping.find(c => c.slug === fair.country_slug)?.name || countryDisplayName(fair.country_slug);
 const cityName = fair.city || citiesMapping.find(c => c.slug === fair.city_slug)?.name || fair.city_slug;
 
-const pageTitle = `${fair.name} — Design Fair in ${cityName}`;
+const pageTitle = `${fair.name} — Design Fair in ${cityName} | Acceso`;
 const pageDesc = fair.description || `Explore ${fair.name}, a premier design event in ${cityName}, ${countryName}.`;
+
+// ── SEO: Canonical + Event schema ──────────────────────────────────────────
+const canonical = new URL(`/directory/fairs/${slug}`, Astro.site);
+const fairSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Event',
+      '@id': `${canonical}#event`,
+      name: fair.name,
+      description: pageDesc,
+      url: canonical.toString(),
+      image: fair.image || undefined,
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      eventStatus: 'https://schema.org/EventScheduled',
+      ...(fair.start_date ? { startDate: fair.start_date } : {}),
+      ...(fair.end_date ? { endDate: fair.end_date } : {}),
+      location: {
+        '@type': 'Place',
+        name: cityName,
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: cityName,
+          addressCountry: countryName,
+        },
+      },
+      organizer: fair.website ? { '@type': 'Organization', name: fair.name, url: fair.website } : undefined,
+    },
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Directory', url: '/directory' },
+      { name: 'Fairs', url: '/directory/fairs' },
+      { name: fair.name, url: `/directory/fairs/${slug}` },
+    ]),
+  ],
+};
 ---
 
-<Layout title={pageTitle} description={pageDesc}>
+<Layout title={pageTitle} description={pageDesc} canonical={canonical} schema={fairSchema}>
   <Navbar />
 
   <div class="breadcrumbs-container">

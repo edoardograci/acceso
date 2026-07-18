@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import { normalizeImage } from '../../lib/images';
+import { itemList } from '../../lib/seo/schema';
 
 interface ProductImage {
   id: string;
@@ -48,11 +49,24 @@ try {
 }
 
 const visibleItems = moodboardItems.filter((item) => item.cover);
+
+// ── SEO: Canonical + ItemList schema ───────────────────────────────────────────
+const canonical = new URL('/discover', Astro.site);
+const discoverSchema = itemList({
+  url: canonical.toString(),
+  name: 'Industrial Design Projects | Acceso Discover',
+  items: visibleItems.slice(0, 50).map((item) => ({
+    name: item.name,
+    url: new URL(`/discover/${item.slug}`, Astro.site).toString(),
+  })),
+});
 ---
 
 <Layout
   title="Discover Design Inspiration | Acceso"
   description="A curated gallery of industrial design projects, furniture, and product photography from independent studios worldwide."
+  canonical={canonical}
+  schema={discoverSchema}
 >
     <Navbar />
 
@@ -61,7 +75,7 @@ const visibleItems = moodboardItems.filter((item) => item.cover);
         <header class="discover-hero">
           <h1 class="discover-title">Discover</h1>
           <p class="discover-description">
-            Furniture and industrial design projects from independent studios worldwide. Explore products, concepts, and exhibitions that reveal how designers approach materials, function, and form.
+            Furniture and industrial design projects from independent studios worldwide. A design inspiration gallery revealing how designers approach materials, function, and form.
           </p>
         </header>
 

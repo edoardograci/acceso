@@ -36,17 +36,16 @@ try {
   totalPages = 1;
 }
 
+// Page 1 is canonically /designers — redirect to avoid duplicate content.
+if (page === 1) return Astro.redirect('/designers', 301);
 if (page > totalPages) return Astro.redirect('/404');
 
 const slice = all.slice((page - 1) * perPage, page * perPage).map((s) => {
   return { ...s, cover: normalizeImage(s.cover, Astro) as string | null };
 });
 
-const title = page === 1 ? 'Design studios directory | Acceso' : `Design studios directory (Page ${page}) | Acceso`;
-const description =
-  page === 1
-    ? 'Browse independent industrial and furniture design studios. Explore profiles, locations, and related designers.'
-    : `Browse independent industrial and furniture design studios — page ${page} of ${totalPages}. Explore profiles and locations.`;
+const title = `Design studios directory (Page ${page}) | Acceso`;
+const description = `Browse independent industrial and furniture design studios — page ${page} of ${totalPages}. Explore profiles and locations.`;
 
 const canonical = new URL(`/designers/page/${page}`, Astro.site);
 

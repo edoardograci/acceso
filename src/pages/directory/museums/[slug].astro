@@ -7,6 +7,7 @@ import EventBasicCard from '../../../components/EventBasicCard.astro';
 import { normalizeImage } from '../../../lib/images';
 import { ensureProtocol } from '../../../lib/url';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { breadcrumbList } from '../../../lib/seo/schema';
 
 const { slug } = Astro.params;
 
@@ -81,11 +82,41 @@ const aboutParagraphs = (museum.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
-const pageTitle = `${museum.name} — Design Museum in ${cityName}`;
+const pageTitle = `${museum.name} — Design Museum in ${cityName} | Acceso`;
 const pageDesc = museum.description || `Explore ${museum.name}, a prominent design institution in ${cityName}, ${countryName}.`;
+
+// ── SEO: Canonical + Museum schema ────────────────────────────────────────
+const canonical = new URL(`/directory/museums/${slug}`, Astro.site);
+const museumSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Museum',
+      '@id': `${canonical}#museum`,
+      name: museum.name,
+      description: pageDesc,
+      url: canonical.toString(),
+      image: museum.image || undefined,
+      address: museum.address ? {
+        '@type': 'PostalAddress',
+        streetAddress: museum.address,
+        addressLocality: cityName,
+        addressCountry: countryName,
+      } : undefined,
+      ...(museumHasLocation ? { geo: { '@type': 'GeoCoordinates', latitude: museumLat, longitude: museumLng } } : {}),
+      sameAs: [museum.website, museum.instagram, museum.facebook].filter(Boolean),
+    },
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Directory', url: '/directory' },
+      { name: 'Museums', url: '/directory/museums' },
+      { name: museum.name, url: `/directory/museums/${slug}` },
+    ]),
+  ],
+};
 ---
 
-<Layout title={pageTitle} description={pageDesc}>
+<Layout title={pageTitle} description={pageDesc} canonical={canonical} schema={museumSchema}>
   <Navbar />
 
   <div class="breadcrumbs-container">

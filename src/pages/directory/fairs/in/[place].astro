@@ -143,7 +143,7 @@ function getPeriod(startStr: string, endStr: string) {
 // location page is unique rather than identical boilerplate.
 function buildIntro(): string {
   const parts: string[] = [];
-  parts.push(`${locName} holds a recognised place on the global design calendar, valued for the character of its local design scene.`);
+  parts.push(`From an annual design week to regular events, ${locName} holds a recognised place on the global design calendar, valued for the character of its local design scene.`);
 
   if (totalFairs > 0) {
     const noun = totalFairs === 1 ? 'design fair' : 'design fairs';
@@ -167,7 +167,7 @@ function buildIntro(): string {
 }
 const introText = buildIntro();
 
-const designersLink = isCity ? `/designers?city=${place}` : `/designers?country=${place}`;
+const designersLink = `/designers/in/${place}`;
 
 const canonical = new URL(`/directory/fairs/in/${place}`, Astro.site);
 

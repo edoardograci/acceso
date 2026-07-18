@@ -5,6 +5,11 @@ export const GET: APIRoute = ({ site }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
 
   const lastmod = toW3CDate(new Date());
+  // Static pages have a real "Last updated" date on-page — use it so Google
+  // doesn't see these as changing every crawl.
+  const privacyLastmod = '2025-12-30';
+  const termsLastmod = '2025-12-30';
+
   const urls = [
     { loc: new URL('/', site).toString(), lastmod, changefreq: 'daily' as const, priority: 1.0 },
     { loc: new URL('/designers', site).toString(), lastmod, changefreq: 'daily' as const, priority: 0.9 },
@@ -17,8 +22,8 @@ export const GET: APIRoute = ({ site }) => {
     // The map is the homepage ("/"); /map redirects there.
     { loc: new URL('/info', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.5 },
     { loc: new URL('/submission', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.4 },
-    { loc: new URL('/privacy', site).toString(), lastmod, changefreq: 'yearly' as const, priority: 0.2 },
-    { loc: new URL('/terms', site).toString(), lastmod, changefreq: 'yearly' as const, priority: 0.2 },
+    { loc: new URL('/privacy', site).toString(), lastmod: privacyLastmod, changefreq: 'yearly' as const, priority: 0.2 },
+    { loc: new URL('/terms', site).toString(), lastmod: termsLastmod, changefreq: 'yearly' as const, priority: 0.2 },
   ];
 
   return new Response(renderUrlSet(urls), {

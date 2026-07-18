@@ -6,6 +6,7 @@ import EventBasicCard from '../../../components/EventBasicCard.astro';
 import { normalizeImage } from '../../../lib/images';
 import { ensureProtocol } from '../../../lib/url';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { breadcrumbList } from '../../../lib/seo/schema';
 
 const { slug } = Astro.params;
 
@@ -81,11 +82,41 @@ const pillText = status === 'status-open' ? 'OPEN' : 'CLOSED';
 
 const cityName = award.city || citiesMapping.find(c => c.slug === award.city_slug)?.name || award.city_slug;
 
-const pageTitle = `${award.name} — Design Award`;
+const pageTitle = `${award.name} — Design Award | Acceso`;
 const pageDesc = award.description || `Explore ${award.name}, one of the most prestigious recognitions in industrial and furniture design.`;
+
+// ── SEO: Canonical + schema ────────────────────────────────────────────────────
+const canonical = new URL(`/directory/awards/${slug}`, Astro.site);
+const awardSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Event',
+      '@id': `${canonical}#event`,
+      name: award.name,
+      description: pageDesc,
+      url: canonical.toString(),
+      image: award.image || undefined,
+      eventStatus: status === 'status-open'
+        ? 'https://schema.org/EventScheduled'
+        : 'https://schema.org/EventPostponed',
+      location: cityName ? {
+        '@type': 'Place',
+        name: cityName,
+      } : undefined,
+      organizer: award.website ? { '@type': 'Organization', name: award.name, url: award.website } : undefined,
+    },
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Directory', url: '/directory' },
+      { name: 'Awards', url: '/directory/awards' },
+      { name: award.name, url: `/directory/awards/${slug}` },
+    ]),
+  ],
+};
 ---
 
-<Layout title={pageTitle} description={pageDesc}>
+<Layout title={pageTitle} description={pageDesc} canonical={canonical} schema={awardSchema}>
   <Navbar />
 
   <div class="breadcrumbs-container">

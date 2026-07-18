@@ -7,6 +7,7 @@ import EventBasicCard from '../../../components/EventBasicCard.astro';
 import { normalizeImage } from '../../../lib/images';
 import { ensureProtocol } from '../../../lib/url';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { breadcrumbList } from '../../../lib/seo/schema';
 
 const { slug } = Astro.params;
 
@@ -81,11 +82,41 @@ const aboutParagraphs = (university.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
-const pageTitle = `${university.name} — Design School in ${cityName}`;
+const pageTitle = `${university.name} — Design School in ${cityName} | Acceso`;
 const pageDesc = university.description || `Explore ${university.name}, a prominent design institution in ${cityName}, ${countryName}.`;
+
+// ── SEO: Canonical + EducationalOrganization schema ───────────────────────────
+const canonical = new URL(`/directory/schools/${slug}`, Astro.site);
+const schoolSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'EducationalOrganization',
+      '@id': `${canonical}#school`,
+      name: university.name,
+      description: pageDesc,
+      url: canonical.toString(),
+      image: university.image || undefined,
+      address: university.address ? {
+        '@type': 'PostalAddress',
+        streetAddress: university.address,
+        addressLocality: cityName,
+        addressCountry: countryName,
+      } : undefined,
+      ...(universityHasLocation ? { geo: { '@type': 'GeoCoordinates', latitude: universityLat, longitude: universityLng } } : {}),
+      sameAs: [university.website, university.instagram, university.facebook].filter(Boolean),
+    },
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Directory', url: '/directory' },
+      { name: 'Schools', url: '/directory/schools' },
+      { name: university.name, url: `/directory/schools/${slug}` },
+    ]),
+  ],
+};
 ---
 
-<Layout title={pageTitle} description={pageDesc}>
+<Layout title={pageTitle} description={pageDesc} canonical={canonical} schema={schoolSchema}>
   <Navbar />
 
   <div class="breadcrumbs-container">

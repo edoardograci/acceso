@@ -59,7 +59,7 @@ let relUniversities: any[] = [];
 let leadAwards: any[] = [];
 
 try {
-  const [citiesData, countriesData, , fairsData, studiosData, museumsData, universitiesData] = await Promise.all([
+  const [citiesData, countriesData, awardsData, fairsData, studiosData, museumsData, universitiesData] = await Promise.all([
     fetchJson<City[]>('/test-cities.json'),
     fetchJson<Country[]>('/test-countries.json'),
     fetchJson<any[]>('/awards.json'),
@@ -91,6 +91,7 @@ try {
   relStudios = inLocation(studiosData, place, mode === 'city');
   relMuseums = inLocation(museumsData, place, mode === 'city');
   relUniversities = inLocation(universitiesData, place, mode === 'city');
+  leadAwards = inLocation(awardsData, place, mode === 'city');
 
   // Moodboard (Projects) is optional and may 404 on the CDN.
   // Isolate it so a failed fetch never blanks the whole page.
@@ -113,7 +114,7 @@ const totalAwards = leadAwards.length;
 // page is unique rather than identical boilerplate.
 function buildIntro(): string {
   const parts: string[] = [];
-  parts.push(`${locName} holds a recognised place on the global design map, valued for the character of its local design scene.`);
+  parts.push(`With regular open calls for designers, ${locName} holds a recognised place on the global design map, valued for the character of its local design scene.`);
 
   if (totalAwards > 0) {
     const noun = totalAwards === 1 ? 'award' : 'awards';
@@ -137,7 +138,7 @@ function buildIntro(): string {
 }
 const introText = buildIntro();
 
-const designersLink = isCity ? `/designers?city=${place}` : `/designers?country=${place}`;
+const designersLink = `/designers/in/${place}`;
 
 const canonical = new URL(`/directory/awards/in/${place}`, Astro.site);
 

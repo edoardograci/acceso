@@ -6,6 +6,7 @@ import SaveButton from '../../components/SaveButton.astro';
 import { ensureProtocol } from '../../lib/url';
 import { normalizeImage } from '../../lib/images';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { breadcrumbList } from '../../lib/seo/schema';
 
 interface ProductImage {
   id: string;
@@ -76,11 +77,37 @@ async function getDesignerSlug(designerName: string | null): Promise<string | nu
 const designerSlug = item ? await getDesignerSlug(item.designer) : null;
 const hasMultipleImages = item ? item.images.length > 1 : false;
 const citySlug = item?.city ? item.city.toLowerCase().replace(/\s+/g, '-') : null;
+
+// ── SEO: Canonical URL & Product schema ──────────────────────────────────────
+const canonical = new URL(`/discover/${slug}`, Astro.site);
+
+const itemSchema = item ? {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Product',
+      '@id': `${canonical}#product`,
+      name: item.name,
+      description: `${item.name}${item.designer ? ` by ${item.designer}` : ''}. Industrial design project.`,
+      image: item.images?.map((img: any) => img.image_url).filter(Boolean),
+      url: canonical.toString(),
+      ...(item.designer ? { brand: { '@type': 'Brand', name: item.designer } } : {}),
+      ...(item.year ? { releaseDate: item.year } : {}),
+    },
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Discover', url: '/discover' },
+      { name: item.name, url: `/discover/${slug}` },
+    ]),
+  ],
+} : null;
 ---
 
 <Layout 
   title={item ? `${item.name}${item.designer ? ` by ${item.designer}` : ''} | Acceso Discover` : 'Loading...'}
   description={item ? `${item.name}${item.designer ? ` by ${item.designer}` : ''}. Industrial design project gallery.` : ''}
+  canonical={canonical}
+  schema={itemSchema || undefined}
 >
   <Navbar />
   
@@ -184,7 +211,7 @@ const citySlug = item?.city ? item.city.toLowerCase().replace(/\s+/g, '-') : nul
               {item.city && (
                 <div class="details-row">
                   <span class="detail-label">Location</span>
-                  <a href={citySlug ? `/?type=designers&city=${citySlug}` : '/designers'} class="detail-value underlined">{item.city}</a>
+                  <a href={citySlug ? `/designers/in/${citySlug}` : '/designers'} class="detail-value underlined">{item.city}</a>
                 </div>
               )}
             </div>

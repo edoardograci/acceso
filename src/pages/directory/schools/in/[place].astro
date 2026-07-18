@@ -128,7 +128,7 @@ function getPeriod(startStr: string, endStr: string) {
 // page is unique rather than identical boilerplate.
 function buildIntro(): string {
   const parts: string[] = [];
-  parts.push(`${locName} holds a recognised place on the global design map, valued for the character of its local design scene.`);
+  parts.push(`For those researching where to study industrial design, ${locName} holds a recognised place on the global design map, valued for the character of its local design scene.`);
 
   if (totalUniversities > 0) {
     const noun = totalUniversities === 1 ? 'school' : 'schools';
@@ -152,7 +152,7 @@ function buildIntro(): string {
 }
 const introText = buildIntro();
 
-const designersLink = isCity ? `/designers?city=${place}` : `/designers?country=${place}`;
+const designersLink = `/designers/in/${place}`;
 
 const canonical = new URL(`/directory/schools/in/${place}`, Astro.site);
 

@@ -29,6 +29,7 @@ export function itemList(params: { url: string; name: string; items: Array<{ url
     '@type': 'ItemList',
     url: params.url,
     name: params.name,
+    numberOfItems: params.items.length,
     itemListElement: params.items.map((it, idx) => ({
       '@type': 'ListItem',
       position: idx + 1,
@@ -63,6 +64,22 @@ export function website(params: { url: string; name: string }) {
     url: params.url,
     name: params.name,
     publisher: { '@id': `${params.url}#organization` },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${params.url}search?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
   };
 }
 
+export function faqPage(faqs: Array<{ q: string; a: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
+}

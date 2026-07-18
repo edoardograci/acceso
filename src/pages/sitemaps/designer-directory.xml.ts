@@ -20,12 +20,20 @@ export const GET: APIRoute = async ({ site, url }) => {
 
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const urls = [];
-  for (let p = 1; p <= totalPages; p++) {
+  // Page 1 canonicalises to /designers — submit /designers directly and skip
+  // /designers/page/1 to avoid a canonical conflict in the sitemap.
+  urls.push({
+    loc: new URL('/designers', site).toString(),
+    lastmod,
+    changefreq: 'daily' as const,
+    priority: 0.9,
+  });
+  for (let p = 2; p <= totalPages; p++) {
     urls.push({
       loc: new URL(`/designers/page/${p}`, site).toString(),
       lastmod,
       changefreq: 'weekly' as const,
-      priority: p === 1 ? 0.7 : 0.4,
+      priority: 0.4,
     });
   }
 

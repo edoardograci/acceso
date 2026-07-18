@@ -17,7 +17,7 @@ function uniq(parts: Array<string | null | undefined>): string[] {
 
 export function locationTitle(ctx: CityCtx): string {
   const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
-  return `Design studios in ${where} | Acceso`;
+  return `Industrial Designers & Studios in ${where} | Acceso`;
 }
 
 export function locationDescription(ctx: CityCtx): string {
