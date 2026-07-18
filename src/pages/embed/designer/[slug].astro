@@ -231,20 +231,45 @@ const widgetCode = `<iframe src="${embedOrigin}/embed/designer/${studio.slug}" w
           import('maplibre-gl/dist/maplibre-gl.css'),
         ]);
 
-        // Serve Geist glyphs from our own origin (public/fonts) instead of
-        // OpenFreeMap's Noto Sans, matching the main map.
+        // Serve glyphs through our own origin. The /api/fonts proxy serves our
+        // self-hosted Geist glyphs locally (fast, no extra network call) and
+        // lazily proxies any other fontstack (Noto Sans) from OpenFreeMap — but
+        // ONLY for the codepoint ranges a visible label actually needs, so
+        // non-Latin glyphs (CJK, Arabic, etc.) are fetched on demand. Without
+        // this, a designer from Japan/Korea/etc. shows a broken map because the
+        // static /fonts Geist PBFs are empty stubs for non-Latin ranges with no
+        // fallback. This mirrors the fix already applied to the main map.
+        // Fontstack names use underscores to match the on-disk folder names
+        // (Geist_Regular / Geist_Bold); MapLibre URL-encodes the stack and
+        // won't resolve spaces otherwise.
+        const STRIP_LAYERS = new Set([
+          'waterway_line_label',
+          'water_name_point_label',
+          'water_name_line_label',
+          'label_other',
+          'label_state',
+          'highway-shield-non-us',
+          'highway-shield-us-interstate',
+          'road_shield_us',
+        ]);
         const styleRes = await fetch('https://tiles.openfreemap.org/styles/positron');
         const styleJson = await styleRes.json();
-        styleJson.glyphs = `${window.location.origin}/fonts/{fontstack}/{range}.pbf`;
-        const FONT_MAP: Record<string, string> = {
-          'Noto Sans Regular': 'Geist_Regular',
-          'Noto Sans Bold': 'Geist_Bold',
-          'Noto Sans Italic': 'Geist_Regular',
+        if (styleJson && Array.isArray(styleJson.layers)) {
+          styleJson.layers = styleJson.layers.filter(
+            (l: any) => !STRIP_LAYERS.has(l.id)
+          );
+        }
+        styleJson.glyphs = `${window.location.origin}/api/fonts/{fontstack}/{range}.pbf`;
+        const FONT_MAP: Record<string, string[]> = {
+          'Noto Sans Regular': ['Geist_Regular', 'Noto Sans Regular'],
+          'Noto Sans Bold': ['Geist_Bold', 'Noto Sans Bold'],
+          'Noto Sans Italic': ['Geist_Regular', 'Noto Sans Regular'],
         };
         for (const layer of styleJson.layers || []) {
           const tf = layer?.layout?.['text-font'];
           if (Array.isArray(tf)) {
-            layer.layout['text-font'] = tf.map((f: string) => FONT_MAP[f] || f);
+            const mapped = tf.flatMap((f: string) => FONT_MAP[f] || [f]);
+            layer.layout['text-font'] = Array.from(new Set(mapped));
           }
         }
 

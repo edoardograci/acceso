@@ -582,6 +582,28 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+
+  /* Hover pill shown above a single pin on hover only (no load cost, desktop only).
+     Defined globally so every map page (homepage, /designers/in, /map/mine, etc.)
+     renders it consistently — the JS that creates the element lives in map-init.ts
+     and is shared, but the style was previously only present on the homepage. */
+  .map-hover-pill {
+    background: #ffffff;
+    color: #000000;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    padding: 7px 11px;
+    border-radius: 999px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14);
+    pointer-events: none;
+    transform: translateY(-2px);
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* ===================================================
