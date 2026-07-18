@@ -5,6 +5,7 @@ import Footer from '../../../../components/Footer.astro';
 import EventBasicCard from '../../../../components/EventBasicCard.astro';
 import DirectoryCard from '../../../../components/DirectoryCard.astro';
 import { normalizeImage } from '../../../../lib/images';
+import { withCovers } from '../../../../lib/moodboard';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
 
 const place = Astro.params.place!;
@@ -107,7 +108,7 @@ try {
   } catch (e) {
     console.error('[Museum Location] Moodboard fetch failed:', e);
   }
-  relProjects = inLocation(moodboardData ?? [], place, mode === 'city');
+  relProjects = inLocation(withCovers(moodboardData ?? []), place, mode === 'city');
 
   // Lead items for this page (museums in this location), filtered from the
   // actual data using the same city/country slug logic as the fairs page.

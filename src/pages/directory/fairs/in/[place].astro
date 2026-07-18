@@ -5,6 +5,7 @@ import Footer from '../../../../components/Footer.astro';
 import EventBasicCard from '../../../../components/EventBasicCard.astro';
 import DirectoryCard from '../../../../components/DirectoryCard.astro';
 import { normalizeImage } from '../../../../lib/images';
+import { withCovers } from '../../../../lib/moodboard';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
 
 const place = Astro.params.place!;
@@ -109,7 +110,7 @@ try {
   } catch (e) {
     console.error('[Fairs Location] Moodboard fetch failed:', e);
   }
-  relProjects = inLocation(moodboardData ?? [], place, mode === 'city');
+  relProjects = inLocation(withCovers(moodboardData ?? []), place, mode === 'city');
 } catch (e) {
   console.error('[Fairs Location] Fetch failed:', e);
 }

@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import { normalizeImage } from '../../lib/images';
 import { itemList } from '../../lib/seo/schema';
+import { withCovers } from '../../lib/moodboard';
 
 interface ProductImage {
   id: string;
@@ -48,7 +49,7 @@ try {
   }
 }
 
-const visibleItems = moodboardItems.filter((item) => item.cover);
+const visibleItems = withCovers(moodboardItems).filter((item) => item.cover);
 
 // ── SEO: Canonical + ItemList schema ───────────────────────────────────────────
 const canonical = new URL('/discover', Astro.site);
