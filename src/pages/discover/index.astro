@@ -49,7 +49,7 @@ try {
   }
 }
 
-const visibleItems = withCovers(moodboardItems).filter((item) => item.cover);
+const visibleItems = withCovers(moodboardItems).filter((item) => item.cover).reverse();
 
 // ── SEO: Canonical + ItemList schema ───────────────────────────────────────────
 const canonical = new URL('/discover', Astro.site);
@@ -109,29 +109,101 @@ const discoverSchema = itemList({
               try { cache = JSON.parse(localStorage.getItem(KEY) || '{}'); }
               catch (e) { cache = {}; }
 
-              const imgs = grid.querySelectorAll('img');
+              const items = Array.from(grid.querySelectorAll('.discover-item'));
+              const imgs = items.map((el) => el.querySelector('img')).filter(Boolean);
+
+              // Decide every item's position up front (before images load) so the
+              // masonry never reorders on screen. Items are absolutely positioned
+              // from a precomputed aspect ratio; new images self-seed the cache.
+              let placed = false;
+              const columnCount = () => {
+                const w = window.innerWidth;
+                if (w >= 1400) return 5;
+                if (w >= 1100) return 4;
+                if (w >= 768) return 3;
+                return 2;
+              };
+              const gapFor = () => (window.innerWidth <= 640 ? 10 : window.innerWidth < 768 ? 16 : window.innerWidth < 1100 ? 18 : 20);
+
+              const layout = () => {
+                const cols = columnCount();
+                const gap = gapFor();
+                const totalGap = gap * (cols - 1);
+                const colW = (grid.clientWidth - totalGap) / cols;
+                const colH = new Array(cols).fill(0);
+
+                grid.style.position = 'relative';
+
+                items.forEach((el) => {
+                  const img = el.querySelector('img');
+                  const src = img && img.getAttribute('src');
+                  const ar = src && cache[src] ? cache[src] : '1 / 1';
+                  const [rw, rh] = ar.split('/').map((n) => parseFloat(n.trim()));
+                  const ratio = rh && rw ? rh / rw : 1;
+                  const h = colW * ratio;
+
+                  let min = 0;
+                  for (let i = 1; i < cols; i++) if (colH[i] < colH[min]) min = i;
+
+                  const x = min * (colW + gap);
+                  const y = colH[min];
+                  el.style.position = 'absolute';
+                  el.style.width = colW + 'px';
+                  el.style.height = h + 'px';
+                  el.style.transform = `translate(${x}px, ${y}px)`;
+                  el.style.margin = '0';
+
+                  const imgEl = el.querySelector('img');
+                  if (imgEl) {
+                    imgEl.style.aspectRatio = ar;
+                    imgEl.style.width = '100%';
+                    imgEl.style.height = '100%';
+                    imgEl.style.objectFit = 'cover';
+                  }
+
+                  colH[min] += h + gap;
+                });
+
+                grid.style.height = Math.max(...colH) + 'px';
+                placed = true;
+              };
+
+              // Seed aspect ratios from cache before first paint, then lay out.
               imgs.forEach((img) => {
                 const src = img.getAttribute('src');
-                if (!src) return;
-                if (cache[src]) img.style.aspectRatio = cache[src];
+                if (src && cache[src]) img.style.aspectRatio = cache[src];
+              });
 
-                const record = () => {
-                  if (!img.naturalWidth || !img.naturalHeight) return;
-                  const ar = img.naturalWidth + ' / ' + img.naturalHeight;
-                  if (cache[src] !== ar) {
-                    cache[src] = ar;
-                    img.style.aspectRatio = ar;
-                    try {
-                      const keys = Object.keys(cache);
-                      if (keys.length > MAX) delete cache[keys[0]];
-                      localStorage.setItem(KEY, JSON.stringify(cache));
-                    } catch (e) {}
-                  }
-                  img.classList.add('is-loaded');
-                };
+              const onResize = () => { if (placed) layout(); };
+              window.addEventListener('resize', onResize);
 
-                if (img.complete && img.naturalWidth) record();
-                else img.addEventListener('load', record, { once: true });
+              const tryLayout = () => { if (!placed) layout(); };
+              if (document.readyState !== 'loading') tryLayout();
+              else window.addEventListener('DOMContentLoaded', tryLayout);
+              // Safety: ensure layout even if load events are missed.
+              window.addEventListener('load', tryLayout);
+              setTimeout(tryLayout, 300);
+
+              const record = (img) => {
+                if (!img.naturalWidth || !img.naturalHeight) return;
+                const ar = img.naturalWidth + ' / ' + img.naturalHeight;
+                const src = img.getAttribute('src');
+                if (src && cache[src] !== ar) {
+                  cache[src] = ar;
+                  try {
+                    const keys = Object.keys(cache);
+                    if (keys.length > MAX) delete cache[keys[0]];
+                    localStorage.setItem(KEY, JSON.stringify(cache));
+                  } catch (e) {}
+                }
+                img.classList.add('is-loaded');
+                // Ratio may have changed from the placeholder → recompute positions.
+                if (placed) layout();
+              };
+
+              imgs.forEach((img) => {
+                if (img.complete && img.naturalWidth) record(img);
+                else img.addEventListener('load', () => record(img), { once: true });
               });
             })();
           </script>
@@ -199,27 +271,28 @@ const discoverSchema = itemList({
   }
 
   .discover-grid {
-    columns: 2;
-    column-gap: 16px;
+    position: relative;
   }
 
   .discover-item {
     display: block;
-    break-inside: avoid;
-    margin-bottom: 16px;
     border-radius: 12px;
     overflow: hidden;
     text-decoration: none;
-    transition: transform 0.2s ease;
+    will-change: transform;
   }
 
-  .discover-item:hover {
-    transform: translateY(-2px);
+  .discover-item:hover .discover-image {
+    transform: scale(1.02);
+  }
+
+  .discover-image {
+    transition: transform 0.2s ease;
   }
 
   .discover-image {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
     object-fit: cover;
     vertical-align: middle;
@@ -257,26 +330,6 @@ const discoverSchema = itemList({
     font-family: var(--font-sans);
   }
 
-  @media (min-width: 768px) {
-    .discover-grid {
-      columns: 3;
-      column-gap: 18px;
-    }
-  }
-
-  @media (min-width: 1100px) {
-    .discover-grid {
-      columns: 4;
-      column-gap: 20px;
-    }
-  }
-
-  @media (min-width: 1400px) {
-    .discover-grid {
-      columns: 5;
-    }
-  }
-
   @media (max-width: 900px) {
     .discover-hero {
       margin-bottom: 48px;
@@ -288,12 +341,11 @@ const discoverSchema = itemList({
       padding: 0 16px;
     }
 
-    .discover-grid {
-      column-gap: 10px;
+    .discover-item {
+      border-radius: 10px;
     }
 
-    .discover-item {
-      margin-bottom: 10px;
+    .discover-image {
       border-radius: 10px;
     }
   }
