@@ -1,6 +1,7 @@
 // src/lib/auth/magic-link.ts
 import { TursoHttpClient } from '../turso';
 import type { Env } from '../../env.d';
+import { notifyNewUser } from '../notify-new-user';
 
 export async function generateMagicLink(email: string, env: Env, requestUrl?: string): Promise<{ link?: string; error?: string; retryAfter?: number }> {
   const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
@@ -29,10 +30,11 @@ export async function generateMagicLink(email: string, env: Env, requestUrl?: st
     const insertNow = Math.floor(Date.now() / 1000);
 
     // Try to insert (will be ignored if email already exists due to UNIQUE constraint)
-    await turso.execute({
+    const insertResult = await turso.execute({
       sql: 'INSERT OR IGNORE INTO users (id, email, email_verified, created_at, updated_at) VALUES (?, ?, 0, ?, ?)',
       args: [newUserId, email, insertNow, insertNow],
     });
+    const isNewUser = insertResult.rowsAffected === 1;
 
     // Now get the user (whether just inserted or existing)
     const userResult = await turso.execute({
@@ -59,6 +61,11 @@ export async function generateMagicLink(email: string, env: Env, requestUrl?: st
       sql: 'INSERT INTO magic_link_tokens (id, user_id, email, expires_at, created_at) VALUES (?, ?, ?, ?, ?)',
       args: [tokenId, userId, email, expiresAt, nowTimestamp],
     });
+
+    // Notify team of a new registration (best-effort, never blocks the flow)
+    if (isNewUser) {
+      await notifyNewUser(email, 'magic-link', env);
+    }
 
     // Determine site URL
     let siteUrl = env.PUBLIC_SITE_URL || 'http://localhost:4321';

@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { createGoogleOAuth } from '../../../lib/auth/oauth';
 import { createLucia } from '../../../lib/auth/lucia';
 import { TursoHttpClient } from '../../../lib/turso';
+import { notifyNewUser } from '../../../lib/notify-new-user';
 import type { Env } from '../../../env.d';
 import { OAuth2RequestError } from 'arctic';
 
@@ -134,6 +135,11 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
     const lucia = createLucia(env);
     const session = await lucia.createSession(userId, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
+
+    // Notify team of a new registration
+    if (isNewUser) {
+      await notifyNewUser(googleUser.email, 'google', env);
+    }
 
     // Set session cookie
     cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.attributes);

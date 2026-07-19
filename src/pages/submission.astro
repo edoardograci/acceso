@@ -168,9 +168,10 @@ const user = Astro.locals.user;
               <!-- Captcha Gate (anti-spam) -->
               <div class="captcha-block">
                 <input type="hidden" name="captcha_token" id="captcha-token" />
+                <p class="captcha-hint suggest-captcha-hint" id="captcha-hint">Complete the steps above to reveal the captcha.</p>
                 <div
                   id="turnstile-container"
-                  class="turnstile-container"
+                  class="turnstile-container hidden"
                   data-sitekey={turnstileSiteKey || ''}
                 ></div>
                 <p class="captcha-error hidden" id="captcha-error">Please complete the captcha.</p>
@@ -218,7 +219,7 @@ const user = Astro.locals.user;
       {!user && (
         <div class="sub-layout">
         <div class="sub-split">
-          <div class="sub-left">
+          <div class="sub-col sub-col-submit active" data-panel="submit">
             <section class="sub-hero">
               <div class="sub-hero-content">
                 <h1 class="sub-hero-title">Put your studio<br>on the map</h1>
@@ -233,40 +234,106 @@ const user = Astro.locals.user;
             </section>
 
             <section class="sub-section">
+              <div class="sub-block sub-card">
+                <span class="sub-label">Why studios join</span>
+                <ul class="sub-perks">
+                  <li>✦ Free permanent listing</li>
+                  <li>✦ Featured on the map, in search, and in curated collections</li>
+                  <li>✦ Reviewed to keep the platform focused and high quality</li>
+                  <li>✦ Reach an audience actively looking for independent design</li>
+                  <li>✦ Become part of a growing international design network</li>
+                </ul>
+              </div>
+            </section>
+          </div>
+
+          <div class="sub-col sub-col-suggest" data-panel="suggest">
+            <section class="sub-hero">
+              <div class="sub-hero-content">
+                <h2 class="sub-hero-title">Have a<br>recommendation?</h2>
+                <p class="sub-hero-sub sub-hero-sub-wide">Know a designer, school, museum, award, or fair that should be on Acceso? Send us a suggestion. You don't need to provide all the details. We'll take care of the research before publishing anything.</p>
+              </div>
+            </section>
+
+            <section class="sub-section">
               <div class="sub-section-inner">
-            <div class="sub-block">
-              <span class="sub-label">Why studios join</span>
-              <ul class="sub-perks">
-                <li><span class="perk-hl">✦ Free permanent listing</span></li>
-                <li>✦ Featured on the map, in search, and in curated collections</li>
-                <li>✦ Reviewed to keep the platform focused and high quality</li>
-                <li>✦ Reach an audience actively looking for independent design</li>
-                <li>✦ Become part of a growing international design network</li>
-              </ul>
-            </div>
+                <form id="suggest-form" class="suggest-form">
+                  <div class="suggest-card">
+                    <div class="fields-grid">
+                      <div class="input-group">
+                        <label for="suggest_type">Type</label>
+                        <div class="select-wrap custom-select" id="suggest-type-select" data-name="suggest_type">
+                          <button type="button" class="cs-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="cs-value" data-placeholder="Select a type">Designer</span>
+                            <svg class="select-chevron cs-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                          </button>
+                          <ul class="cs-list" role="listbox" tabindex="-1">
+                            <li class="cs-option" role="option" data-value="Designer" aria-selected="true">Designer</li>
+                            <li class="cs-option" role="option" data-value="School" aria-selected="false">School</li>
+                            <li class="cs-option" role="option" data-value="Museum" aria-selected="false">Museum</li>
+                            <li class="cs-option" role="option" data-value="Award" aria-selected="false">Award</li>
+                            <li class="cs-option" role="option" data-value="Fair" aria-selected="false">Fair</li>
+                          </ul>
+                          <select name="suggest_type" id="suggest_type" required aria-required="true" class="cs-native">
+                            <option value="Designer">Designer</option>
+                            <option value="School">School</option>
+                            <option value="Museum">Museum</option>
+                            <option value="Award">Award</option>
+                            <option value="Fair">Fair</option>
+                          </select>
+                        </div>
+                      </div>
 
-            <div class="sub-block">
-              <span class="sub-label">What is Acceso?</span>
-              <p class="sub-body sub-emphasis">Acceso helps people discover independent design studios around the world.</p>
-              <p class="sub-body">Whether someone is exploring a new city's design scene, looking for a collaborator, researching studios, or simply searching for inspiration, Acceso makes independent design easier to find. Every studio is reviewed by hand, creating a curated collection you can trust.</p>
-            </div>
+                      <div class="input-group">
+                        <label for="suggest_name">Name</label>
+                        <input type="text" name="suggest_name" id="suggest_name" required aria-required="true" placeholder="Name of place" />
+                      </div>
 
-              <div class="sub-block">
-                <span class="sub-label">Why join?</span>
-                <p class="sub-body sub-emphasis">Your website is for people who already know you.<br>Acceso is for the people who don't.</p>
-                <p class="sub-body">By joining Acceso, your studio becomes part of a global map of independent design, making it easier for the right people to discover your work while exploring cities, searching for studios, or browsing curated collections.</p>
+                      <div class="fields-grid split">
+                        <div class="input-group">
+                          <label for="suggest_city">City</label>
+                          <input type="text" name="suggest_city" id="suggest_city" required aria-required="true" placeholder="e.g. Milan" />
+                        </div>
+                        <div class="input-group">
+                          <label for="suggest_website">Website <span class="opt">(optional)</span></label>
+                          <input type="url" name="suggest_website" id="suggest_website" placeholder="https://..." />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="captcha-block suggest-captcha">
+                    <input type="hidden" name="suggest_captcha_token" id="suggest-captcha-token" />
+                    <p class="captcha-hint suggest-captcha-hint" id="suggest-captcha-hint">Fill in the required fields above to reveal the captcha.</p>
+                    <div id="suggest-turnstile" class="turnstile-container hidden" data-sitekey={turnstileSiteKey || ''}></div>
+                    <p class="captcha-error hidden" id="suggest-captcha-error">Please complete the captcha.</p>
+                  </div>
+
+                  <button type="submit" class="btn-continue suggest-submit">
+                    Send Suggestion
+                  </button>
+                  <p class="suggest-error hidden" id="suggest-error"></p>
+                </form>
+
+                <div id="suggest-success" class="success-screen hidden">
+                  <div class="success-icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  </div>
+                  <h3 class="success-h" style="font-size:22px;margin:0 0 12px;">Thank you!</h3>
+                  <p class="success-p" style="font-size:15px;max-width:320px;margin:0 auto;">Your suggestions have been received. We'll review them and research each place before adding it to Acceso.</p>
+                  <button type="button" class="btn-suggest-another" id="suggest-another">
+                    Send another
+                  </button>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
           </div>
+        </div>
 
-          <div class="sub-sticky-map">
-            <aside class="sub-hero-image">
-              <div class="sub-hero-img-wrapper">
-                <img src="/images/submission.webp" alt="Submission" class="sub-hero-img" />
-              </div>
-            </aside>
-          </div>
+        <!-- Mobile tab switcher (bottom pill, mirrors .map-filters on the map page) -->
+        <div class="sub-mobile-tabs" role="tablist" aria-label="Submission page sections">
+          <button type="button" class="sub-tab-btn active" data-tab="submit" role="tab" aria-selected="true">Submit studio</button>
+          <button type="button" class="sub-tab-btn" data-tab="suggest" role="tab" aria-selected="false">Suggest place</button>
         </div>
         </div>
       )}
@@ -319,7 +386,7 @@ const user = Astro.locals.user;
       padding: var(--page-top-spacing) 24px 140px;
     }
 
-    /* LOGGED-OUT SPLIT (mirrors the homepage map layout) */
+    /* LOGGED-OUT SPLIT: two equal columns */
     .sub-split {
       position: relative;
       z-index: 10;
@@ -327,22 +394,16 @@ const user = Astro.locals.user;
       align-items: flex-start;
       width: 100%;
       max-width: 1600px;
-      margin:0 auto;
+      margin: 0 auto;
       padding: var(--page-top-spacing) 40px 120px;
+      gap: 64px;
       box-sizing: border-box;
     }
 
-    .sub-left {
-      width: 50%;
-      flex: 0 0 50%;
-      box-sizing: border-box;
-      padding-right: 24px;
-    }
-
-    .sub-sticky-map {
-      flex: 0 0 50%;
+    .sub-col {
+      flex: 1 1 0;
       min-width: 0;
-      align-self: flex-start;
+      box-sizing: border-box;
     }
 
     .sub-hero {
@@ -417,26 +478,8 @@ const user = Astro.locals.user;
       max-width: 32ch;
     }
 
-    .sub-hero-image {
-      position: sticky;
-      top: calc(var(--navbar-height) + 24px);
-      width: 100%;
-      height: calc(100vh - var(--navbar-height) - 48px - 120px);
-      margin-left: 16px;
-      border-radius: 24px;
-      overflow: hidden;
-      border: 1px solid var(--color-stroke);
-      background: var(--color-bg-secondary);
-    }
-    .sub-hero-img-wrapper {
-      width: 100%;
-      height: 100%;
-    }
-    .sub-hero-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
+    .sub-hero-sub-wide {
+      max-width: 46ch;
     }
 
     /* CONTENT SECTIONS */
@@ -457,6 +500,15 @@ const user = Astro.locals.user;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    /* "Why studios join" nested card */
+    .sub-card {
+      background: var(--color-white);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .sub-label {
@@ -512,43 +564,115 @@ const user = Astro.locals.user;
       box-decoration-break: clone;
     }
 
+    /* MOBILE TAB SWITCHER (pill, fixed to bottom, mirrors .map-filters) */
+    .sub-mobile-tabs {
+      display: none;
+    }
+
+    /* DESKTOP ONLY: yellow background on the left (submit) column content */
+    @media (min-width: 901px) {
+      .sub-col-submit {
+        background: rgba(237, 255, 119, 0.5);
+        border-radius: 24px;
+        padding: 56px 48px 48px 48px;
+        align-self: stretch;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Push the "Why studios join" card to the bottom of the yellow column */
+      .sub-col-submit .sub-hero {
+        flex: 1 1 auto;
+      }
+      .sub-col-submit .sub-card {
+        margin-top: 48px;
+      }
+    }
+
     @media (max-width: 900px) {
       .sub-layout {
         display: flex;
         flex-direction: column;
+        padding-bottom: 96px; /* clear the fixed bottom pill */
       }
       .sub-split {
         flex-direction: column;
-        gap: 40px;
-        padding: var(--page-top-spacing) 24px 80px;
+        gap: 0;
+        padding: var(--page-top-spacing) 24px 40px;
       }
-      .sub-left {
+      .sub-col {
+        display: none;
         width: 100%;
-        padding-right: 0;
       }
-      .sub-sticky-map {
-        flex: none;
-        width: 100%;
-        order: -1;
-      }
-      .sub-hero-image {
-        position: static;
-        top: auto;
-        width: 100%;
-        height: auto;
-        margin: 0;
-        aspect-ratio: 4 / 3;
-        min-height: 0;
-        border-radius: 16px;
+      .sub-col.active {
+        display: block;
       }
       .sub-section {
-        padding-top: 32px;
+        padding-top: 24px;
       }
       .sub-section-inner {
-        gap: 48px;
+        gap: 40px;
       }
       .sub-emphasis {
         font-size: 20px;
+      }
+      .suggest-card .fields-grid.split { grid-template-columns: 1fr; }
+      .suggest-submit { height: 52px; font-size: 16px; }
+
+      /* Mobile: keep the "Why studios join" card left-aligned and flush with content */
+      .sub-card {
+        padding: 0;
+        background: transparent;
+        align-items: flex-start;
+        text-align: left;
+      }
+      .sub-card .sub-label,
+      .sub-card .sub-perks,
+      .sub-card .sub-perks li {
+        text-align: left;
+        align-items: flex-start;
+      }
+
+      .sub-mobile-tabs {
+        position: fixed;
+        bottom: max(24px, env(safe-area-inset-bottom, 0px) + 16px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 50;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 6px;
+        padding: 6px;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 999px;
+        border: 1px solid var(--color-stroke);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      }
+      .sub-tab-btn {
+        pointer-events: auto;
+        padding: 11px 18px;
+        border-radius: 999px;
+        border: none;
+        background: transparent;
+        color: var(--color-text-muted);
+        font-family: var(--font-sans);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: color 0.2s ease, background 0.2s ease;
+      }
+      .sub-tab-btn:hover {
+        color: var(--color-black);
+        background: var(--color-bg-secondary);
+      }
+      .sub-tab-btn.active {
+        background: var(--color-yellow);
+        color: var(--color-black);
       }
     }
 
@@ -652,7 +776,7 @@ const user = Astro.locals.user;
     .input-group label { font-size: 13px; font-weight: 400; color: var(--color-black); text-transform: uppercase; letter-spacing: 0.05em; }
     .input-group label .opt { font-weight: 400; text-transform: lowercase; }
     
-    .input-group input, .input-group textarea {
+    .input-group input, .input-group textarea, .input-group select {
       background: var(--color-bg-secondary);
       border: 1px solid var(--color-stroke);
       border-radius: 12px;
@@ -663,7 +787,108 @@ const user = Astro.locals.user;
       transition: border-color 0.2s ease;
     }
     .input-group input::placeholder, .input-group textarea::placeholder { color: var(--color-gray); }
-    .input-group input:focus, .input-group textarea:focus { border-color: var(--color-black); outline: none; }
+    .input-group input:focus, .input-group textarea:focus, .input-group select:focus { border-color: var(--color-black); outline: none; }
+
+    /* Custom select (Type dropdown) — fully styled custom dropdown */
+    .select-wrap {
+      position: relative;
+    }
+
+    /* Hide native select visually but keep it accessible/functional */
+    .custom-select .cs-native {
+      position: absolute;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+      pointer-events: none;
+      padding: 0;
+      border: none;
+      margin: 0;
+    }
+
+    .cs-trigger {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-stroke);
+      border-radius: 12px;
+      padding: 16px 20px;
+      color: var(--color-black);
+      font-size: 16px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      text-align: left;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+    .cs-trigger:focus,
+    .custom-select.open .cs-trigger {
+      border-color: var(--color-black);
+      outline: none;
+    }
+    .cs-value {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cs-chevron {
+      flex-shrink: 0;
+      color: var(--color-gray);
+      transition: transform 0.2s ease, color 0.2s ease;
+      position: static;
+      transform: none;
+    }
+    .custom-select.open .cs-chevron {
+      transform: rotate(180deg);
+      color: var(--color-black);
+    }
+
+    .cs-list {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      z-index: 60;
+      list-style: none;
+      margin: 0;
+      padding: 6px;
+      background: var(--color-white);
+      border: 1px solid var(--color-stroke);
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .custom-select.open .cs-list {
+      display: flex;
+      animation: csPop 0.18s ease-out;
+    }
+    @keyframes csPop {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cs-option {
+      padding: 12px 14px;
+      border-radius: 9px;
+      font-size: 16px;
+      color: var(--color-black);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .cs-option:hover,
+    .cs-option.active {
+      background: var(--color-yellow);
+    }
+    .cs-option[aria-selected="true"] {
+      font-weight: 700;
+    }
 
     .input-group input:-webkit-autofill,
     .input-group textarea:-webkit-autofill {
@@ -792,7 +1017,7 @@ const user = Astro.locals.user;
       gap: 24px;
     }
     .success-icon {
-      background: rgba(237, 255, 119, 0.1);
+      background: rgba(237, 255, 119, 0.5);
       width: 120px;
       height: 120px;
       border-radius: 50%;
@@ -800,7 +1025,7 @@ const user = Astro.locals.user;
       align-items: center;
       justify-content: center;
       margin-bottom: 12px;
-      border: 1px solid rgba(237, 255, 119, 0.2);
+      border: 1px solid rgba(237, 255, 119, 0.5);
     }
     .success-title { font-family: var(--font-sans); font-size: 36px; font-weight: 400; color: var(--color-black); }
     .success-p { color: var(--color-gray); font-size: 18px; line-height: 1.6; max-width: 480px; }
@@ -842,6 +1067,42 @@ const user = Astro.locals.user;
       font-family: var(--font-sans);
       font-size: 11px;
       color: var(--color-gray);
+    }
+
+    /* SUGGEST A PLACE (inline form, styled with the shared .input-group / .fields-grid rules) */
+    .suggest-error {
+      color: #c0392b;
+      font-size: 14px;
+      margin: 12px 0 0;
+    }
+
+    .suggest-card {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .suggest-captcha { margin-top: 24px; }
+    .suggest-submit { width: 100%; justify-content: center; margin-top: 24px; }
+
+    .btn-suggest-another {
+      height: 48px;
+      padding: 0 28px;
+      background: var(--color-bg-secondary);
+      color: var(--color-black);
+      border: 1px solid var(--color-stroke);
+      border-radius: 999px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .btn-suggest-another:hover {
+      background: #EBEBED;
+      border-color: #D4D4D8;
+      color: var(--color-black);
     }
   </style>
 
@@ -890,9 +1151,10 @@ const user = Astro.locals.user;
         }
       });
 
-      // Render Turnstile only when step 3 is visible (it won't render correctly in display:none).
+      // Render Turnstile only when step 3 is visible (it won't render correctly in display:none),
+      // and only once the required fields have been filled.
       if (step === 3) {
-        ensureTurnstileRendered();
+        maybeRenderTurnstile();
       }
 
       // Update Path
@@ -914,6 +1176,27 @@ const user = Astro.locals.user;
       });
 
       window.scrollTo(0, 0);
+    }
+
+    // True once all required submission fields are filled (so the captcha
+    // only appears at the end, after the user has done the work).
+    function submissionFieldsReady(): boolean {
+      const fd = new FormData(form as HTMLFormElement);
+      const name = String(fd.get('name') || '').trim();
+      const website = String(fd.get('website') || '').trim();
+      const city = String(fd.get('city') || '').trim();
+      const country = String(fd.get('country') || '').trim();
+      const description = String(fd.get('description') || '').trim();
+      return Boolean(name && website && city && country && description && uploadedFile);
+    }
+
+    // Reveal the captcha only after the required fields are filled.
+    function maybeRenderTurnstile() {
+      if (!turnstileContainer || !turnstileSiteKey) return;
+      if (!submissionFieldsReady()) return;
+      document.getElementById('captcha-hint')?.classList.add('hidden');
+      turnstileContainer.classList.remove('hidden');
+      ensureTurnstileRendered();
     }
 
     function ensureTurnstileRendered() {
@@ -1137,4 +1420,270 @@ const user = Astro.locals.user;
     };
     descriptionField?.addEventListener('input', syncDescCount);
     syncDescCount();
+
+    /* ===== SUGGEST A PLACE (inline form) ===== */
+    const suggestForm = document.getElementById('suggest-form') as HTMLFormElement | null;
+    const suggestSuccess = document.getElementById('suggest-success');
+    const suggestError = document.getElementById('suggest-error');
+    const suggestCaptchaTokenInput = document.getElementById('suggest-captcha-token') as HTMLInputElement | null;
+    const suggestCaptchaError = document.getElementById('suggest-captcha-error');
+    const suggestTurnstileContainer = document.getElementById('suggest-turnstile') as HTMLElement | null;
+    const suggestSiteKey = suggestTurnstileContainer?.dataset.sitekey || '';
+    let suggestTurnstileWidgetId: string | null = null;
+
+    function resetSuggestCaptcha() {
+      if (suggestTurnstileWidgetId && (window as any).turnstile?.reset) {
+        try {
+          (window as any).turnstile.reset(suggestTurnstileWidgetId);
+        } catch {}
+      }
+      if (suggestCaptchaTokenInput) suggestCaptchaTokenInput.value = '';
+      suggestCaptchaError?.classList.add('hidden');
+    }
+
+    function suggestFieldsReady(): boolean {
+      const fd = new FormData(suggestForm as HTMLFormElement);
+      const type = String(fd.get('suggest_type') || '').trim();
+      const name = String(fd.get('suggest_name') || '').trim();
+      const city = String(fd.get('suggest_city') || '').trim();
+      return Boolean(type && name && city);
+    }
+
+    function renderSuggestTurnstile() {
+      if (!suggestTurnstileContainer || !suggestSiteKey) return;
+      if (suggestTurnstileWidgetId) return;
+      // Only show the captcha once the required fields are filled.
+      if (!suggestFieldsReady()) return;
+      const captchaHint = document.getElementById('suggest-captcha-hint');
+      captchaHint?.classList.add('hidden');
+      suggestTurnstileContainer.classList.remove('hidden');
+      const start = Date.now();
+      const tryRender = () => {
+        const t = (window as any).turnstile;
+        if (t && typeof t.render === 'function') {
+          suggestTurnstileContainer.innerHTML = '';
+          try {
+            suggestTurnstileWidgetId = t.render(suggestTurnstileContainer, {
+              sitekey: suggestSiteKey,
+              theme: 'light',
+              callback: (token: string) => {
+                if (suggestCaptchaTokenInput) suggestCaptchaTokenInput.value = token;
+                suggestCaptchaError?.classList.add('hidden');
+              },
+              'expired-callback': () => {
+                if (suggestCaptchaTokenInput) suggestCaptchaTokenInput.value = '';
+              },
+            });
+          } catch {
+            suggestTurnstileWidgetId = null;
+          }
+          return;
+        }
+        if (Date.now() - start > 6000) return;
+        requestAnimationFrame(tryRender);
+      };
+      requestAnimationFrame(tryRender);
+    }
+
+    // Reveal the captcha only after the required fields are filled.
+    function maybeRenderSuggestTurnstile() {
+      if (suggestFieldsReady()) renderSuggestTurnstile();
+    }
+
+    /* ===== CUSTOM TYPE DROPDOWN ===== */
+    const csRoot = document.getElementById('suggest-type-select');
+    const csTrigger = csRoot?.querySelector<HTMLButtonElement>('.cs-trigger');
+    const csValue = csRoot?.querySelector<HTMLElement>('.cs-value');
+    const csOptions = Array.from(csRoot?.querySelectorAll<HTMLElement>('.cs-option') ?? []);
+    const csNative = csRoot?.querySelector<HTMLSelectElement>('.cs-native');
+    let csActiveIndex = csOptions.findIndex((o) => o.getAttribute('aria-selected') === 'true');
+    if (csActiveIndex < 0) csActiveIndex = 0;
+
+    function csSetValue(value: string) {
+      csOptions.forEach((o) => {
+        const selected = o.dataset.value === value;
+        o.setAttribute('aria-selected', selected ? 'true' : 'false');
+      });
+      if (csValue) csValue.textContent = value;
+      if (csNative) csNative.value = value;
+    }
+
+    function csOpen() {
+      csRoot?.classList.add('open');
+      csTrigger?.setAttribute('aria-expanded', 'true');
+      csOptions.forEach((o, i) => o.classList.toggle('active', i === csActiveIndex));
+    }
+
+    function csClose() {
+      csRoot?.classList.remove('open');
+      csTrigger?.setAttribute('aria-expanded', 'false');
+      csOptions.forEach((o) => o.classList.remove('active'));
+    }
+
+    csTrigger?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (csRoot?.classList.contains('open')) csClose();
+      else csOpen();
+    });
+
+    csOptions.forEach((opt, i) => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        csSetValue(opt.dataset.value || '');
+        csActiveIndex = i;
+        csClose();
+        csTrigger?.focus();
+      });
+      opt.addEventListener('mousemove', () => {
+        if (csRoot?.classList.contains('open')) {
+          csActiveIndex = i;
+          csOptions.forEach((o, j) => o.classList.toggle('active', j === i));
+        }
+      });
+    });
+
+    csTrigger?.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!csRoot?.classList.contains('open')) { csOpen(); return; }
+        csActiveIndex = e.key === 'ArrowDown'
+          ? (csActiveIndex + 1) % csOptions.length
+          : (csActiveIndex - 1 + csOptions.length) % csOptions.length;
+        csOptions.forEach((o, j) => o.classList.toggle('active', j === csActiveIndex));
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        if (csRoot?.classList.contains('open')) {
+          e.preventDefault();
+          csSetValue(csOptions[csActiveIndex].dataset.value || '');
+          csClose();
+        }
+      } else if (e.key === 'Escape') {
+        csClose();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (csRoot && !csRoot.contains(e.target as Node)) csClose();
+    });
+
+    if (csNative) {
+      csNative.addEventListener('change', () => {
+        csSetValue(csNative.value);
+        maybeRenderSuggestTurnstile();
+      });
+    }
+
+    // Reveal the captcha as soon as the required text fields are filled.
+    const suggestRequiredInputs = [
+      document.getElementById('suggest_name'),
+      document.getElementById('suggest_city'),
+      document.getElementById('suggest_website'),
+    ].filter(Boolean) as HTMLInputElement[];
+
+    suggestRequiredInputs.forEach((input) => {
+      input.addEventListener('input', maybeRenderSuggestTurnstile);
+    });
+
+    /* ===== MOBILE TAB SWITCHER (Submit studio / Suggest place) ===== */
+    const subTabBtns = document.querySelectorAll<HTMLButtonElement>('.sub-tab-btn');
+    const subCols = document.querySelectorAll<HTMLElement>('.sub-col');
+
+    function switchSubTab(tab: string) {
+      subCols.forEach((col) => col.classList.toggle('active', col.dataset.panel === tab));
+      subTabBtns.forEach((btn) => {
+        const isActive = btn.dataset.tab === tab;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      if (tab === 'suggest') maybeRenderSuggestTurnstile();
+    }
+
+    subTabBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        if (tab) switchSubTab(tab);
+      });
+    });
+
+    suggestForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      suggestError?.classList.add('hidden');
+
+      const token = suggestCaptchaTokenInput?.value || '';
+      if (suggestSiteKey && !token) {
+        suggestCaptchaError?.classList.remove('hidden');
+        return;
+      }
+      suggestCaptchaError?.classList.add('hidden');
+
+      const fd = new FormData(suggestForm);
+      const suggestion = {
+        type: String(fd.get('suggest_type') || 'Designer').trim(),
+        name: String(fd.get('suggest_name') || '').trim(),
+        city: String(fd.get('suggest_city') || '').trim(),
+        website: String(fd.get('suggest_website') || '').trim(),
+      };
+
+      if (!suggestion.name || !suggestion.city) {
+        if (suggestError) {
+          suggestError.textContent = 'Please provide at least a name and a city.';
+          suggestError.classList.remove('hidden');
+        }
+        return;
+      }
+
+      const submitBtn = suggestForm.querySelector('.suggest-submit') as HTMLButtonElement | null;
+      const originalHtml = submitBtn?.innerHTML || 'Send Suggestion';
+      if (submitBtn) {
+        submitBtn.innerHTML = 'Sending...';
+        submitBtn.disabled = true;
+      }
+
+      (async () => {
+        try {
+          const payload = new FormData();
+          payload.set('captcha_token', token);
+          payload.set('suggestions', JSON.stringify([suggestion]));
+
+          const res = await fetch('/api/suggestions', {
+            method: 'POST',
+            body: payload,
+            credentials: 'include',
+          });
+          const jsonRes = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error((jsonRes as any)?.error || 'Suggestion failed');
+          }
+
+          suggestForm.classList.add('hidden');
+          suggestSuccess?.classList.remove('hidden');
+        } catch (err: any) {
+          if (suggestError) {
+            suggestError.textContent = err?.message || 'Something went wrong. Please try again.';
+            suggestError.classList.remove('hidden');
+          }
+          resetSuggestCaptcha();
+        } finally {
+          if (submitBtn) {
+            submitBtn.innerHTML = originalHtml;
+            submitBtn.disabled = false;
+          }
+        }
+      })();
+    });
+
+    const suggestAnotherBtn = document.getElementById('suggest-another') as HTMLButtonElement | null;
+    suggestAnotherBtn?.addEventListener('click', () => {
+      suggestForm?.reset();
+      csSetValue(csOptions[0].dataset.value || '');
+      csActiveIndex = 0;
+      suggestError?.classList.add('hidden');
+      suggestSuccess?.classList.add('hidden');
+      suggestForm?.classList.remove('hidden');
+      // Reset captcha to its pre-filled state.
+      suggestTurnstileWidgetId = null;
+      suggestTurnstileContainer?.classList.add('hidden');
+      suggestTurnstileContainer && (suggestTurnstileContainer.innerHTML = '');
+      document.getElementById('suggest-captcha-hint')?.classList.remove('hidden');
+      if (suggestCaptchaTokenInput) suggestCaptchaTokenInput.value = '';
+    });
   </script>
