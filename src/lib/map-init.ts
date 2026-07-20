@@ -21,6 +21,14 @@ interface MapInstance {
   showRecenter: () => void;
   hideRecenter: () => void;
   itemType: 'studio' | 'museum' | 'university';
+  // Single, shared hover-pill marker. Created once and reused across every
+  // layer rebuild so type switches never leak an extra pill (each leaked pill
+  // carried a heavy drop-shadow and stacked into the "big, dark, layered"
+  // shadows reported on the map).
+  hoverMarker?: any;
+  hoverPill?: any;
+  showPill?: (text: string, lngLat: any) => void;
+  hidePill?: () => void;
 }
 
 function resolveItemCover(cover?: string | null): string {
@@ -165,26 +173,48 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance, maplibregl: any) {
   });
 
   // Hover pill: shows the item name above a single pin on hover only.
-  // Desktop/touch-capable devices skip it (no hover on touch). Created
-  // lazily on interaction, so it adds nothing to the initial load.
+  // Desktop/touch-capable devices skip it (no hover on touch). Created lazily
+  // on first interaction and *reused* (kept on `state`) so switching item
+  // types — which rebuilds the layers via setupMapLayers — never leaks a
+  // second pill onto the map. Each leaked pill kept its heavy drop-shadow and
+  // piled up, producing the "big, dark, layered" shadows reported on the map.
   const isTouch = window.matchMedia('(hover: none)').matches;
-  let hoverPill: any = null;
-  let hoverMarker: any = null;
   const showPill = (text: string, lngLat: any) => {
     if (isTouch) return;
-    if (!hoverMarker) {
-      hoverPill = document.createElement('div');
-      hoverPill.className = 'map-hover-pill';
-      hoverMarker = new maplibregl.Marker({ element: hoverPill, anchor: 'bottom', offset: [0, -16] });
+    // Drop any stale marker left over from a previous layer rebuild before
+    // creating a fresh one.
+    if (state.hoverMarker) {
+      state.hoverMarker.remove();
+      state.hoverMarker = undefined;
+      state.hoverPill = undefined;
     }
-    hoverPill.textContent = text;
-    hoverMarker.setLngLat(lngLat).addTo(state.map);
+    if (!state.hoverPill) {
+      state.hoverPill = document.createElement('div');
+      state.hoverPill.className = 'map-hover-pill';
+      state.hoverMarker = new maplibregl.Marker({ element: state.hoverPill, anchor: 'bottom', offset: [0, -16] });
+    }
+    state.hoverPill.textContent = text;
+    state.hoverMarker.setLngLat(lngLat).addTo(state.map);
   };
   const hidePill = () => {
-    if (hoverMarker) hoverMarker.remove();
+    if (state.hoverMarker) state.hoverMarker.remove();
   };
 
-  // Event listeners — registered once; guard with layer-existence checks
+  // Persist the pill handlers on state so they can be (re)used on every layer
+  // rebuild without re-registering duplicate listeners on the layer.
+  state.showPill = showPill;
+  state.hidePill = hidePill;
+}
+
+// Bind the per-layer interaction listeners exactly once. Layer rebuilds
+// (setupMapLayers, called on every item-type switch) remove the layer but
+// cannot detach its listeners, so registering these inside setupMapLayers
+// would stack duplicate click/hover handlers each time the user toggles
+// between museums, designers and universities.
+function bindLayerInteractions(map: MapLibreMap, state: MapInstance) {
+  const showPill = (text: string, lngLat: any) => state.showPill?.(text, lngLat);
+  const hidePill = () => state.hidePill?.();
+
   map.on('click', 'unclustered-point', (e: any) => {
     if (!e.features || !e.features.length) return;
     const feature = e.features[0];
@@ -193,7 +223,7 @@ function setupMapLayers(map: MapLibreMap, state: MapInstance, maplibregl: any) {
   });
 
   map.on('mouseenter', 'unclustered-point', (e: any) => {
-    if (isTouch) return;
+    if (window.matchMedia('(hover: none)').matches) return;
     state.map.getCanvas().style.cursor = 'pointer';
     const f = e.features && e.features[0];
     if (f) {
@@ -272,7 +302,11 @@ export async function initializeMap(
     recenter: () => { },
     showRecenter: () => { },
     hideRecenter: () => { },
-    itemType
+    itemType,
+    hoverMarker: undefined,
+    hoverPill: undefined,
+    showPill: undefined,
+    hidePill: undefined,
   };
 
   const STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
@@ -399,6 +433,7 @@ export async function initializeMap(
 
   let isMapLoaded = false;
   let pendingData: { studios: MapItem[], autoCenter: boolean, shouldCluster: boolean } | null = null;
+  let layerInteractionsBound = false;
 
   function updateMapData(studios: MapItem[], autoCenter: boolean = true, shouldCluster: boolean = true) {
     if (!isMapLoaded) {
@@ -433,6 +468,15 @@ export async function initializeMap(
 
     isMapLoaded = true;
     setupMapLayers(state.map, state, maplibregl);
+
+    // Bind the per-layer click/hover listeners exactly once (the layer gets
+    // rebuilt on every item-type switch, which would otherwise stack
+    // duplicate handlers). The pill handlers are created in setupMapLayers
+    // and stored on state.
+    if (!layerInteractionsBound) {
+      bindLayerInteractions(state.map, state);
+      layerInteractionsBound = true;
+    }
 
     // Update dynamic layers
     const initialStudios = pendingData ? pendingData.studios : state.studiosData;
