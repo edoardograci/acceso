@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import SaveButton from '../../components/SaveButton.astro';
 import { normalizeImage } from '../../lib/images';
+import { withCovers } from '../../lib/moodboard';
 
 if (!Astro.locals.user) {
   return Astro.redirect('/login');
@@ -17,13 +18,15 @@ try {
   const response = await fetch(moodboardUrl);
   if (!response.ok) throw new Error('CDN Proxy Not Ready');
   objects = await response.json();
+  objects = withCovers(objects);
 } catch (e) {
   console.warn('Falling back to local moodboard.json:', e instanceof Error ? e.message : String(e));
   try {
      const localUrl = new URL('/moodboard.json', Astro.url.origin);
      const localRes = await fetch(localUrl.toString());
-     objects = await localRes.json();
-  } catch (localErr) {
+      objects = await localRes.json();
+      objects = withCovers(objects);
+   } catch (localErr) {
      error = localErr;
      console.error('Total failure to load moodboard collection:', localErr);
   }
