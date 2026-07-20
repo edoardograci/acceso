@@ -792,7 +792,16 @@ function showStudioCard(studio: MapItem, state: MapInstance): void {
 
   state.currentStudio = studio;
   title.textContent = studio.name;
-  address.textContent = studio.address || 'View profile';
+  // Only show the address when the item actually has one. Previously a missing
+  // address fell back to the literal "View profile" string, which was never
+  // intended and leaked into the card. Clear it otherwise.
+  if (studio.address) {
+    address.textContent = studio.address;
+    (address.parentElement as HTMLElement | null)?.style.setProperty('display', '');
+  } else {
+    address.textContent = '';
+    (address.parentElement as HTMLElement | null)?.style.setProperty('display', 'none');
+  }
   if (city) {
     city.textContent = studio.city ? `${studio.city}${studio.country ? `, ${studio.country}` : ''}` : '';
     city.style.display = studio.city ? '' : 'none';
