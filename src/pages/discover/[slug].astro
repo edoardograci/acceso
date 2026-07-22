@@ -86,7 +86,7 @@ const itemSchema = item ? {
   '@context': 'https://schema.org',
   '@graph': [
     {
-      '@type': 'Product',
+      '@type': 'CreativeWork',
       '@id': `${canonical}#product`,
       name: item.name,
       description: `${item.name}${item.designer ? ` by ${item.designer}` : ''}. Industrial design project.`,
