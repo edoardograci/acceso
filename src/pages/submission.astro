@@ -23,7 +23,7 @@ const user = Astro.locals.user;
       </div>
       
       {user && (
-      <div class="form-outer-container">
+      <div class="form-outer-container" id="submission-form-area" style="display:none;">
         <h1 class="sr-only">Submit your studio to Acceso</h1>
         <!-- Visual Progress Path -->
         <div class="step-path-container">
@@ -87,7 +87,11 @@ const user = Astro.locals.user;
               <input type="text" name="instagram" placeholder="@studio" />
             </div>
 
-            <div class="step-actions">
+            <div class="step-actions split">
+              <button type="button" class="btn-back" data-close-form aria-label="Back to overview">
+                <svg class="btn-back-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+                <span>Back</span>
+              </button>
               <button type="button" class="btn-continue" data-next="2">
                 Continue
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -216,8 +220,7 @@ const user = Astro.locals.user;
       </div>
       )}
 
-      {!user && (
-        <div class="sub-layout">
+      <div class="sub-layout" id="submission-overview">
         <div class="sub-split">
           <div class="sub-col sub-col-submit active" data-panel="submit">
             <section class="sub-hero">
@@ -225,9 +228,15 @@ const user = Astro.locals.user;
                 <h1 class="sub-hero-title">Put your studio<br>on the map</h1>
                 <p class="sub-hero-sub">Be included in cities, searches, and curated listings.</p>
               <div class="sub-hero-ctas">
-                <a href="/login?redirect=/submission" class="sub-hero-cta">
-                  Submit for free
-                </a>
+                {user ? (
+                  <button type="button" class="sub-hero-cta" id="toggle-submission-btn">
+                    Submit for free
+                  </button>
+                ) : (
+                  <a href="/login?redirect=/submission" class="sub-hero-cta">
+                    Submit for free
+                  </a>
+                )}
                 <p class="sub-hero-disclaimer">The process takes less than a minute. After logging in, you can submit your studio.</p>
               </div>
               </div>
@@ -335,8 +344,7 @@ const user = Astro.locals.user;
           <button type="button" class="sub-tab-btn active" data-tab="submit" role="tab" aria-selected="true">Submit studio</button>
           <button type="button" class="sub-tab-btn" data-tab="suggest" role="tab" aria-selected="false">Suggest place</button>
         </div>
-        </div>
-      )}
+      </div>
 
       <svg style="display: none;">
         <filter id="grainyNoise">
@@ -1286,10 +1294,32 @@ const user = Astro.locals.user;
 
     document.querySelectorAll('.btn-back').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const prev = (e.currentTarget as HTMLElement).dataset.prev;
+        const target = e.currentTarget as HTMLElement;
+        if (target.hasAttribute('data-close-form')) {
+          const formArea = document.getElementById('submission-form-area');
+          const overview  = document.getElementById('submission-overview');
+          if (formArea) formArea.style.display = 'none';
+          if (overview) overview.style.display = '';
+          return;
+        }
+        const prev = target.dataset.prev;
         if (prev) updateStepUI(parseInt(prev));
       });
     });
+
+    const toggleBtn = document.getElementById('toggle-submission-btn');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const formArea = document.getElementById('submission-form-area');
+        const overview  = document.getElementById('submission-overview');
+        if (formArea && overview) {
+          overview.style.display = 'none';
+          formArea.style.display = '';
+          updateStepUI(1);
+          formArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    }
 
     // File Upload Logic
     uploadZone?.addEventListener('click', () => fileInput?.click());
