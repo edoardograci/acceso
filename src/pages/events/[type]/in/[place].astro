@@ -1,0 +1,6 @@
+---
+const { type, place } = Astro.params;
+const allowed = new Set(['fairs', 'museums', 'awards']);
+if (!type || !allowed.has(type)) return Astro.redirect('/404', 301);
+return Astro.redirect(`/directory/${type}/in/${place}`, 301);
+---
