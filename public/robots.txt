@@ -27,6 +27,17 @@ Allow: /cdn/*.heic
 # Block parameterized duplicates (canonical is clean routes)
 Disallow: /*?*
 
+# Allow cache-busted root assets
+Allow: /*.svg?*
+Allow: /*.ico?*
+Allow: /*.png?*
+Allow: /*.jpg?*
+Allow: /*.jpeg?*
+Allow: /*.webp?*
+Allow: /*.gif?*
+Allow: /*.avif?*
+Allow: /*.heic?*
+
 # Sitemap location
 Sitemap: https://acceso.design/sitemap.xml
 
