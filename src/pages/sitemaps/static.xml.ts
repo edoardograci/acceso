@@ -19,9 +19,11 @@ export const GET: APIRoute = ({ site }) => {
     { loc: new URL('/directory/museums', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
     { loc: new URL('/directory/awards', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
     { loc: new URL('/directory/schools', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
-    // The map is the homepage ("/"); /map redirects there.
     { loc: new URL('/info', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.5 },
     { loc: new URL('/submission', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.4 },
+    { loc: new URL('/icon.svg', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.3 },
+    { loc: new URL('/favicon.ico', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.3 },
+    { loc: new URL('/apple-touch-icon.png', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.3 },
     { loc: new URL('/privacy', site).toString(), lastmod: privacyLastmod, changefreq: 'yearly' as const, priority: 0.2 },
     { loc: new URL('/terms', site).toString(), lastmod: termsLastmod, changefreq: 'yearly' as const, priority: 0.2 },
   ];
