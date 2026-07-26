@@ -87,25 +87,39 @@ const pageDesc = award.description || `Explore ${award.name}, one of the most pr
 
 // ── SEO: Canonical + schema ────────────────────────────────────────────────────
 const canonical = new URL(`/directory/awards/${slug}`, Astro.site);
+
+function getAwardDates(deadlinesStr: string) {
+  if (!deadlinesStr) return { startDate: null, endDate: null };
+  const dates = deadlinesStr.split(',').map(d => d.trim()).filter(Boolean);
+  if (dates.length === 0) return { startDate: null, endDate: null };
+  return { startDate: dates[0], endDate: dates[dates.length - 1] };
+}
+
+const { startDate: awardStartDate, endDate: awardEndDate } = getAwardDates(award.deadlines);
+
+const awardEventSchema = awardStartDate && cityName ? {
+  '@type': 'Event',
+  '@id': `${canonical}#event`,
+  name: award.name,
+  description: pageDesc,
+  url: canonical.toString(),
+  image: award.image || undefined,
+  eventStatus: status === 'status-open'
+    ? 'https://schema.org/EventScheduled'
+    : 'https://schema.org/EventPostponed',
+  startDate: awardStartDate,
+  endDate: awardEndDate,
+  location: {
+    '@type': 'Place',
+    name: cityName,
+  },
+  organizer: award.website ? { '@type': 'Organization', name: award.name, url: award.website } : undefined,
+} : null;
+
 const awardSchema = {
   '@context': 'https://schema.org',
   '@graph': [
-    {
-      '@type': 'Event',
-      '@id': `${canonical}#event`,
-      name: award.name,
-      description: pageDesc,
-      url: canonical.toString(),
-      image: award.image || undefined,
-      eventStatus: status === 'status-open'
-        ? 'https://schema.org/EventScheduled'
-        : 'https://schema.org/EventPostponed',
-      location: cityName ? {
-        '@type': 'Place',
-        name: cityName,
-      } : undefined,
-      organizer: award.website ? { '@type': 'Organization', name: award.name, url: award.website } : undefined,
-    },
+    ...(awardEventSchema ? [awardEventSchema] : []),
     breadcrumbList([
       { name: 'Home', url: '/' },
       { name: 'Directory', url: '/directory' },

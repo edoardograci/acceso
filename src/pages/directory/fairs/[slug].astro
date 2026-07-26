@@ -111,7 +111,9 @@ const pageDesc = fair.description || `Explore ${fair.name}, a premier design eve
 
 // ── SEO: Canonical + Event schema ──────────────────────────────────────────
 const canonical = new URL(`/directory/fairs/${slug}`, Astro.site);
-const fairSchema = {
+const fairStartDate = fair.start_date || fair.end_date;
+
+const fairSchema = fairStartDate && cityName ? {
   '@context': 'https://schema.org',
   '@graph': [
     {
@@ -123,7 +125,7 @@ const fairSchema = {
       image: fair.image || undefined,
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       eventStatus: 'https://schema.org/EventScheduled',
-      ...(fair.start_date ? { startDate: fair.start_date } : {}),
+      startDate: fairStartDate,
       ...(fair.end_date ? { endDate: fair.end_date } : {}),
       location: {
         '@type': 'Place',
@@ -143,7 +145,7 @@ const fairSchema = {
       { name: fair.name, url: `/directory/fairs/${slug}` },
     ]),
   ],
-};
+} : null;
 ---
 
 <Layout title={pageTitle} description={pageDesc} canonical={canonical} schema={fairSchema}>
