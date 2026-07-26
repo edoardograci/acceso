@@ -14,7 +14,7 @@ let cities: string[] = [];
 let totalStudios = 0;
 let orderedFilterData: any[] = [];
 
-function distributeGroupsForColumns(groups: any[], columns = 3) {
+function distributeGroupsForColumns(groups: any[], columns = 6) {
   const colHeights = Array(columns).fill(0);
   const cols: any[][] = Array.from({ length: columns }, () => []);
   for (const g of groups) {
@@ -100,7 +100,7 @@ try {
         if (byCities !== 0) return byCities;
         return a.name.localeCompare(b.name);
       });
-      orderedFilterData = distributeGroupsForColumns(sortedGroups, 3);
+      orderedFilterData = distributeGroupsForColumns(sortedGroups, 6);
     }
   }
 } catch (e) {
@@ -277,16 +277,19 @@ const hubSchema = itemList({
   .search-input::placeholder { color: var(--color-text-muted); }
   .search-input:focus { border-bottom-color: var(--color-black); }
   .city-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; position: relative; z-index: 200; }
-  .filter-popover-wrapper { position: relative; flex-shrink: 0; }
+  .filter-popover-wrapper { flex-shrink: 0; }
   .filter-trigger-btn { height: 36px; padding: 1px 16px 0; border-radius: 999px; border: none; background: var(--color-yellow); color: var(--color-black); font-family: var(--font-sans); font-size: 14px; font-weight: 700; cursor: pointer; }
-  .filter-popover { position: absolute; top: calc(100% + 12px); left: 0; width: min(600px, 90vw); background: var(--color-white); border: 1px solid var(--color-stroke); border-radius: 16px; padding: 24px; z-index: 1500; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+  .filter-popover { position: absolute; top: calc(100% + 12px); left: 0; right: 0; max-width: min(1600px, calc(100vw - 80px)); background: var(--color-white); border: 1px solid var(--color-stroke); border-radius: 16px; padding: 24px; z-index: 1500; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
   .filter-popover.show { display: block; }
   .filter-popover-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-family: var(--font-sans); font-size: 16px; font-weight: 600; color: var(--color-black); }
   .filter-header-actions { display: flex; align-items: center; gap: 16px; }
   .filter-clear-all { height: 32px; padding: 1px 14px 0; border-radius: 999px; border: 1px solid var(--color-stroke); background: var(--color-bg-secondary); color: var(--color-black); font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); }
   .filter-close-btn { display: none; background: transparent; border: none; cursor: pointer; color: var(--color-black); }
-  .filter-popover-content { column-count: 3; column-gap: 20px; }
-  .filter-group { break-inside: avoid; margin-bottom: 18px; }
+  .filter-popover-content { column-count: 6; column-gap: 20px; }
+  .filter-group { margin-bottom: 18px; break-inside: avoid; }
+  @media (min-width: 901px) {
+    .filter-group { break-inside: auto; }
+  }
   .filter-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
   .filter-name { font-family: var(--font-sans); font-size: 14px; font-weight: 400; color: var(--color-black); }
   .country-item .filter-name { font-weight: 700; }
@@ -379,6 +382,7 @@ const hubSchema = itemList({
     .filter-close-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
     .filter-clear-all { height: 40px; padding: 0 16px; font-size: 14px; }
     .filter-popover-content {
+      display: block;
       flex: 1;
       min-height: 0;
       overflow-x: hidden;
