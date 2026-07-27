@@ -253,17 +253,20 @@ if (cityParam) {
   .search-input::placeholder { color: var(--color-text-muted); }
   .search-input:focus { border-bottom-color: var(--color-black); }
 
-  .city-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; position: relative; z-index: 200; flex-wrap: wrap; }
-  .filter-popover-wrapper { position: relative; flex-shrink: 0; }
+  .city-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; position: relative; z-index: 200; }
+  .filter-popover-wrapper { flex-shrink: 0; }
   .filter-trigger-btn { height: 36px; padding: 1px 16px 0; border-radius: 999px; border: none; background: var(--color-yellow); color: var(--color-black); font-family: var(--font-sans); font-size: 14px; font-weight: 700; cursor: pointer; }
-  .filter-popover { position: absolute; top: calc(100% + 12px); left: 0; width: min(600px, 90vw); background: var(--color-white); border: 1px solid var(--color-stroke); border-radius: 16px; padding: 24px; z-index: 1500; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+  .filter-popover { position: absolute; top: calc(100% + 12px); left: 0; right: 0; max-width: min(1600px, calc(100vw - 80px)); background: var(--color-white); border: 1px solid var(--color-stroke); border-radius: 16px; padding: 24px; z-index: 1500; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
   .filter-popover.show { display: block; }
   .filter-popover-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-family: var(--font-sans); font-size: 16px; font-weight: 600; color: var(--color-black); }
   .filter-header-actions { display: flex; align-items: center; gap: 16px; }
   .filter-clear-all { height: 32px; padding: 1px 14px 0; border-radius: 999px; border: 1px solid var(--color-stroke); background: var(--color-bg-secondary); color: var(--color-black); font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); }
   .filter-close-btn { display: none; background: transparent; border: none; cursor: pointer; color: var(--color-black); }
-  .filter-popover-content { column-count: 3; column-gap: 20px; }
-  .filter-group { break-inside: avoid; margin-bottom: 18px; }
+  .filter-popover-content { column-count: 6; column-gap: 20px; }
+  .filter-group { margin-bottom: 18px; break-inside: avoid; }
+  @media (min-width: 901px) {
+    .filter-group { break-inside: auto; }
+  }
   .filter-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
   .filter-name { font-family: var(--font-sans); font-size: 14px; font-weight: 400; color: var(--color-black); }
   .country-item .filter-name { font-weight: 700; }
@@ -348,12 +351,12 @@ if (cityParam) {
   @media (max-width: 900px) {
     .museums-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
-  @media (max-width: 768px) {
-    .directory-inner { padding: var(--page-top-spacing) 20px 60px; }
-    .museums-grid { grid-template-columns: 1fr; }
-    .museums-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .city-filter-row { flex-wrap: wrap; row-gap: 12px; }
-    .directory-toolbar { margin-left: auto; flex-shrink: 0; }
+  @media (max-width: 640px) {
+    .directory-inner { padding: var(--page-top-spacing) 16px 64px; }
+    .museums-grid { grid-template-columns: 1fr; gap: 20px; }
+    .museums-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .city-filter-row { flex-wrap: wrap; }
+    .directory-toolbar { margin-left: 0; width: 100%; justify-content: flex-end; }
     .filter-popover {
       position: fixed;
       top: var(--navbar-height, 64px);
@@ -393,9 +396,6 @@ if (cityParam) {
     .filter-item { width: 100%; }
     .filter-item input[type="checkbox"] { width: 22px; height: 22px; flex-shrink: 0; }
     .city-items { margin-left: 20px; margin-top: 8px; gap: 8px; width: calc(100% - 20px); }
-  }
-  @media (max-width: 640px) {
-    .directory-inner { padding: var(--page-top-spacing) 16px 48px; }
   }
   @keyframes filterSlideIn {
     from { opacity: 0; transform: translateY(8px); }
