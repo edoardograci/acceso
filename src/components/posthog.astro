@@ -7,18 +7,15 @@
 
 const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
 const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';
-const userId = Astro.locals.user?.id;
 ---
 
 {posthogKey ? (
-  <script is:inline define:vars={{ posthogKey, posthogHost, userId }}>
+  <script is:inline define:vars={{ posthogKey, posthogHost }}>
     (function() {
       // Prevent double load
       if (window.__posthog_loaded) return;
       window.__posthog_loaded = true;
 
-      const CONSENT_COOKIE_NAME = 'acceso_analytics_consent';
-      
       const script = document.createElement('script');
       script.async = true;
       script.crossOrigin = 'anonymous';
@@ -28,10 +25,9 @@ const userId = Astro.locals.user?.id;
         try {
           if (!window.posthog || typeof window.posthog.init !== 'function') return;
           
-          const hasConsent = document.cookie.includes(CONSENT_COOKIE_NAME + '=true');
-          
           window.posthog.init(posthogKey, {
             api_host: posthogHost,
+            cookieless_mode: "always",
             loaded: function(posthog) {
               const allowedHosts = ['acceso.design'];
               const currentHost = window.location.hostname;
@@ -40,26 +36,14 @@ const userId = Astro.locals.user?.id;
               }
             },
             capture_pageview: true,
-            persistence: hasConsent ? 'localStorage+cookie' : 'memory',
             autocapture: false,
             disable_session_recording: true,
             respect_dnt: true
-          });
-
-          if (userId && userId !== 'undefined') {
-            window.posthog.identify(userId);
-          }
-
-          window.addEventListener('analytics-consent-granted', function() {
-            if (window.posthog && typeof window.posthog.set_config === 'function') {
-              window.posthog.set_config({ persistence: 'localStorage+cookie' });
-            }
           });
         } catch (e) {}
       };
 
       script.onerror = function() {
-        // Provide empty stub to prevent other scripts from crashing
         window.posthog = { 
           capture: function(){}, identify: function(){}, register: function(){}, 
           set_config: function(){}, opt_in_capturing: function(){}, opt_out_capturing: function(){} 

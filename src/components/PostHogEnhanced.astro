@@ -1,28 +1,22 @@
 ---
 // src/components/PostHogEnhanced.astro
 /**
- * Enhanced PostHog Loader with Overkill-Level Configuration
- * Implements session-centric tracking, privacy-first approach, and type-safe event taxonomy
+ * PostHog Loader - Cookieless Mode
+ * Implements session-level tracking with server-side hash distinct IDs.
  * 
  * Key Features:
- * - Memory-only persistence pre-consent (GDPR compliant)
+ * - No cookies or local/session storage (cookieless_mode: "always")
  * - Automatic session lifecycle tracking
  * - Enhanced pageview capture with page type classification
- * - User identification on login with full person properties
  * - Performance optimized (batching, timeouts)
  */
 
 const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY;
 const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';
-const userId = Astro.locals.user?.id;
-const userEmail = Astro.locals.user?.email;
-const userPlan = Astro.locals.user?.plan;
-const userName = Astro.locals.user?.name;
-const userCreatedAt = Astro.locals.user?.createdAt;
 ---
 
 {posthogKey ? (
-  <script is:inline define:vars={{ posthogKey, posthogHost, userId, userEmail, userPlan, userName, userCreatedAt }}>
+  <script is:inline define:vars={{ posthogKey, posthogHost }}>
     (function() {
       // Prevent double load
       if (window.__posthog_loaded) return;
@@ -38,8 +32,6 @@ const userCreatedAt = Astro.locals.user?.createdAt;
         for (var t=0;t<ph.methods.length;t++){var e=ph.methods[t];ph[e]=ph.factory(e)}
       }
 
-      const CONSENT_COOKIE_NAME = 'acceso_analytics_consent';
-      
       const script = document.createElement('script');
       script.async = true;
       script.crossOrigin = 'anonymous';
@@ -49,11 +41,10 @@ const userCreatedAt = Astro.locals.user?.createdAt;
         try {
           if (!window.posthog || typeof window.posthog.init !== 'function') return;
           
-          const hasConsent = document.cookie.includes(CONSENT_COOKIE_NAME + '=true');
-          
           // Initialize PostHog
           window.posthog.init(posthogKey, {
             api_host: posthogHost,
+            cookieless_mode: "always",
             loaded: function(posthog) {
               const allowedHosts = ['acceso.design'];
               const currentHost = window.location.hostname;
@@ -63,8 +54,6 @@ const userCreatedAt = Astro.locals.user?.createdAt;
             },
             capture_pageview: true, // Let PostHog handle pageviews
             capture_pageleave: true,
-            persistence: hasConsent ? 'localStorage+cookie' : 'memory',
-            persistence_name: 'acceso_ph',
             autocapture: false,
             disable_session_recording: true,
             respect_dnt: true,
@@ -89,7 +78,7 @@ const userCreatedAt = Astro.locals.user?.createdAt;
           });
 
           // ====================================================================
-          // IDENTITY & ATTRIBUTION
+          // ATTRIBUTION
           // ====================================================================
           
           function getUtmParam(param) {
@@ -105,36 +94,6 @@ const userCreatedAt = Astro.locals.user?.createdAt;
             initial_utm_campaign: getUtmParam('utm_campaign'),
           });
 
-          if (userId && userId !== 'undefined') {
-            let accountAgeDays = null;
-            if (userCreatedAt) {
-              try {
-                const createdDate = new Date(userCreatedAt);
-                accountAgeDays = Math.floor((Date.now() - createdDate.getTime()) / 86400000);
-              } catch (e) {}
-            }
-            
-            window.posthog.identify(userId, {
-              email: userEmail,
-              name: userName,
-              created_at: userCreatedAt,
-              plan: userPlan || 'free',
-              account_age_days: accountAgeDays,
-            });
-            
-            window.posthog.set_config({ persistence: 'localStorage+cookie' });
-          }
-
-          // ====================================================================
-          // CONSENT MANAGEMENT
-          // ====================================================================
-          
-          window.addEventListener('analytics-consent-granted', function() {
-            if (window.posthog) {
-              window.posthog.set_config({ persistence: 'localStorage+cookie' });
-            }
-          });
-          
           // ====================================================================
           // ENHANCED PAGE VIEW TRACKING
           // ====================================================================
@@ -172,8 +131,6 @@ const userCreatedAt = Astro.locals.user?.createdAt;
           }
           
           window.posthog.register({
-            authenticated: !!userId,
-            user_plan: userPlan || 'anonymous',
             page_type: getPageType(),
             device_category: getDeviceCategory(),
             referrer_type: classifyReferrer(),

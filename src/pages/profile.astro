@@ -315,35 +315,6 @@ try {
         });
       }
     </script>
-
-    <script is:inline define:vars={{ 
-      user: {
-        id: user.id,
-        email: user.email,
-        emailVerified: user.emailVerified,
-        savedDesignersCount: savedDesignersCount,
-        savedObjectsCount: savedObjectsCount,
-        savedMuseumsCount: savedMuseumsCount,
-        savedUniversitiesCount: savedUniversitiesCount,
-      }
-    }}>
-      if (typeof window !== 'undefined' && window.posthog && window.posthog.identify) {
-        window.posthog.identify(user.id, {
-          email: user.email,
-          email_verified: user.emailVerified,
-          saved_designers_count: user.savedDesignersCount || 0,
-          saved_moodboards_count: user.savedObjectsCount || 0,
-          saved_museums_count: user.savedMuseumsCount || 0,
-          saved_universities_count: user.savedUniversitiesCount || 0,
-          last_login_at: new Date().toISOString(),
-          is_power_user: (user.savedDesignersCount || 0) > 10,
-        });
-
-        if (window.posthog.set_config) {
-            window.posthog.set_config({ persistence: 'localStorage+cookie' });
-        }
-      }
-    </script>
   </Layout>
 
 <style>

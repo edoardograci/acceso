@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import CookieBanner from '../components/CookieBanner.astro';
 import PostHogEnhanced from '../components/PostHogEnhanced.astro';
 import { organization, website } from '../lib/seo/schema';
 
@@ -254,7 +253,6 @@ const mergedSchema =
 
   <body>
     <slot />
-    <CookieBanner />
     <!-- 100% privacy-first analytics -->
     <script is:inline data-collect-dnt="true" async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
     <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif?collect-dnt=true" alt="" referrerpolicy="no-referrer-when-downgrade"/></noscript>
