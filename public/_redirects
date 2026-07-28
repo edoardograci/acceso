@@ -1,1 +1,4 @@
 /events/* /directory/:splat 301
+/directory/universities/* /directory/schools/:splat 301
+/projects / 301
+/projects/* / 301

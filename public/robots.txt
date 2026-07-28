@@ -24,8 +24,11 @@ Allow: /cdn/*.heic
 # Disallow: /cdn/*.json # Optional: keep JSONs private if desired, but some are public
 
 
-# Block parameterized duplicates (canonical is clean routes)
-Disallow: /*?*
+# Block common tracking/session parameters but allow public filter pages
+Disallow: /?*filter=*
+Disallow: /?*sort=*
+Disallow: /?*page=*
+Disallow: /?*utm_*
 
 # Allow cache-busted root assets
 Allow: /*.svg?*
