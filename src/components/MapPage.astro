@@ -9,6 +9,39 @@ import type { Env } from '../env.d';
 
 const typeParam = Astro.url.searchParams.get('type') || 'designers';
 const itemType = typeParam === 'schools' ? 'university' : typeParam === 'museums' ? 'museum' : 'studio';
+const cityParam = Astro.url.searchParams.get('city');
+const itemSlugParam = Astro.url.searchParams.get('item');
+
+// ── SEO: route Designers/Schools/Museums city + item links to the real,
+// indexable directory pages (/designers, /designers/in/<place>, /designers/<slug>;
+// /directory/schools/...; /directory/museums/...) instead of this map's own
+// ?type=&city=/&item= query-string views. Those query views are all served
+// from the same generic template with identical title/description regardless
+// of city, so linking to them just creates duplicate-content targets and
+// splits authority away from the pages that are actually built to rank for
+// individual studio/school/museum + city searches.
+const TYPE_BASE_PATH: Record<'studio' | 'university' | 'museum', string> = {
+  studio: '/designers',
+  university: '/directory/schools',
+  museum: '/directory/museums',
+};
+
+function cityHref(slug: string, forType: 'studio' | 'university' | 'museum' = itemType as any): string {
+  return `${TYPE_BASE_PATH[forType]}/in/${slug}`;
+}
+
+function itemHref(slug: string, forType: 'studio' | 'university' | 'museum' = itemType as any): string {
+  return `${TYPE_BASE_PATH[forType]}/${slug}`;
+}
+
+// Any request that still carries a city or item query param is a stale/legacy
+// link (old bookmark, backlink, or leftover crawl) — nothing on the site
+// generates that shape anymore. Send it permanently to the real page instead
+// of rendering a duplicate map view for it.
+if (cityParam || itemSlugParam) {
+  const target = itemSlugParam ? itemHref(itemSlugParam) : cityHref(cityParam as string);
+  return Astro.redirect(target, 301);
+}
 
 const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
 
@@ -134,7 +167,7 @@ const quickNavCities = [
 ].map((c) => ({
   ...c,
   label: c.isMore ? c.name : `${quickNavTypePhrase} ${c.name}`,
-  href: c.isMore ? null : `/?type=${typeParam}&city=${c.slug}`,
+  href: c.isMore ? null : cityHref(c.slug),
 }));
 
 const quickNavImageWidth = 640;
@@ -158,6 +191,19 @@ const seoTypePluralCap = seoTypePlural.charAt(0).toUpperCase() + seoTypePlural.s
 const SITE = Astro.site?.toString() || 'https://acceso.design';
 const mapUrl = new URL('/', SITE).toString();
 
+// Canonicalize this filter view to the dedicated, indexable directory page
+// instead of falling back to Layout's default (Layout's default canonical is
+// Astro.url.pathname, which drops the query string entirely — every
+// /?type=X... variant was self-canonicalizing to "/", telling Google none of
+// them were the canonical version and suppressing indexing for all of them).
+// Only applied when a `type` query param is actually present, so the true
+// bare homepage ("/") keeps self-canonicalizing to itself.
+const hasTypeQuery = Astro.url.searchParams.has('type');
+const pageCanonical = hasTypeQuery ? new URL(TYPE_BASE_PATH[itemType], SITE) : undefined;
+
+const mapPageTitle = pageTitle;
+const mapPageDescription = pageDescription;
+
 const breadcrumbs = breadcrumbList([
   { name: 'Map', url: mapUrl },
 ]);
@@ -167,7 +213,7 @@ const cityItemListSchema = itemList({
   url: mapUrl,
   name: `${pageTitle} — cities with ${seoTypePlural}`,
   items: topCities.map((c) => ({
-    url: new URL(`/?type=${typeParam}&city=${c.slug}`, SITE).toString(),
+    url: new URL(cityHref(c.slug), SITE).toString(),
     name: c.name,
   })),
 });
@@ -194,10 +240,11 @@ const faqs = [
 ---
 
 <Layout
-  title={`Acceso — ${pageTitle}`}
-  description={pageDescription}
+  title={`Acceso — ${mapPageTitle}`}
+  description={mapPageDescription}
   keywords={seoKeywords}
   schema={pageSchema}
+  canonical={pageCanonical}
 >
   <link slot="head" rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
   {/* Warm the same-origin Geist glyph PBFs so MapLibre doesn't
@@ -255,8 +302,8 @@ const faqs = [
                       <span class="quick-nav-card-label">{item.label}</span>
                     </button>
                   ) : (
-                    <button
-                      type="button"
+                    <a
+                      href={item.href}
                       class="quick-nav-card"
                       data-city={item.city}
                     >
@@ -271,7 +318,7 @@ const faqs = [
                         fetchpriority="low"
                       />
                       <span class="quick-nav-card-label">{item.label}</span>
-                    </button>
+                    </a>
                   )
                 ))}
               </div>
@@ -300,8 +347,8 @@ const faqs = [
                 </div>
                 <div class="city-browse-list" id="city-browse-list">
                   {cityBrowseList.map((city, index) => (
-                    <button
-                      type="button"
+                    <a
+                      href={cityHref(city.slug)}
                       class:list={['city-browse-item', { hidden: city.hidden }]}
                       data-city={city.name}
                       data-slug={city.slug}
@@ -315,7 +362,7 @@ const faqs = [
                       <svg class="city-browse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
-                    </button>
+                    </a>
                   ))}
                 </div>
               </div>
@@ -442,7 +489,7 @@ const faqs = [
           <ul class="seo-city-list">
             {topCities.map((c) => (
               <li>
-                <a href={`/?type=${typeParam}&city=${c.slug}`}>
+                <a href={cityHref(c.slug)}>
                   {c.name}
                   <span class="seo-city-count">{c.count}</span>
                 </a>
@@ -925,6 +972,7 @@ const faqs = [
     background: linear-gradient(135deg, hsl(var(--city-hue, 200) 18% 97%) 0%, var(--color-white) 55%);
     cursor: pointer;
     text-align: left;
+    text-decoration: none;
     transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
 

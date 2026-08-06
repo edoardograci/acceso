@@ -123,6 +123,22 @@ if (cityParam) {
         </p>
       </header>
 
+      <div class="sr-only">
+        <h2>Design schools by city</h2>
+        <ul>
+          {orderedFilterData.map((group: any) => (
+            <li>
+              <a href={`/directory/schools/in/${group.slug}`}>{group.name}</a>
+              <ul>
+                {group.cities.map((city: any) => (
+                  <li><a href={`/directory/schools/in/${city.slug}`}>{city.name}</a></li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       {error && (
         <div role="alert" style="padding: 14px 18px; margin-bottom: 24px; border: 1px solid var(--color-stroke); border-radius: 12px; background: var(--color-bg-secondary); color: var(--color-text-muted); font-family: var(--font-sans); font-size: 15px;">
           <p style="margin: 0;">We couldn't load the latest schools. Please try again later.</p>

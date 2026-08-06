@@ -13,6 +13,13 @@ const CITY_COORDS: Record<string, [number, number]> = {
 
 const STUDIOS_PAGE_SIZE = 12;
 
+// Shared with renderCityStudiosPage(), bindMapInteractions(), and
+// switchItemType() — the single source of truth for which real,
+// SEO-indexable directory path each map type maps to.
+function basePathForType(type: 'studio' | 'museum' | 'university'): string {
+  return type === 'museum' ? '/directory/museums' : type === 'university' ? '/directory/schools' : '/designers';
+}
+
 function hasCoords(studio: { latitude?: unknown; longitude?: unknown }): boolean {
   const lat = typeof studio.latitude === 'string' ? parseFloat(studio.latitude) : studio.latitude;
   const lng = typeof studio.longitude === 'string' ? parseFloat(studio.longitude) : studio.longitude;
@@ -220,10 +227,7 @@ function init() {
       return;
     }
 
-    const basePath =
-      currentItemType === 'museum' ? '/directory/museums'
-      : currentItemType === 'university' ? '/directory/schools'
-      : '/designers';
+    const basePath = basePathForType(currentItemType);
 
     cityStudiosGrid.innerHTML = pageItems
       .map((s) => {
@@ -373,18 +377,28 @@ function init() {
     if (!mapInstance) return;
 
     document.querySelectorAll('.quick-nav-card[data-city]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const city = (btn as HTMLElement).dataset.city;
-        if (city) selectCity(city, city.toLowerCase().replace(/\s+/g, '-'), undefined, 'quick');
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const el = btn as HTMLElement;
+        const city = el.dataset.city;
+        if (!city) return;
+        const href = el.getAttribute('href');
+        if (href) window.history.pushState({}, '', href);
+        selectCity(city, city.toLowerCase().replace(/\s+/g, '-'), undefined, 'quick');
       });
     });
 
     document.querySelectorAll('.city-browse-item').forEach((item) => {
-      item.addEventListener('click', () => {
-        const city = (item as HTMLElement).dataset.city;
-        const slug = (item as HTMLElement).dataset.slug;
-        const country = item.querySelector('.city-browse-meta')?.textContent || '';
-        if (city) selectCity(city, slug, country, 'browse');
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const el = item as HTMLElement;
+        const city = el.dataset.city;
+        const slug = el.dataset.slug;
+        const country = el.querySelector('.city-browse-meta')?.textContent || '';
+        if (!city) return;
+        const href = el.getAttribute('href');
+        if (href) window.history.pushState({}, '', href);
+        selectCity(city, slug, country, 'browse');
       });
     });
   }
@@ -502,7 +516,7 @@ function init() {
     }
   }
 
-  function switchItemType(newType: 'studio' | 'museum' | 'university') {
+  function switchItemType(newType: 'studio' | 'museum' | 'university', opts: { skipHistory?: boolean } = {}) {
     if (newType === currentItemType) return;
     
     currentItemType = newType;
@@ -550,9 +564,11 @@ function init() {
     }
     
     // Update URL without refresh
-    const url = new URL(window.location.href);
+    if (!opts.skipHistory) {
+      const url = new URL(window.location.href);
       url.searchParams.set('type', newType === 'studio' ? 'designers' : newType === 'museum' ? 'museums' : 'schools');
-    window.history.replaceState({}, '', url.toString());
+      window.history.replaceState({}, '', url.toString());
+    }
     
     // Update filter button states
     document.querySelectorAll('.map-filter-btn').forEach(btn => {
@@ -577,17 +593,21 @@ function init() {
         'A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.';
     }
     
-    // Update quick-nav card labels to reflect the current type
-    // (e.g. "Designers in Milan" -> "Design museums in Milan")
+    // Update quick-nav card labels AND hrefs to reflect the current type
+    // (e.g. "Designers in Milan" -> "Design schools in Milan", and the link
+    // target from /designers/in/milan -> /directory/schools/in/milan).
     const typePhrase =
       newType === 'museum' ? 'Design museums in' :
       newType === 'university' ? 'Design schools in' : 'Designers in';
+    const newBasePath = basePathForType(newType);
     document.querySelectorAll('.quick-nav-card[data-city]').forEach((btn) => {
       const el = btn as HTMLElement;
       const cityName = el.dataset.city;
       if (!cityName) return;
       const labelEl = el.querySelector('.quick-nav-card-label');
       if (labelEl) labelEl.textContent = `${typePhrase} ${cityName}`;
+      const citySlug = cityName.toLowerCase().replace(/\s+/g, '-');
+      el.setAttribute('href', `${newBasePath}/in/${citySlug}`);
     });
 
     const cityBrowseListEl = document.getElementById('city-browse-list');
@@ -618,6 +638,7 @@ function init() {
           const cityName = nameEl.textContent?.split('·')[0].trim() || '';
           nameEl.textContent = `${cityName} · ${count} ${itemTypeLabel}`;
         }
+        if (slug) el.setAttribute('href', `${newBasePath}/in/${slug}`);
       });
     }
   }
@@ -789,11 +810,46 @@ function init() {
     }
   });
 
-  // Browser back/forward: if the URL no longer carries a city, reset the
-  // map to show every studio again instead of keeping the previous city's pins.
+  // Browser back/forward: pushState navigations from the click handlers above
+  // put a real path like /directory/schools/in/turin (or /designers,
+  // /directory/museums, etc.) in the address bar. Parse whichever shape is
+  // there — pretty path first, legacy ?type=&city= query as a fallback for
+  // any state pushed before this URL scheme existed — and restore the
+  // matching type + city panel.
+  function parseLocationState(): { type: 'studio' | 'university' | 'museum' | null; citySlug: string | null } {
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    const search = new URLSearchParams(window.location.search);
+
+    let m = path.match(/^\/directory\/schools\/in\/([^/]+)$/);
+    if (m) return { type: 'university', citySlug: m[1] };
+    m = path.match(/^\/directory\/museums\/in\/([^/]+)$/);
+    if (m) return { type: 'museum', citySlug: m[1] };
+    m = path.match(/^\/designers\/in\/([^/]+)$/);
+    if (m) return { type: 'studio', citySlug: m[1] };
+
+    if (path === '/directory/schools') return { type: 'university', citySlug: null };
+    if (path === '/directory/museums') return { type: 'museum', citySlug: null };
+    if (path === '/designers') return { type: 'studio', citySlug: null };
+
+    const typeParam = search.get('type');
+    const type: 'studio' | 'university' | 'museum' | null =
+      typeParam === 'schools' ? 'university' : typeParam === 'museums' ? 'museum' : typeParam === 'designers' ? 'studio' : null;
+    return { type, citySlug: search.get('city') };
+  }
+
   window.addEventListener('popstate', () => {
-    const citySlug = new URLSearchParams(window.location.search).get('city');
-    if (!citySlug) {
+    const { type, citySlug } = parseLocationState();
+
+    if (type && type !== currentItemType) {
+      switchItemType(type, { skipHistory: true });
+    }
+
+    if (citySlug) {
+      const itemEl = document.querySelector(`.city-browse-item[data-slug="${citySlug}"]`) as HTMLElement | null;
+      const cityName = itemEl?.dataset.city || citySlug;
+      const countryMeta = itemEl?.querySelector('.city-browse-meta')?.textContent?.trim() || undefined;
+      showCityStudios(cityName, citySlug, countryMeta, 'browse');
+    } else {
       (window as any).isMyMap ? showCityBrowse() : showQuickNav();
     }
   });
