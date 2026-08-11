@@ -92,7 +92,7 @@ try {
     mode = 'country';
     countryName = leadCountry[0].country || place;
   } else {
-    return Astro.redirect('/404');
+    return new Response(null, { status: 404 });
   }
 
   relFairs = inLocation(fairsData, place, mode === 'city');

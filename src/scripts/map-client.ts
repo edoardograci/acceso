@@ -600,6 +600,26 @@ function init() {
       newType === 'museum' ? 'Design museums in' :
       newType === 'university' ? 'Design schools in' : 'Designers in';
     const newBasePath = basePathForType(newType);
+
+    // Per-city item counts for the new type — used to decide both display
+    // (hide cities with 0 items) and, importantly, whether a city is even
+    // given a real href at all. A city with 0 items for this type has no
+    // real page to link to (its /in/<city> page 404s), so it must not be
+    // left crawlable.
+    const cityCounts: Record<string, number> = {};
+    newData.forEach((item: any) => {
+      let slug = item.city_slug;
+      if (!slug && item.city) {
+        slug = item.city.toLowerCase().replace(/\s+/g, '-');
+      }
+      if (!slug && item.slug) {
+        slug = item.slug;
+      }
+      if (slug) {
+        cityCounts[slug] = (cityCounts[slug] || 0) + 1;
+      }
+    });
+
     document.querySelectorAll('.quick-nav-card[data-city]').forEach((btn) => {
       const el = btn as HTMLElement;
       const cityName = el.dataset.city;
@@ -607,25 +627,16 @@ function init() {
       const labelEl = el.querySelector('.quick-nav-card-label');
       if (labelEl) labelEl.textContent = `${typePhrase} ${cityName}`;
       const citySlug = cityName.toLowerCase().replace(/\s+/g, '-');
-      el.setAttribute('href', `${newBasePath}/in/${citySlug}`);
+      const count = cityCounts[citySlug] || 0;
+      if (count > 0) {
+        el.setAttribute('href', `${newBasePath}/in/${citySlug}`);
+      } else {
+        el.removeAttribute('href');
+      }
     });
 
     const cityBrowseListEl = document.getElementById('city-browse-list');
     if (cityBrowseListEl) {
-      const cityCounts: Record<string, number> = {};
-      newData.forEach((item: any) => {
-        let slug = item.city_slug;
-        if (!slug && item.city) {
-          slug = item.city.toLowerCase().replace(/\s+/g, '-');
-        }
-        if (!slug && item.slug) {
-          slug = item.slug;
-        }
-        if (slug) {
-          cityCounts[slug] = (cityCounts[slug] || 0) + 1;
-        }
-      });
-      
       const itemTypeLabel = newType === 'museum' ? 'museums' : newType === 'university' ? 'schools' : 'studios';
       cityBrowseListEl.querySelectorAll('.city-browse-item').forEach(item => {
         const el = item as HTMLElement;
@@ -638,7 +649,12 @@ function init() {
           const cityName = nameEl.textContent?.split('·')[0].trim() || '';
           nameEl.textContent = `${cityName} · ${count} ${itemTypeLabel}`;
         }
-        if (slug) el.setAttribute('href', `${newBasePath}/in/${slug}`);
+        if (!slug) return;
+        if (count > 0) {
+          el.setAttribute('href', `${newBasePath}/in/${slug}`);
+        } else {
+          el.removeAttribute('href');
+        }
       });
     }
   }

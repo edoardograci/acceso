@@ -60,7 +60,7 @@ if (cityObj) {
   countryName = countryObj.name;
   studios = allStudios.filter(s => s.country_slug === place);
 } else {
-  return Astro.redirect('/404');
+  return new Response(null, { status: 404 });
 }
 
 totalStudios = studios.length;
@@ -1062,4 +1062,3 @@ const mapStudios = studios.map(s => ({
     }
   </style>
 </PostHogLayout>
-

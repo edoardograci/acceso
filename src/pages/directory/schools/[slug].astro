@@ -63,7 +63,7 @@ try {
 }
 
 if (!university) {
-  return Astro.redirect('/404');
+  return new Response(null, { status: 404 });
 }
 
 const countryName = university.country || countriesMapping.find(c => c.slug === university.country_slug)?.name || university.country_slug;

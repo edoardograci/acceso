@@ -62,7 +62,7 @@ try {
 }
 
 if (!museum) {
-  return Astro.redirect('/404');
+  return new Response(null, { status: 404 });
 }
 
 const countryName = museum.country || countriesMapping.find(c => c.slug === museum.country_slug)?.name || museum.country_slug;

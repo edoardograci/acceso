@@ -16,9 +16,6 @@
 /collections/*
   X-Robots-Tag: noindex, nofollow
 
-/submission
-  X-Robots-Tag: noindex, nofollow
-
 /designers
   # Prevent indexing of filtered/query-string variants; clean routes are indexable
   X-Robots-Tag: index, follow

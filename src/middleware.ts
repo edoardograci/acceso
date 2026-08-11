@@ -48,7 +48,7 @@ function applySecurityHeaders(res: Response, pathname: string): Response {
   // so the X-Robots-Tag rules in public/_headers do not apply to them.
   if (pathname.startsWith('/api')) {
     h.set('X-Robots-Tag', 'noindex');
-  } else if (pathname.startsWith('/collections') || pathname === '/submission' || pathname.startsWith('/map')) {
+  } else if (pathname.startsWith('/collections') || pathname.startsWith('/map')) {
     h.set('X-Robots-Tag', 'noindex, nofollow');
   }
 

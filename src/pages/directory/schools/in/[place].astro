@@ -85,7 +85,7 @@ try {
     mode = 'country';
     countryName = countryObj.name;
   } else {
-    return Astro.redirect('/404');
+    return new Response(null, { status: 404 });
   }
 
   leadUniversities = inLocation(universitiesData, place, mode === 'city');

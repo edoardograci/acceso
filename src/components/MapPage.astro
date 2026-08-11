@@ -164,11 +164,14 @@ const quickNavCities = [
   { name: 'Seoul, Korea', city: 'Seoul', slug: 'seoul', image: '/images/quick-nav/seoul.webp', isMore: false },
   { name: 'London, UK', city: 'London', slug: 'london', image: '/images/quick-nav/london.webp', isMore: false },
   { name: 'More Cities →', city: null, slug: null, image: '/images/quick-nav/more.webp', isMore: true },
-].map((c) => ({
-  ...c,
-  label: c.isMore ? c.name : `${quickNavTypePhrase} ${c.name}`,
-  href: c.isMore ? null : cityHref(c.slug),
-}));
+].map((c) => {
+  const cityCount = c.isMore ? null : cityBrowseList.find((entry) => entry.slug === c.slug)?.count ?? 0;
+  return {
+    ...c,
+    label: c.isMore ? c.name : `${quickNavTypePhrase} ${c.name}`,
+    href: c.isMore || !cityCount ? null : cityHref(c.slug),
+  };
+});
 
 const quickNavImageWidth = 640;
 const quickNavImageHeight = 176;
@@ -348,7 +351,7 @@ const faqs = [
                 <div class="city-browse-list" id="city-browse-list">
                   {cityBrowseList.map((city, index) => (
                     <a
-                      href={cityHref(city.slug)}
+                      href={city.count > 0 ? cityHref(city.slug) : undefined}
                       class:list={['city-browse-item', { hidden: city.hidden }]}
                       data-city={city.name}
                       data-slug={city.slug}
