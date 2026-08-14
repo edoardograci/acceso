@@ -54,7 +54,17 @@ if (cityObj) {
   cityName = cityObj.name;
   const c = countries.find((x) => x.slug === (cityObj.country ?? '')) ?? null;
   countryName = c?.name ?? null;
-  studios = allStudios.filter(s => s.city_slug === place);
+  studios = allStudios.filter(s => {
+    const studioSlug = (s.city_slug || '').toLowerCase();
+    const studioCity = (s.city || '').toLowerCase();
+    const target = place.toLowerCase();
+    return (
+      studioSlug === target ||
+      studioCity === target ||
+      studioCity.startsWith(`${target},`) ||
+      studioCity.startsWith(`${target} `)
+    );
+  });
 } else if (countryObj) {
   mode = 'country';
   countryName = countryObj.name;
@@ -389,7 +399,8 @@ const mapStudios = studios.map(s => ({
           
           grid.innerHTML = pageItems.map((s) => {
             const cover = resolveCover(s.cover);
-            const location = `${s.city || ''}${s.country ? `, ${s.country}` : ''}`;
+            const cityClean = (s.city || '').split(',')[0].trim();
+            const location = cityClean || '';
             return `
             <a href="/designers/${encodeURIComponent(s.slug || '')}"
                class="directory-card"

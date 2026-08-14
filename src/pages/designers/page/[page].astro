@@ -105,7 +105,7 @@ const schema = {
               <div class="min-w-0">
                 <div class="font-sans text-black font-normal text-[18px] leading-[1.15] truncate">{s.name}</div>
                 <div class="font-sans text-gray text-[13px] mt-1 truncate">
-                  {s.city ?? ''}{s.city && s.country_slug ? ' · ' : ''}{s.country_slug ?? ''}
+                  {(s.city || '').split(',')[0].trim()}
                 </div>
               </div>
             </div>

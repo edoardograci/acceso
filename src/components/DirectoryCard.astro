@@ -38,9 +38,7 @@ const { studio, index = 0 } = Astro.props;
     )}
   </div>
   <h3 class="directory-card-name">{studio.name}</h3>
-  <p class="directory-card-location">
-    {studio.city}{studio.country ? `, ${studio.country}` : ''}
-  </p>
+  <p class="directory-card-location">{(studio.city || '').split(',')[0].trim()}</p>
 </a>
 
 <style>

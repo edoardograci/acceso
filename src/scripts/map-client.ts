@@ -232,7 +232,7 @@ function init() {
     cityStudiosGrid.innerHTML = pageItems
       .map((s) => {
         const cover = resolveCover(s.cover || s.image);
-        const location = `${s.city || ''}${s.country ? `, ${s.country}` : ''}`;
+        const location = (s.city || '').split(',')[0].trim();
         const lat = typeof s.latitude === 'string' ? s.latitude : (s.latitude != null ? String(s.latitude) : '');
         const lng = typeof s.longitude === 'string' ? s.longitude : (s.longitude != null ? String(s.longitude) : '');
         return `

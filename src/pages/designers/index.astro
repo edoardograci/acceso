@@ -58,20 +58,28 @@ try {
       totalStudios = rawAll.length; // Use actual count from studios data
       studios = rawAll.slice(0, 20);
       
-      // Count studios per city from actual data
+      function studioMatchesCity(studio: any, citySlug: string, cityName: string): boolean {
+        const studioSlug = (studio.city_slug || '').toLowerCase();
+        const studioCity = (studio.city || '').toLowerCase();
+        const targetSlug = citySlug.toLowerCase();
+        const targetName = cityName.toLowerCase();
+        return (
+          studioSlug === targetSlug ||
+          studioCity === targetName ||
+          studioCity.startsWith(`${targetName},`) ||
+          studioCity.startsWith(`${targetName} `)
+        );
+      }
+
+      // Count studios per city from actual data using tolerant matching
       const cityCounts: Record<string, number> = {};
-      rawAll.forEach((studio: any) => {
-        if (studio.city_slug) {
-          cityCounts[studio.city_slug] = (cityCounts[studio.city_slug] || 0) + 1;
-        }
-      });
-      
-      // The cities list has empty country fields, so derive each city's
-      // country from the studios data (which does carry country_slug).
       const cityToCountry: Record<string, string> = {};
-      rawAll.forEach((studio: any) => {
-        if (studio.city_slug && studio.country_slug) {
-          cityToCountry[studio.city_slug] = studio.country_slug;
+      citiesList.forEach((ct: any) => {
+        if (!ct.slug) return;
+        cityCounts[ct.slug] = rawAll.filter((s: any) => studioMatchesCity(s, ct.slug, ct.name)).length;
+        const matchingStudio = rawAll.find((s: any) => s.country_slug && studioMatchesCity(s, ct.slug, ct.name));
+        if (matchingStudio) {
+          cityToCountry[ct.slug] = matchingStudio.country_slug;
         }
       });
       const countryNames = Object.fromEntries(countriesList.map((c: any) => [c.slug, c.name]));

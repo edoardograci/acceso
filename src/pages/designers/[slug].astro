@@ -254,9 +254,7 @@ const studioSchema = studio ? {
                 <h2 class="location-title">Location</h2>
                 <p class="location-studio-name">{studio.name}</p>
                 <p class="location-address">{studio.address}</p>
-                <p class="location-meta">
-                  {studio.city}{studio.country && <>, {studio.country}</>}
-                </p>
+                <p class="location-meta">{(studio.city || '').split(',')[0].trim()}</p>
                 <div class="location-actions">
                   <a class="location-cta location-directions" href={gmapsDirections} target="_blank" rel="noopener">
                     Get directions

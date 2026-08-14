@@ -207,7 +207,8 @@ function init() {
 
       const p = document.createElement('p');
       p.className = 'directory-card-location';
-      p.textContent = `${s.city || ''}${s.country ? `, ${s.country}` : ''}`;
+      const cityClean = (s.city || '').split(',')[0].trim();
+      p.textContent = cityClean || '';
 
       a.append(media, h3, p);
       frag.appendChild(a);
@@ -216,7 +217,7 @@ function init() {
     studiosGrid.replaceChildren(frag);
   }
 
-  const slugifyValue = (v: string) => (v || '').toLowerCase().trim().replace(/\s+/g, '-');
+  const slugifyValue = (v: string) => (v || '').toLowerCase().trim().replace(/,/g, '').replace(/\s+/g, '-');
 
   async function execFetch() {
     if (isFirstLoad) {
@@ -244,42 +245,56 @@ function init() {
         calculatedTotalPages = Math.ceil(totalVisibleCount / PER_PAGE) || 1;
         if (currentPage > calculatedTotalPages) currentPage = Math.max(1, calculatedTotalPages);
         visibleData = matched.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
-      } else {
-        let endpoint = '';
-        const checkedCities = Array.from(document.querySelectorAll('.city-checkbox:checked')) as HTMLInputElement[];
-        const checkedCountries = Array.from(document.querySelectorAll('.country-checkbox:checked')) as HTMLInputElement[];
+        } else {
+          let endpoint = '';
+          const checkedCities = Array.from(document.querySelectorAll('.city-checkbox:checked')) as HTMLInputElement[];
+          const checkedCountries = Array.from(document.querySelectorAll('.country-checkbox:checked')) as HTMLInputElement[];
 
-        if (checkedCities.length + checkedCountries.length > 1) {
           if (!globalSearchCache) {
             const rAll = await apiFetch(`${r2Domain}/test-studios.json`);
             globalSearchCache = rAll.ok ? await rAll.json() : [];
           }
-          const selectedCitySlugs = new Set(checkedCities.map(c => String(c.dataset.slug || '')));
-          const selectedCountrySlugs = new Set(checkedCountries.map(c => String(c.dataset.slug || '')));
-          const matched = (globalSearchCache || []).filter((s: any) => {
-            const sCitySlug = String(s.city_slug || slugifyValue(s.city || ''));
-            const sCountrySlug = String(s.country_slug || slugifyValue(s.country || ''));
-            return selectedCitySlugs.has(sCitySlug) || selectedCountrySlugs.has(sCountrySlug);
-          });
-          totalVisibleCount = matched.length;
-          calculatedTotalPages = Math.ceil(totalVisibleCount / PER_PAGE) || 1;
-          visibleData = matched.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
-        } else if (checkedCities.length > 0) {
-          const slug = checkedCities[0].dataset.slug;
-          endpoint = `${r2Domain}/studios/city/${slug}/page-${currentPage}.json`;
-          calculatedTotalPages = mData.cities?.[slug!]?.pages || 1;
-          totalVisibleCount = mData.cities?.[slug!]?.total || 0;
-        } else if (checkedCountries.length > 0) {
-          const slug = checkedCountries[0].dataset.slug;
-          endpoint = `${r2Domain}/studios/country/${slug}/page-${currentPage}.json`;
-          calculatedTotalPages = mData.countries?.[slug!]?.pages || 1;
-          totalVisibleCount = mData.countries?.[slug!]?.total || 0;
-        } else if (currentCity !== 'all') {
-          const slug = currentCity.toLowerCase().replace(/\s+/g, '-');
-          endpoint = `${r2Domain}/studios/city/${slug}/page-${currentPage}.json`;
-          calculatedTotalPages = mData.cities?.[slug]?.pages || 1;
-          totalVisibleCount = mData.cities?.[slug]?.total || 0;
-        } else {
+
+          if (checkedCities.length + checkedCountries.length > 0) {
+            const selectedCitySlugs = new Set(checkedCities.map(c => String(c.dataset.slug || '')));
+            const selectedCountrySlugs = new Set(checkedCountries.map(c => String(c.dataset.slug || '')));
+            const matched = (globalSearchCache || []).filter((s: any) => {
+              let sCitySlug = String(s.city_slug || '').toLowerCase();
+              if (!selectedCitySlugs.has(sCitySlug)) {
+                const studioCity = (s.city || '').toLowerCase();
+                for (const target of selectedCitySlugs) {
+                  if (
+                    studioCity === target ||
+                    studioCity.startsWith(`${target},`) ||
+                    studioCity.startsWith(`${target} `)
+                  ) {
+                    sCitySlug = target;
+                    break;
+                  }
+                }
+              }
+              const sCountrySlug = String(s.country_slug || slugifyValue(s.country || ''));
+              return selectedCitySlugs.has(sCitySlug) || selectedCountrySlugs.has(sCountrySlug);
+            });
+            totalVisibleCount = matched.length;
+            calculatedTotalPages = Math.ceil(totalVisibleCount / PER_PAGE) || 1;
+            visibleData = matched.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+          } else if (currentCity !== 'all') {
+            const slug = currentCity.toLowerCase().replace(/\s+/g, '-');
+            const matched = (globalSearchCache || []).filter((s: any) => {
+              const studioSlug = (s.city_slug || '').toLowerCase();
+              const studioCity = (s.city || '').toLowerCase();
+              return (
+                studioSlug === slug ||
+                studioCity === slug ||
+                studioCity.startsWith(`${slug},`) ||
+                studioCity.startsWith(`${slug} `)
+              );
+            });
+            totalVisibleCount = matched.length;
+            calculatedTotalPages = Math.ceil(totalVisibleCount / PER_PAGE) || 1;
+            visibleData = matched.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+          } else {
           if (!globalSearchCache) {
             const rAll = await apiFetch(`${r2Domain}/test-studios.json`);
             if (rAll.ok) globalSearchCache = await rAll.json();
