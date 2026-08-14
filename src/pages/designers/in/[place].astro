@@ -121,6 +121,7 @@ if (mode === 'country') {
   if (cityObj?.country) {
     relatedLocations = cities
       .filter(c => c.country === cityObj.country && c.slug !== place)
+      .slice(0, 12)
       .map(c => ({ name: c.name, slug: c.slug }));
   }
   if (relatedLocations.length === 0) {

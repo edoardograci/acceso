@@ -217,7 +217,7 @@ function init() {
     studiosGrid.replaceChildren(frag);
   }
 
-  const slugifyValue = (v: string) => (v || '').toLowerCase().trim().replace(/,/g, '').replace(/\s+/g, '-');
+  const slugifyValue = (v: string) => (v || '').toLowerCase().trim().replace(/,/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
 
   async function execFetch() {
     if (isFirstLoad) {
