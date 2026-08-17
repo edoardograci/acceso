@@ -5,6 +5,8 @@ import Footer from '../../components/Footer.astro';
 import { normalizeImage } from '../../lib/images';
 import { itemList } from '../../lib/seo/schema';
 import { withCovers } from '../../lib/moodboard';
+import WeeklySpotlight from '../../components/WeeklySpotlight.astro';
+import DiscoverSidebar from '../../components/DiscoverSidebar.astro';
 
 interface ProductImage {
   id: string;
@@ -27,6 +29,7 @@ interface MoodboardItem {
   status: string;
   created_at: string;
   updated_at: string;
+  dayToPost: string | null;
   images: ProductImage[];
   cover: string | null;
 }
@@ -49,7 +52,52 @@ try {
   }
 }
 
-const visibleItems = withCovers(moodboardItems).filter((item) => item.cover).reverse();
+const visibleItems = withCovers(moodboardItems)
+  .filter((item) => item.cover)
+  .sort((a, b) => new Date(b.dayToPost ?? 0).getTime() - new Date(a.dayToPost ?? 0).getTime());
+
+// ── Weekly Spotlight ────────────────────────────────────────────────────────────
+// The spotlight is the most recent week present in the data (Monday–Sunday, UTC),
+// NOT the calendar week. This way, on Monday before the new 3 are pushed, last
+// week's items stay in the spotlight instead of leaving it empty and rejoining the
+// masonry early. Once newer items exist, the previous week automatically falls back
+// into the grid.
+function mondayOf(d: Date): Date {
+  const day = d.getUTCDay(); // 0 = Sun … 6 = Sat
+  const diff = day === 0 ? 6 : day - 1; // days since Monday
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - diff));
+}
+
+const WEEK_MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+function formatWeekLabel(start: Date, endExclusive: Date): string {
+  // endExclusive is the following Monday; step back one day to get Sunday.
+  const end = new Date(endExclusive.getTime() - 24 * 60 * 60 * 1000);
+  const f = (d: Date) => `${d.getUTCDate()} ${WEEK_MONTHS[d.getUTCMonth()]}`;
+  return `${f(start)} – ${f(end)}`;
+}
+
+let spotlightItems: MoodboardItem[] = [];
+let spotlightWeekLabel = '';
+if (visibleItems.length) {
+  const times = visibleItems
+    .map((i) => new Date(i.dayToPost ?? 0).getTime())
+    .filter((t) => !Number.isNaN(t));
+  if (times.length) {
+    const maxTime = Math.max(...times);
+    const weekStart = mondayOf(new Date(maxTime));
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+    spotlightWeekLabel = formatWeekLabel(weekStart, weekEnd);
+    spotlightItems = visibleItems
+      .filter((i) => {
+        const t = new Date(i.dayToPost ?? 0).getTime();
+        return !Number.isNaN(t) && t >= weekStart.getTime() && t < weekEnd.getTime();
+      })
+      .sort((a, b) => new Date(a.dayToPost ?? 0).getTime() - new Date(b.dayToPost ?? 0).getTime());
+  }
+}
+
+const spotlightSlugs = new Set(spotlightItems.map((i) => i.slug));
+const gridItems = visibleItems.filter((i) => !spotlightSlugs.has(i.slug));
 
 // ── SEO: Canonical + ItemList schema ───────────────────────────────────────────
 const canonical = new URL('/discover', Astro.site);
@@ -85,18 +133,24 @@ const discoverSchema = itemList({
             <p>Failed to load projects. Please try again later.</p>
           </div>
         ) : (
-          <div class="discover-grid" id="discover-grid">
-            {visibleItems.map((item) => (
-              <a href={`/discover/${item.slug}`} class="discover-item">
-                <img
-                  src={normalizeImage(item.cover!, Astro, { width: 800 })}
-                  alt={item.name}
-                  class="discover-image"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </a>
-            ))}
+          <WeeklySpotlight items={spotlightItems} weekLabel={spotlightWeekLabel} />
+
+          <div class="discover-layout">
+            <div class="discover-grid" id="discover-grid">
+              {gridItems.map((item) => (
+                <a href={`/discover/${item.slug}`} class="discover-item">
+                  <img
+                    src={normalizeImage(item.cover!, Astro, { width: 800 })}
+                    alt={item.name}
+                    class="discover-image"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </a>
+              ))}
+            </div>
+
+            <DiscoverSidebar />
           </div>
 
           <script is:inline>
@@ -118,7 +172,8 @@ const discoverSchema = itemList({
               let placed = false;
               const columnCount = () => {
                 const w = window.innerWidth;
-                if (w >= 1400) return 5;
+                // Cap at 4 columns; the sidebar occupies its own fixed-width
+                // container beside the grid (magazine-style layout).
                 if (w >= 1100) return 4;
                 if (w >= 768) return 3;
                 return 2;
@@ -270,8 +325,22 @@ const discoverSchema = itemList({
     }
   }
 
+  .discover-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
   .discover-grid {
     position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  @media (max-width: 1099px) {
+    .discover-layout {
+      display: block;
+    }
   }
 
   .discover-item {

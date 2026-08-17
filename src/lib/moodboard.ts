@@ -19,6 +19,7 @@ export interface MoodboardItem {
   status: string;
   created_at: string;
   updated_at: string;
+  dayToPost: string | null;
   images: MoodboardImage[];
   cover: string | null;
 }
