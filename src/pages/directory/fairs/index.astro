@@ -3,6 +3,7 @@ import Layout from '../../../layouts/Layout.astro';
 import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
+import FilterSidebar from '../../../components/FilterSidebar.astro';
 import { normalizeImage } from '../../../lib/images';
 
 // R2 URLs
@@ -164,42 +165,8 @@ if (cityParam) {
       </div>
 
       <div class="city-filter-row">
-        <div class="filter-popover-wrapper">
-          <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
-          <div class="filter-popover" id="filter-popover">
-            <div class="filter-popover-header">
-              <span>Filter by location</span>
-              <div class="filter-header-actions">
-                <button class="filter-clear-all" id="filter-clear-all" type="button">Clear all</button>
-                <button class="filter-close-btn" id="filter-close-btn" type="button" aria-label="Close filters">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="filter-popover-content">
-              {orderedFilterData.map((group: any) => (
-                <div class="filter-group">
-                  <label class="filter-item country-item">
-                    <input type="checkbox" class="country-checkbox" data-country={group.name} data-slug={group.slug} />
-                    <span class="filter-name">{group.name}</span>
-                    <span class="filter-count">({group.count})</span>
-                  </label>
-                  <div class="city-items">
-                    {group.cities.map((city: any) => (
-                      <label class="filter-item city-item">
-                        <input type="checkbox" class="city-checkbox" data-city={city.name} data-slug={city.slug} data-country={group.name} />
-                        <span class="filter-name">{city.name}</span>
-                        <span class="filter-count">({city.count})</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
+        <FilterSidebar groups={orderedFilterData} />
 
         <label class="upcoming-toggle">
           <input type="checkbox" id="upcoming-toggle" />
@@ -402,7 +369,6 @@ if (cityParam) {
   }
   @media (max-width: 900px) {
     .fairs-grid { grid-template-columns: repeat(2, 1fr); }
-    .filter-popover-content { column-count: 2; }
     .search-row { margin-left: 0; max-width: none; }
   }
   @media (max-width: 1400px) {
@@ -420,49 +386,6 @@ if (cityParam) {
     .fairs-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .city-filter-row { flex-wrap: wrap; }
     .directory-toolbar { margin-left: 0; width: 100%; justify-content: flex-end; }
-    .filter-popover {
-      position: fixed;
-      top: var(--navbar-height, 64px);
-      left: 0;
-      right: 0;
-      width: 100%;
-      height: calc(100dvh - var(--navbar-height, 64px));
-      max-width: none;
-      border-radius: 0;
-      padding: 16px 16px 24px;
-      z-index: 9001;
-      border: none;
-      box-shadow: none;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-    .filter-popover.show { display: flex; animation: filterSlideIn 0.22s ease-out; }
-    .filter-popover-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; margin-top: 0; flex-shrink: 0; }
-    .filter-close-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
-    .filter-clear-all { height: 40px; padding: 0 16px; font-size: 14px; }
-    .filter-popover-content {
-      flex: 1;
-      min-height: 0;
-      overflow-x: hidden;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      column-count: 2;
-      column-gap: 20px;
-      width: 100%;
-    }
-    .filter-group { margin-bottom: 20px; width: 100%; break-inside: avoid; }
-    .filter-name { font-size: 16px; }
-    .country-item .filter-name { font-size: 17px; }
-    .filter-count { font-size: 14px; }
-    .filter-item { width: 100%; }
-    .filter-item input[type="checkbox"] { width: 22px; height: 22px; flex-shrink: 0; }
-    .city-items { margin-left: 20px; margin-top: 8px; gap: 8px; width: calc(100% - 20px); }
-  }
-  @keyframes filterSlideIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
   }
 </style>
 
@@ -476,7 +399,8 @@ if (cityParam) {
     const countryCheckboxes = Array.from(document.querySelectorAll('.country-checkbox'));
     const clearAllBtn = document.getElementById('filter-clear-all');
     const filterTrigger = document.getElementById('filter-trigger');
-    const filterPopover = document.getElementById('filter-popover');
+    const filterDrawer = document.getElementById('filter-sidebar-drawer');
+    const filterBackdrop = document.getElementById('filter-sidebar-backdrop');
     const filterClose = document.getElementById('filter-close-btn');
     const searchToggle = document.getElementById('search-toggle');
     const searchRow = document.getElementById('search-row');
@@ -514,11 +438,38 @@ if (cityParam) {
       emptyEl.classList.toggle('hidden', visible.length !== 0);
     }
 
+    const filterDone = document.getElementById('filter-done-btn');
+    let savedCitiesState = new Set();
+
+    function snapshotState() {
+      savedCitiesState = new Set(state.cities);
+    }
+
+    function restoreState() {
+      state.cities = new Set(savedCitiesState);
+      syncChecks();
+    }
+
+    function openDrawer() {
+      snapshotState();
+      filterDrawer?.classList.add('show');
+      filterBackdrop?.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer(applyChanges = false) {
+      if (!applyChanges) {
+        restoreState();
+      }
+      filterDrawer?.classList.remove('show');
+      filterBackdrop?.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
     cityCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
       if (cb.checked) state.cities.add(cb.dataset.slug);
       else state.cities.delete(cb.dataset.slug);
       syncChecks();
-      apply();
     }));
 
     countryCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
@@ -529,22 +480,30 @@ if (cityParam) {
         if (cb.checked) state.cities.add(c.dataset.slug);
         else state.cities.delete(c.dataset.slug);
       });
-      apply();
+      syncChecks();
     }));
 
     clearAllBtn?.addEventListener('click', () => {
       state.cities = new Set();
       syncChecks();
       apply();
+      closeDrawer(true);
     });
 
-    filterTrigger?.addEventListener('click', () => filterPopover.classList.toggle('show'));
-    filterClose?.addEventListener('click', () => filterPopover.classList.remove('show'));
-    document.addEventListener('click', (e) => {
-      if (filterPopover?.classList.contains('show') &&
-          !filterPopover.contains(e.target) &&
-          !filterTrigger.contains(e.target)) {
-        filterPopover.classList.remove('show');
+    filterDone?.addEventListener('click', () => {
+      apply();
+      closeDrawer(true);
+    });
+
+    filterTrigger?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openDrawer();
+    });
+    filterClose?.addEventListener('click', () => closeDrawer(false));
+    filterBackdrop?.addEventListener('click', () => closeDrawer(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && filterDrawer?.classList.contains('show')) {
+        closeDrawer(false);
       }
     });
 

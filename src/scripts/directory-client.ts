@@ -15,6 +15,12 @@ function init() {
   let startX = 0;
   let scrollLeft = 0;
   let moved = false;
+  let currentCity = 'all';
+  let currentPage = 1;
+  let sortAsc = true;
+  let currentQuery = '';
+  let isFirstLoad = true;
+  let globalSearchCache: any[] | null = null;
 
   slider?.addEventListener('mousedown', (e) => {
     isDown = true;
@@ -30,19 +36,6 @@ function init() {
     if (Math.abs(walk) > 5) moved = true;
     slider.scrollLeft = scrollLeft - walk;
   });
-  slider?.addEventListener('click', (e) => {
-    if (moved) { e.preventDefault(); e.stopPropagation(); }
-  }, true);
-
-  let currentCity = 'all';
-  let currentQuery = '';
-  let currentPage = 1;
-  let sortAsc = true;
-
-  const searchInput = document.getElementById('search-input') as HTMLInputElement;
-  const searchRow = document.getElementById('search-row');
-  const searchToggle = document.getElementById('search-toggle');
-  const sortBtn = document.getElementById('sort-btn');
   const viewBtn = document.getElementById('view-btn');
   const studioCount = document.getElementById('studio-count');
   const cityPills = document.querySelectorAll('.city-pill');
@@ -50,10 +43,73 @@ function init() {
   const studiosGrid = document.getElementById('studios-grid');
   const paginationContainer = document.getElementById('pagination-container');
   const filterTrigger = document.getElementById('filter-trigger');
-  const filterPopover = document.getElementById('filter-popover');
+  const filterDrawer = document.getElementById('filter-sidebar-drawer');
+  const filterBackdrop = document.getElementById('filter-sidebar-backdrop');
+  const filterCloseBtn = document.getElementById('filter-close-btn');
+  const filterDoneBtn = document.getElementById('filter-done-btn');
+  const searchToggle = document.getElementById('search-toggle');
+  const searchRow = document.getElementById('search-row');
+  const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+  const sortBtn = document.getElementById('sort-btn');
   const countryCheckboxes = document.querySelectorAll('.country-checkbox') as NodeListOf<HTMLInputElement>;
   const cityCheckboxes = document.querySelectorAll('.city-checkbox') as NodeListOf<HTMLInputElement>;
   const clearAllBtn = document.getElementById('filter-clear-all');
+
+  let savedCheckboxState: Array<{ cb: HTMLInputElement; checked: boolean; indeterminate: boolean }> = [];
+
+  function snapshotState() {
+    savedCheckboxState = [];
+    countryCheckboxes.forEach(cb => {
+      savedCheckboxState.push({ cb, checked: cb.checked, indeterminate: cb.indeterminate });
+    });
+    cityCheckboxes.forEach(cb => {
+      savedCheckboxState.push({ cb, checked: cb.checked, indeterminate: false });
+    });
+  }
+
+  function restoreState() {
+    savedCheckboxState.forEach(item => {
+      item.cb.checked = item.checked;
+      item.cb.indeterminate = item.indeterminate;
+    });
+  }
+
+  function openDrawer() {
+    snapshotState();
+    filterDrawer?.classList.add('show');
+    filterBackdrop?.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer(applyChanges = false) {
+    if (!applyChanges) {
+      restoreState();
+    }
+    filterDrawer?.classList.remove('show');
+    filterBackdrop?.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  filterTrigger?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openDrawer();
+  });
+
+  filterCloseBtn?.addEventListener('click', () => closeDrawer(false));
+  filterBackdrop?.addEventListener('click', () => closeDrawer(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && filterDrawer?.classList.contains('show')) {
+      closeDrawer(false);
+    }
+  });
+
+  filterDoneBtn?.addEventListener('click', () => {
+    currentCity = 'all';
+    cityPills.forEach(p => p.classList.remove('active'));
+    currentPage = 1;
+    execFetch();
+    closeDrawer(true);
+  });
 
   searchToggle?.addEventListener('click', () => {
     const open = searchRow?.classList.toggle('hidden') === false;
@@ -70,25 +126,6 @@ function init() {
     studiosGrid?.classList.toggle('compact');
   });
 
-  filterTrigger?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const open = filterPopover?.classList.toggle('show');
-    document.body.style.overflow = open && window.innerWidth <= 640 ? 'hidden' : '';
-  });
-
-  document.getElementById('filter-close-btn')?.addEventListener('click', () => {
-    filterPopover?.classList.remove('show');
-    document.body.style.overflow = '';
-  });
-
-  document.addEventListener('click', (e) => {
-    if (filterPopover?.classList.contains('show') && !filterPopover.contains(e.target as Node) && e.target !== filterTrigger) {
-      filterPopover.classList.remove('show');
-      document.body.style.overflow = '';
-    }
-  });
-
-  // Keep a country checkbox in sync with its child city checkboxes.
   function syncCountryFromCities(group: Element | null) {
     if (!group) return;
     const countryCb = group.querySelector('.country-checkbox') as HTMLInputElement | null;
@@ -102,17 +139,9 @@ function init() {
   countryCheckboxes.forEach(cb => cb.addEventListener('change', () => {
     const group = cb.closest('.filter-group');
     group?.querySelectorAll<HTMLInputElement>('.city-checkbox').forEach(cityCb => { cityCb.checked = cb.checked; });
-    currentCity = 'all';
-    cityPills.forEach(p => p.classList.remove('active'));
-    currentPage = 1;
-    execFetch();
   }));
   cityCheckboxes.forEach(cb => cb.addEventListener('change', () => {
     syncCountryFromCities(cb.closest('.filter-group'));
-    currentCity = 'all';
-    cityPills.forEach(p => p.classList.remove('active'));
-    currentPage = 1;
-    execFetch();
   }));
   clearAllBtn?.addEventListener('click', () => {
     countryCheckboxes.forEach(cb => { cb.checked = false; cb.indeterminate = false; });
@@ -121,6 +150,7 @@ function init() {
     cityPills.forEach(p => p.classList.remove('active'));
     currentPage = 1;
     execFetch();
+    closeDrawer(true);
   });
 
   cityPills.forEach(pill => {
@@ -140,10 +170,6 @@ function init() {
     currentPage = 1;
     execFetch();
   });
-
-  let globalSearchCache: any[] | null = null;
-  let isFirstLoad = true;
-
   function resolveCover(cover?: string) {
     if (!cover) {
       return '';

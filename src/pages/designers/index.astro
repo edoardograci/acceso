@@ -2,6 +2,7 @@
 import PostHogLayout from '../../layouts/PostHogLayout.astro';
 import Navbar from '../../components/Navbar.astro';
 import DirectoryCard from '../../components/DirectoryCard.astro';
+import FilterSidebar from '../../components/FilterSidebar.astro';
 import Footer from '../../components/Footer.astro';
 import type { Studio} from '../../lib/types';
 import { itemList } from '../../lib/seo/schema';
@@ -87,7 +88,7 @@ try {
       // Group every city under its real country — no "Other" catch-all.
       const groupsByCountry: Record<string, any> = {};
       citiesList.forEach((ct: any) => {
-        if (!ct.slug) return;
+        if (!ct.slug || !cityCounts[ct.slug]) return;
         const countrySlug = ct.country || cityToCountry[ct.slug];
         if (!countrySlug) return;
         if (!groupsByCountry[countrySlug]) {
@@ -98,7 +99,7 @@ try {
             cities: [] as any[],
           };
         }
-        const count = cityCounts[ct.slug] || 0;
+        const count = cityCounts[ct.slug];
         groupsByCountry[countrySlug].cities.push({ name: ct.name, slug: ct.slug, count });
         groupsByCountry[countrySlug].count += count;
       });
@@ -186,42 +187,8 @@ const hubSchema = itemList({
       </div>
 
       <div class="city-filter-row">
-        <div class="filter-popover-wrapper">
-          <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
-          <div class="filter-popover" id="filter-popover">
-            <div class="filter-popover-header">
-              <span>Filter by location</span>
-              <div class="filter-header-actions">
-                <button class="filter-clear-all" id="filter-clear-all" type="button">Clear all</button>
-                <button class="filter-close-btn" id="filter-close-btn" type="button" aria-label="Close filters">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="filter-popover-content">
-              {orderedFilterData.map((group: any) => (
-                <div class="filter-group">
-                  <label class="filter-item country-item">
-                    <input type="checkbox" class="country-checkbox" data-country={group.name} data-slug={group.slug} />
-                    <span class="filter-name">{group.name}</span>
-                    <span class="filter-count">({group.count})</span>
-                  </label>
-                  <div class="city-items">
-                    {group.cities.map((city: any) => (
-                      <label class="filter-item city-item">
-                        <input type="checkbox" class="city-checkbox" data-city={city.name} data-slug={city.slug} data-country={group.name} />
-                        <span class="filter-name">{city.name}</span>
-                        <span class="filter-count">({city.count})</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
+        <FilterSidebar groups={orderedFilterData} />
 
         <div class="city-filter-bar">
           <div class="city-filter-scroll" id="city-filters">
@@ -301,53 +268,8 @@ const hubSchema = itemList({
   .search-input::placeholder { color: var(--color-text-muted); }
   .search-input:focus { border-bottom-color: var(--color-black); }
   .city-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; position: relative; z-index: 200; }
-  .filter-popover-wrapper { flex-shrink: 0; }
-  .filter-trigger-btn { height: 36px; padding: 1px 16px 0; border-radius: 999px; border: none; background: var(--color-yellow); color: var(--color-black); font-family: var(--font-sans); font-size: 14px; font-weight: 700; cursor: pointer; }
-  .filter-popover { position: absolute; top: calc(100% + 12px); left: 0; right: 0; max-width: min(1600px, calc(100vw - 80px)); background: var(--color-white); border: 1px solid var(--color-stroke); border-radius: 16px; padding: 24px; z-index: 1500; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
-  .filter-popover.show { display: block; }
-  .filter-popover-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-family: var(--font-sans); font-size: 16px; font-weight: 600; color: var(--color-black); }
-  .filter-header-actions { display: flex; align-items: center; gap: 16px; }
-  .filter-clear-all { height: 32px; padding: 1px 14px 0; border-radius: 999px; border: 1px solid var(--color-stroke); background: var(--color-bg-secondary); color: var(--color-black); font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-sans); }
-  .filter-close-btn { display: none; background: transparent; border: none; cursor: pointer; color: var(--color-black); }
-  .filter-popover-content { column-count: 6; column-gap: 20px; }
-  .filter-group { margin-bottom: 18px; break-inside: avoid; }
-  @media (min-width: 901px) {
-    .filter-group { break-inside: auto; }
-  }
-  .filter-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-  .filter-name { font-family: var(--font-sans); font-size: 14px; font-weight: 400; color: var(--color-black); }
-  .country-item .filter-name { font-weight: 700; }
-  .filter-count { font-family: var(--font-sans); font-size: 12px; font-weight: 400; color: var(--color-text-muted); }
-  .filter-item input[type="checkbox"] {
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--color-stroke);
-    border-radius: 4px;
-    cursor: pointer;
-    position: relative;
-    flex-shrink: 0;
-    background: var(--color-white);
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-  }
-
-  .filter-item input[type="checkbox"]:checked {
-    background: var(--color-black);
-    border-color: var(--color-black);
-  }
-
-  .filter-item input[type="checkbox"]:checked::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 45%;
-    width: 4px;
-    height: 8px;
-    border: solid var(--color-white);
-    border-width: 0 2px 2px 0;
-    transform: translate(-50%, -50%) rotate(45deg);
-  }
-  .city-items { margin-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+  .filter-trigger-btn { height: 36px; padding: 1px 16px 0; border-radius: 999px; border: none; background: var(--color-yellow); color: var(--color-black); font-family: var(--font-sans); font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.15s ease; }
+  .filter-trigger-btn:hover { opacity: 0.9; }
   .city-filter-bar { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(to right, black 85%, transparent 100%); }
   .city-filter-bar::-webkit-scrollbar { display: none; }
   .city-filter-scroll { display: flex; gap: 8px; padding: 4px 0; width: max-content; }
@@ -376,57 +298,13 @@ const hubSchema = itemList({
   :global(.pagination-btn:disabled) { opacity: 0.3; cursor: not-allowed; }
   :global(.pagination-arrow) { background: var(--color-bg-secondary) !important; border: 1px solid var(--color-stroke) !important; color: var(--color-black); }
   :global(.pagination-ellipsis) { color: var(--color-text-muted); font-family: var(--font-sans); }
-  @media (max-width: 900px) { .filter-popover-content { column-count: 2; } .search-row { margin-left: 0; max-width: none; } .studios-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .studios-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); } .directory-description { font-size: 14px; line-height: 1.5; } .filter-trigger-btn, .city-pill { height: 40px; } }
+  @media (max-width: 900px) { .search-row { margin-left: 0; max-width: none; } .studios-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .studios-grid.compact { grid-template-columns: repeat(4, minmax(0, 1fr)); } .directory-description { font-size: 14px; line-height: 1.5; } .filter-trigger-btn, .city-pill { height: 40px; } }
   @media (max-width: 640px) {
     .directory-inner { padding: var(--page-top-spacing) 16px 64px; }
     .studios-grid { grid-template-columns: 1fr; gap: 20px; }
     .studios-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .city-filter-row { flex-wrap: wrap; }
     .directory-toolbar { margin-left: 0; width: 100%; justify-content: flex-end; }
-    .filter-popover {
-      position: fixed;
-      top: var(--navbar-height, 64px);
-      left: 0;
-      right: 0;
-      width: 100%;
-      height: calc(100dvh - var(--navbar-height, 64px));
-      max-width: none;
-      border-radius: 0;
-      padding: 16px 16px 24px;
-      z-index: 9001;
-      border: none;
-      box-shadow: none;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-    .filter-popover.show { display: flex; animation: filterSlideIn 0.22s ease-out; }
-    .filter-popover-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; margin-top: 0; flex-shrink: 0; }
-    .filter-close-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; }
-    .filter-clear-all { height: 40px; padding: 0 16px; font-size: 14px; }
-    .filter-popover-content {
-      display: block;
-      flex: 1;
-      min-height: 0;
-      overflow-x: hidden;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      column-count: 2;
-      column-gap: 20px;
-      width: 100%;
-    }
-    .filter-group { margin-bottom: 20px; width: 100%; break-inside: avoid; }
-    .filter-name { font-size: 16px; }
-    .country-item .filter-name { font-size: 17px; }
-    .filter-count { font-size: 14px; }
-    .filter-item { width: 100%; }
-    .filter-item input[type="checkbox"] { width: 22px; height: 22px; flex-shrink: 0; }
-    .city-items { margin-left: 20px; margin-top: 8px; gap: 8px; width: calc(100% - 20px); }
-  }
-  @keyframes filterSlideIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
   }
   </style>
 
