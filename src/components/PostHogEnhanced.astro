@@ -5,7 +5,7 @@
  * Implements session-level tracking with server-side hash distinct IDs.
  * 
  * Key Features:
- * - No cookies or local/session storage (cookieless_mode: "always")
+ * - No cookies (uses memory persistence for tab-session identity)
  * - Automatic session lifecycle tracking
  * - Enhanced pageview capture with page type classification
  * - Performance optimized (batching, timeouts)
@@ -44,19 +44,16 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog
           // Initialize PostHog
           window.posthog.init(posthogKey, {
             api_host: posthogHost,
-            cookieless_mode: "always",
+            persistence: 'memory',
             loaded: function(posthog) {
-              const allowedHosts = ['acceso.design'];
-              const currentHost = window.location.hostname;
-              if (!allowedHosts.includes(currentHost)) {
-                posthog.opt_out_capturing();
+              if (window.location.hostname !== 'acceso.design') {
+                posthog.set_config({ opt_out_capturing_by_default: true });
               }
             },
-            capture_pageview: true, // Let PostHog handle pageviews
+            capture_pageview: true,
             capture_pageleave: true,
             autocapture: false,
             disable_session_recording: true,
-            respect_dnt: true,
             opt_out_capturing_by_default: false,
             _request_timeout_ms: 10000,
             batch_size: 20,
@@ -162,7 +159,9 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog
           }
 
           
-        } catch (e) {}
+        } catch (e) {
+          console.error('[PostHog] init failed:', e);
+        }
       };
 
       script.onerror = function() {

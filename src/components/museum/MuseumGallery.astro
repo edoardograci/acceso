@@ -1,0 +1,246 @@
+---
+import { normalizeImage } from '../../lib/images';
+
+interface Props {
+  museum: {
+    name: string;
+    image?: string;
+    images?: string;
+  };
+}
+
+const { museum } = Astro.props;
+
+const galleryImages = (() => {
+  if (!museum.images) return museum.image ? [museum.image] : [];
+  try {
+    const parsed = JSON.parse(museum.images);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : (museum.image ? [museum.image] : []);
+  } catch {
+    return museum.image ? [museum.image] : [];
+  }
+})();
+---
+
+<section class="gallery-section">
+  <div class="gallery-frame" id="slideshowMain">
+    {galleryImages.length > 0 ? (
+      <img
+        src={normalizeImage(galleryImages[0], Astro, { width: 1400 })}
+        alt={`${museum.name}`}
+        class="gallery-main-img"
+        id="slideshowMainImg"
+        loading="eager"
+        decoding="async"
+      />
+    ) : (
+      <div class="gallery-empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span>Museum photography coming soon</span>
+      </div>
+    )}
+
+    <!-- Autoplay Loading Line -->
+    <div class="slideshow-progress-bar-wrap" id="slideProgressBarWrap">
+      <div class="slideshow-progress-bar" id="slideProgressBar"></div>
+    </div>
+  </div>
+
+  <!-- Thumbnail Strip -->
+  <div class="gallery-thumbnails" id="slideshowThumbs" role="list" aria-label="Museum photos">
+    {galleryImages.map((img, index) => (
+      <button type="button" class={`thumb-btn ${index === 0 ? 'active' : ''}`} data-index={index} aria-label={`Image ${index + 1}`} aria-current={index === 0 ? 'true' : undefined}>
+        <img src={normalizeImage(img, Astro, { width: 200 })} alt="" loading="lazy" decoding="async" />
+      </button>
+    ))}
+  </div>
+</section>
+
+<script>
+  const thumbs = document.querySelectorAll('.thumb-btn');
+  const mainImg = document.getElementById('slideshowMainImg') as HTMLImageElement | null;
+  const progressBar = document.getElementById('slideProgressBar');
+  const galleryFrame = document.getElementById('slideshowMain');
+
+  const totalThumbs = thumbs.length;
+  let currentIndex = 0;
+  const SLIDE_DURATION = 5000;
+  let animationStart = performance.now();
+  let reqId: number | null = null;
+  let isPaused = false;
+
+  function setActiveSlide(idx: number) {
+    currentIndex = ((idx % totalThumbs) + totalThumbs) % totalThumbs;
+    const activeThumb = thumbs[currentIndex] as HTMLElement | undefined;
+    if (!activeThumb) return;
+
+    const src = activeThumb.querySelector('img')?.src;
+    if (src && mainImg) {
+      mainImg.src = src;
+    }
+
+    thumbs.forEach(t => { t.classList.remove('active'); t.removeAttribute('aria-current'); });
+    activeThumb.classList.add('active');
+    activeThumb.setAttribute('aria-current', 'true');
+
+    resetProgress();
+  }
+
+  function resetProgress() {
+    animationStart = performance.now();
+    if (progressBar) progressBar.style.width = '0%';
+  }
+
+  function step(now: number) {
+    if (!isPaused && totalThumbs > 1) {
+      const elapsed = now - animationStart;
+      const progress = Math.min(elapsed / SLIDE_DURATION, 1);
+      if (progressBar) progressBar.style.width = `${progress * 100}%`;
+
+      if (elapsed >= SLIDE_DURATION) {
+        setActiveSlide(currentIndex + 1);
+      }
+    }
+    reqId = requestAnimationFrame(step);
+  }
+
+  if (totalThumbs > 1) {
+    reqId = requestAnimationFrame(step);
+
+    if (galleryFrame) {
+      galleryFrame.addEventListener('mouseenter', () => { isPaused = true; });
+      galleryFrame.addEventListener('mouseleave', () => {
+        isPaused = false;
+        animationStart = performance.now();
+      });
+    }
+  } else {
+    const progressWrap = document.getElementById('slideProgressBarWrap');
+    if (progressWrap) progressWrap.style.display = 'none';
+  }
+
+  thumbs.forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+      const idx = Number((thumb as HTMLElement).dataset.index ?? 0);
+      setActiveSlide(idx);
+    });
+  });
+</script>
+
+<style>
+  .gallery-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .gallery-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: var(--color-bg-secondary);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-stroke);
+    box-sizing: border-box;
+  }
+
+  .gallery-main-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.3s ease;
+  }
+
+  .gallery-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-gray);
+    font-family: var(--font-sans);
+    font-size: 15px;
+  }
+
+  .slideshow-progress-bar-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.15);
+    z-index: 4;
+    overflow: hidden;
+  }
+
+  .slideshow-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--color-white);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    will-change: width;
+  }
+
+  .gallery-thumbnails {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .thumb-btn {
+    flex-shrink: 0;
+    width: 80px;
+    height: 60px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    overflow: hidden;
+    background: var(--color-bg-secondary);
+    cursor: pointer;
+    padding: 0;
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+    opacity: 0.7;
+    box-sizing: border-box;
+  }
+
+  .thumb-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .thumb-btn.active {
+    border-color: var(--color-black);
+    opacity: 1;
+  }
+
+  .thumb-btn:hover {
+    opacity: 1;
+  }
+
+  .thumb-btn.wireframe {
+    cursor: default;
+    opacity: 0.35;
+  }
+
+  .wireframe-pattern {
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--color-stroke),
+      var(--color-stroke) 1px,
+      transparent 1px,
+      transparent 8px
+    );
+  }
+</style>

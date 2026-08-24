@@ -173,25 +173,23 @@ function init() {
     }
   }
 
-  function setPanelSnap(mode: 'closed' | 'compact' | 'full') {
+  function setPanelSnap(mode: 'compact' | 'full') {
     if (!isMobilePanel()) return;
 
-    if (mode === 'closed') {
-      closeMobilePanel();
-      return;
-    }
-
     explorePanel?.classList.add('is-open');
-    explorePanelBackdrop?.classList.add('is-visible');
-    explorePanelBackdrop?.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
 
     if (mode === 'compact') {
       explorePanel?.classList.add('is-compact');
+      explorePanelBackdrop?.classList.remove('is-visible');
+      explorePanelBackdrop?.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
       const inner = explorePanel?.querySelector('.explore-panel-inner') as HTMLElement | null;
       if (inner) inner.scrollTop = 0;
     } else {
       explorePanel?.classList.remove('is-compact');
+      explorePanelBackdrop?.classList.add('is-visible');
+      explorePanelBackdrop?.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
     }
   }
 
@@ -201,10 +199,7 @@ function init() {
   }
 
   function closeMobilePanel() {
-    explorePanel?.classList.remove('is-open', 'is-compact');
-    explorePanelBackdrop?.classList.remove('is-visible');
-    explorePanelBackdrop?.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    setPanelSnap('compact');
   }
 
   function hideAllPanelViews() {
@@ -406,7 +401,7 @@ function init() {
   function setupPanelSwipe() {
     if (!explorePanel) return;
 
-    const compactHeight = () => Math.round(window.innerHeight * 0.52);
+    const PEEK_HEIGHT = 72;
     const fullHeight = () => Math.round(window.innerHeight * 0.88);
 
     let startY = 0;
@@ -420,12 +415,10 @@ function init() {
       const target = e.target as HTMLElement | null;
       const onHandle = !!(target && target.closest('.explore-panel-handle'));
       const inner = explorePanel!.querySelector('.explore-panel-inner') as HTMLElement | null;
-      // Only start a drag from the body when the list is scrolled to the very
-      // top — otherwise the gesture belongs to scrolling the list.
       if (!onHandle && !(inner && inner.scrollTop <= 0)) return;
       startedOnHandle = onHandle;
       startY = e.touches[0].clientY;
-      startMaxH = explorePanel!.classList.contains('is-compact') ? compactHeight() : fullHeight();
+      startMaxH = explorePanel!.classList.contains('is-compact') ? PEEK_HEIGHT : fullHeight();
       currentMaxH = startMaxH;
       isDragging = true;
     };
@@ -436,7 +429,7 @@ function init() {
       if (!startedOnHandle && inner && inner.scrollTop > 0) return;
 
       const delta = e.touches[0].clientY - startY;
-      // When expanded (not compact), an upward gesture scrolls the list rather
+      // When expanded, an upward gesture scrolls the list rather
       // than expanding further — only a downward gesture collapses it.
       if (!startedOnHandle && delta < 0 && !explorePanel!.classList.contains('is-compact')) return;
 
@@ -444,7 +437,7 @@ function init() {
       let next = startMaxH - delta;
       const full = fullHeight();
       if (next > full) next = full + (next - full) * 0.15;
-      if (next < 0) next = next * 0.35;
+      if (next < PEEK_HEIGHT) next = PEEK_HEIGHT + (next - PEEK_HEIGHT) * 0.3;
 
       currentMaxH = next;
       explorePanel!.style.transition = 'none';
@@ -456,15 +449,12 @@ function init() {
       isDragging = false;
       explorePanel!.style.transition = '';
 
-      const compact = compactHeight();
       const full = fullHeight();
-      const mid = (compact + full) / 2;
+      const mid = (PEEK_HEIGHT + full) / 2;
 
       explorePanel!.style.maxHeight = '';
 
-      if (currentMaxH <= compact * 0.45) {
-        closeMobilePanel();
-      } else if (currentMaxH >= mid) {
+      if (currentMaxH >= mid) {
         setPanelSnap('full');
       } else {
         setPanelSnap('compact');
@@ -750,12 +740,12 @@ function init() {
 
   mapBrowseFab?.addEventListener('click', () => {
     if (isMobilePanel()) {
+      if (explorePanel?.classList.contains('is-compact')) {
+        showCityBrowse();
+        return;
+      }
       if (explorePanel?.classList.contains('is-open')) {
-        if (isOnQuickNavDefault()) {
-          closeMobilePanel();
-        } else {
-          showQuickNav();
-        }
+        setPanelSnap('compact');
         return;
       }
     }
@@ -881,6 +871,13 @@ function init() {
     if (cityBrowseBack) cityBrowseBack.style.display = 'none';
   } else {
     if (mapBackBtn) mapBackBtn.style.display = 'none';
+  }
+
+  if (isMobilePanel()) {
+    explorePanel?.classList.add('is-open', 'is-compact');
+    explorePanelBackdrop?.classList.remove('is-visible');
+    explorePanelBackdrop?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
   }
 }
 

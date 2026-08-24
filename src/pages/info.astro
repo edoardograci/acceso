@@ -2,405 +2,725 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+
+const isDev = import.meta.env.DEV;
+const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+
+async function readJson(filename: string) {
+  try {
+    const response = await fetch(`${domain}/${filename}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function toArray(data: any): any[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.items)) return data.items;
+  return [];
+}
+
+const [citiesData, countriesData, studiosData, projectsData, schoolsData, museumsData, fairsData, awardsData] = await Promise.all([
+  readJson('test-cities.json'),
+  readJson('test-countries.json'),
+  readJson('test-studios.json'),
+  readJson('moodboard.json'),
+  readJson('universities.json'),
+  readJson('museums.json'),
+  readJson('fairs.json'),
+  readJson('awards.json'),
+]);
+
+const counts = {
+  cities: toArray(citiesData).length || 300,
+  countries: toArray(countriesData).length || 60,
+  studios: toArray(studiosData).length || 1000,
+  projects: toArray(projectsData).length,
+  schools: toArray(schoolsData).length,
+  museums: toArray(museumsData).length,
+  fairs: toArray(fairsData).length,
+  awards: toArray(awardsData).length,
+};
+
+function formatCount(value: number, fallback: string) {
+  if (!value) return fallback;
+  if (value >= 1000) return `${Math.floor(value / 100) / 10}k`;
+  return value.toLocaleString('en-US');
+}
+
+const platformLinks = [
+  {
+    title: 'Map',
+    text: 'Explore the design map by city and jump from local clusters to individual listings.',
+    href: '/',
+    cta: 'Open map',
+  },
+  {
+    title: 'Designers',
+    text: 'Find independent furniture, product, and industrial design studios across the world.',
+    href: '/designers',
+    cta: 'Browse studios',
+  },
+  {
+    title: 'Discover',
+    text: 'Look through objects and projects, then follow the studio or reference behind them.',
+    href: '/discover',
+    cta: 'See projects',
+  },
+  {
+    title: 'Directory',
+    text: 'Compare schools, museums, fairs, awards, competitions, and design institutions.',
+    href: '/directory',
+    cta: 'Use directory',
+  },
+];
+
+const ecosystemItems = [
+  { label: 'Independent design studios' },
+  { label: 'Furniture and industrial designers' },
+  { label: 'Design schools and programs' },
+  { label: 'Museums and permanent collections' },
+  { label: 'Fairs, biennials, and design weeks' },
+  { label: 'Awards and open calls' },
+  { label: 'Galleries, showrooms, and retailers', soon: true },
+  { label: 'Manufacturers, workshops, and opportunities', soon: true },
+];
+
+const actionCards = [
+  {
+    label: 'Explore globally',
+    title: 'Find designers outside your usual feed',
+    text: 'Start from the designers page, filter by city, and discover studios working in places you may not already follow.',
+  },
+  {
+    label: 'Compare options',
+    title: 'Weigh schools, awards, and open calls',
+    text: 'Use the directory to compare education paths, prizes, deadlines, and institutions without jumping across tabs.',
+  },
+  {
+    label: 'Save references',
+    title: 'Build your own map of studios and objects',
+    text: 'Create an account to save designers, projects, schools, and museums into a personal collection you can return to.',
+  },
+];
 ---
 
-  <Layout 
-    title="Acceso | Independent Furniture & Industrial Design Studios"
-    description="Curated directory of independent furniture and industrial design studios. Explore studios, objects, and projects across Milan, London, Berlin, Seoul, and more."
-    keywords="independent design studios, furniture design studios, industrial design studios, design studios directory, design studio map, design studios Milan, design studios London, design studios Seoul, design inspiration objects" ogType="website">
-    <Navbar />
-    
-    {/* Page Hero */}
+<Layout
+  title="Info | Acceso"
+  description="Acceso is a local design infopoint: a curated map, directory, and discovery platform for independent design studios, schools, museums, fairs, awards, and design culture worldwide."
+  keywords="Acceso design, local design map, design directory, independent design studios, design schools, design museums, design fairs, industrial design platform"
+  ogType="website"
+>
+  <Navbar />
+
+  <main class="info-page">
     <section class="info-hero">
-      <div class="info-hero-container reveal-on-scroll">
-        <div class="info-hero-content">
-          <div class="info-hero-kicker">
-            <span class="pill">WE MAP DESIGN IN 300+ CITIES</span>
-          </div>
-          <h1 class="info-hero-title">Your local<br/>design infopoint</h1>
-          <p class="info-hero-sub">
-            Acceso is a curated directory of local design communities.
-          </p>
-          <div class="info-hero-ctas">
-            <a href="/" class="btn-primary">
-              Explore map
-            </a>
-            <a href="/designers" class="btn-secondary">Browse designers</a>
-          </div>
+      <div class="hero-copy">
+        <p class="eyebrow">YOUR LOCAL DESIGN INFOPOINT</p>
+        <h1>Design culture, city by city.</h1>
+        <p class="hero-description">
+          Acceso connects the pieces of local design culture: independent studios, projects, schools,
+          museums, fairs, awards, and the cities around them. Start with a place, a designer, or an
+          object, then keep moving through the network.
+        </p>
+        <div class="hero-actions">
+          <a href="/" class="btn-primary">Explore map</a>
+          <a href="/submission" class="btn-submission">Submit a listing</a>
         </div>
-        <div class="info-hero-image">
-          <div class="info-hero-img-wrapper">
-             <img src="/images/projects-grid.webp" alt="Design projects grid" class="info-hero-img" />
-          </div>
+      </div>
+
+      <div class="hero-panel" aria-label="Acceso platform overview">
+        <div class="hero-image">
+          <img src="/images/info-hero.webp" alt="Acceso platform overview" />
         </div>
       </div>
     </section>
 
-    {/* What is Acceso Section */}
-    <section class="what-is-acceso-section">
-      <div class="what-is-grid">
-        <div class="what-is-header">
-          <span class="showcase-label reveal-on-scroll">WHAT IS ACCESO</span>
-          <h2 class="what-is-title reveal-on-scroll">Mapping the<br/>design ecosystem</h2>
-          <p class="what-is-desc reveal-on-scroll">
-            Acceso is a curated directory of local design communities. Discover independent design studios, industrial designers, furniture designers, design schools, exhibitions, fairs, design weeks, awards, competitions, manufacturers, workshops, galleries, museums, showrooms, retailers, jobs, and creative opportunities in cities around the world.
-          </p>
-          <p class="what-is-desc reveal-on-scroll">
-            Each city page includes interactive maps, curated listings, and practical information to help you explore the local design scene. Whether you're looking for design inspiration, planning a visit, searching for a studio, hiring a designer, or researching a city's creative ecosystem, Acceso provides a single place to discover and navigate local design.
-          </p>
-        </div>
-        <div class="what-is-image">
-          <img src="/images/map.webp?v=2" alt="Acceso map of local design" class="what-is-img" />
-        </div>
+    <section class="stats-strip" aria-label="Acceso coverage">
+      <div>
+        <strong>{formatCount(counts.cities, '300+')}</strong>
+        <span>Cities mapped</span>
+      </div>
+      <div>
+        <strong>{formatCount(counts.studios, '1k+')}</strong>
+        <span>Design studios</span>
+      </div>
+      <div>
+        <strong>{formatCount(counts.countries, '60+')}</strong>
+        <span>Countries covered</span>
       </div>
     </section>
 
-    {/* 
-    <main class="spotlight-page">
-      <Spotlight 
-        activeSpotlight={activeSpotlight} 
-        spotlightImages={spotlightImages} 
-        designerStudio={designerStudio} 
-      />
-    </main>
-    */}
-
-    {/* Start collecting Section */}
-    <section class="community-section">
-      <div class="community-content">
-        <span class="showcase-label reveal-on-scroll">Your personal space</span>
-        <h2 class="community-title reveal-on-scroll">Start building<br/>your map</h2>
-        <p class="community-subtitle reveal-on-scroll">Create an account to save studios, objects, schools, museums and build your own map of local design references. Make it completely personalized to reflect your taste.</p>
-        <a href="/login" class="btn-primary community-btn reveal-on-scroll">Build my map</a>
+    <section class="section-block intro-block">
+      <div class="section-heading">
+        <p class="eyebrow">WHAT ACCESO DOES</p>
+        <h2>A connected view of local design.</h2>
+      </div>
+      <div class="section-text">
+        <p>
+          Acceso is built to make design scenes easier to read. It is a map, a discovery layer, and a
+          growing index of the people and institutions that shape industrial, furniture, and product
+          design around the world.
+        </p>
+        <p>
+          You can use it to find studios in another city, compare schools, browse current awards and
+          competitions, save references, or move from a project to the wider context around it.
+        </p>
       </div>
     </section>
 
-    <Footer />
-  </Layout>
+    <section class="platform-grid" aria-label="Explore Acceso">
+      {platformLinks.map((item) => (
+        <a class="platform-card" href={item.href}>
+          <span>{item.title}</span>
+          <p>{item.text}</p>
+          <strong>{item.cta}</strong>
+        </a>
+      ))}
+    </section>
+
+    <section class="section-block ecosystem-block">
+      <div class="section-heading">
+        <p class="eyebrow">THE ECOSYSTEM</p>
+        <h2>Every layer of a design scene, in one place.</h2>
+      </div>
+      <ul class="ecosystem-list">
+        {ecosystemItems.map((item) => (
+          <li class:list={{ 'soon-item': item.soon }}>
+            <span>{item.label}</span>
+            {item.soon && <em>Soon</em>}
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="image-feature">
+      <div class="feature-image">
+        <img src="/cdn/museums/triennale-milano/cover.webp" alt="Triennale Milano" loading="lazy" decoding="async" />
+      </div>
+      <div class="feature-copy">
+        <p class="eyebrow">WHAT YOU CAN FIND</p>
+        <h2>One project leads to its whole context.</h2>
+        <p>
+          Acceso is useful when you want to move between discovery and research. Browse a project,
+          open the studio behind it, check what city it belongs to, then keep exploring nearby schools,
+          museums, fairs, awards, and design references.
+        </p>
+      </div>
+    </section>
+
+    <section class="action-section">
+      <div class="section-heading">
+        <p class="eyebrow">USE ACCESO TO</p>
+        <h2>Move through design with a little more context.</h2>
+      </div>
+      <div class="action-grid" aria-label="What people can do on Acceso">
+        {actionCards.map((item) => (
+          <article class="use-case-card">
+            <p class="eyebrow">{item.label}</p>
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <div class="bottom-cards">
+      <section class="contribute-section">
+        <div class="contribute-copy">
+          <p class="eyebrow">CONTRIBUTE</p>
+          <h2>Know something we should add?</h2>
+          <p>
+            Send us a studio, school, museum, fair, award, competition, or design event that belongs on
+            Acceso. Submissions help keep the map specific, current, and close to the people building
+            each local scene.
+          </p>
+          <a href="/submission" class="btn-save">Submit a listing</a>
+        </div>
+      </section>
+
+      <section class="final-cta">
+        <div class="final-cta-copy">
+          <p class="eyebrow">BUILD YOUR MAP</p>
+          <h2>Save what you want to remember.</h2>
+          <p>
+            Create an account to collect studios, objects, schools, and museums as you explore. Your map
+            becomes a personal index of design references, not another endless feed.
+          </p>
+          <a href="/login" class="btn-save">Start saving</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
 
 <style>
-  /* New Info Hero */
-  .info-hero {
-    width: 100%;
+  .info-page {
     max-width: 1600px;
     margin: 0 auto;
-    padding: var(--page-top-spacing) 40px 100px;
-  }
-
-  .info-hero-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-  }
-
-  .info-hero-content {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .info-hero-kicker {
-    margin-bottom: 24px;
-  }
-
-  .pill {
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-gray);
-    background: rgba(0,0,0,0.04);
-    border: 1px solid var(--color-stroke);
-    padding: 8px 12px;
-    border-radius: 999px;
-    backdrop-filter: blur(10px);
-    display: inline-block;
-  }
-
-  .info-hero-title {
-    font-family: var(--font-sans);
-    font-size: clamp(48px, 6vw, 84px);
-    font-weight: 400;
-    line-height: 0.98;
-    letter-spacing: -0.08em;
-    margin: 0 0 24px;
-    color: var(--color-black);
-  }
-
-  .info-hero-sub {
-    font-family: var(--font-sans);
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--color-gray);
-    margin: 0 0 32px;
-    max-width: 500px;
-  }
-
-  .info-hero-ctas {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .info-hero-image {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 24px;
-    overflow: hidden;
-    border: 1px solid var(--color-stroke);
-    background: var(--color-bg-secondary);
-  }
-
-  .info-hero-img-wrapper {
-    width: 100%;
-    height: 100%;
-  }
-
-  .info-hero-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  @media (max-width: 900px) {
-    .info-hero {
-      padding: var(--page-top-spacing) 24px 60px;
-    }
-    .info-hero-container {
-      grid-template-columns: 1fr;
-      gap: 40px;
-    }
-    .info-hero-content {
-      order: 2;
-    }
-    .info-hero-image {
-      aspect-ratio: 4 / 3;
-      order: 1;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .info-hero {
-      padding: var(--page-top-spacing) 20px 48px;
-    }
-  }
-
-  /* Shared Button Extensions */
-  .btn-primary, .btn-secondary {
-    white-space: nowrap;
-  }
-
-  /* What is Acceso Section */
-  .what-is-acceso-section {
-    width: 100%;
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 0 40px;
-    position: relative;
-    z-index: 10;
-  }
-
-  .what-is-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-  }
-
-  .what-is-header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 24px;
-    text-align: left;
-  }
-
-  .what-is-image {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    border-radius: 24px;
-    overflow: hidden;
-    border: 1px solid var(--color-stroke);
-    background: var(--color-bg-secondary);
-  }
-
-  .what-is-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .what-is-title {
-    font-family: var(--font-sans);
-    font-size: 64px;
-    font-weight: 400;
-    line-height: 1.05;
-    color: var(--color-black);
-    letter-spacing: -0.04em;
-    max-width: 900px;
-    margin: 0;
-  }
-
-  .what-is-desc {
-    font-family: var(--font-sans);
-    font-size: 18px;
-    line-height: 1.6;
-    color: var(--color-gray);
-    max-width: 720px;
-    margin: 0;
-  }
-
-  @media (max-width: 1024px) {
-    .what-is-grid {
-      gap: 48px;
-    }
-    .what-is-title {
-      font-size: 48px;
-    }
-  }
-
-  @media (max-width: 900px) {
-    .what-is-acceso-section {
-      padding: 0 24px;
-    }
-    .what-is-grid {
-      grid-template-columns: 1fr;
-      gap: 40px;
-    }
-    .what-is-title {
-      font-size: 40px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .what-is-acceso-section {
-      padding: 0 20px;
-    }
-    .what-is-title {
-      font-size: 32px;
-    }
-  }
-
-  /* Showcase Label (shared pill) */
-  .showcase-label {
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-gray);
-    background: rgba(0,0,0,0.04);
-    border: 1px solid var(--color-stroke);
-    padding: 8px 12px;
-    border-radius: 999px;
-    backdrop-filter: blur(10px);
-  }
-
-  /* Modern CTA styling (align with current site buttons) */
-  .btn-primary,
-  .btn-secondary,
-  .community-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 52px;
-    padding: 0 22px;
-    border-radius: 14px;
-    font-family: var(--font-sans);
-    font-weight: 700;
-    font-size: 14px;
-    letter-spacing: 0.01em;
-    text-decoration: none;
-    cursor: pointer;
-    transition: opacity 0.2s ease, background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-  }
-
-  .btn-primary,
-  .community-btn {
-    background: var(--color-black);
-    color: var(--color-white);
-    border: 1px solid var(--color-black);
-  }
-
-  .btn-primary:hover,
-  .community-btn:hover {
-    opacity: 0.9;
-  }
-
-  .btn-secondary {
-    background: var(--color-bg-secondary);
-    color: var(--color-black);
-    border: 1px solid var(--color-stroke);
-  }
-
-  .btn-secondary:hover {
-    background: #EBEBED;
-    border-color: #D4D4D8;
-  }
-
-  /* Community Section */
-  .community-section {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 120px 40px;
-    text-align: center;
+    padding: var(--page-top-spacing) 40px 96px;
     background: var(--color-white);
   }
 
-  .community-content {
-    max-width: 600px;
-    margin: 0 auto;
+  .info-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.98fr) minmax(360px, 0.82fr);
+    gap: clamp(32px, 5vw, 76px);
+    align-items: center;
+    padding: 42px 0 64px;
+  }
+
+  .hero-copy {
+    max-width: 760px;
+  }
+
+  .eyebrow {
+    margin: 0 0 14px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  .info-hero h1,
+  .section-heading h2,
+  .feature-copy h2,
+  .contribute-section h2,
+  .final-cta h2 {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    color: var(--color-black);
+    letter-spacing: -0.06em;
+  }
+
+  .info-hero h1 {
+    max-width: 11ch;
+    font-size: clamp(46px, 5.8vw, 88px);
+    line-height: 0.96;
+  }
+
+  .hero-description {
+    max-width: 620px;
+    margin: 28px 0 0;
+    font-family: var(--font-sans);
+    font-size: clamp(16px, 1.35vw, 20px);
+    line-height: 1.55;
+    color: var(--color-text-muted);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .hero-panel {
+    min-width: 0;
+  }
+
+  .hero-image {
+    aspect-ratio: 1.12 / 1;
+    overflow: hidden;
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    background: var(--color-bg-secondary);
+  }
+
+  .hero-image img,
+  .feature-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--color-stroke);
+    border-bottom: 1px solid var(--color-stroke);
+    margin-bottom: 96px;
+  }
+
+  .stats-strip div {
+    min-height: 164px;
+    padding: 24px;
+    border-right: 1px solid var(--color-stroke);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 24px;
+    justify-content: space-between;
   }
 
-  .community-title {
-    font-family: var(--font-sans);
-    font-size: 56px;
+  .stats-strip div:last-child {
+    border-right: 0;
+  }
+
+  .stats-strip strong {
+    font-size: clamp(56px, 8vw, 122px);
     font-weight: 400;
-    line-height: 1.1;
-    color: var(--color-black);
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+  }
+
+  .stats-strip span {
+    max-width: 16ch;
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--color-text-muted);
+  }
+
+  .section-block {
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+    gap: clamp(32px, 7vw, 120px);
+    align-items: start;
+    margin-bottom: 84px;
+  }
+
+  .section-heading h2,
+  .feature-copy h2,
+  .contribute-section h2,
+  .final-cta h2 {
+    font-size: clamp(34px, 4vw, 60px);
+    line-height: 1.04;
+  }
+
+  .section-text {
+    display: grid;
+    gap: 20px;
+    padding-top: 30px;
+  }
+
+  .section-text p,
+  .feature-copy p:not(.eyebrow) {
     margin: 0;
-    letter-spacing: -0.04em;
-  }
-
-  .community-subtitle {
     font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+  }
+
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 100px;
+    padding: 10px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 14px;
+  }
+
+  .platform-card {
+    min-height: 210px;
+    padding: 18px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: inherit;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .platform-card:hover {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-stroke);
+    transform: none;
+    color: var(--color-black);
+  }
+
+  .platform-card span {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+
+  .platform-card p {
+    margin: auto 0 18px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+  }
+
+  .platform-card strong {
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: underline;
+  }
+
+  /* Ecosystem: a quiet, editorial list instead of a boxed grid */
+  .ecosystem-block {
+    align-items: start;
+  }
+
+  .ecosystem-list {
+    margin: 0;
+    padding: 0;
+    padding-top: 8px;
+    list-style: none;
+  }
+
+  .ecosystem-list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-stroke);
     font-size: 18px;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+  }
+
+  .ecosystem-list li:first-child {
+    border-top: 1px solid var(--color-stroke);
+  }
+
+  .ecosystem-list em {
+    flex-shrink: 0;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  .ecosystem-list li.soon-item {
+    opacity: 0.5;
+  }
+
+  .image-feature {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    gap: clamp(28px, 5vw, 72px);
+    align-items: center;
+    margin-bottom: 96px;
+  }
+
+  .feature-image {
+    aspect-ratio: 1.55 / 1;
+    overflow: hidden;
+    border-radius: 12px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+  }
+
+  .feature-copy {
+    max-width: 580px;
+  }
+
+  .feature-copy h2 {
+    font-size: clamp(28px, 3vw, 44px);
+  }
+
+  .feature-copy p:not(.eyebrow) {
+    margin-top: 24px;
+  }
+
+  .action-section {
+    margin-bottom: 96px;
+  }
+
+  .action-section > .section-heading {
+    max-width: 820px;
+    margin-bottom: 28px;
+  }
+
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .use-case-card {
+    min-height: 260px;
+    padding: 24px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    background: transparent;
+  }
+
+  .use-case-card h3 {
+    max-width: 13ch;
+    margin: 0 0 28px;
+    font-size: clamp(26px, 2.55vw, 38px);
+    line-height: 1.04;
+    letter-spacing: -0.05em;
+  }
+
+  .use-case-card p:not(.eyebrow) {
+    margin: 0;
+    font-size: 15px;
     line-height: 1.6;
-    color: var(--color-gray);
-    margin: 0 0 16px;
+    color: var(--color-text-muted);
   }
 
-  .community-btn {
-    min-width: 160px;
+  /* Bottom cards: contribute + build your map */
+  .bottom-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 96px;
   }
 
-  @media (max-width: 768px) {
-    .community-section {
-      padding: 80px 20px;
-      text-align: left;
+  .contribute-section {
+    padding: 48px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    background: var(--color-bg-secondary);
+  }
+
+  .final-cta {
+    padding: 48px;
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    background: rgba(237, 255, 119, 0.5);
+  }
+
+  .contribute-copy,
+  .final-cta-copy {
+    max-width: 640px;
+  }
+
+  .contribute-copy p:not(.eyebrow),
+  .final-cta-copy p:not(.eyebrow) {
+    margin: 22px 0 28px;
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+  }
+
+  .hero-actions .btn-submission {
+    height: var(--btn-height-large);
+    padding: 0 24px;
+  }
+
+  @media (max-width: 1100px) {
+    .info-hero,
+    .section-block,
+    .image-feature {
+      grid-template-columns: 1fr;
     }
 
-    .community-content {
-      margin: 0;
-      align-items: flex-start;
+    .info-hero {
+      align-items: start;
     }
-    
-    .community-title {
-      font-size: 36px;
+
+    .platform-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    
-    
-    .community-subtitle {
+
+    .final-cta {
+      align-items: start;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .info-page {
+      padding: var(--page-top-spacing) 16px 72px;
+    }
+
+    .info-hero {
+      gap: 36px;
+      padding-bottom: 44px;
+    }
+
+    .info-hero h1 {
+      max-width: 9ch;
+      font-size: clamp(52px, 15vw, 72px);
+      letter-spacing: -0.07em;
+    }
+
+    .hero-description,
+    .section-text p,
+    .feature-copy p:not(.eyebrow),
+    .contribute-copy p:not(.eyebrow),
+    .final-cta-copy p:not(.eyebrow) {
       font-size: 16px;
+    }
+
+    .hero-image {
+      aspect-ratio: 1 / 0.92;
+    }
+
+    .stats-strip,
+    .platform-grid,
+    .action-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-strip {
+      margin-bottom: 72px;
+    }
+
+    .stats-strip div,
+    .stats-strip div:last-child {
+      min-height: 112px;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-stroke);
+    }
+
+    .stats-strip div:last-child {
+      border-bottom: 0;
+    }
+
+    .section-block,
+    .platform-grid,
+    .image-feature,
+    .action-section,
+    .contribute-section,
+    .final-cta {
+      margin-bottom: 72px;
+    }
+
+    .section-text {
+      padding-top: 0;
+    }
+
+    .platform-card,
+    .use-case-card {
+      min-height: 210px;
+    }
+
+    .ecosystem-list li {
+      font-size: 16px;
+    }
+
+    .feature-image {
+      aspect-ratio: 1 / 0.82;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .hero-actions a {
+      width: 100%;
+    }
+
+    .contribute-section {
+      padding: 24px;
+    }
+
+    .final-cta {
+      align-items: stretch;
+    }
+
+    .bottom-cards {
+      grid-template-columns: 1fr;
     }
   }
 </style>
-

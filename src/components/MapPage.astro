@@ -1603,26 +1603,24 @@ const faqs = [
       border-top: 1px solid var(--color-stroke);
       border-radius: 24px 24px 0 0;
       box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.12);
-      max-height: 88vh;
-      transform: translateY(100%);
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      max-height: 72px;
+      transform: translateY(0);
+      transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
-    .explore-panel.is-open {
-      transform: translateY(0);
+    .explore-panel.is-open:not(.is-compact) {
+      max-height: 88vh;
     }
 
     .explore-panel.is-compact {
-      max-height: 52vh;
+      max-height: 72px;
     }
 
-    /* When collapsed, the peek must not scroll — that way an upward swipe on
-       the sheet expands it instead of scrolling the list. */
     .explore-panel.is-compact .explore-panel-inner {
-      overflow-y: hidden;
+      display: none;
     }
 
     .explore-panel-handle {
@@ -1748,7 +1746,7 @@ const faqs = [
     }
 
     .map-filters {
-      bottom: max(28px, env(safe-area-inset-bottom, 0px) + 20px);
+      bottom: calc(72px + 16px + env(safe-area-inset-bottom, 0px));
       max-width: calc(100% - 24px);
       padding: 6px;
       gap: 8px;
@@ -1780,7 +1778,7 @@ const faqs = [
 
   @media (max-width: 640px) {
     .map-filters {
-      bottom: max(32px, env(safe-area-inset-bottom, 0px) + 24px);
+      bottom: calc(72px + 16px + env(safe-area-inset-bottom, 0px));
       padding: 6px;
       gap: 8px;
     }

@@ -1121,41 +1121,40 @@ const user = Astro.locals.user;
     const steps = document.querySelectorAll('.form-step');
     const nodes = document.querySelectorAll('.step-node');
     const progressLine = document.getElementById('progress-line');
-    const form = document.getElementById('multi-step-form') as HTMLFormElement;
+    const form = document.getElementById('multi-step-form');
 
-    const captchaTokenInput = document.getElementById('captcha-token') as HTMLInputElement | null;
-    const captchaError = document.getElementById('captcha-error') as HTMLElement | null;
-    const turnstileContainer = document.getElementById('turnstile-container') as HTMLElement | null;
+    const captchaTokenInput = document.getElementById('captcha-token') || null;
+    const captchaError = document.getElementById('captcha-error') || null;
+    const turnstileContainer = document.getElementById('turnstile-container') || null;
     const turnstileSiteKey = turnstileContainer?.dataset.sitekey || '';
-    let turnstileWidgetId: string | null = null;
+    let turnstileWidgetId = null;
 
     // Turnstile callbacks (referenced by `data-callback` / `data-expired-callback`)
-    (window as any).onTurnstileVerified = (token: string) => {
+    (window).onTurnstileVerified = (token) => {
       if (captchaTokenInput) captchaTokenInput.value = token;
       captchaError?.classList.add('hidden');
     };
-    (window as any).onTurnstileExpired = () => {
+    (window).onTurnstileExpired = () => {
       if (captchaTokenInput) captchaTokenInput.value = '';
       // Keep error state visible only when the user attempts to submit.
     };
     
-    // File Upload Refs
-    const fileInput = document.getElementById('cover-upload') as HTMLInputElement;
+    const fileInput = document.getElementById('cover-upload');
     const uploadZone = document.getElementById('upload-zone');
     const uploadUI = document.getElementById('upload-ui');
     const uploadPreview = document.getElementById('upload-preview');
-    const thumb = uploadPreview?.querySelector('.preview-thumb') as HTMLElement;
+    const thumb = uploadPreview?.querySelector('.preview-thumb');
     const fileNameDisplay = uploadPreview?.querySelector('.file-name');
     const removeBtn = uploadPreview?.querySelector('.btn-remove-file');
     const uploadError = document.getElementById('upload-error');
 
-    let uploadedFile: File | null = null;
+    let uploadedFile = null;
 
-    function updateStepUI(step: any) {
-      steps.forEach(s => {
-        (s as HTMLElement).classList.remove('active');
-        if ((s as HTMLElement).dataset.step === step.toString()) {
-          (s as HTMLElement).classList.add('active');
+    function updateStepUI(step) {
+      steps.forEach((s) => {
+        s.classList.remove('active');
+        if (s.dataset.step === String(step)) {
+          s.classList.add('active');
         }
       });
 
@@ -1188,8 +1187,8 @@ const user = Astro.locals.user;
 
     // True once all required submission fields are filled (so the captcha
     // only appears at the end, after the user has done the work).
-    function submissionFieldsReady(): boolean {
-      const fd = new FormData(form as HTMLFormElement);
+    function submissionFieldsReady() {
+      const fd = new FormData(form);
       const name = String(fd.get('name') || '').trim();
       const website = String(fd.get('website') || '').trim();
       const city = String(fd.get('city') || '').trim();
@@ -1210,22 +1209,20 @@ const user = Astro.locals.user;
     function ensureTurnstileRendered() {
       if (!turnstileContainer) return;
       if (!turnstileSiteKey) return;
-      // If a previous attempt failed, allow retry when step 3 is entered again.
       if (turnstileWidgetId) return;
 
       const start = Date.now();
       const tryRender = () => {
-        const t = (window as any).turnstile;
+        const t = window.turnstile;
         if (t && typeof t.render === 'function') {
           turnstileContainer.innerHTML = '';
           try {
             turnstileWidgetId = t.render(turnstileContainer, {
               sitekey: turnstileSiteKey,
               theme: 'light',
-              callback: (token: string) => (window as any).onTurnstileVerified(token),
-              'expired-callback': () => (window as any).onTurnstileExpired(),
-              'error-callback': (err: any) => {
-                // Allow a retry if user stays on step 3.
+              callback: (token) => (window).onTurnstileVerified(token),
+              'expired-callback': () => (window).onTurnstileExpired(),
+              'error-callback': (err) => {
                 turnstileWidgetId = null;
                 const code =
                   typeof err === 'string'
@@ -1251,7 +1248,6 @@ const user = Astro.locals.user;
         }
 
         if (Date.now() - start > 6000) {
-          // If script is blocked (adblock/CSP), we show a clear message.
           turnstileWidgetId = null;
           if (captchaError) {
             captchaError.textContent = 'Captcha did not load. If this continues, check Turnstile domain/site configuration and ensure requests to challenges.cloudflare.com are allowed.';
@@ -1268,12 +1264,12 @@ const user = Astro.locals.user;
     // Navigation
     document.querySelectorAll('.btn-continue[data-next]').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const step = (e.currentTarget as HTMLElement).closest('.form-step');
+        const step = e.currentTarget.closest('.form-step');
         if (step) {
-          const stepNumber = Number((step as HTMLElement).dataset.step || '1');
+          const stepNumber = Number(step.dataset.step || '1');
           const requiredFields = step.querySelectorAll('input[required], textarea[required]');
           let allValid = true;
-          requiredFields.forEach((field: any) => {
+          requiredFields.forEach((field) => {
             if (!field.checkValidity()) {
               field.reportValidity();
               allValid = false;
@@ -1287,14 +1283,14 @@ const user = Astro.locals.user;
           if (!allValid) return;
         }
 
-        const next = (e.currentTarget as HTMLElement).dataset.next;
+        const next = e.currentTarget.dataset.next;
         if (next) updateStepUI(parseInt(next));
       });
     });
 
     document.querySelectorAll('.btn-back').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLElement;
+        const target = e.currentTarget;
         if (target.hasAttribute('data-close-form')) {
           const formArea = document.getElementById('submission-form-area');
           const overview  = document.getElementById('submission-overview');
@@ -1325,7 +1321,8 @@ const user = Astro.locals.user;
     uploadZone?.addEventListener('click', () => fileInput?.click());
 
     fileInput?.addEventListener('change', (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+      const target = e.target;
+      const file = target.files?.[0];
       if (!file) return;
 
       // Validation
@@ -1367,17 +1364,21 @@ const user = Astro.locals.user;
       const formData = new FormData(form);
       const preview = document.getElementById('listing-preview');
       if (preview) {
-        preview.querySelector('.mockup-title')!.textContent = (formData.get('name') as string) || 'Studio Name';
-        preview.querySelector('.mockup-meta')!.textContent = `${formData.get('city')}, ${formData.get('country')}`;
-        preview.querySelector('.mockup-desc')!.textContent = (formData.get('description') as string) || 'Description will appear here...';
-        
-        const previewIcon = preview.querySelector('.mockup-img-placeholder') as HTMLElement;
-        if (uploadedFile) {
-          const reader = new FileReader();
-          reader.onload = (re) => {
-             previewIcon.style.backgroundImage = `url(${re.target?.result})`;
-          };
-          reader.readAsDataURL(uploadedFile);
+        const mockupTitle = preview.querySelector('.mockup-title');
+        const mockupMeta = preview.querySelector('.mockup-meta');
+        const mockupDesc = preview.querySelector('.mockup-desc');
+        const previewIcon = preview.querySelector('.mockup-img-placeholder');
+        if (mockupTitle) mockupTitle.textContent = String(formData.get('name') || 'Studio Name');
+        if (mockupMeta) mockupMeta.textContent = `${formData.get('city')}, ${formData.get('country')}`;
+        if (mockupDesc) mockupDesc.textContent = String(formData.get('description') || 'Description will appear here...');
+        if (previewIcon) {
+          if (uploadedFile) {
+            const reader = new FileReader();
+            reader.onload = (re) => {
+              previewIcon.style.backgroundImage = `url(${re.target?.result})`;
+            };
+            reader.readAsDataURL(uploadedFile);
+          }
         }
       }
     });
@@ -1385,7 +1386,7 @@ const user = Astro.locals.user;
     // Final Submission
     form?.addEventListener('submit', (e) => {
       e.preventDefault();
-      
+
       const token = captchaTokenInput?.value || '';
       if (!token) {
         captchaError?.classList.remove('hidden');
@@ -1396,7 +1397,7 @@ const user = Astro.locals.user;
       const descriptionValue = String((new FormData(form).get('description') || '')).trim();
       if (!uploadedFile) {
         uploadError?.classList.remove('hidden');
-        uploadError && (uploadError.textContent = 'Please upload a cover image before submitting.');
+        if (uploadError) uploadError.textContent = 'Please upload a cover image before submitting.';
         updateStepUI(2);
         return;
       }
@@ -1406,13 +1407,14 @@ const user = Astro.locals.user;
         return;
       }
 
-      const btn = form.querySelector('.final-cta') as HTMLButtonElement;
+      const btn = form.querySelector('.final-cta');
+      if (!btn) return;
       const originalHtml = btn.innerHTML;
       btn.innerHTML = 'Submitting...';
       btn.disabled = true;
 
       (async () => {
-        let uiFailsafeId: number | null = null;
+        let uiFailsafeId = null;
         try {
           const payload = new FormData(form);
           if (uploadedFile) payload.set('cover_file', uploadedFile);
@@ -1430,9 +1432,9 @@ const user = Astro.locals.user;
             throw new Error(json?.error || 'Submission failed');
           }
           updateStepUI(4);
-          const stepsCount = document.querySelector('.step-path-container') as HTMLElement;
+          const stepsCount = document.querySelector('.step-path-container');
           if (stepsCount) stepsCount.style.opacity = '0';
-        } catch (err: any) {
+        } catch (err) {
           alert(err?.message || 'Submission failed. Please try again.');
           btn.innerHTML = originalHtml;
           btn.disabled = false;
@@ -1442,7 +1444,7 @@ const user = Astro.locals.user;
       })();
     });
 
-    const descriptionField = form?.querySelector('textarea[name="description"]') as HTMLTextAreaElement | null;
+    const descriptionField = form?.querySelector('textarea[name="description"]') || null;
     const descCount = document.getElementById('desc-count');
     const syncDescCount = () => {
       if (!descriptionField || !descCount) return;
@@ -1452,27 +1454,27 @@ const user = Astro.locals.user;
     syncDescCount();
 
     /* ===== SUGGEST A PLACE (inline form) ===== */
-    const suggestForm = document.getElementById('suggest-form') as HTMLFormElement | null;
+    const suggestForm = document.getElementById('suggest-form') || null;
     const suggestSuccess = document.getElementById('suggest-success');
     const suggestError = document.getElementById('suggest-error');
-    const suggestCaptchaTokenInput = document.getElementById('suggest-captcha-token') as HTMLInputElement | null;
+    const suggestCaptchaTokenInput = document.getElementById('suggest-captcha-token') || null;
     const suggestCaptchaError = document.getElementById('suggest-captcha-error');
-    const suggestTurnstileContainer = document.getElementById('suggest-turnstile') as HTMLElement | null;
+    const suggestTurnstileContainer = document.getElementById('suggest-turnstile') || null;
     const suggestSiteKey = suggestTurnstileContainer?.dataset.sitekey || '';
-    let suggestTurnstileWidgetId: string | null = null;
+    let suggestTurnstileWidgetId = null;
 
     function resetSuggestCaptcha() {
-      if (suggestTurnstileWidgetId && (window as any).turnstile?.reset) {
+      if (suggestTurnstileWidgetId && window.turnstile?.reset) {
         try {
-          (window as any).turnstile.reset(suggestTurnstileWidgetId);
+          window.turnstile.reset(suggestTurnstileWidgetId);
         } catch {}
       }
       if (suggestCaptchaTokenInput) suggestCaptchaTokenInput.value = '';
       suggestCaptchaError?.classList.add('hidden');
     }
 
-    function suggestFieldsReady(): boolean {
-      const fd = new FormData(suggestForm as HTMLFormElement);
+    function suggestFieldsReady() {
+      const fd = new FormData(suggestForm);
       const type = String(fd.get('suggest_type') || '').trim();
       const name = String(fd.get('suggest_name') || '').trim();
       const city = String(fd.get('suggest_city') || '').trim();
@@ -1482,21 +1484,20 @@ const user = Astro.locals.user;
     function renderSuggestTurnstile() {
       if (!suggestTurnstileContainer || !suggestSiteKey) return;
       if (suggestTurnstileWidgetId) return;
-      // Only show the captcha once the required fields are filled.
       if (!suggestFieldsReady()) return;
       const captchaHint = document.getElementById('suggest-captcha-hint');
       captchaHint?.classList.add('hidden');
       suggestTurnstileContainer.classList.remove('hidden');
       const start = Date.now();
       const tryRender = () => {
-        const t = (window as any).turnstile;
+        const t = window.turnstile;
         if (t && typeof t.render === 'function') {
           suggestTurnstileContainer.innerHTML = '';
           try {
             suggestTurnstileWidgetId = t.render(suggestTurnstileContainer, {
               sitekey: suggestSiteKey,
               theme: 'light',
-              callback: (token: string) => {
+              callback: (token) => {
                 if (suggestCaptchaTokenInput) suggestCaptchaTokenInput.value = token;
                 suggestCaptchaError?.classList.add('hidden');
               },
@@ -1515,21 +1516,19 @@ const user = Astro.locals.user;
       requestAnimationFrame(tryRender);
     }
 
-    // Reveal the captcha only after the required fields are filled.
     function maybeRenderSuggestTurnstile() {
       if (suggestFieldsReady()) renderSuggestTurnstile();
     }
 
-    /* ===== CUSTOM TYPE DROPDOWN ===== */
     const csRoot = document.getElementById('suggest-type-select');
-    const csTrigger = csRoot?.querySelector<HTMLButtonElement>('.cs-trigger');
-    const csValue = csRoot?.querySelector<HTMLElement>('.cs-value');
-    const csOptions = Array.from(csRoot?.querySelectorAll<HTMLElement>('.cs-option') ?? []);
-    const csNative = csRoot?.querySelector<HTMLSelectElement>('.cs-native');
+    const csTrigger = csRoot?.querySelector('.cs-trigger');
+    const csValue = csRoot?.querySelector('.cs-value');
+    const csOptions = Array.from(csRoot?.querySelectorAll('.cs-option') || []);
+    const csNative = csRoot?.querySelector('.cs-native');
     let csActiveIndex = csOptions.findIndex((o) => o.getAttribute('aria-selected') === 'true');
     if (csActiveIndex < 0) csActiveIndex = 0;
 
-    function csSetValue(value: string) {
+    function csSetValue(value) {
       csOptions.forEach((o) => {
         const selected = o.dataset.value === value;
         o.setAttribute('aria-selected', selected ? 'true' : 'false');
@@ -1592,7 +1591,7 @@ const user = Astro.locals.user;
     });
 
     document.addEventListener('click', (e) => {
-      if (csRoot && !csRoot.contains(e.target as Node)) csClose();
+      if (csRoot && !csRoot.contains(e.target)) csClose();
     });
 
     if (csNative) {
@@ -1602,22 +1601,21 @@ const user = Astro.locals.user;
       });
     }
 
-    // Reveal the captcha as soon as the required text fields are filled.
     const suggestRequiredInputs = [
       document.getElementById('suggest_name'),
       document.getElementById('suggest_city'),
       document.getElementById('suggest_website'),
-    ].filter(Boolean) as HTMLInputElement[];
+    ].filter(Boolean);
 
     suggestRequiredInputs.forEach((input) => {
       input.addEventListener('input', maybeRenderSuggestTurnstile);
     });
 
     /* ===== MOBILE TAB SWITCHER (Submit studio / Suggest place) ===== */
-    const subTabBtns = document.querySelectorAll<HTMLButtonElement>('.sub-tab-btn');
-    const subCols = document.querySelectorAll<HTMLElement>('.sub-col');
+    const subTabBtns = document.querySelectorAll('.sub-tab-btn');
+    const subCols = document.querySelectorAll('.sub-col');
 
-    function switchSubTab(tab: string) {
+    function switchSubTab(tab) {
       subCols.forEach((col) => col.classList.toggle('active', col.dataset.panel === tab));
       subTabBtns.forEach((btn) => {
         const isActive = btn.dataset.tab === tab;
@@ -1661,7 +1659,7 @@ const user = Astro.locals.user;
         return;
       }
 
-      const submitBtn = suggestForm.querySelector('.suggest-submit') as HTMLButtonElement | null;
+      const submitBtn = suggestForm.querySelector('.suggest-submit');
       const originalHtml = submitBtn?.innerHTML || 'Send Suggestion';
       if (submitBtn) {
         submitBtn.innerHTML = 'Sending...';
@@ -1681,12 +1679,12 @@ const user = Astro.locals.user;
           });
           const jsonRes = await res.json().catch(() => ({}));
           if (!res.ok) {
-            throw new Error((jsonRes as any)?.error || 'Suggestion failed');
+            throw new Error(jsonRes?.error || 'Suggestion failed');
           }
 
           suggestForm.classList.add('hidden');
           suggestSuccess?.classList.remove('hidden');
-        } catch (err: any) {
+        } catch (err) {
           if (suggestError) {
             suggestError.textContent = err?.message || 'Something went wrong. Please try again.';
             suggestError.classList.remove('hidden');
@@ -1701,7 +1699,7 @@ const user = Astro.locals.user;
       })();
     });
 
-    const suggestAnotherBtn = document.getElementById('suggest-another') as HTMLButtonElement | null;
+    const suggestAnotherBtn = document.getElementById('suggest-another');
     suggestAnotherBtn?.addEventListener('click', () => {
       suggestForm?.reset();
       csSetValue(csOptions[0].dataset.value || '');
@@ -1709,7 +1707,6 @@ const user = Astro.locals.user;
       suggestError?.classList.add('hidden');
       suggestSuccess?.classList.add('hidden');
       suggestForm?.classList.remove('hidden');
-      // Reset captcha to its pre-filled state.
       suggestTurnstileWidgetId = null;
       suggestTurnstileContainer?.classList.add('hidden');
       suggestTurnstileContainer && (suggestTurnstileContainer.innerHTML = '');

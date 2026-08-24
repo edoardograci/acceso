@@ -12,12 +12,38 @@ interface CountryGroup {
   cities: City[];
 }
 
+interface FilterOption {
+  name: string;
+  slug: string;
+  count: number;
+}
+
+interface FilterSection {
+  id: string;
+  title: string;
+  type: 'location' | 'checkbox' | 'radio';
+  options?: FilterOption[];
+  groups?: CountryGroup[];
+  collapsed?: boolean;
+}
+
 interface Props {
-  groups: CountryGroup[];
+  sections?: FilterSection[];
+  // Legacy props for backward compatibility
+  groups?: CountryGroup[];
   title?: string;
 }
 
-const { groups = [], title = 'Filter by location' } = Astro.props;
+const { sections, groups, title = 'Filters' } = Astro.props;
+
+// If legacy mode (only groups provided), create a single location section
+const filterSections: FilterSection[] = sections || (groups ? [{
+  id: 'location',
+  title: 'Filter by location',
+  type: 'location',
+  groups: groups,
+  collapsed: false
+}] : []);
 ---
 
 <div class="filter-sidebar-backdrop" id="filter-sidebar-backdrop" aria-hidden="true"></div>
@@ -29,7 +55,7 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
 
   <div class="filter-sidebar-search-box">
     <div class="filter-search-input-wrapper">
-      <svg class="filter-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg class="filter-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="7"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
@@ -37,13 +63,13 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
         type="text"
         id="filter-sidebar-search"
         class="filter-sidebar-search-input"
-        placeholder="Search country or city..."
-        aria-label="Search country or city in filter"
+        placeholder="Search..."
+        aria-label="Search filters"
       />
       <button type="button" id="filter-sidebar-search-clear" class="filter-search-clear hidden" aria-label="Clear filter search">&times;</button>
     </div>
     <button class="filter-close-btn" id="filter-close-btn" type="button" aria-label="Close filters">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </svg>
@@ -51,38 +77,68 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
   </div>
 
   <div class="filter-sidebar-content" id="filter-sidebar-content">
-    {groups.map((group) => (
-      <div class="filter-group collapsed" data-country-name={group.name.toLowerCase()} data-country-slug={group.slug}>
-        <div class="filter-group-header">
-          <label class="filter-item country-item" onclick="event.stopPropagation();">
-            <input type="checkbox" class="country-checkbox" data-country={group.name} data-slug={group.slug} />
-            <span class="filter-name">{group.name}</span>
-            <span class="filter-count">({group.count})</span>
-          </label>
-          {group.cities && group.cities.length > 0 && (
-            <button type="button" class="group-collapse-btn" aria-label={`Toggle ${group.name} cities`}>
-              <svg class="chevron-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          )}
+    {filterSections.map((section) => (
+      <div class={`filter-section ${section.collapsed ? 'collapsed' : ''}`} data-section-id={section.id}>
+        <button type="button" class="filter-section-header">
+          <span class="filter-section-title">{section.title}</span>
+          <svg class="section-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="filter-section-content">
+          {section.type === 'location' && section.groups && section.groups.map((group) => (
+            <div class="filter-group collapsed" data-country-name={group.name.toLowerCase()} data-country-slug={group.slug}>
+              <div class="filter-group-header">
+                <label class="filter-item country-item" onclick="event.stopPropagation();">
+                  <input type="checkbox" class="country-checkbox" data-country={group.name} data-slug={group.slug} />
+                  <span class="filter-name">{group.name}</span>
+                  <span class="filter-count">({group.count})</span>
+                </label>
+                {group.cities && group.cities.length > 0 && (
+                  <button type="button" class="group-collapse-btn" aria-label={`Toggle ${group.name} cities`}>
+                    <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
+              
+              {group.cities && group.cities.length > 0 && (
+                <div class="city-items">
+                  {group.cities.map((city) => (
+                    <label class="filter-item city-item" data-city-name={city.name.toLowerCase()} data-city-slug={city.slug}>
+                      <input type="checkbox" class="city-checkbox" data-city={city.name} data-slug={city.slug} data-country={group.name} />
+                      <span class="filter-name">{city.name}</span>
+                      <span class="filter-count">({city.count})</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {section.type === 'checkbox' && section.options && section.options.map((option) => (
+            <label class="filter-item simple-option" data-option-name={option.name.toLowerCase()}>
+              <input type="checkbox" class={`${section.id}-checkbox`} data-slug={option.slug} data-section={section.id} />
+              <span class="filter-name">{option.name}</span>
+              {option.count > 0 && <span class="filter-count">({option.count})</span>}
+            </label>
+          ))}
+
+          {section.type === 'radio' && section.options && section.options.map((option) => (
+            <label class="filter-item simple-option" data-option-name={option.name.toLowerCase()}>
+              <input type="radio" name={section.id} class={`${section.id}-radio`} data-slug={option.slug} data-section={section.id} />
+              <span class="filter-name">{option.name}</span>
+              {option.count > 0 && <span class="filter-count">({option.count})</span>}
+            </label>
+          ))}
         </div>
-        
-        {group.cities && group.cities.length > 0 && (
-          <div class="city-items">
-            {group.cities.map((city) => (
-              <label class="filter-item city-item" data-city-name={city.name.toLowerCase()} data-city-slug={city.slug}>
-                <input type="checkbox" class="city-checkbox" data-city={city.name} data-slug={city.slug} data-country={group.name} />
-                <span class="filter-name">{city.name}</span>
-                <span class="filter-count">({city.count})</span>
-              </label>
-            ))}
-          </div>
-        )}
       </div>
     ))}
+    
     <div id="filter-sidebar-empty" class="filter-sidebar-empty hidden">
-      <p>No matching location found.</p>
+      <p>No matching filters found.</p>
     </div>
   </div>
 
@@ -133,14 +189,14 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 28px 24px 16px;
+    padding: 24px 20px 14px;
     flex-shrink: 0;
     position: relative;
     z-index: 10;
   }
   .filter-sidebar-title {
     font-family: var(--font-sans);
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--color-black, #000000);
     letter-spacing: -0.02em;
@@ -169,7 +225,7 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
   }
 
   .filter-sidebar-search-box {
-    padding: 8px 24px 20px;
+    padding: 4px 20px 16px;
     flex-shrink: 0;
     background: var(--color-white, #ffffff);
   }
@@ -180,20 +236,20 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
   }
   .filter-search-icon {
     position: absolute;
-    left: 4px;
+    left: 2px;
     color: var(--color-text-muted, #737373);
     pointer-events: none;
   }
   .filter-sidebar-search-input {
     width: 100%;
-    height: 44px;
-    padding: 0 32px 0 32px;
+    height: 38px;
+    padding: 0 28px 0 28px;
     border: none;
     border-bottom: 1.5px solid var(--color-stroke, #e5e5e5);
     border-radius: 0;
     background: transparent;
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 14px;
     color: var(--color-black, #000000);
     outline: none;
     transition: border-color 0.2s ease;
@@ -227,15 +283,104 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
   .filter-sidebar-content {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 24px 24px;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    padding: 8px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 0;
+  }
+
+  /* Filter Sections (collapsible categories) */
+  .filter-section {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+  }
+  
+  /* When any section is OPEN (not collapsed), it grows to fill space */
+  .filter-section:not(.collapsed) {
+    flex: 1;
+    min-height: 0;
+  }
+  
+  .filter-section:last-child {
+    border-bottom: none;
+  }
+
+  .filter-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 14px 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    flex-shrink: 0;
+  }
+  .filter-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-gray, #737373);
+    line-height: 16px;
+  }
+  .section-chevron {
+    color: var(--color-gray, #737373);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+  .filter-section.collapsed .section-chevron {
+    transform: rotate(-90deg);
+  }
+  .filter-section.collapsed .filter-section-content {
+    display: none;
+  }
+
+  .filter-section-content {
+    padding: 0 0 14px 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* When any section is OPEN, its content grows and scrolls */
+  .filter-section:not(.collapsed) .filter-section-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+  }
+
+  /* Minimal scrollbar for location section */
+  .filter-section[data-section-id="location"] .filter-section-content::-webkit-scrollbar {
+    width: 4px;
+  }
+  .filter-section[data-section-id="location"] .filter-section-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .filter-section[data-section-id="location"] .filter-section-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
+  }
+  .filter-section[data-section-id="location"] .filter-section-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+  }
+  .filter-section[data-section-id="location"] .filter-section-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
   }
 
   .filter-group {
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   }
   .filter-group:last-child {
     border-bottom: none;
@@ -249,14 +394,14 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0;
+    padding: 6px 0;
     cursor: pointer;
     border-radius: 6px;
   }
   .group-collapse-btn {
     background: transparent;
     border: none;
-    padding: 6px;
+    padding: 4px;
     border-radius: 50%;
     cursor: pointer;
     color: var(--color-text-muted, #737373);
@@ -281,10 +426,10 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
   .filter-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     cursor: pointer;
     user-select: none;
-    padding: 5px 0;
+    padding: 4px 0;
   }
   .filter-item.hidden {
     display: none !important;
@@ -295,23 +440,26 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
   }
   .filter-name {
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 13px;
     color: var(--color-black, #000000);
+    flex: 1;
   }
   .country-item .filter-name {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
   }
   .filter-count {
     font-family: var(--font-sans);
-    font-size: 13px;
+    font-size: 11px;
     color: var(--color-text-muted, #737373);
+    flex-shrink: 0;
   }
 
-  .filter-item input[type="checkbox"] {
+  .filter-item input[type="checkbox"],
+  .filter-item input[type="radio"] {
     appearance: none;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     border: 1.5px solid var(--color-stroke, #cccccc);
     border-radius: 4px;
     cursor: pointer;
@@ -320,10 +468,15 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
     background: var(--color-white, #ffffff);
     transition: border-color 0.15s ease, background-color 0.15s ease;
   }
-  .filter-item input[type="checkbox"]:hover {
+  .filter-item input[type="radio"] {
+    border-radius: 50%;
+  }
+  .filter-item input[type="checkbox"]:hover,
+  .filter-item input[type="radio"]:hover {
     border-color: var(--color-black, #000000);
   }
-  .filter-item input[type="checkbox"]:checked {
+  .filter-item input[type="checkbox"]:checked,
+  .filter-item input[type="radio"]:checked {
     background: var(--color-black, #000000);
     border-color: var(--color-black, #000000);
   }
@@ -332,11 +485,22 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
     position: absolute;
     left: 50%;
     top: 45%;
-    width: 5px;
-    height: 9px;
+    width: 4px;
+    height: 8px;
     border: solid var(--color-white, #ffffff);
     border-width: 0 2px 2px 0;
     transform: translate(-50%, -50%) rotate(45deg);
+  }
+  .filter-item input[type="radio"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    background: var(--color-white, #ffffff);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
   }
   .filter-item input[type="checkbox"]:indeterminate {
     background: var(--color-black, #000000);
@@ -347,26 +511,30 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 9px;
+    width: 8px;
     height: 2px;
     background: var(--color-white, #ffffff);
     transform: translate(-50%, -50%);
   }
 
   .city-items {
-    margin-left: 28px;
+    margin-left: 24px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 6px;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .simple-option {
+    margin-bottom: 2px;
   }
 
   .filter-sidebar-empty {
-    padding: 40px 0;
+    padding: 32px 0;
     text-align: center;
     color: var(--color-text-muted, #737373);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 13px;
   }
   .filter-sidebar-empty.hidden {
     display: none;
@@ -374,22 +542,22 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
 
   .filter-sidebar-footer {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
-    padding: 18px 24px max(20px, env(safe-area-inset-bottom, 20px));
+    padding: 16px 20px max(16px, env(safe-area-inset-bottom, 16px));
     border-top: 1px solid var(--color-stroke, #e5e5e5);
     background: var(--color-white, #ffffff);
     flex-shrink: 0;
   }
   .filter-clear-all {
     flex: 1;
-    height: 46px;
+    height: 44px;
     border: 1px solid var(--color-stroke, #e5e5e5);
     border-radius: 999px;
     background: var(--color-bg-secondary, #f5f5f5);
     color: var(--color-black, #000000);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
@@ -402,13 +570,13 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
   }
   .filter-done-btn {
     flex: 1.6;
-    height: 46px;
+    height: 44px;
     border: none;
     border-radius: 999px;
     background: var(--color-black, #000000);
     color: var(--color-white, #ffffff);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     transition: opacity 0.15s ease;
@@ -426,14 +594,14 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
       border-right: none;
     }
     .filter-sidebar-header {
-      padding-top: max(28px, env(safe-area-inset-top, 28px));
-      padding-bottom: 12px;
+      padding-top: max(24px, env(safe-area-inset-top, 24px));
+      padding-bottom: 10px;
     }
     .filter-sidebar-search-box {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding-top: 12px;
+      gap: 10px;
+      padding-top: 10px;
     }
     .filter-search-input-wrapper {
       flex: 1;
@@ -455,6 +623,8 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
     const closeBtn = document.getElementById('filter-close-btn');
     const searchInput = document.getElementById('filter-sidebar-search') as HTMLInputElement;
     const searchClear = document.getElementById('filter-sidebar-search-clear');
+    const sections = document.querySelectorAll('.filter-section');
+    const sectionHeaders = document.querySelectorAll('.filter-section-header');
     const groups = document.querySelectorAll('.filter-group');
     const groupHeaders = document.querySelectorAll('.filter-group-header');
     const emptyEl = document.getElementById('filter-sidebar-empty');
@@ -489,10 +659,31 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
       }
     });
 
-    // Accordion toggle on group header click
+    // Section header toggle with accordion behavior (only one section open at a time)
+    sectionHeaders.forEach((header) => {
+      header.addEventListener('click', () => {
+        const section = header.closest('.filter-section');
+        const isCurrentlyCollapsed = section?.classList.contains('collapsed');
+        
+        if (isCurrentlyCollapsed) {
+          // Collapse all other sections
+          sections.forEach((s) => {
+            if (s !== section) {
+              s.classList.add('collapsed');
+            }
+          });
+          // Expand this one
+          section?.classList.remove('collapsed');
+        } else {
+          // Collapse this one
+          section?.classList.add('collapsed');
+        }
+      });
+    });
+
+    // Accordion toggle on group header click (for location groups)
     groupHeaders.forEach((header) => {
       header.addEventListener('click', (e) => {
-        // If clicking directly on checkbox, let checkbox change event handle it
         if ((e.target as HTMLElement).tagName === 'INPUT') return;
         const group = header.closest('.filter-group');
         group?.classList.toggle('collapsed');
@@ -517,36 +708,67 @@ const { groups = [], title = 'Filter by location' } = Astro.props;
 
       let totalVisible = 0;
 
-      groups.forEach((group) => {
-        const countryName = group.getAttribute('data-country-name') || '';
-        const cityItems = group.querySelectorAll('.city-item');
-        let groupHasMatch = countryName.includes(query);
-        let visibleCitiesCount = 0;
+      // Search across all sections
+      sections.forEach((section) => {
+        let sectionHasMatch = false;
 
-        cityItems.forEach((cityItem) => {
-          const cityName = cityItem.getAttribute('data-city-name') || '';
-          const cityMatches = cityName.includes(query);
-          if (countryName.includes(query) || cityMatches) {
-            cityItem.classList.remove('hidden');
-            visibleCitiesCount++;
+        // Search in location groups
+        const locationGroups = section.querySelectorAll('.filter-group');
+        locationGroups.forEach((group) => {
+          const countryName = group.getAttribute('data-country-name') || '';
+          const cityItems = group.querySelectorAll('.city-item');
+          let groupHasMatch = countryName.includes(query);
+          let visibleCitiesCount = 0;
+
+          cityItems.forEach((cityItem) => {
+            const cityName = cityItem.getAttribute('data-city-name') || '';
+            const cityMatches = cityName.includes(query);
+            if (countryName.includes(query) || cityMatches) {
+              cityItem.classList.remove('hidden');
+              visibleCitiesCount++;
+            } else {
+              cityItem.classList.add('hidden');
+            }
+          });
+
+          if (groupHasMatch || visibleCitiesCount > 0) {
+            group.classList.remove('hidden');
+            if (query) group.classList.remove('collapsed');
+            sectionHasMatch = true;
           } else {
-            cityItem.classList.add('hidden');
+            group.classList.add('hidden');
           }
         });
 
-        if (groupHasMatch || visibleCitiesCount > 0) {
-          group.classList.remove('hidden');
-          if (query) {
-            group.classList.remove('collapsed');
+        // Search in simple options (tags, frequency, etc.)
+        const simpleOptions = section.querySelectorAll('.simple-option');
+        simpleOptions.forEach((option) => {
+          const optionName = option.getAttribute('data-option-name') || '';
+          if (optionName.includes(query)) {
+            option.classList.remove('hidden');
+            sectionHasMatch = true;
+          } else {
+            option.classList.add('hidden');
           }
+        });
+
+        if (sectionHasMatch) {
+          section.classList.remove('hidden');
+          if (query) section.classList.remove('collapsed');
           totalVisible++;
         } else {
-          group.classList.add('hidden');
+          section.classList.add('hidden');
         }
       });
 
       if (!query) {
         // Re-collapse when query cleared unless item is checked
+        sections.forEach((section) => {
+          const checkedInputs = section.querySelectorAll<HTMLInputElement>('input:checked');
+          if (checkedInputs.length === 0 && section.getAttribute('data-section-id') !== 'location') {
+            section.classList.add('collapsed');
+          }
+        });
         groups.forEach((group) => {
           const checkedCount = group.querySelectorAll<HTMLInputElement>('.city-checkbox:checked, .country-checkbox:checked').length;
           if (checkedCount === 0) {

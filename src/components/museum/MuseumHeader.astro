@@ -1,0 +1,261 @@
+---
+import { normalizeImage } from '../../lib/images';
+
+interface Props {
+  museum: {
+    name: string;
+    image?: string;
+    logo?: string;
+    city_slug?: string;
+    country_slug?: string;
+  };
+  cityName: string;
+  countryName: string;
+}
+
+const { museum, cityName, countryName } = Astro.props;
+---
+
+<header class="museum-header">
+  <div class="museum-header-identity">
+    <div class="museum-logo-box">
+      {museum.logo ? (
+        <img
+          src={normalizeImage(museum.logo, Astro, { width: 240 })}
+          alt={museum.name}
+          class="museum-logo-img"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+      ) : (
+        <div class="museum-logo-fallback">
+          <span>{museum.name.charAt(0)}</span>
+        </div>
+      )}
+    </div>
+
+    <div class="museum-header-text">
+      <h1 class="museum-title">{museum.name}</h1>
+      <p class="museum-subtitle">
+        {museum.city_slug ? (
+          <a href={`/directory/museums/in/${museum.city_slug}`} class="subtitle-link">{cityName}</a>
+        ) : (
+          <span>{cityName}</span>
+        )}
+        {countryName && cityName !== countryName && (
+          <>
+            <span class="subtitle-sep">,</span>
+            {museum.country_slug ? (
+              <a href={`/directory/museums/in/${museum.country_slug}`} class="subtitle-link">{countryName}</a>
+            ) : (
+              <span>{countryName}</span>
+            )}
+          </>
+        )}
+      </p>
+    </div>
+  </div>
+
+  <div class="museum-header-actions">
+    <button class="header-share-btn" id="shareButton" type="button" aria-label="Share this museum">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+        <polyline points="16 6 12 2 8 6"/>
+        <line x1="12" y1="2" x2="12" y2="15"/>
+      </svg>
+      <span>Share</span>
+    </button>
+  </div>
+</header>
+
+<script>
+  const shareButton = document.getElementById('shareButton');
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      const shareData = {
+        title: document.title,
+        url: window.location.href,
+        text: `Check out ${document.title.split('—')[0]} on Acceso`
+      };
+      try {
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          alert('Link copied to clipboard');
+        }
+      } catch (err) { }
+    });
+  }
+</script>
+
+<style>
+  .museum-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 16px 0 24px;
+    border-bottom: none;
+    margin-bottom: 24px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .museum-header-identity {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .museum-logo-box {
+    flex-shrink: 0;
+    width: 76px;
+    height: 76px;
+  }
+
+  .museum-logo-img {
+    width: 76px;
+    height: 76px;
+    border-radius: 14px;
+    border: 1px solid var(--color-stroke);
+    object-fit: cover;
+    background: var(--color-white);
+    display: block;
+    padding: 0;
+  }
+
+  .museum-logo-fallback {
+    width: 76px;
+    height: 76px;
+    border-radius: 14px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .museum-logo-fallback span {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--color-gray);
+    text-transform: uppercase;
+  }
+
+  .museum-header-text {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .museum-title {
+    font-family: var(--font-sans);
+    font-size: clamp(24px, 3.2vw, 36px);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--color-black);
+    margin: 0 0 6px;
+    word-break: break-word;
+  }
+
+  .museum-subtitle {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--color-gray);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .subtitle-link {
+    color: var(--color-gray);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s ease;
+  }
+
+  .subtitle-link:hover {
+    color: var(--color-black);
+  }
+
+  .subtitle-sep {
+    color: var(--color-gray);
+    margin-right: 2px;
+  }
+
+  .museum-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .header-share-btn {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .header-share-btn:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+  }
+
+  @media (max-width: 768px) {
+    .museum-header {
+      gap: 16px;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .header-share-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+    }
+    .header-share-btn span {
+      display: none;
+    }
+    .header-share-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .museum-logo-box {
+      width: 60px;
+      height: 60px;
+    }
+    .museum-logo-img, .museum-logo-fallback {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+    }
+    .museum-logo-fallback span {
+      font-size: 22px;
+    }
+    .museum-title {
+      font-size: 20px;
+    }
+  }
+</style>

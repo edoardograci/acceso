@@ -129,8 +129,8 @@ const sections = [
       const deadlineDate = a.deadlines ? new Date(Math.max(...a.deadlines.split(',').map((d: any) => new Date(d.trim()).getTime()))) : null;
       return {
         ...a,
-        pillText: st === 'status-open' ? 'OPEN' : 'CLOSED',
-        pillType: st,
+        pillText: st === 'status-open' ? 'OPEN' : '',
+        pillType: st === 'status-open' ? st : 'default',
         location: deadlineDate ? `Deadline: ${deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''
       };
     }), 
