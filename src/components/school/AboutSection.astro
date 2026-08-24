@@ -1,0 +1,72 @@
+---
+interface Props {
+  aboutParagraphs: string[];
+  title?: string;
+}
+
+const { aboutParagraphs, title = "About the School" } = Astro.props;
+---
+
+{aboutParagraphs.length > 0 && (
+  <section class="content-block about-block">
+    <h2 class="block-title">{title}</h2>
+    <div class={`about-text-columns${aboutParagraphs.length > 1 ? '' : ' single-column'}`}>
+      {aboutParagraphs.map((para) => (
+        <p class="about-paragraph">{para}</p>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .content-block {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .block-title {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  .about-text-columns {
+    column-count: 2;
+    column-gap: 36px;
+    column-rule: 1px solid var(--color-stroke);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .about-text-columns.single-column {
+    column-count: 1;
+    column-rule: none;
+  }
+
+  .about-paragraph {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+    margin: 0 0 20px;
+    break-inside: avoid-column;
+  }
+
+  .about-paragraph:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 960px) {
+    .about-text-columns {
+      column-count: 1;
+      column-rule: none;
+    }
+  }
+</style>
