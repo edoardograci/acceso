@@ -18,168 +18,108 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog
 {posthogKey ? (
   <script is:inline define:vars={{ posthogKey, posthogHost }}>
     (function() {
-      // Prevent double load
       if (window.__posthog_loaded) return;
       window.__posthog_loaded = true;
 
-      // Buffering stub
-      var ph = window.posthog = window.posthog || [];
-      if (!ph.init) {
-        if (ph.invoked) return;
-        ph.invoked = true;
-        ph.methods = ["capture", "identify", "alias", "people.set", "people.set_once", "register", "register_once", "unregister", "opt_out_capturing", "has_opted_out_capturing", "opt_in_capturing", "reset", "isFeatureEnabled", "onFeatureFlags", "getFeatureFlag", "getFeatureFlagPayload", "reloadFeatureFlags", "identify", "set_config"];
-        ph.factory = function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);ph.push(e);return ph}};
-        for (var t=0;t<ph.methods.length;t++){var e=ph.methods[t];ph[e]=ph.factory(e)}
+      // Standard PostHog stub (no invoked flag – that's what was breaking it)
+      !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+
+      // Helper functions
+      function getUtmParam(param) {
+        return new URLSearchParams(window.location.search).get(param) || undefined;
       }
 
-      const script = document.createElement('script');
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      script.src = posthogHost + '/static/array.js';
-      
-      script.onload = function() {
-        try {
-          if (!window.posthog || typeof window.posthog.init !== 'function') return;
-          
-          // Initialize PostHog
-          window.posthog.init(posthogKey, {
-            api_host: posthogHost,
-            persistence: 'memory',
-            loaded: function(posthog) {
-              if (window.location.hostname !== 'acceso.design') {
-                posthog.opt_out_capturing();
-              }
-            },
-            capture_pageview: true,
-            capture_pageleave: true,
-            autocapture: false,
-            disable_session_recording: true,
-            opt_out_capturing_by_default: false,
-            opt_out_capturing_by_default: false,
-            _request_timeout_ms: 10000,
-            batch_size: 20,
-            batch_interval_ms: 3000,
-            sanitize_properties: function(properties) {
-              ['$current_url', '$referrer'].forEach(prop => {
-                if (properties[prop]) {
-                  try {
-                    const urlObj = new URL(properties[prop]);
-                    const piiParams = ['email', 'phone', 'name', 'address', 'token', 'key', 'secret'];
-                    piiParams.forEach(param => urlObj.searchParams.delete(param));
-                    properties[prop] = urlObj.toString();
-                  } catch (e) {}
-                }
-              });
-              return properties;
-            },
-            advanced_disable_feature_flags: true,
-          });
+      function getPageType() {
+        var path = window.location.pathname;
+        if (path === '/' || path === '/map') return 'map';
+        if (path === '/discover' || path.indexOf('/discover/') === 0) return 'discover';
+        if (path === '/designers') return 'directory';
+        if (path.indexOf('/designers/') === 0) return 'designer_profile';
+        if (path === '/moodboard') return 'moodboard_index';
+        if (path.indexOf('/moodboard/') === 0) return 'moodboard_detail';
+        if (path === '/login') return 'login';
+        if (path === '/profile') return 'profile';
+        if (path.indexOf('/collections/') === 0) return 'collections';
+        return 'other';
+      }
 
-          // ====================================================================
-          // ATTRIBUTION
-          // ====================================================================
-          
-          function getUtmParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param) || undefined;
+      function getDeviceCategory() {
+        var w = window.innerWidth;
+        return w < 768 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop';
+      }
+
+      function classifyReferrer() {
+        var referrer = document.referrer;
+        if (!referrer) return 'direct';
+        try {
+          var domain = new URL(referrer).hostname;
+          if (['google.com','bing.com','yahoo.com'].some(function(d){return domain.includes(d)})) return 'organic';
+          if (['t.co','facebook.com','instagram.com','linkedin.com'].some(function(d){return domain.includes(d)})) return 'social';
+          return 'referral';
+        } catch(e) { return 'direct'; }
+      }
+
+      // Call init on the stub – array.js will pick this up when it loads
+      window.posthog.init(posthogKey, {
+        api_host: posthogHost,
+        persistence: 'memory',
+        loaded: function(posthog) {
+          // Block non-production domains
+          if (window.location.hostname !== 'acceso.design') {
+            posthog.opt_out_capturing();
+            return;
           }
 
-          // Initial attribution (Sets person properties once)
-          window.posthog.register_once({
+          // Attribution (once per session)
+          posthog.register_once({
             initial_referrer: document.referrer || '$direct',
             initial_utm_source: getUtmParam('utm_source'),
             initial_utm_medium: getUtmParam('utm_medium'),
             initial_utm_campaign: getUtmParam('utm_campaign'),
           });
 
-          // ====================================================================
-          // ENHANCED PAGE VIEW TRACKING
-          // ====================================================================
-          
-          function getPageType() {
-            const path = window.location.pathname;
-            if (path === '/' || path === '/map') return 'map';
-            if (path === '/discover' || path.startsWith('/discover/')) return 'discover';
-            if (path === '/designers') return 'directory';
-            if (path.startsWith('/designers/')) return 'designer_profile';
-            if (path === '/moodboard') return 'moodboard_index';
-            if (path.startsWith('/moodboard/')) return 'moodboard_detail';
-            if (path === '/login') return 'login';
-            if (path === '/profile') return 'profile';
-            if (path.startsWith('/collections/')) return 'collections';
-            return 'other';
-          }
-          
-          function getDeviceCategory() {
-            const width = window.innerWidth;
-            if (width < 768) return 'mobile';
-            if (width < 1024) return 'tablet';
-            return 'desktop';
-          }
-
-          function classifyReferrer() {
-            const referrer = document.referrer;
-            if (!referrer) return 'direct';
-            try {
-              const domain = new URL(referrer).hostname;
-              if (['google.com', 'bing.com', 'yahoo.com'].some(d => domain.includes(d))) return 'organic';
-              if (['t.co', 'facebook.com', 'instagram.com', 'linkedin.com'].some(d => domain.includes(d))) return 'social';
-              return 'referral';
-            } catch { return 'direct'; }
-          }
-          
-          window.posthog.register({
+          // Page metadata
+          posthog.register({
             page_type: getPageType(),
             device_category: getDeviceCategory(),
             referrer_type: classifyReferrer(),
           });
-          
 
-          
-          // ====================================================================
-          // SESSION LIFECYCLE
-          // ====================================================================
-          
-
-          
-          // Engaged session tracking (once per session)
+          // Engaged session (30s timer)
           if (!sessionStorage.getItem('acceso_session_engaged')) {
-            let engagementTimer = setTimeout(function() {
+            var timer = setTimeout(function() {
               sessionStorage.setItem('acceso_session_engaged', 'true');
-              window.posthog.capture('session_engaged', { duration_sec: 30 });
-              engagementTimer = null;
+              posthog.capture('session_engaged', { duration_sec: 30 });
             }, 30000);
-            
-            // Clear timer if user navigates away before 30s
             window.addEventListener('beforeunload', function() {
-              if (engagementTimer) {
-                clearTimeout(engagementTimer);
-                engagementTimer = null;
-              }
+              clearTimeout(timer);
             }, { once: true });
           }
-
-          
-        } catch (e) {
-          console.error('[PostHog] init failed:', e);
-        }
-      };
-
-      script.onerror = function() {
-        // Provide empty stub to prevent other scripts from crashing
-        window.posthog = { 
-          capture: function(){}, 
-          identify: function(){}, 
-          register: function(){},
-          set_config: function(){}, 
-          opt_in_capturing: function(){}, 
-          opt_out_capturing: function(){},
-          alias: function(){},
-          reset: function(){},
-        };
-      };
-
-      document.head.appendChild(script);
+        },
+        capture_pageview: true,
+        capture_pageleave: true,
+        autocapture: false,
+        disable_session_recording: true,
+        opt_out_capturing_by_default: false,
+        advanced_disable_feature_flags: true,
+        _request_timeout_ms: 10000,
+        batch_size: 20,
+        batch_interval_ms: 3000,
+        sanitize_properties: function(properties) {
+          ['$current_url', '$referrer'].forEach(function(prop) {
+            if (properties[prop]) {
+              try {
+                var url = new URL(properties[prop]);
+                ['email','phone','name','address','token','key','secret'].forEach(function(p) {
+                  url.searchParams.delete(p);
+                });
+                properties[prop] = url.toString();
+              } catch(e) {}
+            }
+          });
+          return properties;
+        },
+      });
     })();
   </script>
 ) : null}
