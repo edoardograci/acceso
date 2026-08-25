@@ -47,13 +47,14 @@ const posthogHost = import.meta.env.PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog
             persistence: 'memory',
             loaded: function(posthog) {
               if (window.location.hostname !== 'acceso.design') {
-                posthog.set_config({ opt_out_capturing_by_default: true });
+                posthog.opt_out_capturing();
               }
             },
             capture_pageview: true,
             capture_pageleave: true,
             autocapture: false,
             disable_session_recording: true,
+            opt_out_capturing_by_default: false,
             opt_out_capturing_by_default: false,
             _request_timeout_ms: 10000,
             batch_size: 20,

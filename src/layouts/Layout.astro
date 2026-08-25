@@ -69,6 +69,7 @@ const mergedSchema =
         // 1. Silence repetitive external crashes (Cloudflare/PostHog stubs)
         window.addEventListener('error', function(e) {
           if (e.message && (e.message.includes('iterable') || e.message.includes('Cloudflare'))) {
+            console.warn('[StabilityGuard] Swallowed error:', e.message);
             e.stopImmediatePropagation();
           }
         }, true);
