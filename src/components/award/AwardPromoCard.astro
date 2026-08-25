@@ -1,0 +1,129 @@
+---
+---
+
+<div class="promo-box promo-peach">
+  <div class="promo-top-row">
+    <div class="promo-icon-badge" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+        <path d="M4 22h16"/>
+        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+      </svg>
+    </div>
+    <span class="promo-tag">For Awards</span>
+  </div>
+
+  <h4 class="promo-heading">Represent a Design Award?</h4>
+  <p class="promo-text">
+    Submit your award program and connect with designers and studios worldwide on Acceso.
+  </p>
+
+  <a href="/submission" class="promo-cta-btn">
+    <span>Submit for review</span>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</div>
+
+<style>
+  .promo-box {
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .promo-peach {
+    background: #FFF8F3;
+    border: 1px solid #FFDCC5;
+  }
+
+  .promo-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .promo-peach .promo-icon-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #FFB38A;
+    border: 1px solid #FF9F6E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7C2D12;
+  }
+
+  .promo-peach .promo-tag {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9A3412;
+  }
+
+  .promo-heading {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .promo-text {
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  .promo-peach .promo-cta-btn {
+    margin-top: 4px;
+    width: 100%;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--color-black);
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    box-sizing: border-box;
+    border: 1.5px solid #FFB38A;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .promo-peach .promo-cta-btn:hover {
+    background: #FFB38A;
+    border-color: #FF9F6E;
+    color: #0F1113;
+  }
+
+  .promo-peach .promo-cta-btn:active {
+    background: #FF9F6E;
+    border-color: #FF9F6E;
+  }
+
+  @media (max-width: 960px) {
+    .promo-box {
+      padding: 20px;
+    }
+  }
+</style>

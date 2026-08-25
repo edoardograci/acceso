@@ -1,0 +1,337 @@
+---
+interface Props {
+  eventName?: string;
+  eventDescription?: string;
+  startDate?: string;
+  endDate?: string;
+  location?: string;
+  website?: string;
+}
+
+const {
+  eventName = '',
+  eventDescription = '',
+  startDate = '',
+  endDate = '',
+  location = '',
+  website = ''
+} = Astro.props;
+---
+
+<div class="calendar-modal" id="calendarModal" hidden>
+  <div class="calendar-modal-backdrop" id="calendarBackdrop"></div>
+  <div class="calendar-modal-box" role="dialog" aria-modal="true" aria-label="Save to calendar">
+    
+    <div class="calendar-modal-header">
+      <div class="calendar-icon-badge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <button class="calendar-modal-close" id="calendarClose" type="button" aria-label="Close modal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <h3 class="calendar-modal-title">Save Event to Calendar</h3>
+    <p class="calendar-modal-desc">
+      Add this event directly to your personal calendar so you don't miss it.
+    </p>
+
+    <div class="calendar-options">
+      <!-- Option 1: Google Calendar -->
+      <a class="calendar-opt-btn gcal-btn" id="gcalLink" href="#" target="_blank" rel="noopener noreferrer">
+        <div class="opt-btn-left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+            <path d="M12 14v4M10 16h4"/>
+          </svg>
+          <span>Google Calendar</span>
+        </div>
+        <svg class="opt-ext-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </a>
+
+      <!-- Option 2: iCal / Outlook (.ics download) -->
+      <button class="calendar-opt-btn ics-btn" id="icsDownloadBtn" type="button">
+        <div class="opt-btn-left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Apple / Outlook Calendar (.ics)</span>
+        </div>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function formatGCalDate(dateStr: string, isEnd = false): string {
+    if (!dateStr) return '';
+    const cleanStr = dateStr.split('T')[0].replace(/-/g, '');
+    if (cleanStr.length === 8) {
+      if (isEnd) {
+        // Increment date by 1 day for all-day end date in Google Calendar format
+        const year = parseInt(cleanStr.substring(0, 4), 10);
+        const month = parseInt(cleanStr.substring(4, 6), 10) - 1;
+        const day = parseInt(cleanStr.substring(6, 8), 10);
+        const d = new Date(Date.UTC(year, month, day + 1));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(d.getUTCDate()).padStart(2, '0');
+        return `${yyyy}${mm}${dd}`;
+      }
+      return cleanStr;
+    }
+    return cleanStr;
+  }
+
+  const calendarBtn = document.getElementById('calendarBtn');
+  const calendarModal = document.getElementById('calendarModal');
+  const calendarClose = document.getElementById('calendarClose');
+  const calendarBackdrop = document.getElementById('calendarBackdrop');
+  const gcalLink = document.getElementById('gcalLink') as HTMLAnchorElement | null;
+  const icsDownloadBtn = document.getElementById('icsDownloadBtn');
+
+  function openCalendarModal() {
+    if (!calendarModal || !calendarBtn) return;
+    const { name = '', desc = '', start = '', end = '', location = '', url: website = '' } = calendarBtn.dataset;
+
+    // 1. Build Google Calendar link
+    const gStart = formatGCalDate(start);
+    const gEnd = formatGCalDate(end || start, true);
+    const gDetails = [desc, website ? `Website: ${website}` : ''].filter(Boolean).join('\n\n');
+
+    const gcalParams = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: name,
+      dates: `${gStart}/${gEnd}`,
+      details: gDetails,
+      location: location,
+    });
+
+    if (gcalLink) {
+      gcalLink.href = `https://calendar.google.com/calendar/render?${gcalParams.toString()}`;
+    }
+
+    calendarModal.hidden = false;
+  }
+
+  function closeCalendarModal() {
+    if (calendarModal) calendarModal.hidden = true;
+  }
+
+  if (calendarBtn) calendarBtn.addEventListener('click', openCalendarModal);
+  if (calendarClose) calendarClose.addEventListener('click', closeCalendarModal);
+  if (calendarBackdrop) calendarBackdrop.addEventListener('click', closeCalendarModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeCalendarModal();
+  });
+
+  // 2. Handle ICS Download
+  if (icsDownloadBtn && calendarBtn) {
+    icsDownloadBtn.addEventListener('click', () => {
+      const { name = '', desc = '', start = '', end = '', location = '', url: website = '' } = calendarBtn.dataset;
+      const fmtStart = (start || '').replace(/-/g, '').split('T')[0];
+      const fmtEnd = (end || start || '').replace(/-/g, '').split('T')[0];
+
+      const icsData = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Acceso//Design Events//EN',
+        'BEGIN:VEVENT',
+        `DTSTART;VALUE=DATE:${fmtStart}`,
+        `DTEND;VALUE=DATE:${fmtEnd}`,
+        `SUMMARY:${name}`,
+        `LOCATION:${location}`,
+        `DESCRIPTION:${(desc || '').replace(/\n/g, '\\n')}\\n\\nWebsite: ${website || 'N/A'}`,
+        `URL:${website || ''}`,
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\r\n');
+
+      const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${name.toLowerCase().replace(/\s+/g, '-')}.ics`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      closeCalendarModal();
+    });
+  }
+</script>
+
+<style>
+  .calendar-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .calendar-modal[hidden] {
+    display: none;
+  }
+
+  .calendar-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 17, 19, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .calendar-modal-box {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    background: var(--color-white);
+    border: 1px solid var(--color-stroke);
+    border-radius: 20px;
+    padding: 24px 28px 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  .calendar-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    width: 100%;
+  }
+
+  .calendar-icon-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-black);
+  }
+
+  .calendar-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    color: var(--color-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+  }
+
+  .calendar-modal-close:hover {
+    color: var(--color-black);
+    border-color: var(--color-black);
+    background: var(--color-white);
+  }
+
+  .calendar-modal-title {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--color-black);
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .calendar-modal-desc {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    margin: 0 0 20px;
+  }
+
+  .calendar-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .calendar-opt-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    width: 100%;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .opt-btn-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .gcal-btn {
+    background: var(--color-black);
+    border: 1px solid var(--color-black);
+    color: var(--color-white);
+  }
+
+  .gcal-btn:hover {
+    background: #2A2D30;
+    border-color: #2A2D30;
+    color: var(--color-white);
+  }
+
+  .ics-btn {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    color: var(--color-black);
+  }
+
+  .ics-btn:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+    color: var(--color-black);
+  }
+
+  .opt-ext-arrow {
+    color: rgba(255, 255, 255, 0.7);
+  }
+</style>

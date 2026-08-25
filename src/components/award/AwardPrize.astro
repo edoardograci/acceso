@@ -1,0 +1,43 @@
+---
+interface Props {
+  prize?: string;
+}
+
+const { prize } = Astro.props;
+---
+
+{(prize) && (
+  <section class="content-block prize-block">
+    <h2 class="block-title">PRIZE</h2>
+    <p class="prize-text">{prize}</p>
+  </section>
+)}
+
+<style>
+  .content-block {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .block-title {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  .prize-text {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+    margin: 0;
+    word-break: break-word;
+  }
+</style>

@@ -1,0 +1,105 @@
+---
+interface Props {
+  fee?: string;
+  focus?: string;
+  eligibility?: string;
+  prototype?: string;
+}
+
+const { fee, focus, eligibility, prototype } = Astro.props;
+---
+
+{(fee || focus || eligibility || prototype) && (
+  <section class="content-block details-block">
+    <h2 class="block-title">KEY DETAILS</h2>
+    <div class="details-grid">
+      {fee && (
+        <div class="detail-card">
+          <span class="detail-card-label">Entry Fee</span>
+          <span class="detail-card-value">{fee}</span>
+        </div>
+      )}
+      {focus && (
+        <div class="detail-card">
+          <span class="detail-card-label">Focus</span>
+          <span class="detail-card-value">{focus}</span>
+        </div>
+      )}
+      {eligibility && (
+        <div class="detail-card">
+          <span class="detail-card-label">Eligibility</span>
+          <span class="detail-card-value">{eligibility}</span>
+        </div>
+      )}
+      {prototype && (
+        <div class="detail-card">
+          <span class="detail-card-label">Prototype</span>
+          <span class="detail-card-value">{prototype}</span>
+        </div>
+      )}
+    </div>
+  </section>
+)}
+
+<style>
+  .content-block {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .block-title {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .detail-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-sizing: border-box;
+  }
+
+  .detail-card-label {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-gray);
+  }
+
+  .detail-card-value {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-black);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  @media (max-width: 768px) {
+    .details-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

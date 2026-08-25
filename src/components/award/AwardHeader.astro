@@ -1,0 +1,241 @@
+---
+import { normalizeImage } from '../../lib/images';
+
+interface Props {
+  award: {
+    name: string;
+    image?: string;
+    city_slug?: string;
+    country_slug?: string;
+  };
+  cityName: string;
+  countryName: string;
+}
+
+const { award, cityName, countryName } = Astro.props;
+---
+
+<header class="award-header">
+  <div class="award-header-identity">
+    <div class="award-logo-box">
+      {award.image ? (
+        <img
+          src={normalizeImage(award.image, Astro, { width: 240 })}
+          alt={award.name}
+          class="award-logo-img"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+        />
+      ) : (
+        <div class="award-logo-fallback">
+          <span>{award.name.charAt(0)}</span>
+        </div>
+      )}
+    </div>
+
+    <div class="award-header-text">
+      <h1 class="award-title">{award.name}</h1>
+      <p class="award-subtitle">
+        {cityName}
+        {countryName && cityName !== countryName && (
+          <>
+            <span class="subtitle-sep">,</span>
+            <span>{countryName}</span>
+          </>
+        )}
+      </p>
+    </div>
+  </div>
+
+  <div class="award-header-actions">
+    <button class="header-share-btn" id="shareButton" type="button" aria-label="Share this award">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+        <polyline points="16 6 12 2 8 6"/>
+        <line x1="12" y1="2" x2="12" y2="15"/>
+      </svg>
+      <span>Share</span>
+    </button>
+  </div>
+</header>
+
+<script>
+  const shareButton = document.getElementById('shareButton');
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      const shareData = {
+        title: document.title,
+        url: window.location.href,
+        text: `Check out ${document.title.split('—')[0]} on Acceso`
+      };
+      try {
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          alert('Link copied to clipboard');
+        }
+      } catch (err) { }
+    });
+  }
+</script>
+
+<style>
+  .award-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 16px 0 24px;
+    border-bottom: none;
+    margin-bottom: 24px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .award-header-identity {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .award-logo-box {
+    flex-shrink: 0;
+    width: 76px;
+    height: 76px;
+  }
+
+  .award-logo-img {
+    width: 76px;
+    height: 76px;
+    border-radius: 14px;
+    border: 1px solid var(--color-stroke);
+    object-fit: contain;
+    background: var(--color-white);
+    display: block;
+    padding: 0;
+  }
+
+  .award-logo-fallback {
+    width: 76px;
+    height: 76px;
+    border-radius: 14px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .award-logo-fallback span {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--color-gray);
+    text-transform: uppercase;
+  }
+
+  .award-header-text {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .award-title {
+    font-family: var(--font-sans);
+    font-size: clamp(24px, 3.2vw, 36px);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--color-black);
+    margin: 0 0 6px;
+    word-break: break-word;
+  }
+
+  .award-subtitle {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--color-gray);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .subtitle-sep {
+    color: var(--color-gray);
+    margin-right: 2px;
+  }
+
+  .award-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .header-share-btn {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .header-share-btn:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+  }
+
+  @media (max-width: 768px) {
+    .award-header {
+      gap: 16px;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .header-share-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+    }
+    .header-share-btn span {
+      display: none;
+    }
+    .header-share-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .award-logo-box {
+      width: 60px;
+      height: 60px;
+    }
+    .award-logo-img, .award-logo-fallback {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+    }
+    .award-logo-fallback span {
+      font-size: 22px;
+    }
+    .award-title {
+      font-size: 20px;
+    }
+  }
+</style>

@@ -1,0 +1,226 @@
+---
+import { ensureProtocol } from '../../lib/url';
+
+interface Props {
+  award: {
+    name: string;
+    description?: string;
+    deadlines?: string;
+    fee?: string;
+    focus?: string;
+    city_slug?: string;
+    country_slug?: string;
+    website?: string;
+    instagram?: string;
+  };
+  period: string;
+  countryName: string;
+  cityName: string;
+}
+
+const { award, period, countryName, cityName } = Astro.props;
+
+function getLastDeadline(deadlinesStr: string): string {
+  if (!deadlinesStr) return '';
+  const dates = deadlinesStr.split(',').map(d => d.trim()).filter(Boolean);
+  if (dates.length === 0) return '';
+  return dates[dates.length - 1];
+}
+
+const lastDeadline = getLastDeadline(award.deadlines || '');
+---
+
+<div class="info-card">
+  <div class="info-rows-group">
+    {period && (
+      <div class="info-row">
+        <span class="info-label">Deadline</span>
+        <span class="info-val">{period}</span>
+      </div>
+    )}
+    {award.fee && (
+      <div class="info-row">
+        <span class="info-label">Fee</span>
+        <span class="info-val">{award.fee}</span>
+      </div>
+    )}
+    {award.focus && (
+      <div class="info-row">
+        <span class="info-label">Focus</span>
+        <span class="info-val">{award.focus}</span>
+      </div>
+    )}
+    {cityName && (
+      <div class="info-row">
+        <span class="info-label">Location</span>
+        <span class="info-val">{cityName}{countryName && cityName !== countryName ? `, ${countryName}` : ''}</span>
+      </div>
+    )}
+  </div>
+
+  {award.website && (
+    <a href={ensureProtocol(award.website)} target="_blank" rel="noopener noreferrer" class="sidebar-website-btn">
+      <div class="website-btn-left">
+        <img src="/icons/source.svg" alt="" width="18" height="18" />
+        <span>Visit Official Website</span>
+      </div>
+      <svg class="website-ext-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </a>
+  )}
+
+  <div class="sidebar-save-wrap">
+    <button
+      class="sidebar-calendar-btn"
+      id="calendarBtn"
+      data-name={award.name}
+      data-desc={award.description}
+      data-start={lastDeadline}
+      data-end={lastDeadline}
+      data-location={`${cityName}${countryName ? ', ' + countryName : ''}`}
+      data-url={award.website}
+      type="button"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <span>Save deadline</span>
+    </button>
+  </div>
+</div>
+
+<style>
+  .info-card {
+    background: var(--color-bg-secondary);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .info-rows-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--color-stroke);
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .info-row:first-child {
+    padding-top: 4px;
+  }
+
+  .info-label {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--color-gray);
+    flex-shrink: 0;
+    font-weight: 400;
+  }
+
+  .info-val {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-black);
+    text-align: right;
+    text-decoration: none;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .sidebar-website-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    padding: 0 16px;
+    background: var(--color-white);
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    color: var(--color-black);
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    box-sizing: border-box;
+    width: 100%;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    margin-top: 6px;
+  }
+
+  .website-btn-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sidebar-website-btn:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+    color: var(--color-black);
+  }
+
+  .website-ext-icon {
+    color: var(--color-gray);
+  }
+
+  .sidebar-website-btn:hover .website-ext-icon {
+    color: var(--color-black);
+  }
+
+  .sidebar-save-wrap {
+    margin-top: 0;
+    width: 100%;
+  }
+
+  .sidebar-calendar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 48px;
+    width: 100%;
+    background: var(--color-black);
+    color: var(--color-white);
+    border: 1px solid var(--color-black);
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .sidebar-calendar-btn:hover {
+    background: #2A2D30;
+    border-color: #2A2D30;
+  }
+
+  @media (max-width: 960px) {
+    .info-card {
+      padding: 20px;
+    }
+  }
+</style>

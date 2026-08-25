@@ -1,0 +1,98 @@
+---
+interface Props {
+  award: any;
+  gmapsUrl: string;
+}
+
+const { award, gmapsUrl } = Astro.props;
+---
+
+<section class="sidebar-location-section">
+  <h3 class="location-title">Organizer Location</h3>
+  
+  {award.address && (
+    <p class="location-address">{award.address}</p>
+  )}
+
+  {gmapsUrl && (
+    <a
+      href={gmapsUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="directions-btn"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      <span>Get Directions</span>
+    </a>
+  )}
+</section>
+
+<style>
+  .sidebar-location-section {
+    background: var(--color-bg-secondary, #f5f5f5);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .location-title {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-black, #000000);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .location-address {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text-muted, #737373);
+    margin: 0;
+  }
+
+  .directions-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 20px;
+    background: var(--color-black, #000000);
+    color: var(--color-white, #ffffff);
+    border: none;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .directions-btn:hover {
+    opacity: 0.85;
+  }
+
+  .directions-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 960px) {
+    .sidebar-location-section {
+      padding: 20px;
+    }
+  }
+</style>

@@ -3,6 +3,7 @@ import Layout from '../../../layouts/Layout.astro';
 import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
+import FilterSidebar from '../../../components/FilterSidebar.astro';
 import { normalizeImage } from '../../../lib/images';
 
 // R2 URLs
@@ -11,6 +12,16 @@ const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let awards = [];
 let error = null;
+let filterSections: any[] = [];
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 try {
   const [aRes] = await Promise.all([
@@ -21,6 +32,46 @@ try {
     const data = await aRes.json();
     awards = Array.isArray(data) ? data : (data.items || []);
   }
+
+  const focusCounts: Record<string, number> = {};
+  const prototypeCounts: Record<string, number> = {};
+  awards.forEach((a: any) => {
+    if (a.focus) {
+      const tags = a.focus.split(',').map((t: string) => t.trim()).filter(Boolean);
+      tags.forEach((tag: string) => {
+        focusCounts[tag] = (focusCounts[tag] || 0) + 1;
+      });
+    }
+    if (a.prototype) {
+      const proto = a.prototype.trim();
+      if (proto) prototypeCounts[proto] = (prototypeCounts[proto] || 0) + 1;
+    }
+  });
+
+  const focusOptions = Object.entries(focusCounts)
+    .map(([name, count]) => ({ name, slug: slugify(name), count }))
+    .sort((a, b) => b.count - a.count);
+
+  const prototypeOptions = Object.entries(prototypeCounts)
+    .map(([name, count]) => ({ name, slug: slugify(name), count }))
+    .sort((a, b) => b.count - a.count);
+
+  filterSections = [
+    {
+      id: 'focus',
+      title: 'Focus',
+      type: 'checkbox',
+      options: focusOptions,
+      collapsed: false
+    },
+    {
+      id: 'prototype',
+      title: 'Prototype',
+      type: 'checkbox',
+      options: prototypeOptions,
+      collapsed: true
+    }
+  ];
 } catch (e) {
   error = e;
   console.error('[Awards Index] Fail to fetch data:', e);
@@ -40,12 +91,19 @@ function getAwardStatus(deadlinesStr: string) {
 const processedAwards = awards.map((a: any) => {
   const st = getAwardStatus(a.deadlines);
   const open = st === 'status-open';
+  const focusSlugs = a.focus
+    ? a.focus.split(',').map((t: string) => slugify(t.trim())).filter(Boolean)
+    : [];
+  const prototypeSlug = a.prototype ? slugify(a.prototype.trim()) : '';
   return {
     ...a,
-    pillText: open ? 'OPEN' : 'CLOSED',
-    pillType: st,
+    pillText: open ? 'OPEN' : '',
+    pillType: open ? st : 'default',
     location: a.city || a.location || undefined,
     open,
+    free: a.fee === 'Free',
+    focusSlugs,
+    prototypeSlug,
   };
 });
 
@@ -58,7 +116,7 @@ const processedAwards = awards.map((a: any) => {
 >
   <Navbar />
   
-  <main class="directory-page">
+  <main class="directory-page awards-directory">
     <div class="directory-inner">
       <header class="directory-hero">
         <h1 class="directory-title">Awards</h1>
@@ -85,9 +143,19 @@ const processedAwards = awards.map((a: any) => {
       </div>
 
       <div class="city-filter-row">
+        <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
+        <FilterSidebar sections={filterSections} title="Filters" />
+
         <label class="upcoming-toggle">
-          <input type="checkbox" id="upcoming-toggle" />
+          <input type="checkbox" id="upcoming-toggle" class="toggle-switch" />
+          <span class="toggle-slider"></span>
           <span class="upcoming-label">Open for submissions</span>
+        </label>
+
+        <label class="upcoming-toggle">
+          <input type="checkbox" id="free-toggle" class="toggle-switch" />
+          <span class="toggle-slider"></span>
+          <span class="upcoming-label">Show free</span>
         </label>
 
         <div class="directory-toolbar">
@@ -114,6 +182,9 @@ const processedAwards = awards.map((a: any) => {
             class="award-card-wrapper"
             data-name={(award.name || '').toLowerCase()}
             data-open={award.open ? 'true' : 'false'}
+            data-free={award.free ? 'true' : 'false'}
+            data-focus={(award.focusSlugs || []).join(',')}
+            data-prototype={award.prototypeSlug || ''}
           >
             <EventBasicCard 
               name={award.name}
@@ -168,36 +239,82 @@ const processedAwards = awards.map((a: any) => {
   .search-input::placeholder { color: var(--color-text-muted); }
   .search-input:focus { border-bottom-color: var(--color-black); }
 
-  .city-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .city-filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; position: relative; z-index: 200; }
+  .filter-trigger-btn { height: 36px; padding: 1px 16px 0; border-radius: 999px; border: none; background: var(--color-yellow); color: var(--color-black); font-family: var(--font-sans); font-size: 14px; font-weight: 700; cursor: pointer; }
 
-  .upcoming-toggle { display: flex; align-items: center; gap: 8px; flex-shrink: 0; cursor: pointer; font-family: var(--font-sans); }
-  .upcoming-label { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--color-black); white-space: nowrap; }
-  .upcoming-toggle input[type="checkbox"] {
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--color-stroke);
-    border-radius: 4px;
-    cursor: pointer;
+  .awards-directory :global(#filter-sidebar-drawer) :global(.filter-section) {
+    flex: 0 0 auto !important;
+  }
+  .awards-directory :global(#filter-sidebar-drawer) :global(.filter-section) :global(.filter-section-content) {
+    flex: 0 0 auto !important;
+    overflow: visible !important;
+  }
+
+  .upcoming-toggle { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    flex-shrink: 0; 
+    cursor: pointer; 
+    font-family: var(--font-sans);
     position: relative;
+    height: 36px;
+  }
+  .upcoming-label { 
+    font-family: var(--font-sans); 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: var(--color-black); 
+    white-space: nowrap; 
+    user-select: none;
+  }
+  
+  /* Hide the native checkbox */
+  .toggle-switch {
+    appearance: none;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  /* Pill-shaped toggle slider */
+  .toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    background: var(--color-stroke, #e5e5e5);
+    border-radius: 999px;
+    transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     flex-shrink: 0;
-    background: var(--color-white);
-    transition: border-color 0.2s ease, background-color 0.2s ease;
   }
-  .upcoming-toggle input[type="checkbox"]:checked {
-    background: var(--color-black);
-    border-color: var(--color-black);
-  }
-  .upcoming-toggle input[type="checkbox"]:checked::after {
+  
+  /* The circle inside the toggle */
+  .toggle-slider::after {
     content: '';
     position: absolute;
-    left: 50%;
-    top: 45%;
-    width: 4px;
-    height: 8px;
-    border: solid var(--color-white);
-    border-width: 0 2px 2px 0;
-    transform: translate(-50%, -50%) rotate(45deg);
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: var(--color-white, #ffffff);
+    border-radius: 50%;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* When checked: black background and slide circle to right */
+  .toggle-switch:checked + .toggle-slider {
+    background: var(--color-black, #000000);
+  }
+  
+  .toggle-switch:checked + .toggle-slider::after {
+    transform: translateX(24px);
+  }
+  
+  /* Hover effect */
+  .upcoming-toggle:hover .toggle-slider {
+    opacity: 0.9;
   }
 
   .results-meta { margin-bottom: 24px; }
@@ -247,7 +364,7 @@ const processedAwards = awards.map((a: any) => {
     .directory-inner { padding: var(--page-top-spacing) 20px 60px; }
     .awards-grid { grid-template-columns: 1fr; }
     .awards-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .city-filter-row { flex-wrap: wrap; row-gap: 12px; }
+    .city-filter-row { flex-wrap: wrap; }
     .directory-toolbar { margin-left: auto; flex-shrink: 0; }
   }
   @media (max-width: 640px) {
@@ -261,21 +378,41 @@ const processedAwards = awards.map((a: any) => {
     if (!grid) return;
 
     const wrappers = Array.from(grid.querySelectorAll('.award-card-wrapper'));
+    const focusCheckboxes = Array.from(document.querySelectorAll<HTMLInputElement>('.focus-checkbox'));
+    const prototypeCheckboxes = Array.from(document.querySelectorAll<HTMLInputElement>('.prototype-checkbox'));
+    const clearAllBtn = document.getElementById('filter-clear-all');
+    const filterTrigger = document.getElementById('filter-trigger');
+    const filterDrawer = document.getElementById('filter-sidebar-drawer');
+    const filterBackdrop = document.getElementById('filter-sidebar-backdrop');
+    const filterClose = document.getElementById('filter-close-btn');
     const searchToggle = document.getElementById('search-toggle');
     const searchRow = document.getElementById('search-row');
     const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
     const upcomingToggle = document.getElementById('upcoming-toggle') as HTMLInputElement | null;
+    const freeToggle = document.getElementById('free-toggle') as HTMLInputElement | null;
     const viewBtn = document.getElementById('view-btn');
     const countEl = document.getElementById('awards-count');
     const emptyEl = document.getElementById('empty-result');
 
-    const state = { search: '', open: false };
+    const state = { search: '', open: false, free: false, focus: new Set<string>(), prototype: new Set<string>() };
+
+    function syncChecks() {
+      focusCheckboxes.forEach((cb) => { cb.checked = state.focus.has(cb.dataset.slug || ''); });
+      prototypeCheckboxes.forEach((cb) => { cb.checked = state.prototype.has(cb.dataset.slug || ''); });
+    }
 
     function apply() {
       const search = state.search.trim().toLowerCase();
       const visible = wrappers.filter((w) => {
         const el = w as HTMLElement;
         if (state.open && el.dataset.open !== 'true') return false;
+        if (state.free && el.dataset.free !== 'true') return false;
+        if (state.focus.size > 0) {
+          const focusList = (el.dataset.focus || '').split(',').filter(Boolean);
+          const hasMatchingFocus = focusList.some(f => state.focus.has(f));
+          if (!hasMatchingFocus) return false;
+        }
+        if (state.prototype.size > 0 && !state.prototype.has(el.dataset.prototype || '')) return false;
         if (search && !el.dataset.name?.includes(search)) return false;
         return true;
       });
@@ -286,6 +423,72 @@ const processedAwards = awards.map((a: any) => {
       countEl!.textContent = visible.length + (visible.length === 1 ? ' result' : ' results');
       emptyEl!.classList.toggle('hidden', visible.length !== 0);
     }
+
+    const filterDone = document.getElementById('filter-done-btn');
+    let savedState = { focus: new Set<string>(), prototype: new Set<string>() };
+
+    function snapshotState() {
+      savedState = { focus: new Set(state.focus), prototype: new Set(state.prototype) };
+    }
+
+    function restoreState() {
+      state.focus = new Set(savedState.focus);
+      state.prototype = new Set(savedState.prototype);
+      syncChecks();
+    }
+
+    function openDrawer() {
+      snapshotState();
+      filterDrawer?.classList.add('show');
+      filterBackdrop?.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer(applyChanges = false) {
+      if (!applyChanges) {
+        restoreState();
+      }
+      filterDrawer?.classList.remove('show');
+      filterBackdrop?.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    focusCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) state.focus.add(cb.dataset.slug || '');
+      else state.focus.delete(cb.dataset.slug || '');
+      syncChecks();
+    }));
+
+    prototypeCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) state.prototype.add(cb.dataset.slug || '');
+      else state.prototype.delete(cb.dataset.slug || '');
+      syncChecks();
+    }));
+
+    clearAllBtn?.addEventListener('click', () => {
+      state.focus = new Set();
+      state.prototype = new Set();
+      syncChecks();
+      apply();
+      closeDrawer(true);
+    });
+
+    filterDone?.addEventListener('click', () => {
+      apply();
+      closeDrawer(true);
+    });
+
+    filterTrigger?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openDrawer();
+    });
+    filterClose?.addEventListener('click', () => closeDrawer(false));
+    filterBackdrop?.addEventListener('click', () => closeDrawer(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && filterDrawer?.classList.contains('show')) {
+        closeDrawer(false);
+      }
+    });
 
     searchToggle?.addEventListener('click', () => {
       const hidden = searchRow!.classList.toggle('hidden');
@@ -298,7 +501,12 @@ const processedAwards = awards.map((a: any) => {
     });
 
     upcomingToggle?.addEventListener('change', () => {
-      state.open = upcomingToggle!.checked;
+      state.open = upcomingToggle.checked;
+      apply();
+    });
+
+    freeToggle?.addEventListener('change', () => {
+      state.free = freeToggle.checked;
       apply();
     });
 
@@ -308,6 +516,7 @@ const processedAwards = awards.map((a: any) => {
       viewBtn.title = compact ? 'Larger images' : 'Smaller images';
     });
 
+    syncChecks();
     apply();
   })();
 </script>
