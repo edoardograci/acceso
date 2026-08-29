@@ -20,7 +20,7 @@ const { fair, cityName, countryName } = Astro.props;
     <div class="fair-logo-box">
       {fair.image ? (
         <img
-          src={normalizeImage(fair.image, Astro, { width: 240 })}
+          src={normalizeImage(fair.image, Astro)}
           alt={fair.name}
           class="fair-logo-img"
           loading="eager"
