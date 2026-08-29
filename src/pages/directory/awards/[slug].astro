@@ -46,7 +46,7 @@ try {
 
     if (award) {
       relatedAwards = allAwards
-        .filter((a: any) => a.slug !== slug)
+        .filter((a: any) => a.slug !== slug && getAwardStatus(a.deadlines) === 'status-open')
         .slice(0, 10);
     }
   }
