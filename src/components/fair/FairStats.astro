@@ -1,0 +1,103 @@
+---
+interface Props {
+  exhibitors?: string | number;
+  visitors?: string | number;
+  founded?: string | number;
+  recurrence?: string;
+}
+
+const { exhibitors, visitors, founded, recurrence } = Astro.props;
+
+const hasAnyStat = !!exhibitors || !!visitors || !!founded || !!recurrence;
+---
+
+{hasAnyStat && (
+  <section class="fair-stats-grid">
+    {exhibitors && (
+      <div class="stat-card">
+        <span class="stat-value">{exhibitors}</span>
+        <span class="stat-label">Exhibitors</span>
+      </div>
+    )}
+
+    {visitors && (
+      <div class="stat-card">
+        <span class="stat-value">{visitors}</span>
+        <span class="stat-label">Visitors</span>
+      </div>
+    )}
+
+    {founded && (
+      <div class="stat-card">
+        <span class="stat-value">{founded}</span>
+        <span class="stat-label">Est. Year</span>
+      </div>
+    )}
+
+    {recurrence && (
+      <div class="stat-card">
+        <span class="stat-value">{recurrence}</span>
+        <span class="stat-label">Frequency</span>
+      </div>
+    )}
+  </section>
+)}
+
+<style>
+  .fair-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .stat-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-sizing: border-box;
+  }
+
+  .stat-value {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--color-black);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .stat-label {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-gray);
+  }
+
+  @media (max-width: 1024px) {
+    .fair-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .fair-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .stat-card {
+      padding: 12px 14px;
+    }
+    .stat-value {
+      font-size: 18px;
+    }
+  }
+</style>

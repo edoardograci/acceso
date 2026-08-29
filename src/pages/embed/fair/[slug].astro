@@ -1,0 +1,227 @@
+---
+const { slug } = Astro.params;
+
+const isDev = import.meta.env.DEV;
+const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+
+let fair: any = null;
+
+try {
+  const res = await fetch(`${domain}/fairs.json`);
+  if (res.ok) {
+    const data = await res.json();
+    const fairs = Array.isArray(data) ? data : (data.items || []);
+    fair = fairs.find((f: any) => f.slug === slug) || null;
+  }
+} catch (e) {
+  console.error('[Embed Map] Failed to fetch fairs:', e);
+}
+
+if (!fair || fair.latitude == null || fair.longitude == null) {
+  return Astro.redirect('/404');
+}
+
+const lat = parseFloat(fair.latitude);
+const lng = parseFloat(fair.longitude);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{fair.name} — Map</title>
+    <style is:global>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; height: 100%; }
+      body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+      #embed-map { position: absolute; inset: 0; background: transparent; }
+
+      .embed-name-pill {
+        max-width: 200px;
+        padding: 7px 16px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 999px;
+        color: #000;
+        font-size: 13px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.18);
+        pointer-events: none;
+        cursor: default;
+      }
+
+      .embed-pin {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #EDFF77;
+        border: 2.5px solid #ffffff;
+        color: #000;
+        font-weight: 700;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
+
+      .embed-bottom-right {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .embed-info-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1px solid #ffffff;
+        background: rgba(255, 255, 255, 0.92);
+        color: #000;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-style: italic;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+      .embed-info-btn:hover { background: #ffffff; }
+
+      .embed-info-popover {
+        position: absolute;
+        right: 0;
+        bottom: 34px;
+        width: 210px;
+        background: #fff;
+        border-radius: 10px;
+        padding: 10px 12px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22);
+        z-index: 6;
+      }
+      .embed-info-popover[hidden] { display: none; }
+      .embed-info-text {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 11px;
+        line-height: 1.45;
+        color: #52525B;
+      }
+      .embed-info-text strong { color: #000; font-weight: 700; }
+      .embed-info-text a { color: #000; text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div id="embed-map" data-lat={lat} data-lng={lng} data-name={fair.name}></div>
+
+    <div class="embed-bottom-right">
+      <button class="embed-info-btn" id="infoBtn" type="button" aria-label="Legal information" aria-expanded="false">i</button>
+
+      <div class="embed-info-popover" id="infoPopover" hidden>
+        <p class="embed-info-text"><strong>Map data.</strong> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, served by <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>. Tiles and geocoding are openly licensed community contributions.</p>
+      </div>
+    </div>
+
+    <script>
+      (async () => {
+        const container = document.getElementById('embed-map');
+        if (!container) return;
+        const lat = parseFloat(container.dataset.lat ?? '');
+        const lng = parseFloat(container.dataset.lng ?? '');
+        const name = container.dataset.name || 'F';
+
+        const [maplibregl] = await Promise.all([
+          import('maplibre-gl').then((m) => m.default),
+          import('maplibre-gl/dist/maplibre-gl.css'),
+        ]);
+
+        const STRIP_LAYERS = new Set([
+          'waterway_line_label',
+          'water_name_point_label',
+          'water_name_line_label',
+          'label_other',
+          'label_state',
+          'highway-shield-non-us',
+          'highway-shield-us-interstate',
+          'road_shield_us',
+        ]);
+        const styleRes = await fetch('https://tiles.openfreemap.org/styles/positron');
+        const styleJson = await styleRes.json();
+        if (styleJson && Array.isArray(styleJson.layers)) {
+          styleJson.layers = styleJson.layers.filter(
+            (l: any) => !STRIP_LAYERS.has(l.id)
+          );
+        }
+        styleJson.glyphs = `${window.location.origin}/api/fonts/{fontstack}/{range}.pbf`;
+        const FONT_MAP: Record<string, string[]> = {
+          'Noto Sans Regular': ['Geist_Regular', 'Noto Sans Regular'],
+          'Noto Sans Bold': ['Geist_Bold', 'Noto Sans Bold'],
+          'Noto Sans Italic': ['Geist_Regular', 'Noto Sans Regular'],
+        };
+        for (const layer of styleJson.layers || []) {
+          const tf = layer?.layout?.['text-font'];
+          if (Array.isArray(tf)) {
+            const mapped = tf.flatMap((f: string) => FONT_MAP[f] || [f]);
+            layer.layout['text-font'] = Array.from(new Set(mapped));
+          }
+        }
+
+        const map = new maplibregl.Map({
+          container: 'embed-map',
+          style: styleJson,
+          center: [lng, lat],
+          zoom: 15,
+          minZoom: 2,
+          maxZoom: 18,
+          attributionControl: false,
+          scrollZoom: false,
+          boxZoom: false,
+          dragRotate: false,
+          keyboard: false,
+          pitchWithRotate: false,
+          fadeDuration: 100,
+        });
+
+        map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+        const el = document.createElement('div');
+        el.className = 'embed-pin';
+        el.textContent = (name || 'F').trim().charAt(0).toUpperCase();
+        new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
+
+        const pill = document.createElement('div');
+        pill.className = 'embed-name-pill';
+        pill.textContent = name;
+        new maplibregl.Marker({ element: pill, anchor: 'bottom', offset: [0, -28] }).setLngLat([lng, lat]).addTo(map);
+
+        const infoBtn = document.getElementById('infoBtn');
+        const infoPopover = document.getElementById('infoPopover');
+        if (infoBtn && infoPopover) {
+          infoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = infoPopover.hidden;
+            infoPopover.hidden = !open;
+            infoBtn.setAttribute('aria-expanded', String(open));
+          });
+          document.addEventListener('click', (e) => {
+            if (!infoPopover.hidden && !infoBtn.contains(e.target as Node) && !infoPopover.contains(e.target as Node)) {
+              infoPopover.hidden = true;
+              infoBtn.setAttribute('aria-expanded', 'false');
+            }
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -40,6 +40,10 @@ try {
 
     if (award && !award.website && award.url) award.website = award.url;
 
+    if (award && award.image === 'awards/if-award.webp') {
+      award.image = 'awards/if-award/logo.webp';
+    }
+
     if (award) {
       relatedAwards = allAwards
         .filter((a: any) => a.slug !== slug)

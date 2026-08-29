@@ -12,8 +12,7 @@ const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
 
 let fairs = [];
 let error = null;
-let orderedFilterData: any[] = [];
-let citiesPills: any[] = [];
+let filterSections: any[] = [];
 
 function distributeGroupsForColumns(groups: any[], columns = 3) {
   const colHeights = Array(columns).fill(0);
@@ -28,6 +27,16 @@ function distributeGroupsForColumns(groups: any[], columns = 3) {
     colHeights[target] += weight;
   }
   return cols.flat();
+}
+
+// Helper to create slug-friendly strings
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 try {
@@ -60,7 +69,7 @@ try {
       if (f.city_slug && f.country_slug) cityToCountry[f.city_slug] = f.country_slug;
     });
 
-    // Group every city under its real country (mirrors designers filtering)
+    // Group every city under its real country
     const groupsByCountry: Record<string, any> = {};
     citiesList.forEach((ct: any) => {
       if (!ct.slug || !cityCounts[ct.slug]) return;
@@ -83,12 +92,67 @@ try {
       if (byCities !== 0) return byCities;
       return a.name.localeCompare(b.name);
     });
-    orderedFilterData = distributeGroupsForColumns(sortedGroups, 3);
+    const orderedLocationGroups = distributeGroupsForColumns(sortedGroups, 3);
 
-    citiesPills = citiesList
-      .filter((ct: any) => cityCounts[ct.slug])
-      .map((ct: any) => ({ name: ct.name, slug: ct.slug }))
-      .sort((a: any, b: any) => cityCounts[b.slug] - cityCounts[a.slug]);
+    // ── Extract Tags from focus field ──────────────────────────────────
+    const tagCounts: Record<string, number> = {};
+    fairs.forEach((f: any) => {
+      if (f.focus) {
+        const tags = f.focus.split(',').map((t: string) => t.trim()).filter(Boolean);
+        tags.forEach((tag: string) => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      }
+    });
+    const tagOptions = Object.entries(tagCounts)
+      .map(([name, count]) => ({ name, slug: slugify(name), count }))
+      .sort((a, b) => b.count - a.count);
+
+    // ── Extract Frequency from recurrence field ───────────────────────
+    const frequencyCounts: Record<string, number> = {};
+    fairs.forEach((f: any) => {
+      if (f.recurrence) {
+        const freq = f.recurrence.trim();
+        if (freq) frequencyCounts[freq] = (frequencyCounts[freq] || 0) + 1;
+      }
+    });
+    const frequencyOptions = Object.entries(frequencyCounts)
+      .map(([name, count]) => ({ name, slug: slugify(name), count }))
+      .sort((a, b) => {
+        // Sort by common frequency order
+        const order = ['annual', 'biennial', 'triennial', 'one-time'];
+        const aIdx = order.indexOf(a.slug);
+        const bIdx = order.indexOf(b.slug);
+        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+        if (aIdx !== -1) return -1;
+        if (bIdx !== -1) return 1;
+        return b.count - a.count;
+      });
+
+    // ── Build Filter Sections ──────────────────────────────────────────
+    filterSections = [
+      {
+        id: 'location',
+        title: 'Location',
+        type: 'location',
+        groups: orderedLocationGroups,
+        collapsed: false
+      },
+      {
+        id: 'tags',
+        title: 'Tags',
+        type: 'checkbox',
+        options: tagOptions,
+        collapsed: true
+      },
+      {
+        id: 'frequency',
+        title: 'Frequency',
+        type: 'checkbox',
+        options: frequencyOptions,
+        collapsed: true
+      }
+    ];
   }
 } catch (e) {
   error = e;
@@ -115,20 +179,33 @@ now.setHours(0, 0, 0, 0);
 const processedFairs = fairs.map((f: any) => {
   const end = f.end_date ? new Date(f.end_date) : (f.start_date ? new Date(f.start_date) : null);
   const upcoming = end ? end >= now : false;
+  
+  // Extract tags as slugs for filtering
+  const tagSlugs = f.focus ? f.focus.split(',').map((t: string) => slugify(t.trim())).filter(Boolean) : [];
+  const frequencySlug = f.recurrence ? slugify(f.recurrence.trim()) : '';
+  
   return {
     ...f,
     pillText: getPeriod(f.start_date, f.end_date),
     pillType: 'default',
     location: f.city || f.location,
     upcoming,
+    tagSlugs,
+    frequencySlug,
   };
 });
 
 const cityParam = Astro.url.searchParams.get('city');
 let initialCity = 'all';
 if (cityParam) {
-  const matched = citiesPills.find((c) => c.slug === cityParam);
-  if (matched) initialCity = matched.slug;
+  // Find if this city exists in our filter sections
+  const locationSection = filterSections.find(s => s.id === 'location');
+  if (locationSection) {
+    const hasCity = locationSection.groups.some((g: any) => 
+      g.cities.some((c: any) => c.slug === cityParam)
+    );
+    if (hasCity) initialCity = cityParam;
+  }
 }
 ---
 
@@ -166,10 +243,11 @@ if (cityParam) {
 
       <div class="city-filter-row">
         <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
-        <FilterSidebar groups={orderedFilterData} />
+        <FilterSidebar sections={filterSections} title="Filters" />
 
         <label class="upcoming-toggle">
-          <input type="checkbox" id="upcoming-toggle" />
+          <input type="checkbox" id="upcoming-toggle" class="toggle-switch" />
+          <span class="toggle-slider"></span>
           <span class="upcoming-label">Show upcoming</span>
         </label>
 
@@ -196,6 +274,8 @@ if (cityParam) {
           <div
             class="fair-card-wrapper"
             data-city={fair.city_slug || ''}
+            data-tags={fair.tagSlugs.join(',')}
+            data-frequency={fair.frequencySlug || ''}
             data-name={(fair.name || '').toLowerCase()}
             data-start={fair.start_date || ''}
             data-upcoming={fair.upcoming ? 'true' : 'false'}
@@ -300,34 +380,71 @@ if (cityParam) {
   }
   .city-items { margin-left: 20px; display: flex; flex-direction: column; gap: 6px; }
 
-  .upcoming-toggle { display: flex; align-items: center; gap: 8px; flex-shrink: 0; cursor: pointer; font-family: var(--font-sans); }
-  .upcoming-label { font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--color-black); white-space: nowrap; }
-  .upcoming-toggle input[type="checkbox"] {
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--color-stroke);
-    border-radius: 4px;
-    cursor: pointer;
+  .upcoming-toggle { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    flex-shrink: 0; 
+    cursor: pointer; 
+    font-family: var(--font-sans);
     position: relative;
+    height: 36px;
+  }
+  .upcoming-label { 
+    font-family: var(--font-sans); 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: var(--color-black); 
+    white-space: nowrap; 
+    user-select: none;
+  }
+  
+  /* Hide the native checkbox */
+  .toggle-switch {
+    appearance: none;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  /* Pill-shaped toggle slider */
+  .toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    background: var(--color-stroke, #e5e5e5);
+    border-radius: 999px;
+    transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     flex-shrink: 0;
-    background: var(--color-white);
-    transition: border-color 0.2s ease, background-color 0.2s ease;
   }
-  .upcoming-toggle input[type="checkbox"]:checked {
-    background: var(--color-black);
-    border-color: var(--color-black);
-  }
-  .upcoming-toggle input[type="checkbox"]:checked::after {
+  
+  /* The circle inside the toggle */
+  .toggle-slider::after {
     content: '';
     position: absolute;
-    left: 50%;
-    top: 45%;
-    width: 4px;
-    height: 8px;
-    border: solid var(--color-white);
-    border-width: 0 2px 2px 0;
-    transform: translate(-50%, -50%) rotate(45deg);
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: var(--color-white, #ffffff);
+    border-radius: 50%;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* When checked: black background and slide circle to right */
+  .toggle-switch:checked + .toggle-slider {
+    background: var(--color-black, #000000);
+  }
+  
+  .toggle-switch:checked + .toggle-slider::after {
+    transform: translateX(24px);
+  }
+  
+  /* Hover effect */
+  .upcoming-toggle:hover .toggle-slider {
+    opacity: 0.9;
   }
 
   .city-filter-bar { flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(to right, black 85%, transparent 100%); }
@@ -397,6 +514,8 @@ if (cityParam) {
     const wrappers = Array.from(grid.querySelectorAll('.fair-card-wrapper'));
     const cityCheckboxes = Array.from(document.querySelectorAll('.city-checkbox'));
     const countryCheckboxes = Array.from(document.querySelectorAll('.country-checkbox'));
+    const tagsCheckboxes = Array.from(document.querySelectorAll('.tags-checkbox'));
+    const frequencyCheckboxes = Array.from(document.querySelectorAll('.frequency-checkbox'));
     const clearAllBtn = document.getElementById('filter-clear-all');
     const filterTrigger = document.getElementById('filter-trigger');
     const filterDrawer = document.getElementById('filter-sidebar-drawer');
@@ -410,7 +529,13 @@ if (cityParam) {
     const countEl = document.getElementById('fairs-count');
     const emptyEl = document.getElementById('empty-result');
 
-    const state = { cities: new Set(), search: '', upcoming: false };
+    const state = { 
+      cities: new Set(), 
+      tags: new Set(),
+      frequencies: new Set(),
+      search: '', 
+      upcoming: false 
+    };
 
     function syncChecks() {
       cityCheckboxes.forEach((cb) => { cb.checked = state.cities.has(cb.dataset.slug); });
@@ -420,15 +545,43 @@ if (cityParam) {
         cb.checked = cityCbs.length > 0 && cityCbs.every((c) => c.checked);
         cb.indeterminate = !cb.checked && cityCbs.some((c) => c.checked);
       });
+      tagsCheckboxes.forEach((cb) => { cb.checked = state.tags.has(cb.dataset.slug); });
+      frequencyCheckboxes.forEach((cb) => { cb.checked = state.frequencies.has(cb.dataset.slug); });
     }
 
     function apply() {
       const search = state.search.trim().toLowerCase();
       const visible = wrappers.filter((w) => {
+        // City filter
         if (state.cities.size > 0 && !state.cities.has(w.dataset.city)) return false;
+        
+        // Tags filter (if any tag selected, fair must have at least one matching tag)
+        if (state.tags.size > 0) {
+          const fairTags = (w.dataset.tags || '').split(',').filter(Boolean);
+          const hasMatchingTag = fairTags.some(tag => state.tags.has(tag));
+          if (!hasMatchingTag) return false;
+        }
+        
+        // Frequency filter
+        if (state.frequencies.size > 0 && !state.frequencies.has(w.dataset.frequency)) return false;
+        
+        // Upcoming filter
         if (state.upcoming && w.dataset.upcoming !== 'true') return false;
+        
+        // Search filter
         if (search && !w.dataset.name.includes(search)) return false;
+        
         return true;
+      });
+
+      // Sort chronologically by start date
+      visible.sort((a, b) => {
+        const dateA = a.dataset.start || '';
+        const dateB = b.dataset.start || '';
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        return dateA.localeCompare(dateB);
       });
 
       visible.forEach((w) => grid.appendChild(w));
@@ -439,14 +592,20 @@ if (cityParam) {
     }
 
     const filterDone = document.getElementById('filter-done-btn');
-    let savedCitiesState = new Set();
+    let savedState = { cities: new Set(), tags: new Set(), frequencies: new Set() };
 
     function snapshotState() {
-      savedCitiesState = new Set(state.cities);
+      savedState = { 
+        cities: new Set(state.cities),
+        tags: new Set(state.tags),
+        frequencies: new Set(state.frequencies)
+      };
     }
 
     function restoreState() {
-      state.cities = new Set(savedCitiesState);
+      state.cities = new Set(savedState.cities);
+      state.tags = new Set(savedState.tags);
+      state.frequencies = new Set(savedState.frequencies);
       syncChecks();
     }
 
@@ -466,12 +625,14 @@ if (cityParam) {
       document.body.style.overflow = '';
     }
 
+    // City checkboxes
     cityCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
       if (cb.checked) state.cities.add(cb.dataset.slug);
       else state.cities.delete(cb.dataset.slug);
       syncChecks();
     }));
 
+    // Country checkboxes
     countryCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
       const grp = cb.closest('.filter-group');
       const cityCbs = Array.from(grp.querySelectorAll('.city-checkbox'));
@@ -483,8 +644,24 @@ if (cityParam) {
       syncChecks();
     }));
 
+    // Tags checkboxes
+    tagsCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) state.tags.add(cb.dataset.slug);
+      else state.tags.delete(cb.dataset.slug);
+      syncChecks();
+    }));
+
+    // Frequency checkboxes
+    frequencyCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) state.frequencies.add(cb.dataset.slug);
+      else state.frequencies.delete(cb.dataset.slug);
+      syncChecks();
+    }));
+
     clearAllBtn?.addEventListener('click', () => {
       state.cities = new Set();
+      state.tags = new Set();
+      state.frequencies = new Set();
       syncChecks();
       apply();
       closeDrawer(true);
