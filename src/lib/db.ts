@@ -677,3 +677,143 @@ export async function getProfileSummary(userId: string, env: Env): Promise<{
     };
   }
 }
+
+/* ============================================================
+   Admin dashboard metrics
+   Read-only aggregates over the app's own tables. These complement the
+   PostHog numbers: signups and saved items are ground truth here, whereas
+   PostHog only ever sees what the browser managed to send.
+   ============================================================ */
+
+export interface AdminTursoMetrics {
+  totalUsers: number;
+  newUsers: number;
+  signupsByDay: { day: string; count: number }[];
+  saves: { designers: number; objects: number; museums: number; universities: number };
+  recentSaves: { designers: number; objects: number; museums: number; universities: number };
+  submissionsByStatus: { status: string; count: number }[];
+  pendingStudioRequests: number;
+  suggestions: number;
+  errors: string[];
+}
+
+const EMPTY_ADMIN_TURSO_METRICS: AdminTursoMetrics = {
+  totalUsers: 0,
+  newUsers: 0,
+  signupsByDay: [],
+  saves: { designers: 0, objects: 0, museums: 0, universities: 0 },
+  recentSaves: { designers: 0, objects: 0, museums: 0, universities: 0 },
+  submissionsByStatus: [],
+  pendingStudioRequests: 0,
+  suggestions: 0,
+  errors: [],
+};
+
+/**
+ * Aggregate app-side metrics for the admin dashboard.
+ *
+ * Every query is run independently and failures are collected rather than
+ * thrown: `submissions`, `studio_requests` and `suggestions` were created
+ * outside the setup scripts, so a table missing in one environment must not
+ * blank out the whole panel.
+ */
+export async function getAdminTursoMetrics(env: Env, days: number): Promise<AdminTursoMetrics> {
+  const windowDays = Math.min(Math.max(Math.floor(days) || 7, 1), 365);
+  const cacheKey = getCacheKey('admin_turso_metrics', windowDays);
+  const cached = getFromCache<AdminTursoMetrics>(cacheKey);
+  if (cached) return cached;
+
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  const metrics: AdminTursoMetrics = {
+    ...EMPTY_ADMIN_TURSO_METRICS,
+    saves: { ...EMPTY_ADMIN_TURSO_METRICS.saves },
+    recentSaves: { ...EMPTY_ADMIN_TURSO_METRICS.recentSaves },
+    signupsByDay: [],
+    submissionsByStatus: [],
+    errors: [],
+  };
+
+  // users.created_at is an INTEGER unix timestamp; user_saved_* store TEXT
+  // datetimes from datetime('now'), so the two need different comparisons.
+  const sinceUnix = Math.floor(Date.now() / 1000) - windowDays * 86400;
+  const sinceModifier = `-${windowDays} days`;
+
+  const run = async (label: string, fn: () => Promise<void>) => {
+    try {
+      await fn();
+    } catch (error: any) {
+      metrics.errors.push(`${label}: ${error?.message || 'query failed'}`);
+    }
+  };
+
+  const savedTables: [keyof AdminTursoMetrics['saves'], string][] = [
+    ['designers', 'user_saved_designers'],
+    ['objects', 'user_saved_objects'],
+    ['museums', 'user_saved_museums'],
+    ['universities', 'user_saved_universities'],
+  ];
+
+  await Promise.all([
+    run('users', async () => {
+      const result = await turso.execute({
+        sql: 'SELECT count(*) AS total, sum(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS recent FROM users',
+        args: [sinceUnix],
+      });
+      metrics.totalUsers = Number(result.rows[0]?.total ?? 0);
+      metrics.newUsers = Number(result.rows[0]?.recent ?? 0);
+    }),
+
+    run('signups_by_day', async () => {
+      const result = await turso.execute({
+        sql: `SELECT date(created_at, 'unixepoch') AS day, count(*) AS count
+              FROM users WHERE created_at >= ? GROUP BY day ORDER BY day ASC`,
+        args: [sinceUnix],
+      });
+      metrics.signupsByDay = result.rows.map((row: any) => ({
+        day: String(row.day),
+        count: Number(row.count ?? 0),
+      }));
+    }),
+
+    ...savedTables.map(([key, table]) =>
+      run(table, async () => {
+        const result = await turso.execute({
+          sql: `SELECT count(*) AS total,
+                       sum(CASE WHEN created_at >= datetime('now', ?) THEN 1 ELSE 0 END) AS recent
+                FROM ${table}`,
+          args: [sinceModifier],
+        });
+        metrics.saves[key] = Number(result.rows[0]?.total ?? 0);
+        metrics.recentSaves[key] = Number(result.rows[0]?.recent ?? 0);
+      })
+    ),
+
+    run('submissions', async () => {
+      const result = await turso.execute({
+        sql: 'SELECT status, count(*) AS count FROM submissions GROUP BY status ORDER BY count DESC',
+      });
+      metrics.submissionsByStatus = result.rows.map((row: any) => ({
+        status: String(row.status ?? 'unknown'),
+        count: Number(row.count ?? 0),
+      }));
+    }),
+
+    run('studio_requests', async () => {
+      const result = await turso.execute({
+        sql: "SELECT count(*) AS count FROM studio_requests WHERE status = 'pending'",
+      });
+      metrics.pendingStudioRequests = Number(result.rows[0]?.count ?? 0);
+    }),
+
+    run('suggestions', async () => {
+      const result = await turso.execute({
+        sql: 'SELECT count(*) AS count FROM suggestions WHERE created_at >= ?',
+        args: [sinceUnix],
+      });
+      metrics.suggestions = Number(result.rows[0]?.count ?? 0);
+    }),
+  ]);
+
+  setCache(cacheKey, metrics);
+  return metrics;
+}

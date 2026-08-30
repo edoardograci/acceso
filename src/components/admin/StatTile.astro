@@ -1,0 +1,44 @@
+---
+// src/components/admin/StatTile.astro
+// A headline number. Per the "is it even a chart?" rule, a single value is a
+// stat tile, not a one-bar chart.
+
+interface Props {
+  label: string;
+  value: string;
+  /** Percentage change vs the previous period; null when there is no baseline. */
+  delta?: number | null;
+  /** Small caption under the value (e.g. the comparison period). */
+  hint?: string;
+  /** When false, a rise is not "good" — the delta chip stays neutral. */
+  higherIsBetter?: boolean;
+}
+
+const { label, value, delta = undefined, hint, higherIsBetter = true } = Astro.props;
+
+const hasDelta = delta !== undefined && delta !== null && Number.isFinite(delta);
+const rising = hasDelta && (delta as number) > 0;
+const flat = hasDelta && Math.abs(delta as number) < 0.05;
+
+// Status colors are reserved and always ship with a glyph, never color alone.
+const deltaClass = !hasDelta || flat
+  ? 'text-[#52525B]'
+  : rising === higherIsBetter
+    ? 'text-[#008300]'
+    : 'text-[#d13b3b]';
+
+const arrow = flat ? '→' : rising ? '↑' : '↓';
+const deltaText = hasDelta
+  ? `${arrow} ${Math.abs(delta as number).toFixed(Math.abs(delta as number) < 10 ? 1 : 0)}%`
+  : null;
+---
+
+<div class="rounded-lg border border-[#E4E4E7] bg-white p-4">
+  <p class="text-[11px] uppercase tracking-[0.08em] text-[#52525B]">{label}</p>
+  <p class="mt-2 text-[28px] leading-none tabular-nums">{value}</p>
+  <div class="mt-2 flex items-baseline gap-2 text-xs">
+    {deltaText && <span class={deltaClass}>{deltaText}</span>}
+    {delta === null && <span class="text-[#52525B]">no baseline</span>}
+    {hint && <span class="text-[#52525B]">{hint}</span>}
+  </div>
+</div>

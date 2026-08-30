@@ -170,5 +170,14 @@ export const RateLimits = {
         maxRequests: 1,
         windowMs: 60 * 60 * 1000,
         keyPrefix: 'delete'
+    },
+
+    // Admin dashboard: 60 requests per minute per user. Generous for a single
+    // operator, but it caps how fast a leaked session could drain the PostHog
+    // query quota behind this endpoint.
+    ADMIN: {
+        maxRequests: 60,
+        windowMs: 60 * 1000,
+        keyPrefix: 'admin'
     }
 } as const;

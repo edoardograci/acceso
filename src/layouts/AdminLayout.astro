@@ -1,0 +1,29 @@
+---
+// src/layouts/AdminLayout.astro
+// Minimal shell for the owner-only dashboard.
+//
+// Deliberately NOT built on Layout.astro: that one mounts PostHogEnhanced, so
+// the dashboard would emit $pageview events and pollute the very numbers it
+// reports. No analytics, no schema.org, no navbar — just the design tokens.
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>{title}</title>
+  </head>
+  <body class="bg-white text-black antialiased">
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,82 @@
+---
+// src/components/admin/BreakdownList.astro
+// Ranked magnitude by category → horizontal bars, one series, one color.
+// The rows are the table view as well as the chart, so the values are always
+// readable as text and never encoded by color alone.
+
+export interface BreakdownItem {
+  label: string;
+  value: number;
+  secondary?: number;
+}
+
+interface Props {
+  title: string;
+  rows: BreakdownItem[];
+  valueLabel?: string;
+  secondaryLabel?: string;
+  emptyText?: string;
+  error?: string | null;
+  limit?: number;
+}
+
+const {
+  title,
+  rows,
+  valueLabel = 'sessions',
+  secondaryLabel = 'views',
+  emptyText = 'No data in this period.',
+  error = null,
+  limit = 12,
+} = Astro.props;
+
+const visible = rows.slice(0, limit);
+const max = visible.reduce((acc, row) => Math.max(acc, row.value), 0);
+const format = (n: number) => new Intl.NumberFormat('en-US').format(Math.round(n));
+---
+
+<section class="rounded-lg border border-[#E4E4E7] bg-white">
+  <header class="flex items-baseline justify-between border-b border-[#E4E4E7] px-4 py-3">
+    <h2 class="text-sm">{title}</h2>
+    <span class="text-[11px] uppercase tracking-[0.08em] text-[#52525B]">{valueLabel}</span>
+  </header>
+
+  {error ? (
+    <p class="px-4 py-6 text-xs text-[#d13b3b]">{error}</p>
+  ) : visible.length === 0 ? (
+    <p class="px-4 py-6 text-xs text-[#52525B]">{emptyText}</p>
+  ) : (
+    <ul class="divide-y divide-[#F4F4F5]">
+      {visible.map((row) => (
+        <li
+          class="px-4 py-2.5 transition-colors hover:bg-[#FAFAFA]"
+          title={`${row.label} — ${format(row.value)} ${valueLabel}${
+            row.secondary !== undefined ? `, ${format(row.secondary)} ${secondaryLabel}` : ''
+          }`}
+        >
+          <div class="flex items-baseline justify-between gap-3">
+            <span class="min-w-0 flex-1 truncate text-[13px]">{row.label}</span>
+            <span class="shrink-0 text-[13px] tabular-nums">{format(row.value)}</span>
+            {row.secondary !== undefined && (
+              <span class="w-14 shrink-0 text-right text-[11px] tabular-nums text-[#52525B]">
+                {format(row.secondary)}
+              </span>
+            )}
+          </div>
+          <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#F4F4F5]">
+            <div
+              class="h-full rounded-full bg-[#2a78d6]"
+              style={`width: ${max > 0 ? Math.max((row.value / max) * 100, 1.5) : 0}%`}
+            ></div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+
+  {rows.length > visible.length && (
+    <p class="border-t border-[#E4E4E7] px-4 py-2 text-[11px] text-[#52525B]">
+      {rows.length - visible.length} more not shown
+    </p>
+  )}
+</section>
