@@ -1,0 +1,300 @@
+---
+// src/components/admin/TrafficChart.astro
+// Change over time → line chart. Two series on ONE shared axis (both are counts
+// of the same kind); never a second y-scale.
+//
+// Colors are categorical slots 1 and 2 of the validated default palette
+// (#2a78d6 blue, #eb6834 orange): validated on a #ffffff surface — lightness
+// band, chroma, CVD separation, normal-vision floor and 3:1 contrast all pass.
+// The site is light-only (`<html class="light">`), so no dark steps are needed.
+
+import type { TrafficPoint } from '../../lib/posthog-query';
+
+interface Props {
+  series: TrafficPoint[];
+  title?: string;
+}
+
+const { series, title = 'Traffic' } = Astro.props;
+
+const W = 1000;
+const H = 260;
+const PAD_L = 48;
+const PAD_R = 16;
+const PAD_T = 16;
+const PAD_B = 28;
+
+const SERIES = [
+  { key: 'pageviews' as const, name: 'Pageviews', color: '#2a78d6' },
+  { key: 'visitors' as const, name: 'Visitors', color: '#eb6834' },
+];
+
+/** Round the axis top up to a readable 1/2/5 × 10ⁿ step. */
+function niceMax(value: number): number {
+  if (value <= 0) return 1;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+  const normalized = value / magnitude;
+  const step = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return step * magnitude;
+}
+
+const rawMax = series.reduce(
+  (acc, point) => Math.max(acc, point.pageviews, point.visitors),
+  0
+);
+const yMax = niceMax(rawMax);
+const hasData = rawMax > 0;
+
+const plotW = W - PAD_L - PAD_R;
+const plotH = H - PAD_T - PAD_B;
+
+const x = (index: number) =>
+  series.length <= 1 ? PAD_L + plotW / 2 : PAD_L + (index * plotW) / (series.length - 1);
+const y = (value: number) => PAD_T + plotH - (value / yMax) * plotH;
+
+const paths = SERIES.map((s) => ({
+  ...s,
+  d: series.map((point, i) => `${i === 0 ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(point[s.key]).toFixed(1)}`).join(' '),
+  last: series.length ? series[series.length - 1][s.key] : 0,
+  lastY: series.length ? y(series[series.length - 1][s.key]) : 0,
+}));
+
+// Nudge the two end labels apart when the series converge.
+if (paths.length === 2 && Math.abs(paths[0].lastY - paths[1].lastY) < 14) {
+  if (paths[0].lastY <= paths[1].lastY) {
+    paths[0].lastY -= 7;
+    paths[1].lastY += 7;
+  } else {
+    paths[0].lastY += 7;
+    paths[1].lastY -= 7;
+  }
+}
+
+const gridLines = [0, 0.25, 0.5, 0.75, 1].map((fraction) => ({
+  y: PAD_T + plotH - fraction * plotH,
+  value: Math.round(yMax * fraction),
+}));
+
+// Roughly six date ticks, always including the first and last day.
+const tickStep = Math.max(1, Math.ceil(series.length / 6));
+const xTicks = series
+  .map((point, index) => ({ point, index }))
+  .filter(({ index }) => index % tickStep === 0 || index === series.length - 1);
+
+const shortDay = (day: string) => {
+  const date = new Date(`${day}T00:00:00Z`);
+  return Number.isNaN(date.getTime())
+    ? day
+    : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+};
+
+const formatNumber = (n: number) => new Intl.NumberFormat('en-US').format(Math.round(n));
+
+// Serialised for the hover layer.
+const hoverPoints = series.map((point, index) => ({
+  x: x(index),
+  day: shortDay(point.day),
+  pageviews: point.pageviews,
+  visitors: point.visitors,
+  sessions: point.sessions,
+  ys: SERIES.map((s) => y(point[s.key])),
+}));
+---
+
+<section class="rounded-lg border border-[#E4E4E7] bg-white">
+  <header class="flex flex-wrap items-baseline justify-between gap-3 border-b border-[#E4E4E7] px-4 py-3">
+    <h2 class="text-sm">{title}</h2>
+    <ul class="flex items-center gap-4">
+      {SERIES.map((s) => (
+        <li class="flex items-center gap-1.5 text-[11px] text-[#52525B]">
+          <span class="inline-block h-2 w-2 rounded-full" style={`background:${s.color}`}></span>
+          {s.name}
+        </li>
+      ))}
+    </ul>
+  </header>
+
+  <div class="relative px-2 pb-2 pt-4" data-traffic-chart>
+    <svg viewBox={`0 0 ${W} ${H}`} class="h-auto w-full" role="img" aria-label={`${title} over time`}>
+      {gridLines.map((line) => (
+        <g>
+          <line
+            x1={PAD_L}
+            x2={W - PAD_R}
+            y1={line.y}
+            y2={line.y}
+            stroke="#E4E4E7"
+            stroke-width="1"
+          />
+          <text x={PAD_L - 8} y={line.y + 4} text-anchor="end" font-size="11" fill="#52525B">
+            {formatNumber(line.value)}
+          </text>
+        </g>
+      ))}
+
+      {xTicks.map(({ point, index }) => (
+        <text x={x(index)} y={H - 8} text-anchor="middle" font-size="11" fill="#52525B">
+          {shortDay(point.day)}
+        </text>
+      ))}
+
+      {hasData &&
+        paths.map((s) => (
+          <path d={s.d} fill="none" stroke={s.color} stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+        ))}
+
+      {hasData &&
+        paths.map((s) => (
+          <text
+            x={W - PAD_R - 2}
+            y={s.lastY - 8}
+            text-anchor="end"
+            font-size="11"
+            fill="#52525B"
+          >
+            {`${s.name} ${formatNumber(s.last)}`}
+          </text>
+        ))}
+
+      <line
+        data-crosshair
+        x1="0"
+        x2="0"
+        y1={PAD_T}
+        y2={PAD_T + plotH}
+        stroke="#0F1113"
+        stroke-width="1"
+        opacity="0"
+      />
+      {SERIES.map((s) => (
+        <circle
+          data-hover-dot
+          r="4"
+          fill={s.color}
+          stroke="#FFFFFF"
+          stroke-width="2"
+          opacity="0"
+        />
+      ))}
+
+      <rect
+        data-hover-area
+        x={PAD_L}
+        y={PAD_T}
+        width={plotW}
+        height={plotH}
+        fill="transparent"
+      />
+    </svg>
+
+    <div
+      data-tooltip
+      class="pointer-events-none absolute z-10 hidden rounded-md border border-[#E4E4E7] bg-white px-3 py-2 text-xs shadow-sm"
+    ></div>
+
+    {!hasData && (
+      <p class="absolute inset-0 flex items-center justify-center text-xs text-[#52525B]">
+        No traffic recorded in this period.
+      </p>
+    )}
+  </div>
+
+  <details class="border-t border-[#E4E4E7] px-4 py-3">
+    <summary class="cursor-pointer text-[11px] uppercase tracking-[0.08em] text-[#52525B]">
+      Data table
+    </summary>
+    <div class="mt-3 max-h-64 overflow-auto">
+      <table class="w-full text-left text-[13px]">
+        <thead class="sticky top-0 bg-white text-[11px] uppercase tracking-[0.08em] text-[#52525B]">
+          <tr>
+            <th class="py-1 pr-3 font-normal">Day</th>
+            <th class="py-1 pr-3 text-right font-normal">Pageviews</th>
+            <th class="py-1 pr-3 text-right font-normal">Visitors</th>
+            <th class="py-1 text-right font-normal">Sessions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {series.map((point) => (
+            <tr class="border-t border-[#F4F4F5]">
+              <td class="py-1 pr-3">{point.day}</td>
+              <td class="py-1 pr-3 text-right tabular-nums">{formatNumber(point.pageviews)}</td>
+              <td class="py-1 pr-3 text-right tabular-nums">{formatNumber(point.visitors)}</td>
+              <td class="py-1 text-right tabular-nums">{formatNumber(point.sessions)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </details>
+</section>
+
+<script is:inline define:vars={{ hoverPoints, W }}>
+  (function () {
+    const root = document.querySelector('[data-traffic-chart]');
+    if (!root || !hoverPoints.length) return;
+
+    const svg = root.querySelector('svg');
+    const crosshair = root.querySelector('[data-crosshair]');
+    const dots = Array.from(root.querySelectorAll('[data-hover-dot]'));
+    const tooltip = root.querySelector('[data-tooltip]');
+    const area = root.querySelector('[data-hover-area]');
+    if (!svg || !crosshair || !tooltip || !area) return;
+
+    const format = (n) => new Intl.NumberFormat('en-US').format(Math.round(n));
+
+    function nearest(svgX) {
+      let best = 0;
+      let bestDistance = Infinity;
+      for (let i = 0; i < hoverPoints.length; i++) {
+        const distance = Math.abs(hoverPoints[i].x - svgX);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = i;
+        }
+      }
+      return hoverPoints[best];
+    }
+
+    function show(event) {
+      const rect = svg.getBoundingClientRect();
+      const scale = W / rect.width;
+      const point = nearest((event.clientX - rect.left) * scale);
+
+      crosshair.setAttribute('x1', point.x);
+      crosshair.setAttribute('x2', point.x);
+      crosshair.setAttribute('opacity', '0.25');
+
+      dots.forEach((dot, index) => {
+        dot.setAttribute('cx', point.x);
+        dot.setAttribute('cy', point.ys[index]);
+        dot.setAttribute('opacity', '1');
+      });
+
+      tooltip.innerHTML =
+        '<div class="mb-1 text-[#52525B]">' + point.day + '</div>' +
+        '<div class="tabular-nums">' + format(point.pageviews) + ' pageviews</div>' +
+        '<div class="tabular-nums">' + format(point.visitors) + ' visitors</div>' +
+        '<div class="tabular-nums text-[#52525B]">' + format(point.sessions) + ' sessions</div>';
+      tooltip.classList.remove('hidden');
+
+      // Flip the tooltip to the left of the cursor near the right edge.
+      const left = point.x / scale;
+      const flip = left > rect.width - 150;
+      tooltip.style.left = (flip ? left - 12 : left + 12) + 'px';
+      tooltip.style.top = '12px';
+      tooltip.style.transform = flip ? 'translateX(-100%)' : 'none';
+    }
+
+    function hide() {
+      crosshair.setAttribute('opacity', '0');
+      dots.forEach((dot) => dot.setAttribute('opacity', '0'));
+      tooltip.classList.add('hidden');
+    }
+
+    area.addEventListener('mousemove', show);
+    area.addEventListener('mouseleave', hide);
+    area.addEventListener('touchstart', (event) => show(event.touches[0]), { passive: true });
+    area.addEventListener('touchmove', (event) => show(event.touches[0]), { passive: true });
+    area.addEventListener('touchend', hide);
+  })();
+</script>

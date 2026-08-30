@@ -14,6 +14,14 @@ export type Env = {
   JWT_SECRET: string;
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
+  /** Comma-separated allowlist of emails that may open /admin. */
+  ADMIN_EMAILS?: string;
+  /** PostHog personal API key (read-only scopes) used by the admin dashboard. */
+  POSTHOG_API_KEY?: string;
+  /** Numeric PostHog project id, from Project settings. */
+  POSTHOG_PROJECT_ID?: string;
+  /** PostHog app host for the REST API — NOT the ingest host. Defaults to https://eu.posthog.com */
+  POSTHOG_API_HOST?: string;
   INDEX_BUCKET: R2Bucket;
   MOODBOARD_BUCKET: R2Bucket;
   JSON_BUCKET: R2Bucket;
@@ -57,6 +65,10 @@ declare global {
     readonly RESEND_API_KEY?: string;
     readonly TURNSTILE_SITE_KEY?: string;
     readonly TURNSTILE_SECRET_KEY?: string;
+    readonly ADMIN_EMAILS?: string;
+    readonly POSTHOG_API_KEY?: string;
+    readonly POSTHOG_PROJECT_ID?: string;
+    readonly POSTHOG_API_HOST?: string;
   }
 
   interface ImportMeta {
