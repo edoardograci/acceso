@@ -96,23 +96,27 @@ function shouldSkipAuth(pathname: string): boolean {
 export const onRequest = defineMiddleware(async ({ locals, cookies, request, url }, next) => {
   const pathname = url.pathname;
 
+  // CSRF protection for non-GET requests.
+  // This runs BEFORE the static-path early return: skipping auth for a prefix is
+  // a statement about sessions, not about origins, and letting the early return
+  // come first meant a POST to anything under /images/, /js/, /fonts/… was never
+  // origin-checked.
+  if (request.method !== 'GET') {
+    const originHeader = request.headers.get('Origin');
+    const hostHeader = request.headers.get('Host');
+
+    // In production, ensure origin matches host
+    if (import.meta.env.PROD && (!originHeader || !hostHeader || !verifyRequestOrigin(originHeader, [hostHeader]))) {
+      return new Response('Invalid origin: CSRF protection triggered.', { status: 403 });
+    }
+  }
+
   // Early return for static resources and public pages
   if (shouldSkipAuth(pathname)) {
     locals.user = null;
     locals.session = null;
     const res = await next();
     return applySecurityHeaders(res, pathname);
-  }
-
-  // CSRF protection for non-GET requests
-  if (request.method !== 'GET') {
-    const originHeader = request.headers.get('Origin');
-    const hostHeader = request.headers.get('Host');
-    
-    // In production, ensure origin matches host
-    if (import.meta.env.PROD && (!originHeader || !hostHeader || !verifyRequestOrigin(originHeader, [hostHeader]))) {
-      return new Response('Invalid origin: CSRF protection triggered.', { status: 403 });
-    }
   }
 
   const runtimeEnv = locals.runtime?.env || {};

@@ -55,6 +55,32 @@ function resolveCover(cover?: string | null): string {
   return `${window.location.origin}/cdn/${cover.replace(/^\/+/, '')}`;
 }
 
+// City names reach the breadcrumb from CMS records (`data-city`) and, for
+// legacy history entries, straight from the URL — so they can contain markup.
+// Anything interpolated into an HTML string has to go through this first.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Slugs published by the CMS are always lowercase words joined by dashes.
+// Requiring that shape keeps URL-supplied values out of both the attribute
+// selector below (where a quote would throw) and the breadcrumb fallback.
+const CITY_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
+
+function resolveCityFromSlug(slug: string): { name: string; country?: string } | null {
+  if (!CITY_SLUG_RE.test(slug)) return null;
+  const itemEl = document.querySelector(`.city-browse-item[data-slug="${slug}"]`) as HTMLElement | null;
+  return {
+    name: itemEl?.dataset.city || slug,
+    country: itemEl?.querySelector('.city-browse-meta')?.textContent?.trim() || undefined,
+  };
+}
+
 function median(numbers: number[]): number {
   if (numbers.length === 0) return 0;
   const sorted = [...numbers].sort((a, b) => a - b);
@@ -231,12 +257,12 @@ function init() {
         const lat = typeof s.latitude === 'string' ? s.latitude : (s.latitude != null ? String(s.latitude) : '');
         const lng = typeof s.longitude === 'string' ? s.longitude : (s.longitude != null ? String(s.longitude) : '');
         return `
-          <a href="${basePath}/${encodeURIComponent(s.slug || '')}" class="city-studio-card" data-lat="${lat}" data-lng="${lng}" data-slug="${s.slug || ''}">
+          <a href="${basePath}/${encodeURIComponent(s.slug || '')}" class="city-studio-card" data-lat="${escapeHtml(lat)}" data-lng="${escapeHtml(lng)}" data-slug="${escapeHtml(s.slug || '')}">
             <div class="city-studio-card-media">
-              ${cover ? `<img src="${cover}" alt="${s.name || ''}" loading="lazy" decoding="async" />` : ''}
+              ${cover ? `<img src="${escapeHtml(cover)}" alt="${escapeHtml(s.name || '')}" loading="lazy" decoding="async" />` : ''}
             </div>
-            <h3 class="city-studio-card-name">${s.name || ''}</h3>
-            <p class="city-studio-card-location">${location}</p>
+            <h3 class="city-studio-card-name">${escapeHtml(s.name || '')}</h3>
+            <p class="city-studio-card-location">${escapeHtml(location)}</p>
           </a>
         `;
       })
@@ -280,10 +306,11 @@ function init() {
     if (panelView === 'browse') {
       html += sep + '<span class="breadcrumb-current">More cities</span>';
     } else if (panelView === 'studios') {
+      const current = `<span class="breadcrumb-current">${escapeHtml(currentCityName)}</span>`;
       if (panelOrigin === 'browse') {
-        html += sep + '<a href="#" class="breadcrumb-item" data-bc="more">More cities</a>' + sep + `<span class="breadcrumb-current">${currentCityName}</span>`;
+        html += sep + '<a href="#" class="breadcrumb-item" data-bc="more">More cities</a>' + sep + current;
       } else {
-        html += sep + `<span class="breadcrumb-current">${currentCityName}</span>`;
+        html += sep + current;
       }
     }
 
@@ -655,10 +682,9 @@ function init() {
     const citySlug = params.get('city');
     if (!citySlug || !mapInstance) return;
     // Resolve the display name from the city browse list when available.
-    const itemEl = document.querySelector(`.city-browse-item[data-slug="${citySlug}"]`) as HTMLElement | null;
-    const cityName = itemEl?.dataset.city || citySlug;
-    const countryMeta = itemEl?.querySelector('.city-browse-meta')?.textContent?.trim() || undefined;
-    showCityStudios(cityName, citySlug, countryMeta, 'browse');
+    const city = resolveCityFromSlug(citySlug);
+    if (!city) return;
+    showCityStudios(city.name, citySlug, city.country, 'browse');
   }
 
   async function tryInitMap() {
@@ -850,11 +876,10 @@ function init() {
       switchItemType(type, { skipHistory: true });
     }
 
-    if (citySlug) {
-      const itemEl = document.querySelector(`.city-browse-item[data-slug="${citySlug}"]`) as HTMLElement | null;
-      const cityName = itemEl?.dataset.city || citySlug;
-      const countryMeta = itemEl?.querySelector('.city-browse-meta')?.textContent?.trim() || undefined;
-      showCityStudios(cityName, citySlug, countryMeta, 'browse');
+    const city = citySlug ? resolveCityFromSlug(citySlug) : null;
+
+    if (city && citySlug) {
+      showCityStudios(city.name, citySlug, city.country, 'browse');
     } else {
       (window as any).isMyMap ? showCityBrowse() : showQuickNav();
     }

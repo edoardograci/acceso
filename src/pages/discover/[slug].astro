@@ -76,7 +76,10 @@ async function getDesignerSlug(designerName: string | null): Promise<string | nu
 }
 
 const designerSlug = item ? await getDesignerSlug(item.designer) : null;
-const hasMultipleImages = item ? item.images.length > 1 : false;
+// The CMS omits `images` entirely on records without a gallery, so normalise it
+// once here rather than guarding each of the four uses below.
+const itemImages = item?.images ?? [];
+const hasMultipleImages = itemImages.length > 1;
 const citySlug = item?.city ? item.city.toLowerCase().replace(/\s+/g, '-') : null;
 
 // ── SEO: Canonical URL & Product schema ──────────────────────────────────────
@@ -129,10 +132,10 @@ const itemSchema = item ? {
     ) : item && (
       <div class="project-hero-row">
         <div class="hero-image-wrapper">
-          <div class="ecom-gallery" data-image-count={item.images.length}>
+          <div class="ecom-gallery" data-image-count={itemImages.length}>
             {hasMultipleImages && (
               <div class="ecom-thumbs" id="ecom-thumbs" role="list" aria-label="Product images">
-                {item.images.map((image, idx) => (
+                {itemImages.map((image, idx) => (
                   <button
                     type="button"
                     class:list={['ecom-thumb', { active: idx === 0 }]}
@@ -160,7 +163,7 @@ const itemSchema = item ? {
             <div class="ecom-main">
               <img
                 id="ecom-main-image"
-                src={normalizeImage(item.images[0]?.image_url, Astro, { width: 1400 }) ?? 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000"%3E%3Crect width="100%25" height="100%25" fill="%23E8E8EA"/%3E%3C/svg%3E'}
+                src={normalizeImage(itemImages[0]?.image_url, Astro, { width: 1400 }) ?? 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000"%3E%3Crect width="100%25" height="100%25" fill="%23E8E8EA"/%3E%3C/svg%3E'}
                 alt={item.name}
                 class="ecom-main-img"
                 loading="eager"

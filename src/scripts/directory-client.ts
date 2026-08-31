@@ -265,7 +265,8 @@ function init() {
           globalSearchCache = res.ok ? await res.json() : [];
         }
         const matched = globalSearchCache!.filter((s: any) =>
-          s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q)
+          String(s.name || '').toLowerCase().includes(q) ||
+          String(s.city || '').toLowerCase().includes(q)
         );
         totalVisibleCount = matched.length;
         calculatedTotalPages = Math.ceil(totalVisibleCount / PER_PAGE) || 1;
@@ -346,8 +347,10 @@ function init() {
         await buildCards(visibleData);
       }
       renderPagination(calculatedTotalPages);
-    } catch {
-      /* silent */
+    } catch (err) {
+      // Swallowing this silently made a single malformed CMS record look like
+      // "the search box does nothing" — leave the UI as-is, but say why.
+      console.error('[directory] failed to render results:', err);
     }
   }
 

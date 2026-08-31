@@ -172,12 +172,12 @@ export const RateLimits = {
         keyPrefix: 'delete'
     },
 
-    // Admin dashboard: 60 requests per minute per user. Generous for a single
-    // operator, but it caps how fast a leaked session could drain the PostHog
-    // query quota behind this endpoint.
-    ADMIN: {
-        maxRequests: 60,
-        windowMs: 60 * 1000,
-        keyPrefix: 'admin'
+    // Studio submissions: 5 per hour per user. Each one writes an image to R2,
+    // inserts a row and sends an email, so this is the most expensive authenticated
+    // endpoint on the site.
+    SUBMISSIONS: {
+        maxRequests: 5,
+        windowMs: 60 * 60 * 1000,
+        keyPrefix: 'submissions'
     }
 } as const;

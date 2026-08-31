@@ -10,8 +10,23 @@ export function toW3CDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+// Control characters are not representable in XML 1.0 at all, so a single one in
+// a CMS field makes the whole sitemap unparseable for a crawler. Tab (9), LF (10)
+// and CR (13) are the three that are legal and are kept.
+// Written as an explicit scan rather than a regex so the source carries no
+// literal control characters of its own.
+function stripXmlControlChars(s: string): string {
+  let out = '';
+  for (const ch of s) {
+    const code = ch.codePointAt(0) as number;
+    if (code < 32 && code !== 9 && code !== 10 && code !== 13) continue;
+    out += ch;
+  }
+  return out;
+}
+
 export function escapeXml(s: string): string {
-  return s
+  return stripXmlControlChars(s)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -44,4 +59,3 @@ export function renderUrlSet(urls: SitemapUrl[]): string {
 
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset ${ns}>\n${body}\n</urlset>\n`;
 }
-

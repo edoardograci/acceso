@@ -35,6 +35,9 @@ type Runtime = {
   env: Env;
   cf?: any;
   ctx?: any;
+  // Exposed by @astrojs/cloudflare; declaring it removes the `as any` cast the
+  // session cache in src/middleware.ts needed to reach it.
+  caches?: { default: Cache };
 };
 
 declare global {

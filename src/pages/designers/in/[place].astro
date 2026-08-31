@@ -373,6 +373,17 @@ const mapStudios = studios.map(s => ({
       });
     }
 
+    // Card markup below is built as an HTML string, so every CMS value
+    // interpolated into it has to be escaped first.
+    function escapeHtml(value: string) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function resolveCover(cover?: string | null) {
       if (!cover) return '';
       if (cover.startsWith('http')) return cover;
@@ -405,15 +416,15 @@ const mapStudios = studios.map(s => ({
             return `
             <a href="/designers/${encodeURIComponent(s.slug || '')}"
                class="directory-card"
-               data-lat="${s.latitude || ''}"
-               data-lng="${s.longitude || ''}"
-               data-slug="${s.slug || ''}"
+               data-lat="${escapeHtml(s.latitude || '')}"
+               data-lng="${escapeHtml(s.longitude || '')}"
+               data-slug="${escapeHtml(s.slug || '')}"
             >
               <div class="directory-card-media">
-                ${cover ? `<img src="${cover}" alt="${s.name}" class="directory-card-image" loading="lazy" decoding="async" />` : '<div class="directory-card-placeholder"></div>'}
+                ${cover ? `<img src="${escapeHtml(cover)}" alt="${escapeHtml(s.name || '')}" class="directory-card-image" loading="lazy" decoding="async" />` : '<div class="directory-card-placeholder"></div>'}
               </div>
-              <h3 class="directory-card-name">${s.name}</h3>
-              <p class="directory-card-location">${location}</p>
+              <h3 class="directory-card-name">${escapeHtml(s.name || '')}</h3>
+              <p class="directory-card-location">${escapeHtml(location)}</p>
             </a>
           `;
           }).join('');

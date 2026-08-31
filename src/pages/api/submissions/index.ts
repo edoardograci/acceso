@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { TursoHttpClient } from '../../../lib/turso';
 import { Resend } from 'resend';
 import type { Env } from '../../../env.d';
+import { checkRateLimit, createRateLimitResponse, getClientIdentifier, RateLimits } from '../../../lib/rate-limiter';
 
 const MAX_IMAGE_SIZE = 1024 * 1024; // 1MB
 const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
@@ -68,6 +69,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const indexBucket = runtimeEnv?.INDEX_BUCKET;
     if (!indexBucket) {
       return json(500, { error: 'Server configuration error (R2)' });
+    }
+
+    // Captcha raises the cost of an abusive submission but does not bound it:
+    // this route writes an image to R2, inserts a row and sends an email every
+    // time. Gate it before any of that work happens.
+    const rateLimitEnv = { TURSO_DATABASE_URL: dbUrl, TURSO_AUTH_TOKEN: dbToken } as unknown as Env;
+    const clientId = getClientIdentifier(request, user.id);
+    const rateLimitResult = await checkRateLimit(clientId, RateLimits.SUBMISSIONS, rateLimitEnv);
+    if (!rateLimitResult.success) {
+      return createRateLimitResponse(Math.max(1, rateLimitResult.retryAfter ?? 1), rateLimitResult.limit);
     }
 
     const form = await request.formData();

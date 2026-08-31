@@ -52,7 +52,7 @@ try {
       if (moodboardRes.ok) {
         const moodboardItems = await moodboardRes.json();
         const projects = moodboardItems.filter(
-          (item: any) => item.designer && item.designer.toLowerCase() === currentStudio.name.toLowerCase() && item.cover
+          (item: any) => item.designer && item.designer.toLowerCase() === String(currentStudio.name ?? '').toLowerCase() && item.cover
         );
         hasProjects = projects.length > 0;
       }

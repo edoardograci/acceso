@@ -9,7 +9,28 @@ if (Astro.locals.user) {
 
 const url = Astro.url;
 const error = url.searchParams.get('error');
-const errorMessage = url.searchParams.get('message');
+
+// One entry per `?error=` value the auth routes redirect with. This used to be
+// a chain of inline `&&` expressions whose `oauth_error` ternary rendered its
+// else-branch for every other error, so an expired magic link printed
+// "Invalid or expired magic linkOAuth error occurred".
+//
+// The `?message=` param the OAuth callback appends is deliberately NOT shown:
+// it is attacker-controlled text (and can carry raw driver errors), so it only
+// belongs in the server logs.
+const LOGIN_ERRORS: Record<string, string> = {
+  no_token: 'That login link is missing its token. Please request a new one.',
+  invalid_token: 'Invalid or expired magic link',
+  verification_failed: 'We could not verify that link. Please request a new one.',
+  oauth_init_failed: 'Failed to initialize OAuth',
+  oauth_error: 'OAuth error occurred',
+  oauth_failed: 'OAuth authentication failed',
+  no_email: 'No email found in Google account',
+  email_not_verified: 'Your Google account does not have a verified email address',
+  invalid_state: 'Invalid OAuth state',
+};
+
+const errorText = error ? (LOGIN_ERRORS[error] ?? 'An error occurred') : null;
 ---
 
 <Layout
@@ -29,15 +50,9 @@ const errorMessage = url.searchParams.get('message');
             <p class="login-subtitle">Access your saved studios and moodboard collections.</p>
           </div>
 
-          {error && (
+          {errorText && (
             <div class="login-alert" role="alert">
-              {error === 'invalid_token' && 'Invalid or expired magic link'}
-              {error === 'oauth_init_failed' && 'Failed to initialize OAuth'}
-              {error === 'oauth_error' && errorMessage ? decodeURIComponent(errorMessage) : 'OAuth error occurred'}
-              {error === 'oauth_failed' && 'OAuth authentication failed'}
-              {error === 'no_email' && 'No email found in Google account'}
-              {error === 'invalid_state' && 'Invalid OAuth state'}
-              {!['invalid_token', 'oauth_init_failed', 'oauth_error', 'oauth_failed', 'no_email', 'invalid_state'].includes(error) && 'An error occurred'}
+              {errorText}
             </div>
           )}
 

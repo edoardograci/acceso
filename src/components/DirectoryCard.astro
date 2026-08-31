@@ -13,7 +13,7 @@ const { studio, index = 0 } = Astro.props;
 <a
   href={`/designers/${studio.slug}`}
   class="directory-card"
-  data-name={studio.name.toLowerCase()}
+  data-name={String(studio.name ?? '').toLowerCase()}
   data-city={studio.city}
   data-country={studio.country}
   data-id={studio.id}

@@ -19,11 +19,27 @@ import type { APIRoute } from 'astro';
 // arrive as "Noto Sans Regular".
 const OFM_GLYPHS_BASE = 'https://tiles.openfreemap.org/fonts';
 
+// A real MapLibre stack is one to three names. Anything longer is not a map
+// asking for glyphs, it is someone turning this unauthenticated route into a
+// fan-out amplifier: every entry costs up to two outbound fetches.
+const MAX_FONTS_PER_STACK = 4;
+// Deliberately not an allow-list of names: the upstream style may reference Noto
+// variants we do not enumerate here. This bounds the shape instead, which is
+// enough to keep separators and path traversal out of the upstream URL.
+const FONT_NAME_RE = /^[A-Za-z0-9 _-]{1,64}$/;
+
 export const GET: APIRoute = async ({ params, request }) => {
-  const fontstackRaw = decodeURIComponent((params.fontstack as string) || '');
-  // MapLibre requests "{range}.pbf", so the captured segment includes the
-  // extension — strip it before validating.
-  const rangeRaw = decodeURIComponent((params.range as string) || '');
+  let fontstackRaw: string;
+  let rangeRaw: string;
+  try {
+    fontstackRaw = decodeURIComponent((params.fontstack as string) || '');
+    // MapLibre requests "{range}.pbf", so the captured segment includes the
+    // extension — strip it before validating.
+    rangeRaw = decodeURIComponent((params.range as string) || '');
+  } catch {
+    // A stray "%" makes decodeURIComponent throw; that used to surface as a 500.
+    return new Response('Bad Request', { status: 400 });
+  }
   const range = rangeRaw.replace(/\.pbf$/i, '');
 
   // Validate shape: "Geist_Regular,Noto Sans Regular" + "0-255".
@@ -34,7 +50,12 @@ export const GET: APIRoute = async ({ params, request }) => {
   const fonts = fontstackRaw
     .split(',')
     .map((f) => f.trim())
-    .filter(Boolean);
+    .filter((f) => FONT_NAME_RE.test(f))
+    .slice(0, MAX_FONTS_PER_STACK);
+
+  if (fonts.length === 0) {
+    return new Response('Bad Request', { status: 400 });
+  }
 
   const origin = new URL(request.url).origin;
 

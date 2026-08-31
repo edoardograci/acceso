@@ -6,6 +6,9 @@ import { Resend } from 'resend';
 import type { Env } from '../../../env.d';
 import { checkRateLimit, createRateLimitResponse, getClientIdentifier, RateLimits } from '../../../lib/rate-limiter';
 
+const MAX_EMAIL_LENGTH = 254; // RFC 5321 upper bound for a forward path
+const EMAIL_RE = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
+
 export const POST: APIRoute = async ({ request, locals }) => {
   const runtimeEnv = locals.runtime?.env || {};
   const metaEnv = import.meta.env || {};
@@ -14,15 +17,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
   // Abuse protection: throttle magic-link requests per client/IP
   const clientId = getClientIdentifier(request);
   const rateLimitResult = await checkRateLimit(clientId, RateLimits.EMAIL, env);
-  if (!rateLimitResult.success && rateLimitResult.retryAfter) {
-    return createRateLimitResponse(rateLimitResult.retryAfter, rateLimitResult.limit);
+  // Test only `success`: retryAfter can round down to 0, which used to make this
+  // guard falsy and let the request through.
+  if (!rateLimitResult.success) {
+    return createRateLimitResponse(Math.max(1, rateLimitResult.retryAfter ?? 1), rateLimitResult.limit);
   }
 
   try {
     const body = await request.json() as { email?: string };
     const { email } = body;
 
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
+    // `includes('@')` accepted anything, including megabyte-long strings that
+    // then got written to users.email and magic_link_tokens.email.
+    if (
+      !email ||
+      typeof email !== 'string' ||
+      email.length > MAX_EMAIL_LENGTH ||
+      !EMAIL_RE.test(email.trim())
+    ) {
       return new Response(
         JSON.stringify({ success: false, error: 'Valid email is required' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -30,6 +42,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    // The IP budget above does not protect the *recipient*: with rotating IPs a
+    // single mailbox could still be sent one link a minute (the only other guard
+    // is the 60s per-email cooldown inside generateMagicLink). Cap per
+    // destination address too, so nobody can use the login form to bomb an inbox
+    // — and so the sending domain's reputation survives.
+    const recipientLimit = await checkRateLimit(`email:${normalizedEmail}`, RateLimits.EMAIL, env);
+    if (!recipientLimit.success) {
+      return createRateLimitResponse(Math.max(1, recipientLimit.retryAfter ?? 1), recipientLimit.limit);
+    }
+
     const result = await generateMagicLink(normalizedEmail, env, request.url);
 
     if (result.error) {
@@ -221,10 +244,10 @@ If you did not request this email, you can safely ignore it.
     );
 
   } catch (error) {
+    // Do not return `detail` to the caller: it can carry the driver error.
     console.error('[Magic Link] Error:', error);
-    const detail = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ success: false, error: 'Failed to send magic link', detail }),
+      JSON.stringify({ success: false, error: 'Failed to send magic link' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
