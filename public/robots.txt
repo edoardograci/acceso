@@ -12,7 +12,6 @@ Disallow: /login
 Disallow: /profile
 Disallow: /embed/
 Disallow: /map/
-Disallow: /admin/
 # Allow images in CDN to be indexed
 Allow: /cdn/*.jpg
 Allow: /cdn/*.jpeg
