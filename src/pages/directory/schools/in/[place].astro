@@ -114,6 +114,8 @@ const totalUniversities = leadUniversities.length;
 function getPeriod(startStr: string, endStr: string) {
   if (!startStr) return "";
   const start = new Date(startStr);
+  // An unparseable CMS date used to render as "NaN NaN, NaN" on the card.
+  if (isNaN(start.getTime())) return "";
   const end = endStr ? new Date(endStr) : null;
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const startDay = start.getDate();

@@ -2,14 +2,24 @@ import type { APIRoute } from 'astro';
 import { TursoHttpClient } from '../../../lib/turso';
 import type { Env } from '../../../env.d';
 import { createLucia } from '../../../lib/auth/lucia';
+import { checkRateLimit, createRateLimitResponse, getClientIdentifier, RateLimits } from '../../../lib/rate-limiter';
 
-export const POST: APIRoute = async ({ locals, cookies }) => {
+export const POST: APIRoute = async ({ request, locals, cookies }) => {
     if (!locals.user) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
     try {
         const env = (locals.runtime?.env || import.meta.env) as unknown as Env;
+
+        // RateLimits.ACCOUNT_DELETE existed but was never wired up: this route
+        // runs nine sequential DELETEs, so a loop against it is free DB load.
+        const clientId = getClientIdentifier(request, locals.user.id);
+        const rateLimitResult = await checkRateLimit(clientId, RateLimits.ACCOUNT_DELETE, env);
+        if (!rateLimitResult.success) {
+            return createRateLimitResponse(Math.max(1, rateLimitResult.retryAfter ?? 1), rateLimitResult.limit);
+        }
+
         const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
         const userId = locals.user.id;
 

@@ -26,12 +26,14 @@ const TYPE_BASE_PATH: Record<'studio' | 'university' | 'museum', string> = {
   museum: '/directory/museums',
 };
 
+// The slug reaches these from a query param on the legacy-link redirect below,
+// so it is encoded rather than spliced into the path as-is.
 function cityHref(slug: string, forType: 'studio' | 'university' | 'museum' = itemType as any): string {
-  return `${TYPE_BASE_PATH[forType]}/in/${slug}`;
+  return `${TYPE_BASE_PATH[forType]}/in/${encodeURIComponent(slug)}`;
 }
 
 function itemHref(slug: string, forType: 'studio' | 'university' | 'museum' = itemType as any): string {
-  return `${TYPE_BASE_PATH[forType]}/${slug}`;
+  return `${TYPE_BASE_PATH[forType]}/${encodeURIComponent(slug)}`;
 }
 
 // Any request that still carries a city or item query param is a stale/legacy

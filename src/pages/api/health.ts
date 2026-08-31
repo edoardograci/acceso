@@ -22,11 +22,11 @@ export const GET: APIRoute = async ({ locals }) => {
             latency: Date.now() - start
         };
     } catch (error) {
+        // This route is anonymous: report the state, keep the driver detail in
+        // the logs.
+        console.error('[Health] Turso check failed:', error);
         checks.status = 'degraded';
-        checks.services.database = {
-            status: 'disconnected',
-            error: error instanceof Error ? error.message : 'Unknown error'
-        };
+        checks.services.database = { status: 'disconnected' };
     }
 
     // Check if environment variables are set

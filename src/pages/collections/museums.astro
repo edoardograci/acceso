@@ -9,6 +9,10 @@ if (!Astro.locals.user) {
   return Astro.redirect('/login');
 }
 
+// Personal content served from a fixed URL: make sure no shared cache is ever
+// allowed to hold it, whatever the edge configuration happens to be.
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+
 let museums: any[] = [];
 let error = null;
 

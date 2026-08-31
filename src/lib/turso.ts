@@ -18,8 +18,24 @@ export interface TursoHttpResponse {
 export class TursoHttpClient {
     private baseUrl: string;
     private authToken: string;
+    // Shared by every instance in the isolate and keyed by SQL+args, so each
+    // distinct session id is a distinct key. Without a cap the map grows for the
+    // whole life of the isolate and eventually trips the Worker memory limit —
+    // same reason src/lib/db.ts caps its own cache.
     private static cache = new Map<string, { data: any, timestamp: number }>();
     private static CACHE_TTL = 30000; // 30 seconds
+    private static MAX_CACHE_SIZE = 500;
+
+    private static setCached(key: string, data: any) {
+        // Deleting first moves a refreshed key to the end of the iteration
+        // order, so the first key is always the oldest write and eviction is O(1).
+        TursoHttpClient.cache.delete(key);
+        if (TursoHttpClient.cache.size >= TursoHttpClient.MAX_CACHE_SIZE) {
+            const oldestKey = TursoHttpClient.cache.keys().next().value;
+            if (oldestKey !== undefined) TursoHttpClient.cache.delete(oldestKey);
+        }
+        TursoHttpClient.cache.set(key, { data, timestamp: Date.now() });
+    }
 
     constructor(url: string, authToken: string) {
         if (!url) {
@@ -36,8 +52,12 @@ export class TursoHttpClient {
 
         if (options.useCache) {
             const cached = TursoHttpClient.cache.get(cacheKey);
-            if (cached && (Date.now() - cached.timestamp < TursoHttpClient.CACHE_TTL)) {
-                return cached.data;
+            if (cached) {
+                if (Date.now() - cached.timestamp < TursoHttpClient.CACHE_TTL) {
+                    return cached.data;
+                }
+                // Drop it now instead of leaving a dead entry taking up a slot.
+                TursoHttpClient.cache.delete(cacheKey);
             }
         }
 
@@ -81,7 +101,10 @@ export class TursoHttpClient {
 
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Turso HTTP API error: ${response.status} ${errorText}`);
+            // Several API routes echo error.message straight back to the caller,
+            // so the details stay in the logs and the thrown message stays generic.
+            console.error(`[Turso] HTTP ${response.status}: ${errorText}`);
+            throw new Error(`Turso HTTP API error: ${response.status}`);
         }
 
         const data: TursoHttpResponse = await response.json();
@@ -91,7 +114,11 @@ export class TursoHttpClient {
             const detail = tursoError?.message
                 ? `${tursoError.message}${tursoError.code ? ` (${tursoError.code})` : ''}`
                 : JSON.stringify(tursoError || pipelineResult || data);
-            throw new Error(`Turso query failed: ${detail} | SQL: ${query.sql}`);
+            // Same reason as above: the statement text names tables and columns,
+            // so it belongs in the logs and never in a thrown message that a
+            // route might hand to the client.
+            console.error(`[Turso] query failed: ${detail} | SQL: ${query.sql}`);
+            throw new Error('Turso query failed');
         }
 
         const result = pipelineResult.response.result;
@@ -119,7 +146,7 @@ export class TursoHttpClient {
 
         const result_data = { rows, rowsAffected: result.affected_row_count };
         if (options.useCache) {
-            TursoHttpClient.cache.set(cacheKey, { data: result_data, timestamp: Date.now() });
+            TursoHttpClient.setCached(cacheKey, result_data);
         }
         return result_data;
     }

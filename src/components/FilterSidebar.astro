@@ -88,7 +88,7 @@ const filterSections: FilterSection[] = sections || (groups ? [{
 
         <div class="filter-section-content">
           {section.type === 'location' && section.groups && section.groups.map((group) => (
-            <div class="filter-group collapsed" data-country-name={group.name.toLowerCase()} data-country-slug={group.slug}>
+            <div class="filter-group collapsed" data-country-name={String(group.name ?? '').toLowerCase()} data-country-slug={group.slug}>
               <div class="filter-group-header">
                 <label class="filter-item country-item" onclick="event.stopPropagation();">
                   <input type="checkbox" class="country-checkbox" data-country={group.name} data-slug={group.slug} />
@@ -107,7 +107,7 @@ const filterSections: FilterSection[] = sections || (groups ? [{
               {group.cities && group.cities.length > 0 && (
                 <div class="city-items">
                   {group.cities.map((city) => (
-                    <label class="filter-item city-item" data-city-name={city.name.toLowerCase()} data-city-slug={city.slug}>
+                    <label class="filter-item city-item" data-city-name={String(city.name ?? '').toLowerCase()} data-city-slug={city.slug}>
                       <input type="checkbox" class="city-checkbox" data-city={city.name} data-slug={city.slug} data-country={group.name} />
                       <span class="filter-name">{city.name}</span>
                       <span class="filter-count">({city.count})</span>
@@ -119,7 +119,7 @@ const filterSections: FilterSection[] = sections || (groups ? [{
           ))}
 
           {section.type === 'checkbox' && section.options && section.options.map((option) => (
-            <label class="filter-item simple-option" data-option-name={option.name.toLowerCase()}>
+            <label class="filter-item simple-option" data-option-name={String(option.name ?? '').toLowerCase()}>
               <input type="checkbox" class={`${section.id}-checkbox`} data-slug={option.slug} data-section={section.id} />
               <span class="filter-name">{option.name}</span>
               {option.count > 0 && <span class="filter-count">({option.count})</span>}
@@ -127,7 +127,7 @@ const filterSections: FilterSection[] = sections || (groups ? [{
           ))}
 
           {section.type === 'radio' && section.options && section.options.map((option) => (
-            <label class="filter-item simple-option" data-option-name={option.name.toLowerCase()}>
+            <label class="filter-item simple-option" data-option-name={String(option.name ?? '').toLowerCase()}>
               <input type="radio" name={section.id} class={`${section.id}-radio`} data-slug={option.slug} data-section={section.id} />
               <span class="filter-name">{option.name}</span>
               {option.count > 0 && <span class="filter-count">({option.count})</span>}

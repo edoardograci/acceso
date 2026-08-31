@@ -219,6 +219,7 @@ export async function saveObject(userId: string, productId: string, env: Env): P
       }
 
       // Already saved - return false but no error
+      invalidateCache(userId);
       return false;
     }
 

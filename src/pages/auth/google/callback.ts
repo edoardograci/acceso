@@ -152,11 +152,14 @@ export const GET: APIRoute = async ({ request, locals, redirect, cookies }) => {
   } catch (error) {
     console.error('[OAuth] Error in callback:', error);
 
+    // The message used to be appended as ?message=…; it could carry internal
+    // driver errors and was rendered verbatim on the login page. It is logged
+    // above instead, and the login page now shows a fixed string per error code.
     if (error instanceof OAuth2RequestError) {
-      return redirect(`/login?error=oauth_error&message=${encodeURIComponent(error.message)}`, 302);
+      return redirect('/login?error=oauth_error', 302);
     }
 
-    return redirect(`/login?error=oauth_failed&message=${encodeURIComponent(error instanceof Error ? error.message : String(error))}`, 302);
+    return redirect('/login?error=oauth_failed', 302);
   }
 };
 

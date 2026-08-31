@@ -35,7 +35,7 @@ try {
     moodboardItems = await response.json();
     // Filter products by designer name matching studio name
     designerProducts = moodboardItems.filter(
-      item => item.designer && item.designer.toLowerCase() === studio.name.toLowerCase() && item.cover
+      item => item.designer && item.designer.toLowerCase() === String(studio.name ?? '').toLowerCase() && item.cover
     );
   } else {
     console.error('Failed to load moodboard data from both remote and local sources');
