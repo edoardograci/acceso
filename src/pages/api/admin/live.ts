@@ -1,15 +1,11 @@
 import type { APIRoute } from 'astro';
 import { adminNotFound, isAdmin } from '../../../lib/admin';
-import { getAdminMetrics, parseRange } from '../../../lib/admin-metrics';
+import { getLiveAnalytics } from '../../../lib/admin-metrics';
 import { checkRateLimit, createRateLimitResponse, getClientIdentifier, RateLimits } from '../../../lib/rate-limiter';
 import type { Env } from '../../../env.d';
 
 export const prerender = false;
 
-/**
- * JSON feed behind /admin. Anyone who is not on the ADMIN_EMAILS allowlist —
- * logged out or not — gets a 404, so the route is not discoverable by probing.
- */
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const runtimeEnv = locals.runtime?.env || {};
   const metaEnv = import.meta.env || {};
@@ -26,22 +22,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       return createRateLimitResponse(rateLimit.retryAfter || 60, rateLimit.limit);
     }
 
-    const range = parseRange(url.searchParams.get('range'));
     const refresh = url.searchParams.get('refresh') === '1';
-    const day = url.searchParams.get('day');
-    const partRaw = url.searchParams.get('part');
-    const part = partRaw === 'core' || partRaw === 'extra' || partRaw === 'all' ? partRaw : 'all';
-    const metrics = await getAdminMetrics(env, range, { refresh, day: day || undefined, part });
+    const payload = await getLiveAnalytics(env, { refresh });
 
-    return Response.json(metrics, {
-      headers: {
-        // Never store admin analytics in a shared or browser cache; the
-        // server-side Cloudflare cache in admin-metrics.ts handles reuse.
-        'Cache-Control': 'private, no-store',
-      },
+    return Response.json(payload, {
+      headers: { 'Cache-Control': 'private, no-store' },
     });
   } catch (error: any) {
-    console.error('[Admin Metrics API] Error:', error);
+    console.error('[Admin Live API] Error:', error);
     return Response.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 };

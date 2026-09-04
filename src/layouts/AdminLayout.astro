@@ -1,17 +1,19 @@
 ---
 // src/layouts/AdminLayout.astro
-// Minimal shell for the owner-only dashboard.
-//
-// Deliberately NOT built on Layout.astro: that one mounts PostHogEnhanced, so
-// the dashboard would emit $pageview events and pollute the very numbers it
-// reports. No analytics, no schema.org, no navbar — just the design tokens.
+// Owner dashboard shell with a persistent sidebar. Does not mount PostHog.
 import '../styles/global.css';
 
 interface Props {
   title: string;
+  active: 'analytics' | 'submissions';
 }
 
-const { title } = Astro.props;
+const { title, active } = Astro.props;
+
+const nav = [
+  { href: '/admin/analytics', id: 'analytics', label: 'Analytics' },
+  { href: '/admin/submissions', id: 'submissions', label: 'Submissions' },
+] as const;
 ---
 
 <!DOCTYPE html>
@@ -23,7 +25,119 @@ const { title } = Astro.props;
     <link rel="icon" href="/favicon.ico" />
     <title>{title}</title>
   </head>
-  <body class="bg-white text-black antialiased">
-    <slot />
+  <body class="bg-[#FAFAFA] text-black antialiased">
+    <div class="admin-shell">
+      <aside class="admin-sidebar">
+        <p class="admin-brand">Acceso</p>
+        <nav class="admin-nav" aria-label="Dashboard">
+          {nav.map((item) => (
+            <a
+              href={item.href}
+              class={`admin-nav-link ${active === item.id ? 'is-active' : ''}`}
+              aria-current={active === item.id ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+        <a href="/" class="admin-site-link">View site</a>
+      </aside>
+      <div class="admin-main">
+        <slot />
+      </div>
+    </div>
   </body>
 </html>
+
+<style>
+  .admin-shell {
+    display: flex;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .admin-sidebar {
+    display: flex;
+    width: 220px;
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: 8px;
+    border-right: 1px solid #E4E4E7;
+    background: #fff;
+    padding: 24px 16px;
+  }
+
+  .admin-brand {
+    margin: 0 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #52525B;
+  }
+
+  .admin-nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .admin-nav-link {
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    color: #52525B;
+    text-decoration: none;
+  }
+
+  .admin-nav-link:hover {
+    background: #F4F4F5;
+    color: #000;
+  }
+
+  .admin-nav-link.is-active {
+    background: #000;
+    color: #fff;
+  }
+
+  .admin-site-link {
+    margin-top: auto;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #52525B;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .admin-main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  @media (max-width: 800px) {
+    .admin-shell {
+      flex-direction: column;
+    }
+    .admin-sidebar {
+      width: 100%;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-right: none;
+      border-bottom: 1px solid #E4E4E7;
+    }
+    .admin-brand {
+      margin: 0;
+    }
+    .admin-nav {
+      flex: 1;
+      flex-direction: row;
+    }
+    .admin-site-link {
+      margin-top: 0;
+      white-space: nowrap;
+    }
+  }
+</style>

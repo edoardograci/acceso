@@ -1,0 +1,475 @@
+---
+// src/pages/admin/analytics.astro
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/admin';
+import { parseRange, parseSelectedDay, RANGES } from '../../lib/admin-metrics';
+import type { Env } from '../../env.d';
+
+export const prerender = false;
+
+const runtimeEnv = Astro.locals.runtime?.env || {};
+const metaEnv = import.meta.env || {};
+const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
+
+if (!isAdmin(Astro.locals.user, env)) {
+  return new Response('Not Found', {
+    status: 404,
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+
+const range = parseRange(Astro.url.searchParams.get('range'));
+const selectedDay = parseSelectedDay(Astro.url.searchParams.get('day'));
+const refresh = Astro.url.searchParams.get('refresh') === '1';
+---
+
+<AdminLayout title="Acceso — Analytics" active="analytics">
+  <main class="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-xl">Analytics</h1>
+        <p class="mt-1 text-xs text-[#52525B]" data-generated-meta>
+          Loading…
+        </p>
+      </div>
+
+      <form class="flex flex-wrap items-center gap-2" data-filters>
+        <label class="sr-only" for="day">Day</label>
+        <input
+          id="day"
+          name="day"
+          type="date"
+          value={selectedDay}
+          max={new Date().toISOString().slice(0, 10)}
+          class="rounded-full border border-[#E4E4E7] bg-white px-3 py-1 text-xs"
+        />
+        {Object.keys(RANGES).map((key) => (
+          <a
+            href={`/admin/analytics?range=${key}&day=${selectedDay}`}
+            class={`rounded-full border px-3 py-1 text-xs transition-colors ${
+              key === range
+                ? 'border-black bg-black text-white'
+                : 'border-[#E4E4E7] text-[#52525B] hover:border-black hover:text-black'
+            }`}
+          >
+            {key === '1d' ? 'Today' : key}
+          </a>
+        ))}
+        <a
+          href={`/admin/analytics?range=${range}&day=${selectedDay}&refresh=1`}
+          class="rounded-full border border-[#E4E4E7] px-3 py-1 text-xs text-[#52525B] hover:border-black hover:text-black"
+        >
+          Refresh
+        </a>
+      </form>
+    </header>
+
+    <section class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4" data-live-row>
+      {['Live visitors', 'Live pageviews', "Today's visitors", "Today's pageviews"].map((label) => (
+        <div class="rounded-lg border border-[#E4E4E7] bg-white p-4">
+          <p class="text-[11px] uppercase tracking-[0.08em] text-[#52525B]">{label}</p>
+          <div class="mt-2 h-8 w-20 animate-pulse rounded bg-[#F4F4F5]"></div>
+        </div>
+      ))}
+    </section>
+
+    <div data-metrics-root class="space-y-8">
+      <div class="rounded-lg border border-[#E4E4E7] bg-white p-8">
+        <p class="text-sm text-[#52525B]">Loading analytics…</p>
+        <div class="mt-4 grid gap-3 md:grid-cols-3">
+          <div class="h-24 animate-pulse rounded bg-[#F4F4F5]"></div>
+          <div class="h-24 animate-pulse rounded bg-[#F4F4F5]"></div>
+          <div class="h-24 animate-pulse rounded bg-[#F4F4F5]"></div>
+        </div>
+        <div class="mt-4 h-56 animate-pulse rounded bg-[#F4F4F5]"></div>
+      </div>
+    </div>
+  </main>
+</AdminLayout>
+
+<script is:inline define:vars={{ range, selectedDay, refresh }}>
+  (function () {
+    const liveRow = document.querySelector('[data-live-row]');
+    const metricsRoot = document.querySelector('[data-metrics-root]');
+    const meta = document.querySelector('[data-generated-meta]');
+    const dayInput = document.getElementById('day');
+
+    if (dayInput) {
+      dayInput.addEventListener('change', function () {
+        var day = dayInput.value;
+        if (!day) return;
+        window.location.href = '/admin/analytics?range=' + encodeURIComponent(range) + '&day=' + encodeURIComponent(day);
+      });
+    }
+
+    function fmt(n) {
+      return new Intl.NumberFormat('en-US').format(Math.round(Number(n) || 0));
+    }
+
+    function esc(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function duration(seconds) {
+      var total = Math.max(0, Math.round(seconds || 0));
+      if (total < 60) return total + 's';
+      var minutes = Math.floor(total / 60);
+      return minutes + 'm ' + String(total % 60).padStart(2, '0') + 's';
+    }
+
+    function percentChange(current, previous) {
+      if (!previous) return current > 0 ? null : 0;
+      return ((current - previous) / previous) * 100;
+    }
+
+    function tile(label, value, hint, delta) {
+      var deltaHtml = '';
+      if (delta !== undefined && delta !== null && isFinite(delta)) {
+        var rising = delta > 0;
+        var flat = Math.abs(delta) < 0.05;
+        var color = flat ? '#52525B' : rising ? '#008300' : '#d13b3b';
+        var arrow = flat ? '→' : rising ? '↑' : '↓';
+        deltaHtml = '<span style="color:' + color + '">' + arrow + ' ' + Math.abs(delta).toFixed(Math.abs(delta) < 10 ? 1 : 0) + '%</span>';
+      } else if (delta === null) {
+        deltaHtml = '<span class="text-[#52525B]">no baseline</span>';
+      }
+      return (
+        '<div class="rounded-lg border border-[#E4E4E7] bg-white p-4">' +
+          '<p class="text-[11px] uppercase tracking-[0.08em] text-[#52525B]">' + esc(label) + '</p>' +
+          '<p class="mt-2 text-[28px] leading-none tabular-nums">' + esc(value) + '</p>' +
+          '<div class="mt-2 flex items-baseline gap-2 text-xs text-[#52525B]">' +
+            deltaHtml + (hint ? '<span>' + esc(hint) + '</span>' : '') +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function breakdown(title, rows, valueLabel, secondaryLabel, emptyText, limit) {
+      void secondaryLabel;
+      var visible = (rows || []).slice(0, limit || 12);
+      var max = visible.reduce(function (acc, row) { return Math.max(acc, row.value || 0); }, 0);
+      var body;
+      if (!visible.length) {
+        body = '<p class="px-4 py-6 text-xs text-[#52525B]">' + esc(emptyText || 'No data in this period.') + '</p>';
+      } else {
+        body = '<ul class="divide-y divide-[#F4F4F5]">' + visible.map(function (row) {
+          var width = max > 0 ? Math.max((row.value / max) * 100, 1.5) : 0;
+          var secondary = row.secondary !== undefined
+            ? '<span class="w-14 shrink-0 text-right text-[11px] tabular-nums text-[#52525B]">' + fmt(row.secondary) + '</span>'
+            : '';
+          return (
+            '<li class="px-4 py-2.5">' +
+              '<div class="flex items-baseline justify-between gap-3">' +
+                '<span class="min-w-0 flex-1 truncate text-[13px]">' + esc(row.label) + '</span>' +
+                '<span class="shrink-0 text-[13px] tabular-nums">' + fmt(row.value) + '</span>' +
+                secondary +
+              '</div>' +
+              '<div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#F4F4F5]">' +
+                '<div class="h-full rounded-full bg-[#2a78d6]" style="width:' + width + '%"></div>' +
+              '</div>' +
+            '</li>'
+          );
+        }).join('') + '</ul>';
+      }
+      return (
+        '<section class="rounded-lg border border-[#E4E4E7] bg-white">' +
+          '<header class="flex items-baseline justify-between border-b border-[#E4E4E7] px-4 py-3">' +
+            '<h2 class="text-sm">' + esc(title) + '</h2>' +
+            '<span class="text-[11px] uppercase tracking-[0.08em] text-[#52525B]">' + esc(valueLabel || 'visitors') + '</span>' +
+          '</header>' +
+          body +
+        '</section>'
+      );
+    }
+
+    function toItems(rows) {
+      return (rows || []).map(function (row) {
+        return { label: row.label, value: row.sessions, secondary: row.pageviews };
+      });
+    }
+
+    function shortDay(day) {
+      var date = new Date(day + 'T00:00:00Z');
+      return isNaN(date.getTime()) ? day : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    }
+
+    function renderChart(series, title) {
+      var W = 1000, H = 260, PAD_L = 48, PAD_R = 16, PAD_T = 16, PAD_B = 28;
+      var rawMax = (series || []).reduce(function (acc, p) { return Math.max(acc, p.pageviews || 0, p.visitors || 0); }, 0);
+      function niceMax(value) {
+        if (value <= 0) return 1;
+        var magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+        var normalized = value / magnitude;
+        var step = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+        return step * magnitude;
+      }
+      var yMax = niceMax(rawMax);
+      var plotW = W - PAD_L - PAD_R;
+      var plotH = H - PAD_T - PAD_B;
+      function x(i) { return series.length <= 1 ? PAD_L + plotW / 2 : PAD_L + (i * plotW) / (series.length - 1); }
+      function y(v) { return PAD_T + plotH - (v / yMax) * plotH; }
+      var colors = { pageviews: '#2a78d6', visitors: '#eb6834' };
+      function pathFor(key) {
+        return series.map(function (p, i) {
+          return (i === 0 ? 'M' : 'L') + ' ' + x(i).toFixed(1) + ' ' + y(p[key] || 0).toFixed(1);
+        }).join(' ');
+      }
+      var grid = [0, 0.25, 0.5, 0.75, 1].map(function (f) {
+        var gy = PAD_T + plotH - f * plotH;
+        return '<line x1="' + PAD_L + '" x2="' + (W - PAD_R) + '" y1="' + gy + '" y2="' + gy + '" stroke="#E4E4E7" stroke-width="1"></line>' +
+          '<text x="' + (PAD_L - 8) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="11" fill="#52525B">' + fmt(yMax * f) + '</text>';
+      }).join('');
+      var tickStep = Math.max(1, Math.ceil(series.length / 6));
+      var ticks = series.map(function (p, i) { return { p: p, i: i }; }).filter(function (t) {
+        return t.i % tickStep === 0 || t.i === series.length - 1;
+      }).map(function (t) {
+        return '<text x="' + x(t.i) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#52525B">' + esc(shortDay(t.p.day || t.p.hour || '')) + '</text>';
+      }).join('');
+      var lines = rawMax > 0
+        ? '<path d="' + pathFor('pageviews') + '" fill="none" stroke="' + colors.pageviews + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>' +
+          '<path d="' + pathFor('visitors') + '" fill="none" stroke="' + colors.visitors + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>'
+        : '';
+      return (
+        '<section class="rounded-lg border border-[#E4E4E7] bg-white">' +
+          '<header class="flex flex-wrap items-baseline justify-between gap-3 border-b border-[#E4E4E7] px-4 py-3">' +
+            '<h2 class="text-sm">' + esc(title) + '</h2>' +
+            '<ul class="flex items-center gap-4">' +
+              '<li class="flex items-center gap-1.5 text-[11px] text-[#52525B]"><span class="inline-block h-2 w-2 rounded-full" style="background:#2a78d6"></span>Pageviews</li>' +
+              '<li class="flex items-center gap-1.5 text-[11px] text-[#52525B]"><span class="inline-block h-2 w-2 rounded-full" style="background:#eb6834"></span>Visitors</li>' +
+            '</ul>' +
+          '</header>' +
+          '<div class="px-2 pb-2 pt-4">' +
+            '<svg viewBox="0 0 ' + W + ' ' + H + '" class="h-auto w-full">' + grid + ticks + lines + '</svg>' +
+            (rawMax ? '' : '<p class="px-4 pb-4 text-xs text-[#52525B]">No traffic recorded in this period.</p>') +
+          '</div>' +
+        '</section>'
+      );
+    }
+
+    function renderLive(live, isToday) {
+      if (!liveRow) return;
+      if (!isToday) {
+        liveRow.innerHTML =
+          '<div class="col-span-2 rounded-lg border border-[#E4E4E7] bg-white px-4 py-3 text-xs text-[#52525B] md:col-span-4">' +
+            'Live visitors are only shown when viewing today. Pick today in the date picker to see realtime traffic.' +
+          '</div>';
+        return;
+      }
+      if (!live) {
+        liveRow.innerHTML =
+          '<div class="col-span-2 rounded-lg border border-[#E4E4E7] bg-white px-4 py-3 text-xs text-[#52525B] md:col-span-4">Live data unavailable.</div>';
+        return;
+      }
+      liveRow.innerHTML =
+        tile('Live visitors', fmt(live.liveVisitors), 'last 30 min') +
+        tile('Live pageviews', fmt(live.livePageviews), 'last 5 min') +
+        tile("Today's visitors", fmt(live.todayVisitors), 'UTC day') +
+        tile("Today's pageviews", fmt(live.todayPageviews), 'UTC day');
+    }
+
+    function renderMetrics(m) {
+      var traffic = m.traffic || {};
+      var current = traffic.current || {};
+      var previous = traffic.previous || {};
+      var app = m.app || {};
+      var selected = m.selectedDayTotals || {};
+      var hourly = (m.hourly || []).map(function (row) {
+        return { day: row.hour, pageviews: row.pageviews, visitors: row.visitors, sessions: 0 };
+      });
+
+      var html = '';
+      if (!m.posthogConfigured) {
+        html += '<div class="rounded-lg border border-[#E4E4E7] bg-[#F4F4F5] px-4 py-3 text-xs text-[#52525B]">PostHog is not connected — only app data is shown below.</div>';
+      }
+      if (m.errors && m.errors.length) {
+        html += '<details class="rounded-lg border border-[#E4E4E7] bg-white px-4 py-3 text-xs"><summary class="cursor-pointer text-[#52525B]">' + m.errors.length + ' queries failed</summary><ul class="mt-2 space-y-1 text-[#d13b3b]">' +
+          m.errors.map(function (e) { return '<li class="break-words">' + esc(e) + '</li>'; }).join('') + '</ul></details>';
+      }
+
+      html += '<section class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">';
+      html += tile('Selected day views', fmt(selected.pageviews || 0), m.selectedDay);
+      html += tile('Selected day visitors', fmt(selected.visitors || 0), 'hashed daily ID');
+      html += tile('Range pageviews', fmt(current.pageviews || 0), 'vs previous', percentChange(current.pageviews || 0, previous.pageviews || 0));
+      html += tile('Range visitors', fmt(current.visitors || 0), 'vs previous', percentChange(current.visitors || 0, previous.visitors || 0));
+      html += tile('Avg session', duration((m.engagement && m.engagement.sessions && m.engagement.sessions.avgDurationSec) || 0), 'median ' + duration((m.engagement && m.engagement.sessions && m.engagement.sessions.medianDurationSec) || 0));
+      html += tile('New signups', fmt(app.newUsers || 0), fmt(app.totalUsers || 0) + ' total users');
+      html += '</section>';
+
+      html += renderChart(hourly, 'Hourly traffic — ' + m.selectedDay);
+      html += renderChart(traffic.series || [], 'Pageviews & visitors — last ' + (m.days || 30) + ' days');
+
+      html += '<section class="grid gap-3 lg:grid-cols-2">';
+      html += breakdown('Sections', toItems(m.content && m.content.sections), 'visitors', 'views', 'No pageviews recorded in this period.');
+      html += breakdown('Top pages', toItems(m.content && m.content.topPages), 'visitors', 'views', 'No pageviews recorded in this period.');
+      html += '</section>';
+
+      html += '<section class="grid gap-3 lg:grid-cols-3">';
+      html += breakdown('Nationality', toItems(m.acquisition && m.acquisition.countries), 'visitors', 'views', 'No country data yet.', 12);
+      html += breakdown('Devices', toItems(m.acquisition && m.acquisition.devices), 'visitors', 'views', 'No device data yet.', 8);
+      html += breakdown('Browsers', toItems(m.acquisition && m.acquisition.browsers), 'visitors', 'views', 'No browser data yet.', 10);
+      html += '</section>';
+
+      html += '<section class="grid gap-3 lg:grid-cols-3">';
+      html += breakdown('Referrer type', toItems(m.acquisition && m.acquisition.referrerTypes), 'visitors', 'views', '', 8);
+      html += breakdown('External referrers', toItems(m.acquisition && m.acquisition.referringDomains), 'visitors', 'views', 'No external referrers in this period.', 10);
+      html += breakdown('UTM source', toItems(m.acquisition && m.acquisition.utmSources), 'visitors', 'views', '', 8);
+      html += '</section>';
+
+      var platforms = (m.aiReferrers && m.aiReferrers.platforms) || [];
+      var details = (m.aiReferrers && m.aiReferrers.details) || [];
+      html += '<section class="space-y-3">';
+      html += '<h2 class="text-sm">AI referrers</h2>';
+      html += '<div class="grid gap-3 lg:grid-cols-2">';
+      html += breakdown('AI platforms', toItems(platforms), 'visitors', 'views', 'No AI referrers in this period.', 12);
+      html += '<section class="rounded-lg border border-[#E4E4E7] bg-white overflow-hidden">';
+      html += '<header class="border-b border-[#E4E4E7] px-4 py-3"><h2 class="text-sm">Pages cited by AI</h2></header>';
+      if (!details.length) {
+        html += '<p class="px-4 py-6 text-xs text-[#52525B]">No AI citations in this period.</p>';
+      } else {
+        html += '<div class="max-h-96 overflow-auto"><table class="w-full text-left text-[13px]"><thead class="sticky top-0 bg-white text-[11px] uppercase tracking-[0.08em] text-[#52525B]"><tr>' +
+          '<th class="px-4 py-2 font-normal">Platform</th><th class="px-2 py-2 font-normal">Country</th><th class="px-2 py-2 font-normal">Page</th>' +
+          '<th class="px-2 py-2 text-right font-normal">Views</th><th class="px-4 py-2 text-right font-normal">Visitors</th></tr></thead><tbody>' +
+          details.map(function (row) {
+            return '<tr class="border-t border-[#F4F4F5]">' +
+              '<td class="px-4 py-2">' + esc(row.platform) + '</td>' +
+              '<td class="px-2 py-2">' + esc(row.country) + '</td>' +
+              '<td class="px-2 py-2 truncate max-w-[220px]">' + esc(row.path) + '</td>' +
+              '<td class="px-2 py-2 text-right tabular-nums">' + fmt(row.pageviews) + '</td>' +
+              '<td class="px-4 py-2 text-right tabular-nums">' + fmt(row.visitors) + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+      }
+      html += '</section></div></section>';
+
+      html += '<section class="grid gap-3 lg:grid-cols-2">';
+      html += breakdown('Page types', toItems(m.content && m.content.pageTypes), 'visitors', 'views', 'No page_type property recorded yet.');
+      html += breakdown('Custom events', ((m.engagement && m.engagement.customEvents) || []).map(function (row) {
+        return { label: row.event, value: row.total };
+      }), 'events', '', 'No custom events in this period.');
+      html += '</section>';
+
+      var savedRows = [
+        { label: 'Studios', value: (app.saves && app.saves.designers) || 0, secondary: (app.recentSaves && app.recentSaves.designers) || 0 },
+        { label: 'Objects', value: (app.saves && app.saves.objects) || 0, secondary: (app.recentSaves && app.recentSaves.objects) || 0 },
+        { label: 'Museums', value: (app.saves && app.saves.museums) || 0, secondary: (app.recentSaves && app.recentSaves.museums) || 0 },
+        { label: 'Universities', value: (app.saves && app.saves.universities) || 0, secondary: (app.recentSaves && app.recentSaves.universities) || 0 },
+      ];
+      var totalSaves = savedRows.reduce(function (acc, row) { return acc + row.value; }, 0);
+
+      html += '<section><h2 class="mb-3 text-sm">App data <span class="ml-2 text-[11px] font-normal text-[#52525B]">from the database, not PostHog</span></h2>';
+      html += '<div class="grid grid-cols-2 gap-3 md:grid-cols-4">';
+      html += tile('Total users', fmt(app.totalUsers || 0), 'all time');
+      html += tile('Saved items', fmt(totalSaves), 'all time, all types');
+      html += tile('Pending studio requests', fmt(app.pendingStudioRequests || 0));
+      html += tile('Suggestions', fmt(app.suggestions || 0), 'in this period');
+      html += '</div>';
+      html += '<div class="mt-3 grid gap-3 lg:grid-cols-2">';
+      html += breakdown('Saved items by type', savedRows, 'all time', 'in period', 'Nothing saved yet.');
+      html += breakdown('Submissions by status', ((app.submissionsByStatus) || []).map(function (row) {
+        return { label: row.status, value: row.count };
+      }), 'submissions', '', 'No submissions yet.');
+      html += '</div></section>';
+
+      html += '<footer class="border-t border-[#E4E4E7] pt-4 text-[11px] text-[#52525B]"><p>Visitors are counted with a daily-rotating hash of IP + user-agent + salt. Raw IPs are never stored. Day boundaries follow UTC. Live counts use the last 30 minutes for visitors and the last 5 minutes for pageviews.</p></footer>';
+
+      if (metricsRoot) metricsRoot.innerHTML = html;
+      if (meta) {
+        var generated = m.generatedAt ? new Date(m.generatedAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+        meta.textContent = 'Window ending ' + m.selectedDay + ' · last ' + (m.days || '') + ' days' + (generated ? ' · generated ' + generated : '') + ' · cached up to 5 min';
+      }
+    }
+
+    var qs = 'range=' + encodeURIComponent(range) + '&day=' + encodeURIComponent(selectedDay) + (refresh ? '&refresh=1' : '');
+    var state = null;
+
+    function pickList(nextList, prevList) {
+      return nextList && nextList.length ? nextList : prevList;
+    }
+
+    function merge(base, next) {
+      if (!base) return next;
+      var prevContent = base.content || {};
+      var nextContent = next.content || {};
+      var prevAcq = base.acquisition || {};
+      var nextAcq = next.acquisition || {};
+      var prevAi = base.aiReferrers || {};
+      var nextAi = next.aiReferrers || {};
+      var prevEng = base.engagement || {};
+      var nextEng = next.engagement || {};
+      return Object.assign({}, base, next, {
+        traffic: next.traffic && next.traffic.series && next.traffic.series.length ? next.traffic : base.traffic,
+        selectedDayTotals: next.selectedDayTotals || base.selectedDayTotals,
+        hourly: pickList(next.hourly, base.hourly),
+        content: {
+          sections: pickList(nextContent.sections, prevContent.sections),
+          topPages: pickList(nextContent.topPages, prevContent.topPages),
+          pageTypes: pickList(nextContent.pageTypes, prevContent.pageTypes),
+        },
+        acquisition: {
+          referrerTypes: pickList(nextAcq.referrerTypes, prevAcq.referrerTypes),
+          referringDomains: pickList(nextAcq.referringDomains, prevAcq.referringDomains),
+          utmSources: pickList(nextAcq.utmSources, prevAcq.utmSources),
+          utmCampaigns: pickList(nextAcq.utmCampaigns, prevAcq.utmCampaigns),
+          countries: pickList(nextAcq.countries, prevAcq.countries),
+          devices: pickList(nextAcq.devices, prevAcq.devices),
+          browsers: pickList(nextAcq.browsers, prevAcq.browsers),
+        },
+        aiReferrers: {
+          platforms: pickList(nextAi.platforms, prevAi.platforms),
+          details: pickList(nextAi.details, prevAi.details),
+        },
+        engagement: {
+          sessions: nextEng.sessions && nextEng.sessions.sessions ? nextEng.sessions : prevEng.sessions,
+          customEvents: pickList(nextEng.customEvents, prevEng.customEvents),
+        },
+        app: next.part === 'extra' || next.part === 'all' ? next.app : (base.app || next.app),
+        errors: (base.errors || []).concat(next.errors || []),
+        generatedAt: next.generatedAt || base.generatedAt,
+      });
+    }
+
+    function loadLive() {
+      fetch('/api/admin/live' + (refresh ? '?refresh=1' : ''), { credentials: 'same-origin' })
+        .then(function (res) { return res.ok ? res.json() : null; })
+        .then(function (data) {
+          renderLive(data && data.live, selectedDay === new Date().toISOString().slice(0, 10));
+        })
+        .catch(function () {
+          renderLive(null, selectedDay === new Date().toISOString().slice(0, 10));
+        });
+    }
+
+    loadLive();
+    if (selectedDay === new Date().toISOString().slice(0, 10)) {
+      setInterval(loadLive, 30000);
+    }
+
+    fetch('/api/admin/metrics?' + qs + '&part=core', { credentials: 'same-origin' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Failed to load metrics');
+        return res.json();
+      })
+      .then(function (core) {
+        state = merge(state, core);
+        renderMetrics(state);
+        return fetch('/api/admin/metrics?' + qs + '&part=extra', { credentials: 'same-origin' });
+      })
+      .then(function (res) {
+        if (!res || !res.ok) return null;
+        return res.json();
+      })
+      .then(function (extra) {
+        if (!extra) return;
+        state = merge(state, extra);
+        renderMetrics(state);
+      })
+      .catch(function (err) {
+        if (metricsRoot) {
+          metricsRoot.innerHTML = '<div class="rounded-lg border border-[#d13b3b] bg-[#fef6f6] px-4 py-3 text-xs text-[#d13b3b]">Could not load metrics: ' + esc(err.message) + '</div>';
+        }
+      });
+  })();
+</script>

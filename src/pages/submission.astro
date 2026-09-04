@@ -222,7 +222,7 @@ const user = Astro.locals.user;
 
       <div class="sub-layout" id="submission-overview">
         <div class="sub-split">
-          <div class="sub-col sub-col-submit active" data-panel="submit">
+          <div class="sub-col sub-col-submit active" data-panel="submit" id="submit-studio">
             <section class="sub-hero">
               <div class="sub-hero-content">
                 <h1 class="sub-hero-title">Put your studio<br>on the map</h1>
@@ -256,7 +256,7 @@ const user = Astro.locals.user;
             </section>
           </div>
 
-          <div class="sub-col sub-col-suggest" data-panel="suggest">
+          <div class="sub-col sub-col-suggest" data-panel="suggest" id="suggest-place">
             <section class="sub-hero">
               <div class="sub-hero-content">
                 <h2 class="sub-hero-title">Have a<br>recommendation?</h2>
@@ -363,7 +363,8 @@ const user = Astro.locals.user;
       color: var(--color-black);
       min-height: 100vh;
       position: relative;
-      overflow-x: clip;
+      overflow-x: hidden;
+      overflow-y: visible;
       font-family: var(--font-sans);
     }
 
@@ -604,15 +605,17 @@ const user = Astro.locals.user;
       }
       .sub-split {
         flex-direction: column;
-        gap: 0;
+        gap: 48px;
         padding: var(--page-top-spacing) 24px 40px;
       }
       .sub-col {
-        display: none;
-        width: 100%;
-      }
-      .sub-col.active {
         display: block;
+        width: 100%;
+        scroll-margin-top: 96px;
+      }
+      .sub-col-suggest {
+        padding-top: 8px;
+        border-top: 1px solid var(--color-stroke);
       }
       .sub-section {
         padding-top: 24px;
@@ -620,8 +623,8 @@ const user = Astro.locals.user;
       .sub-section-inner {
         gap: 40px;
       }
-      .sub-emphasis {
-        font-size: 20px;
+      .sub-hero-title {
+        font-size: clamp(36px, 11vw, 56px);
       }
       .suggest-card .fields-grid.split { grid-template-columns: 1fr; }
       .suggest-submit { height: 52px; font-size: 16px; }
@@ -1622,6 +1625,10 @@ const user = Astro.locals.user;
         btn.classList.toggle('active', isActive);
         btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
       });
+      const target = document.getElementById(tab === 'suggest' ? 'suggest-place' : 'submit-studio');
+      if (target && window.matchMedia('(max-width: 900px)').matches) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
       if (tab === 'suggest') maybeRenderSuggestTurnstile();
     }
 

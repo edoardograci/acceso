@@ -179,5 +179,12 @@ export const RateLimits = {
         maxRequests: 5,
         windowMs: 60 * 60 * 1000,
         keyPrefix: 'submissions'
+    },
+
+    // Admin dashboard JSON feeds: 60 per minute per admin.
+    ADMIN: {
+        maxRequests: 60,
+        windowMs: 60 * 1000,
+        keyPrefix: 'admin'
     }
 } as const;

@@ -71,6 +71,7 @@ const STATIC_PATHS = [
   '/css/',
   '/_astro/',
   '/sw.js',
+  '/api/analytics/visitor-id',
   '/test-studios.json',
   '/metadata.json',
   '/test-cities.json',

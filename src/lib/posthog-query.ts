@@ -1,12 +1,5 @@
 // src/lib/posthog-query.ts
 // Server-side reader for the PostHog Query API (HogQL).
-//
-// Note the two different PostHog hosts: the browser sends events to the ingest
-// host (eu.i.posthog.com, PUBLIC_POSTHOG_HOST) while the REST/query API lives on
-// the app host (eu.posthog.com). Only the app host is used here.
-//
-// The personal API key never leaves the server: every call in this module runs
-// inside the Worker and only aggregated numbers are returned to the browser.
 
 import type { Env } from '../env.d';
 
@@ -21,7 +14,6 @@ export interface HogQLResult {
   rows: any[][];
 }
 
-/** A single `label → counts` breakdown row. */
 export interface BreakdownRow {
   label: string;
   sessions: number;
@@ -32,6 +24,12 @@ export interface TrafficPoint {
   day: string;
   pageviews: number;
   sessions: number;
+  visitors: number;
+}
+
+export interface HourlyPoint {
+  hour: string;
+  pageviews: number;
   visitors: number;
 }
 
@@ -48,23 +46,79 @@ export interface EventCountRow {
   total: number;
 }
 
+export interface AiReferrerRow {
+  platform: string;
+  country: string;
+  path: string;
+  pageviews: number;
+  visitors: number;
+}
+
+export interface LiveStats {
+  liveVisitors: number;
+  livePageviews: number;
+  todayPageviews: number;
+  todayVisitors: number;
+}
+
+export interface DateRange {
+  /** Inclusive start day YYYY-MM-DD */
+  startDay: string;
+  /** Inclusive end day YYYY-MM-DD */
+  endDay: string;
+}
+
 const QUERY_TIMEOUT_MS = 20000;
 const DEFAULT_HOST = 'https://eu.posthog.com';
 
-/**
- * The dashboard itself must never show up in its own numbers. The admin layout
- * does not load PostHog at all, so this is a second line of defence — and it
- * also covers any /admin traffic recorded before that layout existed.
- * The coalesce matters: `NULL NOT LIKE …` is NULL, which would silently drop
- * every event that carries no $pathname.
- */
 const EXCLUDE_ADMIN = `coalesce(toString(properties.$pathname), '') NOT LIKE '/admin%'`;
 
-/**
- * Read PostHog credentials from the runtime env.
- * Returns null when the dashboard has not been configured yet, so callers can
- * render a "not configured" state instead of throwing.
- */
+/** Prefer server-side visitor_hash; fall back to distinct_id for legacy events. */
+export const VISITOR_ID = `coalesce(nullIf(toString(properties.visitor_hash), ''), distinct_id)`;
+
+const OWN_DOMAINS = `('acceso.design', 'www.acceso.design')`;
+const REFERRING_DOMAIN = `if(coalesce(toString(properties.$referring_domain), '') IN ('', '$direct'), 'direct', toString(properties.$referring_domain))`;
+
+const AI_DOMAIN_PATTERN =
+  '(chatgpt|openai|perplexity|claude|anthropic|gemini|bard|copilot|bing[.]com/chat|phind|you[.]com|poe[.]com|meta[.]ai|mistral|deepseek)';
+
+const AI_PLATFORM = `multiIf(
+  match(toString(properties.$referring_domain), 'chatgpt|openai'), 'ChatGPT',
+  match(toString(properties.$referring_domain), 'perplexity'), 'Perplexity',
+  match(toString(properties.$referring_domain), 'claude|anthropic'), 'Claude',
+  match(toString(properties.$referring_domain), 'gemini|bard'), 'Gemini',
+  match(toString(properties.$referring_domain), 'copilot|bing'), 'Copilot',
+  match(toString(properties.$referring_domain), 'phind'), 'Phind',
+  match(toString(properties.$referring_domain), 'you[.]com'), 'You.com',
+  match(toString(properties.$referring_domain), 'poe[.]com'), 'Poe',
+  match(toString(properties.$referring_domain), 'meta[.]ai'), 'Meta AI',
+  match(toString(properties.$referring_domain), 'mistral'), 'Mistral',
+  match(toString(properties.$referring_domain), 'deepseek'), 'DeepSeek',
+  'Other AI'
+)`;
+
+const EXPR = {
+  path: `coalesce(nullIf(toString(properties.$pathname), ''), '/')`,
+  pageType: `coalesce(nullIf(toString(properties.page_type), ''), 'unknown')`,
+  referrerType: `multiIf(
+    ${REFERRING_DOMAIN} = 'direct', 'direct',
+    toString(properties.$referring_domain) IN ${OWN_DOMAINS}, 'internal',
+    match(toString(properties.$referring_domain), '(google|bing|duckduckgo|yahoo|ecosia|brave)[.]'), 'organic search',
+    match(toString(properties.$referring_domain), '(instagram|facebook|linkedin|pinterest|reddit|tiktok|threads|t[.]co)'), 'social',
+    match(toString(properties.$referring_domain), '${AI_DOMAIN_PATTERN}'), 'ai',
+    'referral'
+  )`,
+  referringDomain: REFERRING_DOMAIN,
+  utmSource: `coalesce(nullIf(toString(properties.utm_source), ''), nullIf(toString(properties.initial_utm_source), ''), 'none')`,
+  utmCampaign: `coalesce(nullIf(toString(properties.utm_campaign), ''), nullIf(toString(properties.initial_utm_campaign), ''), 'none')`,
+  country: `coalesce(nullIf(toString(properties.$geoip_country_name), ''), nullIf(toString(properties.$geoip_country_code), ''), 'unknown')`,
+  device: `coalesce(nullIf(toString(properties.device_category), ''), nullIf(toString(properties.$device_type), ''), 'unknown')`,
+  browser: `coalesce(nullIf(toString(properties.$browser), ''), 'unknown')`,
+} as const;
+
+const EXTERNAL_ONLY = `coalesce(toString(properties.$referring_domain), '') NOT IN ${OWN_DOMAINS}`;
+const AI_ONLY = `match(toString(properties.$referring_domain), '${AI_DOMAIN_PATTERN}')`;
+
 export function getPostHogConfig(env: Env): PostHogConfig | null {
   const anyEnv = env as any;
   const apiKey = String(anyEnv?.POSTHOG_API_KEY || '').trim();
@@ -75,7 +129,6 @@ export function getPostHogConfig(env: Env): PostHogConfig | null {
   return { apiKey, projectId, host };
 }
 
-/** Run one HogQL query and return its columns/rows. Throws on API errors. */
 export async function hogql(config: PostHogConfig, query: string): Promise<HogQLResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), QUERY_TIMEOUT_MS);
@@ -93,7 +146,6 @@ export async function hogql(config: PostHogConfig, query: string): Promise<HogQL
 
     if (!response.ok) {
       const body = await response.text().catch(() => '');
-      // Truncate: PostHog error bodies can carry the whole query back.
       throw new Error(`PostHog API ${response.status}: ${body.slice(0, 300)}`);
     }
 
@@ -107,11 +159,47 @@ export async function hogql(config: PostHogConfig, query: string): Promise<HogQL
   }
 }
 
-/** Guard against anything but a plain integer reaching a query string. */
 function safeDays(days: number): number {
   const n = Math.floor(Number(days));
   if (!Number.isFinite(n) || n < 1) return 7;
   return Math.min(n, 365);
+}
+
+/** Validate YYYY-MM-DD; returns null if invalid. */
+export function parseDay(value: string | null | undefined): string | null {
+  const day = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const date = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  return day;
+}
+
+export function utcToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function shiftDay(day: string, delta: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Build an inclusive date range ending on endDay spanning `days` calendar days. */
+export function buildDateRange(endDay: string, days: number): DateRange {
+  const safe = safeDays(days);
+  return {
+    startDay: shiftDay(endDay, -(safe - 1)),
+    endDay,
+  };
+}
+
+function dateFilter(range: DateRange): string {
+  return `toDate(timestamp) >= toDate('${range.startDay}')
+       AND toDate(timestamp) <= toDate('${range.endDay}')`;
+}
+
+function singleDayFilter(day: string): string {
+  return `toDate(timestamp) = toDate('${day}')`;
 }
 
 function toNumber(value: any): number {
@@ -125,57 +213,28 @@ function toDayString(value: any): string {
   return String(value ?? '').slice(0, 10);
 }
 
-/**
- * Daily pageviews/sessions/visitors over twice the requested window, so the
- * caller can compare the current period against the one immediately before it
- * without a second round trip.
- */
-export async function fetchTrafficSeries(config: PostHogConfig, days: number): Promise<TrafficPoint[]> {
-  const window = safeDays(days) * 2;
-  const result = await hogql(
-    config,
-    `SELECT toDate(timestamp) AS day,
-            count() AS pageviews,
-            count(DISTINCT properties.$session_id) AS sessions,
-            count(DISTINCT distinct_id) AS visitors
-     FROM events
-     WHERE event = '$pageview'
-       AND timestamp >= now() - INTERVAL ${window} DAY
-       AND ${EXCLUDE_ADMIN}
-     GROUP BY day
-     ORDER BY day ASC`
-  );
-
-  return result.rows.map((row) => ({
-    day: toDayString(row[0]),
-    pageviews: toNumber(row[1]),
-    sessions: toNumber(row[2]),
-    visitors: toNumber(row[3]),
-  }));
+function toHourString(value: any): string {
+  if (typeof value === 'string') return value.slice(0, 16).replace('T', ' ');
+  return String(value ?? '').slice(0, 16);
 }
 
-/**
- * Generic `GROUP BY <expression>` breakdown over pageviews.
- * `expression` is a fixed HogQL snippet defined in this file — never user input.
- */
-async function fetchBreakdown(
+async function fetchBreakdownForRange(
   config: PostHogConfig,
-  days: number,
+  range: DateRange,
   expression: string,
   limit = 25,
   extraWhere = ''
 ): Promise<BreakdownRow[]> {
-  const window = safeDays(days);
   const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 500);
 
   const result = await hogql(
     config,
     `SELECT ${expression} AS label,
-            count(DISTINCT properties.$session_id) AS sessions,
+            count(DISTINCT ${VISITOR_ID}) AS sessions,
             count() AS pageviews
      FROM events
      WHERE event = '$pageview'
-       AND timestamp >= now() - INTERVAL ${window} DAY
+       AND ${dateFilter(range)}
        AND ${EXCLUDE_ADMIN}
        ${extraWhere ? `AND ${extraWhere}` : ''}
      GROUP BY label
@@ -190,55 +249,172 @@ async function fetchBreakdown(
   }));
 }
 
-/** The site's own hostnames — a link between two Acceso pages is not acquisition. */
-const OWN_DOMAINS = `('acceso.design', 'www.acceso.design')`;
+async function fetchBreakdown(
+  config: PostHogConfig,
+  days: number,
+  expression: string,
+  limit = 25,
+  extraWhere = '',
+  endDay = utcToday()
+): Promise<BreakdownRow[]> {
+  return fetchBreakdownForRange(config, buildDateRange(endDay, days), expression, limit, extraWhere);
+}
 
-/** Raw referring domain, with PostHog's `$direct` sentinel normalised. */
-const REFERRING_DOMAIN = `if(coalesce(toString(properties.$referring_domain), '') IN ('', '$direct'), 'direct', toString(properties.$referring_domain))`;
+export async function fetchTrafficSeries(
+  config: PostHogConfig,
+  days: number,
+  endDay = utcToday()
+): Promise<TrafficPoint[]> {
+  const range = buildDateRange(endDay, safeDays(days) * 2);
+  const result = await hogql(
+    config,
+    `SELECT toDate(timestamp) AS day,
+            count() AS pageviews,
+            count(DISTINCT properties.$session_id) AS sessions,
+            count(DISTINCT ${VISITOR_ID}) AS visitors
+     FROM events
+     WHERE event = '$pageview'
+       AND ${dateFilter(range)}
+       AND ${EXCLUDE_ADMIN}
+     GROUP BY day
+     ORDER BY day ASC`
+  );
 
-const EXPR = {
-  path: `coalesce(nullIf(toString(properties.$pathname), ''), '/')`,
-  pageType: `coalesce(nullIf(toString(properties.page_type), ''), 'unknown')`,
-  /**
-   * Derived here rather than read from the client's `referrer_type` property:
-   * the site's classifyReferrer() does not exclude its own domain, so internal
-   * navigation is tagged 'referral' and would swamp the acquisition panel.
-   */
-  referrerType: `multiIf(
-    ${REFERRING_DOMAIN} = 'direct', 'direct',
-    toString(properties.$referring_domain) IN ${OWN_DOMAINS}, 'internal',
-    match(toString(properties.$referring_domain), '(google|bing|duckduckgo|yahoo|ecosia|brave)\\\\.'), 'organic search',
-    match(toString(properties.$referring_domain), '(instagram|facebook|linkedin|pinterest|reddit|tiktok|threads|t\\\\.co)'), 'social',
-    'referral'
-  )`,
-  referringDomain: REFERRING_DOMAIN,
-  utmSource: `coalesce(nullIf(toString(properties.utm_source), ''), nullIf(toString(properties.initial_utm_source), ''), 'none')`,
-  utmCampaign: `coalesce(nullIf(toString(properties.utm_campaign), ''), nullIf(toString(properties.initial_utm_campaign), ''), 'none')`,
-  country: `coalesce(nullIf(toString(properties.$geoip_country_name), ''), nullIf(toString(properties.$geoip_country_code), ''), 'unknown')`,
-  device: `coalesce(nullIf(toString(properties.device_category), ''), nullIf(toString(properties.$device_type), ''), 'unknown')`,
-} as const;
+  return result.rows.map((row) => ({
+    day: toDayString(row[0]),
+    pageviews: toNumber(row[1]),
+    sessions: toNumber(row[2]),
+    visitors: toNumber(row[3]),
+  }));
+}
 
-/** Internal navigation is excluded so the panel shows real acquisition sources. */
-const EXTERNAL_ONLY = `coalesce(toString(properties.$referring_domain), '') NOT IN ${OWN_DOMAINS}`;
+export async function fetchHourlyTraffic(config: PostHogConfig, day: string): Promise<HourlyPoint[]> {
+  const result = await hogql(
+    config,
+    `SELECT toStartOfHour(timestamp) AS hour,
+            count() AS pageviews,
+            count(DISTINCT ${VISITOR_ID}) AS visitors
+     FROM events
+     WHERE event = '$pageview'
+       AND ${singleDayFilter(day)}
+       AND ${EXCLUDE_ADMIN}
+     GROUP BY hour
+     ORDER BY hour ASC`
+  );
 
-export const fetchTopPaths = (c: PostHogConfig, d: number) => fetchBreakdown(c, d, EXPR.path, 300);
-export const fetchPageTypes = (c: PostHogConfig, d: number) => fetchBreakdown(c, d, EXPR.pageType, 25);
-export const fetchReferrerTypes = (c: PostHogConfig, d: number) => fetchBreakdown(c, d, EXPR.referrerType, 10);
-export const fetchReferringDomains = (c: PostHogConfig, d: number) =>
-  fetchBreakdown(c, d, EXPR.referringDomain, 15, EXTERNAL_ONLY);
-export const fetchUtmSources = (c: PostHogConfig, d: number) => fetchBreakdown(c, d, EXPR.utmSource, 15);
-export const fetchUtmCampaigns = (c: PostHogConfig, d: number) => fetchBreakdown(c, d, EXPR.utmCampaign, 15);
-export const fetchCountries = (c: PostHogConfig, d: number) => fetchBreakdown(c, d, EXPR.country, 15);
-export const fetchDevices = (c: PostHogConfig, d: number) => fetchBreakdown(c, d, EXPR.device, 10);
+  return result.rows.map((row) => ({
+    hour: toHourString(row[0]),
+    pageviews: toNumber(row[1]),
+    visitors: toNumber(row[2]),
+  }));
+}
 
-/**
- * Session-level engagement, reconstructed from the event stream: PostHog's
- * session table is not queried, we derive duration from the first and last
- * event sharing a $session_id. A session with a single pageview counts as a
- * bounce.
- */
-export async function fetchSessionStats(config: PostHogConfig, days: number): Promise<SessionStats> {
-  const window = safeDays(days);
+export async function fetchLiveStats(config: PostHogConfig): Promise<LiveStats> {
+  const today = utcToday();
+  const result = await hogql(
+    config,
+    `SELECT
+       countIf(timestamp >= now() - INTERVAL 5 MINUTE) AS live_pageviews,
+       count(DISTINCT if(timestamp >= now() - INTERVAL 30 MINUTE, ${VISITOR_ID}, NULL)) AS live_visitors,
+       countIf(toDate(timestamp) = toDate('${today}')) AS today_pageviews,
+       count(DISTINCT if(toDate(timestamp) = toDate('${today}'), ${VISITOR_ID}, NULL)) AS today_visitors
+     FROM events
+     WHERE event = '$pageview'
+       AND timestamp >= now() - INTERVAL 1 DAY
+       AND ${EXCLUDE_ADMIN}`
+  );
+
+  const row = result.rows[0] || [];
+  return {
+    livePageviews: toNumber(row[0]),
+    liveVisitors: toNumber(row[1]),
+    todayPageviews: toNumber(row[2]),
+    todayVisitors: toNumber(row[3]),
+  };
+}
+
+export async function fetchDayTotals(config: PostHogConfig, day: string): Promise<TrafficPoint> {
+  const result = await hogql(
+    config,
+    `SELECT count() AS pageviews,
+            count(DISTINCT properties.$session_id) AS sessions,
+            count(DISTINCT ${VISITOR_ID}) AS visitors
+     FROM events
+     WHERE event = '$pageview'
+       AND ${singleDayFilter(day)}
+       AND ${EXCLUDE_ADMIN}`
+  );
+
+  const row = result.rows[0] || [];
+  return {
+    day,
+    pageviews: toNumber(row[0]),
+    sessions: toNumber(row[1]),
+    visitors: toNumber(row[2]),
+  };
+}
+
+export const fetchTopPaths = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.path, 300, '', endDay);
+export const fetchPageTypes = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.pageType, 25, '', endDay);
+export const fetchReferrerTypes = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.referrerType, 10, '', endDay);
+export const fetchReferringDomains = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.referringDomain, 15, EXTERNAL_ONLY, endDay);
+export const fetchUtmSources = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.utmSource, 15, '', endDay);
+export const fetchUtmCampaigns = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.utmCampaign, 15, '', endDay);
+export const fetchCountries = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.country, 15, '', endDay);
+export const fetchDevices = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.device, 10, '', endDay);
+export const fetchBrowsers = (c: PostHogConfig, d: number, endDay?: string) =>
+  fetchBreakdown(c, d, EXPR.browser, 12, '', endDay);
+
+export async function fetchAiPlatforms(config: PostHogConfig, days: number, endDay?: string): Promise<BreakdownRow[]> {
+  return fetchBreakdown(config, days, AI_PLATFORM, 15, AI_ONLY, endDay);
+}
+
+export async function fetchAiReferrerDetails(
+  config: PostHogConfig,
+  days: number,
+  endDay?: string
+): Promise<AiReferrerRow[]> {
+  const range = buildDateRange(endDay || utcToday(), safeDays(days));
+  const result = await hogql(
+    config,
+    `SELECT ${AI_PLATFORM} AS platform,
+            ${EXPR.country} AS country,
+            ${EXPR.path} AS path,
+            count() AS pageviews,
+            count(DISTINCT ${VISITOR_ID}) AS visitors
+     FROM events
+     WHERE event = '$pageview'
+       AND ${dateFilter(range)}
+       AND ${EXCLUDE_ADMIN}
+       AND ${AI_ONLY}
+     GROUP BY platform, country, path
+     ORDER BY pageviews DESC
+     LIMIT 50`
+  );
+
+  return result.rows.map((row) => ({
+    platform: String(row[0] ?? 'unknown'),
+    country: String(row[1] ?? 'unknown'),
+    path: String(row[2] ?? '/'),
+    pageviews: toNumber(row[3]),
+    visitors: toNumber(row[4]),
+  }));
+}
+
+export async function fetchSessionStats(
+  config: PostHogConfig,
+  days: number,
+  endDay?: string
+): Promise<SessionStats> {
+  const range = buildDateRange(endDay || utcToday(), safeDays(days));
   const result = await hogql(
     config,
     `SELECT count() AS sessions,
@@ -252,7 +428,7 @@ export async function fetchSessionStats(config: PostHogConfig, days: number): Pr
               countIf(event = '$pageview') AS views
        FROM events
        WHERE event IN ('$pageview', '$pageleave')
-         AND timestamp >= now() - INTERVAL ${window} DAY
+         AND ${dateFilter(range)}
          AND ${EXCLUDE_ADMIN}
          AND notEmpty(toString(properties.$session_id))
        GROUP BY session_id
@@ -269,17 +445,17 @@ export async function fetchSessionStats(config: PostHogConfig, days: number): Pr
   };
 }
 
-/**
- * Every non-pageview event with its volume. Deliberately generic rather than a
- * hardcoded list, so events added to the site later show up here on their own.
- */
-export async function fetchCustomEvents(config: PostHogConfig, days: number): Promise<EventCountRow[]> {
-  const window = safeDays(days);
+export async function fetchCustomEvents(
+  config: PostHogConfig,
+  days: number,
+  endDay?: string
+): Promise<EventCountRow[]> {
+  const range = buildDateRange(endDay || utcToday(), safeDays(days));
   const result = await hogql(
     config,
     `SELECT event, count() AS total
      FROM events
-     WHERE timestamp >= now() - INTERVAL ${window} DAY
+     WHERE ${dateFilter(range)}
        AND event NOT IN ('$pageview', '$pageleave')
        AND ${EXCLUDE_ADMIN}
      GROUP BY event

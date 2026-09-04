@@ -1,16 +1,19 @@
 // src/lib/admin-metrics.ts
-// Assembles the admin dashboard payload from PostHog (traffic/behaviour) and
-// Turso (signups, saved items, submissions), and caches the result.
-//
-// Every PostHog query runs independently: one failing block degrades to an
-// error message next to that panel instead of blanking the dashboard.
+// Assembles admin dashboard payloads from PostHog and Turso.
 
 import type { Env } from '../env.d';
 import { getAdminTursoMetrics, type AdminTursoMetrics } from './db';
 import {
+  buildDateRange,
+  fetchAiPlatforms,
+  fetchAiReferrerDetails,
+  fetchBrowsers,
   fetchCountries,
   fetchCustomEvents,
+  fetchDayTotals,
   fetchDevices,
+  fetchHourlyTraffic,
+  fetchLiveStats,
   fetchPageTypes,
   fetchReferringDomains,
   fetchReferrerTypes,
@@ -20,19 +23,25 @@ import {
   fetchUtmCampaigns,
   fetchUtmSources,
   getPostHogConfig,
+  parseDay,
+  utcToday,
+  type AiReferrerRow,
   type BreakdownRow,
   type EventCountRow,
+  type HourlyPoint,
+  type LiveStats,
   type PostHogConfig,
   type SessionStats,
   type TrafficPoint,
 } from './posthog-query';
 
-export const RANGES = { '7d': 7, '30d': 30, '90d': 90 } as const;
+export const RANGES = { '1d': 1, '7d': 7, '30d': 30, '90d': 90 } as const;
 export type RangeKey = keyof typeof RANGES;
 export const DEFAULT_RANGE: RangeKey = '30d';
+export type MetricsPart = 'core' | 'extra' | 'all';
 
-/** Cloudflare Cache API TTL. PostHog's query API is slow and rate limited. */
 const CACHE_TTL_SECONDS = 300;
+const LIVE_CACHE_TTL_SECONDS = 30;
 const CACHE_ORIGIN = 'https://admin-metrics.acceso.internal';
 
 export interface TrafficTotals {
@@ -44,8 +53,14 @@ export interface TrafficTotals {
 export interface AdminMetrics {
   range: RangeKey;
   days: number;
+  selectedDay: string;
+  isToday: boolean;
+  part: MetricsPart;
   generatedAt: string;
   posthogConfigured: boolean;
+  live: LiveStats | null;
+  selectedDayTotals: TrafficPoint | null;
+  hourly: HourlyPoint[];
   traffic: {
     series: TrafficPoint[];
     current: TrafficTotals;
@@ -63,6 +78,11 @@ export interface AdminMetrics {
     utmCampaigns: BreakdownRow[];
     countries: BreakdownRow[];
     devices: BreakdownRow[];
+    browsers: BreakdownRow[];
+  };
+  aiReferrers: {
+    platforms: BreakdownRow[];
+    details: AiReferrerRow[];
   };
   engagement: {
     sessions: SessionStats;
@@ -72,22 +92,20 @@ export interface AdminMetrics {
   errors: string[];
 }
 
-/** Normalise the ?range= query param; anything unknown falls back to default. */
 export function parseRange(value: string | null | undefined): RangeKey {
   const key = String(value || '').trim() as RangeKey;
   return key in RANGES ? key : DEFAULT_RANGE;
 }
 
-/** Percentage change between two periods; null when there is no baseline. */
+export function parseSelectedDay(value: string | null | undefined): string {
+  return parseDay(value) || utcToday();
+}
+
 export function percentChange(current: number, previous: number): number | null {
   if (!previous) return current > 0 ? null : 0;
   return ((current - previous) / previous) * 100;
 }
 
-/**
- * Group site paths into the sections the site is actually organised in, so the
- * ranking reads as "which part of Acceso gets used" rather than a flat URL list.
- */
 export function classifyPath(path: string): string {
   const p = path.toLowerCase();
   if (p === '/' || p === '/map' || p.startsWith('/map/')) return 'Home / Map';
@@ -109,17 +127,13 @@ export function classifyPath(path: string): string {
 
 function aggregateSections(paths: BreakdownRow[]): BreakdownRow[] {
   const totals = new Map<string, BreakdownRow>();
-
   for (const row of paths) {
     const label = classifyPath(row.label);
     const entry = totals.get(label) || { label, sessions: 0, pageviews: 0 };
-    // Sessions are summed across paths, so a visitor browsing two sections is
-    // counted in both — these are section weights, not unique session counts.
     entry.sessions += row.sessions;
     entry.pageviews += row.pageviews;
     totals.set(label, entry);
   }
-
   return Array.from(totals.values()).sort((a, b) => b.pageviews - a.pageviews);
 }
 
@@ -141,20 +155,14 @@ function addPoint(totals: TrafficTotals, point: TrafficPoint): void {
   totals.visitors += point.visitors;
 }
 
-/**
- * Split the double-length series into the current window and the one before it,
- * filling gaps so the chart has one point per day.
- *
- * Day boundaries come from the PostHog project's timezone while the cutoffs are
- * computed in UTC; on a non-UTC project the edge days can be off by a few hours.
- */
 export function splitTrafficSeries(
   series: TrafficPoint[],
-  days: number
+  days: number,
+  endDay: string
 ): { series: TrafficPoint[]; current: TrafficTotals; previous: TrafficTotals } {
-  const today = new Date();
-  const currentStart = isoDay(shiftDays(today, -(days - 1)));
-  const previousStart = isoDay(shiftDays(today, -(days * 2 - 1)));
+  const end = new Date(`${endDay}T00:00:00Z`);
+  const currentStart = isoDay(shiftDays(end, -(days - 1)));
+  const previousStart = isoDay(shiftDays(end, -(days * 2 - 1)));
 
   const byDay = new Map(series.map((point) => [point.day, point]));
   const current = emptyTotals();
@@ -162,7 +170,7 @@ export function splitTrafficSeries(
   const filled: TrafficPoint[] = [];
 
   for (let i = days - 1; i >= 0; i--) {
-    const day = isoDay(shiftDays(today, -i));
+    const day = isoDay(shiftDays(end, -i));
     const point = byDay.get(day) || { day, pageviews: 0, sessions: 0, visitors: 0 };
     filled.push(point);
     addPoint(current, point);
@@ -177,6 +185,9 @@ export function splitTrafficSeries(
 
 function emptyPostHogBlocks() {
   return {
+    live: null as LiveStats | null,
+    selectedDayTotals: null as TrafficPoint | null,
+    hourly: [] as HourlyPoint[],
     traffic: { series: [] as TrafficPoint[], current: emptyTotals(), previous: emptyTotals() },
     content: { sections: [], topPages: [], pageTypes: [] } as AdminMetrics['content'],
     acquisition: {
@@ -186,7 +197,9 @@ function emptyPostHogBlocks() {
       utmCampaigns: [],
       countries: [],
       devices: [],
+      browsers: [],
     } as AdminMetrics['acquisition'],
+    aiReferrers: { platforms: [] as BreakdownRow[], details: [] as AiReferrerRow[] },
     engagement: {
       sessions: {
         sessions: 0,
@@ -200,7 +213,12 @@ function emptyPostHogBlocks() {
   };
 }
 
-async function collectPostHog(config: PostHogConfig, days: number) {
+async function collectPostHog(
+  config: PostHogConfig,
+  days: number,
+  selectedDay: string,
+  part: MetricsPart
+) {
   const blocks = emptyPostHogBlocks();
   const errors: string[] = [];
 
@@ -212,114 +230,179 @@ async function collectPostHog(config: PostHogConfig, days: number) {
     }
   };
 
-  await Promise.all([
-    settle('traffic', fetchTrafficSeries(config, days), (series) => {
-      blocks.traffic = splitTrafficSeries(series, days);
+  const core: Promise<void>[] = [
+    settle('traffic', fetchTrafficSeries(config, days, selectedDay), (series) => {
+      blocks.traffic = splitTrafficSeries(series, days, selectedDay);
     }),
-    settle('top_paths', fetchTopPaths(config, days), (paths) => {
+    settle('top_paths', fetchTopPaths(config, days, selectedDay), (paths) => {
       blocks.content.sections = aggregateSections(paths);
       blocks.content.topPages = paths.slice(0, 25);
     }),
-    settle('page_types', fetchPageTypes(config, days), (rows) => {
-      blocks.content.pageTypes = rows;
-    }),
-    settle('referrer_types', fetchReferrerTypes(config, days), (rows) => {
-      blocks.acquisition.referrerTypes = rows;
-    }),
-    settle('referring_domains', fetchReferringDomains(config, days), (rows) => {
-      blocks.acquisition.referringDomains = rows;
-    }),
-    settle('utm_sources', fetchUtmSources(config, days), (rows) => {
-      blocks.acquisition.utmSources = rows;
-    }),
-    settle('utm_campaigns', fetchUtmCampaigns(config, days), (rows) => {
-      blocks.acquisition.utmCampaigns = rows;
-    }),
-    settle('countries', fetchCountries(config, days), (rows) => {
+    settle('countries', fetchCountries(config, days, selectedDay), (rows) => {
       blocks.acquisition.countries = rows;
     }),
-    settle('devices', fetchDevices(config, days), (rows) => {
+    settle('devices', fetchDevices(config, days, selectedDay), (rows) => {
       blocks.acquisition.devices = rows;
     }),
-    settle('session_stats', fetchSessionStats(config, days), (stats) => {
+    settle('browsers', fetchBrowsers(config, days, selectedDay), (rows) => {
+      blocks.acquisition.browsers = rows;
+    }),
+    settle('day_totals', fetchDayTotals(config, selectedDay), (totals) => {
+      blocks.selectedDayTotals = totals;
+    }),
+    settle('hourly', fetchHourlyTraffic(config, selectedDay), (rows) => {
+      blocks.hourly = rows;
+    }),
+  ];
+
+  const extra: Promise<void>[] = [
+    settle('page_types', fetchPageTypes(config, days, selectedDay), (rows) => {
+      blocks.content.pageTypes = rows;
+    }),
+    settle('referrer_types', fetchReferrerTypes(config, days, selectedDay), (rows) => {
+      blocks.acquisition.referrerTypes = rows;
+    }),
+    settle('referring_domains', fetchReferringDomains(config, days, selectedDay), (rows) => {
+      blocks.acquisition.referringDomains = rows;
+    }),
+    settle('utm_sources', fetchUtmSources(config, days, selectedDay), (rows) => {
+      blocks.acquisition.utmSources = rows;
+    }),
+    settle('utm_campaigns', fetchUtmCampaigns(config, days, selectedDay), (rows) => {
+      blocks.acquisition.utmCampaigns = rows;
+    }),
+    settle('ai_platforms', fetchAiPlatforms(config, days, selectedDay), (rows) => {
+      blocks.aiReferrers.platforms = rows;
+    }),
+    settle('ai_details', fetchAiReferrerDetails(config, days, selectedDay), (rows) => {
+      blocks.aiReferrers.details = rows;
+    }),
+    settle('session_stats', fetchSessionStats(config, days, selectedDay), (stats) => {
       blocks.engagement.sessions = stats;
     }),
-    settle('custom_events', fetchCustomEvents(config, days), (rows) => {
+    settle('custom_events', fetchCustomEvents(config, days, selectedDay), (rows) => {
       blocks.engagement.customEvents = rows;
     }),
-  ]);
+  ];
 
+  const queries = part === 'core' ? core : part === 'extra' ? extra : [...core, ...extra];
+  await Promise.all(queries);
   return { blocks, errors };
 }
 
-function cacheRequest(range: RangeKey): Request {
-  return new Request(`${CACHE_ORIGIN}/${range}`);
+function cacheKey(range: RangeKey, day: string, kind: 'metrics' | 'live' | 'core' | 'extra'): string {
+  return `${CACHE_ORIGIN}/${kind}/${range}/${day}`;
 }
 
-async function readCache(range: RangeKey): Promise<AdminMetrics | null> {
+async function readCache<T>(key: string): Promise<T | null> {
   const cacheStore = (globalThis as any).caches?.default;
   if (!cacheStore) return null;
   try {
-    const hit = await cacheStore.match(cacheRequest(range));
-    return hit ? ((await hit.json()) as AdminMetrics) : null;
+    const hit = await cacheStore.match(new Request(key));
+    return hit ? ((await hit.json()) as T) : null;
   } catch {
     return null;
   }
 }
 
-async function writeCache(range: RangeKey, metrics: AdminMetrics): Promise<void> {
+async function writeCache(key: string, data: unknown, ttl: number): Promise<void> {
   const cacheStore = (globalThis as any).caches?.default;
   if (!cacheStore) return;
   try {
     await cacheStore.put(
-      cacheRequest(range),
-      new Response(JSON.stringify(metrics), {
+      new Request(key),
+      new Response(JSON.stringify(data), {
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': `max-age=${CACHE_TTL_SECONDS}`,
+          'Cache-Control': `max-age=${ttl}`,
         },
       })
     );
   } catch {
-    // A cold or unavailable cache is not worth failing the request over.
+    // Non-fatal
   }
 }
 
-/**
- * Build the full dashboard payload. Served from the Cloudflare Cache API for
- * CACHE_TTL_SECONDS unless `refresh` is set.
- */
+export async function getLiveAnalytics(
+  env: Env,
+  options: { refresh?: boolean } = {}
+): Promise<{ live: LiveStats | null; posthogConfigured: boolean; generatedAt: string; errors: string[] }> {
+  const key = cacheKey(DEFAULT_RANGE, utcToday(), 'live');
+  if (!options.refresh) {
+    const cached = await readCache<{ live: LiveStats | null; posthogConfigured: boolean; generatedAt: string; errors: string[] }>(key);
+    if (cached) return cached;
+  }
+
+  const config = getPostHogConfig(env);
+  if (!config) {
+    return { live: null, posthogConfigured: false, generatedAt: new Date().toISOString(), errors: [] };
+  }
+
+  const errors: string[] = [];
+  let live: LiveStats | null = null;
+  try {
+    live = await fetchLiveStats(config);
+  } catch (error: any) {
+    errors.push(`live: ${error?.message || 'query failed'}`);
+  }
+
+  const payload = { live, posthogConfigured: true, generatedAt: new Date().toISOString(), errors };
+  await writeCache(key, payload, LIVE_CACHE_TTL_SECONDS);
+  return payload;
+}
+
+function emptyApp(): AdminTursoMetrics {
+  return {
+    totalUsers: 0,
+    newUsers: 0,
+    signupsByDay: [],
+    saves: { designers: 0, objects: 0, museums: 0, universities: 0 },
+    recentSaves: { designers: 0, objects: 0, museums: 0, universities: 0 },
+    submissionsByStatus: [],
+    pendingStudioRequests: 0,
+    suggestions: 0,
+    errors: [],
+  };
+}
+
 export async function getAdminMetrics(
   env: Env,
   range: RangeKey,
-  options: { refresh?: boolean } = {}
+  options: { refresh?: boolean; day?: string; part?: MetricsPart } = {}
 ): Promise<AdminMetrics> {
+  const selectedDay = parseSelectedDay(options.day);
+  const part: MetricsPart = options.part || 'all';
+  const kind = part === 'all' ? 'metrics' : part;
+  const cacheKeyStr = cacheKey(range, selectedDay, kind);
+
   if (!options.refresh) {
-    const cached = await readCache(range);
+    const cached = await readCache<AdminMetrics>(cacheKeyStr);
     if (cached) return cached;
   }
 
   const days = RANGES[range];
   const config = getPostHogConfig(env);
+  const isToday = selectedDay === utcToday();
+  const loadApp = part !== 'core';
 
   const [posthog, app] = await Promise.all([
-    config ? collectPostHog(config, days) : Promise.resolve({ blocks: emptyPostHogBlocks(), errors: [] }),
-    getAdminTursoMetrics(env, days).catch((error: any) => ({
-      totalUsers: 0,
-      newUsers: 0,
-      signupsByDay: [],
-      saves: { designers: 0, objects: 0, museums: 0, universities: 0 },
-      recentSaves: { designers: 0, objects: 0, museums: 0, universities: 0 },
-      submissionsByStatus: [],
-      pendingStudioRequests: 0,
-      suggestions: 0,
-      errors: [`turso: ${error?.message || 'query failed'}`],
-    })),
+    config
+      ? collectPostHog(config, days, selectedDay, part)
+      : Promise.resolve({ blocks: emptyPostHogBlocks(), errors: [] }),
+    loadApp
+      ? getAdminTursoMetrics(env, days).catch((error: any) => ({
+          ...emptyApp(),
+          errors: [`turso: ${error?.message || 'query failed'}`],
+        }))
+      : Promise.resolve(emptyApp()),
   ]);
 
   const metrics: AdminMetrics = {
     range,
     days,
+    selectedDay,
+    isToday,
+    part,
     generatedAt: new Date().toISOString(),
     posthogConfigured: Boolean(config),
     ...posthog.blocks,
@@ -327,6 +410,8 @@ export async function getAdminMetrics(
     errors: [...posthog.errors, ...app.errors],
   };
 
-  await writeCache(range, metrics);
+  await writeCache(cacheKeyStr, metrics, CACHE_TTL_SECONDS);
   return metrics;
 }
+
+export { buildDateRange, utcToday };

@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import PostHogEnhanced from '../components/PostHogEnhanced.astro';
 import { organization, website } from '../lib/seo/schema';
+import { resolveVisitorIdentity } from '../lib/visitor-hash';
+import type { Env } from '../env.d';
 
 interface Props {
   title: string;
@@ -33,6 +35,17 @@ const metaDescription = description || DEFAULT_DESCRIPTION;
 // Pass user ID to client-side for collections state
 const userId = Astro.locals.user?.id || null;
 
+let visitorId = '';
+let visitorDay = '';
+try {
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const identity = await resolveVisitorIdentity(Astro.request, env);
+  visitorId = identity.visitorId;
+  visitorDay = identity.day;
+} catch {
+  // PostHogEnhanced falls back to /api/analytics/visitor-id
+}
+
 const siteUrl = Astro.site ? new URL('/', Astro.site).toString() : '';
 const baseGraph: any[] = siteUrl
   ? [
@@ -60,7 +73,7 @@ const mergedSchema =
 <!DOCTYPE html>
 <html lang="en" class="light">
   <head>
-    <PostHogEnhanced />
+    <PostHogEnhanced visitorId={visitorId} visitorDay={visitorDay} />
     <slot name="head" />
 
     <!-- EMERGENCY STABILITY GUARD: Stops adblocker-induced loops -->

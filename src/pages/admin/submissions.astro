@@ -1,0 +1,121 @@
+---
+// src/pages/admin/submissions.astro
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/admin';
+import type { Env } from '../../env.d';
+
+export const prerender = false;
+
+const runtimeEnv = Astro.locals.runtime?.env || {};
+const metaEnv = import.meta.env || {};
+const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
+
+if (!isAdmin(Astro.locals.user, env)) {
+  return new Response('Not Found', {
+    status: 404,
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+---
+
+<AdminLayout title="Acceso — Submissions" active="submissions">
+  <main class="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
+    <header class="mb-6">
+      <h1 class="text-xl">Submissions</h1>
+      <p class="mt-1 text-xs text-[#52525B]" data-inbox-meta>Loading…</p>
+    </header>
+    <div data-inbox-root>
+      <div class="space-y-4">
+        <div class="h-10 animate-pulse rounded bg-[#E4E4E7]"></div>
+        <div class="h-48 animate-pulse rounded bg-[#F4F4F5]"></div>
+        <div class="h-48 animate-pulse rounded bg-[#F4F4F5]"></div>
+      </div>
+    </div>
+  </main>
+</AdminLayout>
+
+<script is:inline>
+  (function () {
+    const root = document.querySelector('[data-inbox-root]');
+    const meta = document.querySelector('[data-inbox-meta]');
+    if (!root) return;
+
+    function esc(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function fmt(n) {
+      return new Intl.NumberFormat('en-US').format(n);
+    }
+
+    function formatWhen(value) {
+      var numeric = Number(value);
+      var date = isFinite(numeric) && numeric > 1e9
+        ? new Date(numeric > 1e12 ? numeric : numeric * 1000)
+        : new Date(value);
+      if (isNaN(date.getTime())) return value || '—';
+      return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+
+    function render(inbox) {
+      if (meta) {
+        meta.textContent = fmt(inbox.submissions.length) + ' studio submissions · ' + fmt(inbox.suggestions.length) + ' place suggestions';
+      }
+
+      var html = '';
+      if (inbox.errors && inbox.errors.length) {
+        html += '<div class="mb-6 rounded-lg border border-[#d13b3b] bg-[#fef6f6] px-4 py-3 text-xs text-[#d13b3b]">' + esc(inbox.errors.join(' · ')) + '</div>';
+      }
+
+      html += '<section class="mb-10"><h2 class="mb-3 text-sm">Studio submissions</h2>';
+      if (!inbox.submissions.length) {
+        html += '<p class="rounded-lg border border-[#E4E4E7] bg-white px-4 py-6 text-xs text-[#52525B]">No studio submissions yet.</p>';
+      } else {
+        html += '<div class="overflow-auto rounded-lg border border-[#E4E4E7] bg-white"><table class="w-full min-w-[860px] text-left text-[13px]"><thead class="border-b border-[#E4E4E7] text-[11px] uppercase tracking-[0.08em] text-[#52525B]"><tr><th class="px-4 py-3 font-normal">Studio</th><th class="px-3 py-3 font-normal">Location</th><th class="px-3 py-3 font-normal">Contact</th><th class="px-3 py-3 font-normal">Status</th><th class="px-4 py-3 font-normal">Submitted</th></tr></thead><tbody>';
+        html += inbox.submissions.map(function (row) {
+          return '<tr class="border-t border-[#F4F4F5] align-top">' +
+            '<td class="px-4 py-3"><p class="font-medium">' + esc(row.name) + '</p>' +
+            (row.website ? '<a href="' + esc(row.website) + '" class="text-[12px] text-[#2a78d6] underline-offset-2 hover:underline" target="_blank" rel="noreferrer">' + esc(row.website) + '</a>' : '') +
+            (row.instagram ? '<p class="text-[12px] text-[#52525B]">' + esc(row.instagram) + '</p>' : '') +
+            (row.description ? '<p class="mt-1 max-w-md text-[12px] text-[#52525B] line-clamp-3">' + esc(row.description) + '</p>' : '') +
+            '</td><td class="px-3 py-3 text-[#52525B]">' + esc([row.city, row.country].filter(Boolean).join(', ')) +
+            (row.address ? '<p class="mt-1 text-[12px]">' + esc(row.address) + '</p>' : '') +
+            '</td><td class="px-3 py-3"><a href="mailto:' + esc(row.contactEmail) + '" class="text-[12px] underline-offset-2 hover:underline">' + esc(row.contactEmail) + '</a></td>' +
+            '<td class="px-3 py-3"><span class="rounded-full border border-[#E4E4E7] px-2 py-0.5 text-[11px] uppercase tracking-[0.06em]">' + esc(row.status) + '</span></td>' +
+            '<td class="px-4 py-3 whitespace-nowrap text-[12px] text-[#52525B]">' + esc(formatWhen(row.createdAt)) + '</td></tr>';
+        }).join('');
+        html += '</tbody></table></div>';
+      }
+      html += '</section>';
+
+      html += '<section><h2 class="mb-3 text-sm">Place suggestions</h2>';
+      if (!inbox.suggestions.length) {
+        html += '<p class="rounded-lg border border-[#E4E4E7] bg-white px-4 py-6 text-xs text-[#52525B]">No suggestions yet.</p>';
+      } else {
+        html += '<div class="overflow-auto rounded-lg border border-[#E4E4E7] bg-white"><table class="w-full min-w-[640px] text-left text-[13px]"><thead class="border-b border-[#E4E4E7] text-[11px] uppercase tracking-[0.08em] text-[#52525B]"><tr><th class="px-4 py-3 font-normal">Name</th><th class="px-3 py-3 font-normal">Type</th><th class="px-3 py-3 font-normal">City</th><th class="px-3 py-3 font-normal">Website</th><th class="px-4 py-3 font-normal">Submitted</th></tr></thead><tbody>';
+        html += inbox.suggestions.map(function (row) {
+          return '<tr class="border-t border-[#F4F4F5]"><td class="px-4 py-3">' + esc(row.name) + '</td><td class="px-3 py-3 text-[#52525B]">' + esc(row.type) + '</td><td class="px-3 py-3 text-[#52525B]">' + esc(row.city) + '</td><td class="px-3 py-3">' +
+            (row.website ? '<a href="' + esc(row.website) + '" class="text-[12px] text-[#2a78d6] underline-offset-2 hover:underline" target="_blank" rel="noreferrer">' + esc(row.website) + '</a>' : '<span class="text-[#52525B]">—</span>') +
+            '</td><td class="px-4 py-3 whitespace-nowrap text-[12px] text-[#52525B]">' + esc(formatWhen(row.createdAt)) + '</td></tr>';
+        }).join('');
+        html += '</tbody></table></div>';
+      }
+      html += '</section>';
+      root.innerHTML = html;
+    }
+
+    fetch('/api/admin/inbox', { credentials: 'same-origin' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Failed to load submissions');
+        return res.json();
+      })
+      .then(render)
+      .catch(function (err) {
+        root.innerHTML = '<div class="rounded-lg border border-[#d13b3b] bg-[#fef6f6] px-4 py-3 text-xs text-[#d13b3b]">' + esc(err.message) + '</div>';
+      });
+  })();
+</script>

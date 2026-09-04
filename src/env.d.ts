@@ -22,6 +22,8 @@ export type Env = {
   POSTHOG_PROJECT_ID?: string;
   /** PostHog app host for the REST API — NOT the ingest host. Defaults to https://eu.posthog.com */
   POSTHOG_API_HOST?: string;
+  /** Secret salt for daily-rotating visitor hashes. Never store raw IPs. */
+  VISITOR_HASH_SALT?: string;
   INDEX_BUCKET: R2Bucket;
   MOODBOARD_BUCKET: R2Bucket;
   JSON_BUCKET: R2Bucket;
@@ -72,6 +74,7 @@ declare global {
     readonly POSTHOG_API_KEY?: string;
     readonly POSTHOG_PROJECT_ID?: string;
     readonly POSTHOG_API_HOST?: string;
+    readonly VISITOR_HASH_SALT?: string;
   }
 
   interface ImportMeta {

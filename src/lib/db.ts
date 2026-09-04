@@ -818,3 +818,100 @@ export async function getAdminTursoMetrics(env: Env, days: number): Promise<Admi
   setCache(cacheKey, metrics);
   return metrics;
 }
+
+export interface AdminSubmissionRow {
+  id: string;
+  userId: string;
+  name: string;
+  website: string;
+  city: string;
+  country: string;
+  address: string | null;
+  instagram: string | null;
+  description: string;
+  contactEmail: string;
+  imageUrl: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface AdminSuggestionRow {
+  id: string;
+  type: string;
+  name: string;
+  city: string;
+  website: string | null;
+  createdAt: string;
+}
+
+export interface AdminInbox {
+  submissions: AdminSubmissionRow[];
+  suggestions: AdminSuggestionRow[];
+  errors: string[];
+}
+
+/**
+ * Full submission/suggestion rows for the admin inbox. Independent of PostHog.
+ */
+export async function getAdminInbox(env: Env): Promise<AdminInbox> {
+  const cacheKey = getCacheKey('admin_inbox');
+  const cached = getFromCache<AdminInbox>(cacheKey);
+  if (cached) return cached;
+
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  const inbox: AdminInbox = { submissions: [], suggestions: [], errors: [] };
+
+  const run = async (label: string, fn: () => Promise<void>) => {
+    try {
+      await fn();
+    } catch (error: any) {
+      inbox.errors.push(`${label}: ${error?.message || 'query failed'}`);
+    }
+  };
+
+  await Promise.all([
+    run('submissions', async () => {
+      const result = await turso.execute({
+        sql: `SELECT id, user_id, name, website, city, country, address, instagram,
+                     description, contact_email, image_url, status, created_at
+              FROM submissions
+              ORDER BY created_at DESC
+              LIMIT 200`,
+      });
+      inbox.submissions = result.rows.map((row: any) => ({
+        id: String(row.id ?? ''),
+        userId: String(row.user_id ?? ''),
+        name: String(row.name ?? ''),
+        website: String(row.website ?? ''),
+        city: String(row.city ?? ''),
+        country: String(row.country ?? ''),
+        address: row.address != null ? String(row.address) : null,
+        instagram: row.instagram != null ? String(row.instagram) : null,
+        description: String(row.description ?? ''),
+        contactEmail: String(row.contact_email ?? ''),
+        imageUrl: row.image_url != null ? String(row.image_url) : null,
+        status: String(row.status ?? 'unknown'),
+        createdAt: String(row.created_at ?? ''),
+      }));
+    }),
+    run('suggestions', async () => {
+      const result = await turso.execute({
+        sql: `SELECT id, type, name, city, website, created_at
+              FROM suggestions
+              ORDER BY created_at DESC
+              LIMIT 200`,
+      });
+      inbox.suggestions = result.rows.map((row: any) => ({
+        id: String(row.id ?? ''),
+        type: String(row.type ?? ''),
+        name: String(row.name ?? ''),
+        city: String(row.city ?? ''),
+        website: row.website != null ? String(row.website) : null,
+        createdAt: String(row.created_at ?? ''),
+      }));
+    }),
+  ]);
+
+  setCache(cacheKey, inbox);
+  return inbox;
+}
