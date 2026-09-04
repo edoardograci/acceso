@@ -1,6 +1,7 @@
 # wrangler.toml
 name = "acceso"
 compatibility_date = "2024-12-10"
+compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
 [vars]
@@ -9,27 +10,25 @@ GOOGLE_CLIENT_ID = "166684899952-6je6cp48ohlv8d8gkg01vaigobnt2tm0.apps.googleuse
 PUBLIC_SITE_URL = "https://acceso.design"
 PUBLIC_POSTHOG_KEY = "phc_WQx9M4lXjH8NfAcZNSj6XBYOpL4ytt4PyzTCsnVRDfY"
 
-
-
 [[r2_buckets]]
 binding = "INDEX_BUCKET"
 bucket_name = "index"
-preview_bucket_name = "index-preview"
+remote = false
 
 [[r2_buckets]]
 binding = "MOODBOARD_BUCKET"
 bucket_name = "moodboard"
-preview_bucket_name = "moodboard-preview"
+remote = false
 
 [[r2_buckets]]
 binding = "JSON_BUCKET"
 bucket_name = "json"
-preview_bucket_name = "json-preview"
+remote = false
 
 [[r2_buckets]]
 binding = "EVENTS_BUCKET"
 bucket_name = "events"
-preview_bucket_name = "events-preview"
+remote = false
 
 # KV binding used by @astrojs/cloudflare for Astro's built-in Sessions feature.
 # (App auth itself uses Turso; this is required by the adapter at runtime.)

@@ -14,6 +14,16 @@ let universities = [];
 let error = null;
 let orderedFilterData: any[] = [];
 let citiesPills: any[] = [];
+let filterSections: any[] = [];
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 function distributeGroupsForColumns(groups: any[], columns = 3) {
   const colHeights = Array(columns).fill(0);
@@ -85,6 +95,36 @@ try {
     });
     orderedFilterData = distributeGroupsForColumns(sortedGroups, 3);
 
+    const specializationCounts: Record<string, number> = {};
+    universities.forEach((u: any) => {
+      if (u.specialization) {
+        const specs = u.specialization.split(',').map((s: string) => s.trim()).filter(Boolean);
+        specs.forEach((spec: string) => {
+          specializationCounts[spec] = (specializationCounts[spec] || 0) + 1;
+        });
+      }
+    });
+    const specializationOptions = Object.entries(specializationCounts)
+      .map(([name, count]) => ({ name, slug: slugify(name), count }))
+      .sort((a, b) => b.count - a.count);
+
+    filterSections = [
+      {
+        id: 'location',
+        title: 'Location',
+        type: 'location',
+        groups: orderedFilterData,
+        collapsed: false
+      },
+      {
+        id: 'specialization',
+        title: 'Specialization',
+        type: 'checkbox',
+        options: specializationOptions,
+        collapsed: true
+      }
+    ];
+
     citiesPills = citiesList
       .filter((ct: any) => cityCounts[ct.slug])
       .map((ct: any) => ({ name: ct.name, slug: ct.slug }))
@@ -95,10 +135,16 @@ try {
   console.error('[Universities Index] Fail to fetch data:', e);
 }
 
-    const processedUniversities = universities.map((u: any) => ({
-  ...u,
-  location: u.city || u.location
-}));
+    const processedUniversities = universities.map((u: any) => {
+      const specializationSlugs = u.specialization
+        ? u.specialization.split(',').map((s: string) => slugify(s.trim())).filter(Boolean)
+        : [];
+      return {
+        ...u,
+        location: u.city || u.location,
+        specializationSlugs,
+      };
+    });
 
 const cityParam = Astro.url.searchParams.get('city');
 let initialCity = 'all';
@@ -158,7 +204,7 @@ if (cityParam) {
 
       <div class="city-filter-row">
         <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
-        <FilterSidebar groups={orderedFilterData} />
+        <FilterSidebar sections={filterSections} title="Filters" />
 
         <div class="directory-toolbar">
           <button type="button" class="toolbar-btn" id="view-btn" aria-label="Toggle grid size" title="Smaller images" aria-pressed="false">
@@ -183,6 +229,7 @@ if (cityParam) {
           <div
             class="school-card-wrapper"
             data-city={university.city_slug || ''}
+            data-specializations={(university.specializationSlugs || []).join(',')}
             data-name={(university.name || '').toLowerCase()}
           >
             <EventBasicCard
@@ -349,6 +396,7 @@ if (cityParam) {
     const wrappers = Array.from(grid.querySelectorAll('.school-card-wrapper'));
     const cityCheckboxes = Array.from(document.querySelectorAll('.city-checkbox'));
     const countryCheckboxes = Array.from(document.querySelectorAll('.country-checkbox'));
+    const specializationCheckboxes = Array.from(document.querySelectorAll('.specialization-checkbox'));
     const clearAllBtn = document.getElementById('filter-clear-all');
     const filterTrigger = document.getElementById('filter-trigger');
     const filterDrawer = document.getElementById('filter-sidebar-drawer');
@@ -361,7 +409,7 @@ if (cityParam) {
     const countEl = document.getElementById('schools-count');
     const emptyEl = document.getElementById('empty-result');
 
-    const state = { cities: new Set(), search: '' };
+    const state = { cities: new Set(), specializations: new Set(), search: '' };
 
     function syncChecks() {
       cityCheckboxes.forEach((cb) => { cb.checked = state.cities.has(cb.dataset.slug); });
@@ -371,12 +419,18 @@ if (cityParam) {
         cb.checked = cityCbs.length > 0 && cityCbs.every((c) => c.checked);
         cb.indeterminate = !cb.checked && cityCbs.some((c) => c.checked);
       });
+      specializationCheckboxes.forEach((cb) => { cb.checked = state.specializations.has(cb.dataset.slug); });
     }
 
     function apply() {
       const search = state.search.trim().toLowerCase();
       const visible = wrappers.filter((w) => {
         if (state.cities.size > 0 && !state.cities.has(w.dataset.city)) return false;
+        if (state.specializations.size > 0) {
+          const schoolSpecs = (w.dataset.specializations || '').split(',').filter(Boolean);
+          const hasMatchingSpec = schoolSpecs.some(spec => state.specializations.has(spec));
+          if (!hasMatchingSpec) return false;
+        }
         if (search && !w.dataset.name.includes(search)) return false;
         return true;
       });
@@ -390,13 +444,16 @@ if (cityParam) {
 
     const filterDone = document.getElementById('filter-done-btn');
     let savedCitiesState = new Set();
+    let savedSpecializationsState = new Set();
 
     function snapshotState() {
       savedCitiesState = new Set(state.cities);
+      savedSpecializationsState = new Set(state.specializations);
     }
 
     function restoreState() {
       state.cities = new Set(savedCitiesState);
+      state.specializations = new Set(savedSpecializationsState);
       syncChecks();
     }
 
@@ -433,8 +490,15 @@ if (cityParam) {
       syncChecks();
     }));
 
+    specializationCheckboxes.forEach((cb) => cb.addEventListener('change', () => {
+      if (cb.checked) state.specializations.add(cb.dataset.slug);
+      else state.specializations.delete(cb.dataset.slug);
+      syncChecks();
+    }));
+
     clearAllBtn?.addEventListener('click', () => {
       state.cities = new Set();
+      state.specializations = new Set();
       syncChecks();
       apply();
       closeDrawer(true);

@@ -29,6 +29,7 @@ const user = Astro.locals.user;
 const isLoggedIn = !!user;
 
 let studio: Studio | null = null;
+let cover: string | null = null;
 let error = null;
 let sameCityStudios: Studio[] = [];
 let sameCountryStudios: Studio[] = [];
@@ -44,6 +45,7 @@ try {
     const rawStudios: Studio[] = await response.json();
     const mappedStudios = rawStudios;
     studio = mappedStudios.find(s => s.slug === slug) || null;
+    cover = studio ? (studio.cover || (studio as any).image || null) : null;
 
     if (studio) {
       const currentStudio = studio;
@@ -150,9 +152,9 @@ const studioSchema = studio ? {
       <>
         <div class="designer-hero-row">
           <div class="hero-image-wrapper">
-            {studio.cover ? (
+            {cover ? (
               <img 
-                src={normalizeImage(studio.cover, Astro, { width: 1200 })} 
+                src={normalizeImage(cover, Astro, { width: 1200 })} 
                 alt={studio.name} 
                 class="hero-image"
                 loading="eager"
@@ -179,10 +181,17 @@ const studioSchema = studio ? {
                   <img src="/icons/source.svg" alt="" width="16" height="16" />
                   <span>Website</span>
                 </a>
-                <a href={ensureProtocol(studio.instagram) || '#'} target="_blank" rel="noopener noreferrer" class="card-social-btn">
-                  <img src="/icons/instagram.svg" alt="" width="16" height="16" />
-                  <span>Instagram</span>
-                </a>
+                {studio.instagram ? (
+                  <a href={ensureProtocol(studio.instagram)} target="_blank" rel="noopener noreferrer" class="card-social-btn">
+                    <img src="/icons/instagram.svg" alt="" width="16" height="16" />
+                    <span>Instagram</span>
+                  </a>
+                ) : (
+                  <span class="card-social-btn disabled" aria-disabled="true">
+                    <img src="/icons/instagram.svg" alt="" width="16" height="16" />
+                    <span>Instagram</span>
+                  </span>
+                )}
               </div>
 
               <div class="details-section">

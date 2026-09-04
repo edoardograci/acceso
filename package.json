@@ -2,6 +2,9 @@
   "name": "acceso",
   "type": "module",
   "version": "1.0.0",
+  "overrides": {
+    "wrangler": "^4.128.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -27,6 +30,7 @@
     "@types/node": "^20.11.0",
     "dotenv": "^17.2.3",
     "tsx": "^4.7.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.128.0"
   }
 }

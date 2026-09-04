@@ -60,6 +60,7 @@ export interface University {
   latitude: number | null;
   longitude: number | null;
   specialization: string | null;
+  slideshow?: string[] | string;
 }
 
 export interface NavLink {

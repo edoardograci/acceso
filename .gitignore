@@ -5,6 +5,7 @@ package-lock.json
 dist/
 .astro/
 .wrangler/
+wrangler.prod.toml
 
 # Generated files
 build-output.log

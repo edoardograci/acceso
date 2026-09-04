@@ -29,6 +29,7 @@ const user = Astro.locals.user;
 const isLoggedIn = !!user;
 
 let studio: Studio | null = null;
+let cover: string | null = null;
 let error = null;
 let relatedStudios: Studio[] = [];
 let hasProjects = false;
@@ -44,6 +45,7 @@ try {
     const rawStudios: Studio[] = await response.json();
     const mappedStudios = rawStudios;
     studio = mappedStudios.find(s => s.slug === slug) || null;
+    cover = studio ? (studio.cover || (studio as any).image || null) : null;
 
     if (studio) {
       const currentStudio = studio;
@@ -102,9 +104,9 @@ if (!studio && !error) {
       <>
         <div class="designer-hero-row">
           <div class="hero-image-wrapper">
-            {studio.cover ? (
+            {cover ? (
               <img 
-                src={normalizeImage(studio.cover, Astro, { width: 1200 })} 
+                src={normalizeImage(cover, Astro, { width: 1200 })} 
                 alt={studio.name} 
                 class="hero-image"
                 loading="eager"

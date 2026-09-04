@@ -359,7 +359,7 @@ const faqs = [
                       data-slug={city.slug}
                       style={`--city-hue: ${(index * 47 + 180) % 360}`}
                     >
-                      <span class="city-browse-badge" aria-hidden="true">{city.name.charAt(0)}</span>
+                       <span class="city-browse-badge" aria-hidden="true">{(city.name || city.slug || '?').charAt(0)}</span>
                       <span class="city-browse-body">
                         <span class="city-browse-name">{city.name} · {city.count} {itemType === 'museum' ? 'museums' : itemType === 'university' ? 'schools' : 'studios'}</span>
                         <span class="city-browse-meta">{city.country || 'Worldwide'}</span>

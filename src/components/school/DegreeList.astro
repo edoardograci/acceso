@@ -1,0 +1,135 @@
+---
+interface DegreeEntry {
+  name: string;
+  duration: string;
+  credits: string;
+}
+
+interface Props {
+  degreeEntries: DegreeEntry[];
+}
+
+const { degreeEntries } = Astro.props;
+const hasCredits = degreeEntries.some((e) => e.credits);
+---
+
+{degreeEntries.length > 0 && (
+  <section class="content-block academic-block">
+    <h2 class="block-title">Academic Programme</h2>
+    <div class="degrees-list">
+      <div class="degrees-header-row" style={{ gridTemplateColumns: hasCredits ? '1fr auto auto' : '1fr auto' }}>
+        <span class="degrees-th">Degree</span>
+        <span class="degrees-th text-right">Duration</span>
+        {hasCredits && <span class="degrees-th text-right">Credits</span>}
+      </div>
+      {degreeEntries.map((entry) => (
+        <div class="degree-item-row" style={{ gridTemplateColumns: hasCredits ? '1fr auto auto' : '1fr auto' }}>
+          <span class="degree-name">{entry.name}</span>
+          <span class="degree-duration">{entry.duration}</span>
+          {hasCredits && entry.credits && <span class="degree-credits-badge">{entry.credits}</span>}
+        </div>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .content-block {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .block-title {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  .degrees-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--color-stroke);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--color-white);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .degrees-header-row {
+    display: grid;
+    gap: 16px;
+    padding: 12px 20px;
+    background: var(--color-bg-secondary);
+    box-sizing: border-box;
+  }
+
+  .degrees-th {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-gray);
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  .degree-item-row {
+    display: grid;
+    gap: 16px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--color-stroke);
+    align-items: center;
+    transition: background 0.15s ease;
+    box-sizing: border-box;
+  }
+
+  .degree-item-row:hover {
+    background: var(--color-bg-secondary);
+  }
+
+  .degree-name {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-black);
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .degree-duration {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .degree-credits-badge {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-black);
+    text-align: right;
+    white-space: nowrap;
+    background: var(--color-bg-secondary);
+    border-radius: 999px;
+    padding: 4px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    border: 1px solid var(--color-stroke);
+  }
+</style>

@@ -399,6 +399,14 @@
     color: var(--color-black);
   }
 
+  .card-social-btn.disabled {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-stroke);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
   /* Pagination — make the current page clearly distinguishable from the rest */
   .pagination-wrapper .pagination-btn {
     border: 1px solid transparent;

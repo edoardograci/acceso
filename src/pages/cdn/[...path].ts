@@ -63,20 +63,38 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     let object = await bucket.get(key);
 
     // ─────────────────────────────────────────────────────────────
+    // FALLBACK: fairs/{slug}.webp -> fairs/{slug}/logo.webp
+    // Some fairs store the logo as fairs/{slug}.webp in the data
+    // but the actual R2 key is fairs/{slug}/logo.webp
+    // ─────────────────────────────────────────────────────────────
+    if (!object && isImage && path.startsWith('fairs/')) {
+      const logoKey = path.replace(/\.webp$/, '') + '/logo.webp';
+      object = await bucket.get(logoKey);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // DEV FALLBACK: If local R2 is empty, proxy from production
+    // Try the original path first, then the logo fallback for fairs
     // ─────────────────────────────────────────────────────────────
     if (!object && import.meta.env.DEV) {
-      const prodUrl = `https://acceso.design/cdn/${path}`;
-      const prodRes = await fetch(prodUrl);
-      if (prodRes.ok) {
-        const body = await prodRes.arrayBuffer();
-        return new Response(body, {
-          headers: {
-            'Content-Type': prodRes.headers.get('Content-Type') || (isImage ? 'image/webp' : 'application/json'),
-            'Cache-Control': 'no-cache',
-            'X-Proxy-Fallback': 'true'
-          }
-        });
+      const urlsToTry = [path];
+      if (isImage && path.startsWith('fairs/')) {
+        const logoKey = path.replace(/\.webp$/, '') + '/logo.webp';
+        urlsToTry.push(logoKey);
+      }
+      for (const tryPath of urlsToTry) {
+        const prodUrl = `https://acceso.design/cdn/${tryPath}`;
+        const prodRes = await fetch(prodUrl);
+        if (prodRes.ok) {
+          const body = await prodRes.arrayBuffer();
+          return new Response(body, {
+            headers: {
+              'Content-Type': prodRes.headers.get('Content-Type') || (isImage ? 'image/webp' : 'application/json'),
+              'Cache-Control': 'no-cache',
+              'X-Proxy-Fallback': 'true'
+            }
+          });
+        }
       }
     }
 
