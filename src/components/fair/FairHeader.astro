@@ -57,7 +57,7 @@ const { fair, cityName, countryName } = Astro.props;
   </div>
 
   <div class="fair-header-actions">
-    <button class="header-share-btn" id="shareButton" type="button" aria-label="Share this fair">
+    <button class="header-share-btn" id="shareButton" type="button" data-share-name={fair.name} aria-label="Share this fair">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
         <polyline points="16 6 12 2 8 6"/>
@@ -75,7 +75,10 @@ const { fair, cityName, countryName } = Astro.props;
       const shareData = {
         title: document.title,
         url: window.location.href,
-        text: `Check out ${document.title.split('—')[0]} on Acceso`
+        // Read the name from the button rather than slicing document.title on a
+        // separator: titles use a plain hyphen now, and any hyphenated name
+        // ("Foo-Bar Award") would be truncated by a split.
+        text: `Check out ${shareButton.dataset.shareName || document.title} on Acceso`
       };
       try {
         if (navigator.canShare && navigator.canShare(shareData)) {

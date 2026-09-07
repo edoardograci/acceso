@@ -118,12 +118,13 @@ const user = Astro.locals.user;
                 <input type="file" id="cover-upload" name="cover_file" accept=".png, .jpg, .jpeg, .webp" hidden />
                 <div class="upload-ui" id="upload-ui">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" /></svg>
-                  <span>Click to upload image</span>
+                  <span>Click to upload, or drop an image here</span>
                 </div>
                 <div class="upload-preview hidden" id="upload-preview">
                   <div class="preview-thumb"></div>
                   <div class="preview-info">
                     <span class="file-name">filename.jpg</span>
+                    <span class="file-size" id="file-size"></span>
                     <button type="button" class="btn-remove-file">Remove</button>
                   </div>
                 </div>
@@ -197,6 +198,7 @@ const user = Astro.locals.user;
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
+            <p class="suggest-error hidden" id="submit-error" role="alert"></p>
           </div>
 
           <!-- STEP 4: SUCCESS -->
@@ -311,6 +313,21 @@ const user = Astro.locals.user;
                     </div>
                   </div>
 
+                  <!--
+                    Recommendations can be queued up and sent together: the API
+                    accepts a batch and de-dupes server-side, so adding five
+                    places costs one captcha instead of five.
+                  -->
+                  <div class="suggest-queue hidden" id="suggest-queue" aria-live="polite">
+                    <p class="suggest-queue-label">Ready to send</p>
+                    <ul class="suggest-queue-list" id="suggest-queue-list"></ul>
+                  </div>
+
+                  <button type="button" class="btn-add-another" id="suggest-add-another">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+                    Add another
+                  </button>
+
                   <div class="captcha-block suggest-captcha">
                     <input type="hidden" name="suggest_captcha_token" id="suggest-captcha-token" />
                     <p class="captcha-hint suggest-captcha-hint" id="suggest-captcha-hint">Fill in the required fields above to reveal the captcha.</p>
@@ -319,7 +336,7 @@ const user = Astro.locals.user;
                   </div>
 
                   <button type="submit" class="btn-continue suggest-submit">
-                    Send Suggestion
+                    Send Recommendation
                   </button>
                   <p class="suggest-error hidden" id="suggest-error"></p>
                 </form>
@@ -928,7 +945,8 @@ const user = Astro.locals.user;
       transition: all 0.3s;
     }
     .upload-zone:hover { border-color: var(--color-black); background: var(--color-white); }
-    
+    .upload-zone.is-dragging { border-color: var(--color-black); background: var(--color-yellow); }
+
     .upload-ui { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--color-gray); }
     .upload-ui svg { color: var(--color-black); }
     .upload-ui span { font-weight: 400; font-size: 14px; }
@@ -936,10 +954,30 @@ const user = Astro.locals.user;
     .upload-preview { display: flex; align-items: center; gap: 16px; text-align: left; }
     .preview-thumb { width: 64px; height: 64px; border-radius: 8px; background-size: cover; background-position: center; flex-shrink: 0; }
     .preview-info { flex: 1; min-width: 0; }
-    .file-name { display: block; font-size: 14px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
+    .file-name { display: block; font-size: 14px; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
+    .file-size { display: block; font-size: 12px; color: var(--color-gray); margin-bottom: 4px; }
     .btn-remove-file { font-size: 11px; font-weight: 400; text-transform: uppercase; color: var(--color-error); background: transparent; border: none; cursor: pointer; padding: 0; }
 
     .error-msg { font-size: 13px; color: var(--color-error); font-weight: 400; margin-top: 4px; }
+
+    /* Per-field validation message, written in by the step validator. */
+    .field-error {
+      font-size: 13px;
+      line-height: 1.4;
+      color: #c0392b;
+      margin: 4px 0 0;
+    }
+
+    .input-group input.is-invalid,
+    .input-group textarea.is-invalid {
+      border-color: #c0392b;
+    }
+
+    /* A disabled Continue reads as "the step isn't finished", not as broken. */
+    .btn-continue:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
 
     .step-actions { display: flex; align-items: center; gap: 16px; margin-top: 12px; }
     .step-actions.split { justify-content: space-between; }
@@ -1095,6 +1133,102 @@ const user = Astro.locals.user;
 
     .suggest-captcha { margin-top: 24px; }
     .suggest-submit { width: 100%; justify-content: center; margin-top: 24px; }
+    .suggest-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Queued recommendations, shown as removable chips above the captcha. */
+    .suggest-queue { margin-top: 20px; }
+
+    .suggest-queue-label {
+      font-size: 11px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--color-gray);
+      margin: 0 0 8px;
+    }
+
+    .suggest-queue-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .suggest-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+      border: 1px solid var(--color-stroke);
+      border-radius: 9999px;
+      background: var(--color-white);
+      padding: 6px 8px 6px 10px;
+      font-size: 13px;
+    }
+
+    .suggest-chip-type {
+      border-radius: 9999px;
+      background: var(--color-yellow);
+      padding: 1px 8px;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--color-black);
+    }
+
+    .suggest-chip-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .suggest-chip-remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 9999px;
+      background: var(--color-bg-secondary);
+      font-size: 15px;
+      line-height: 1;
+      color: var(--color-gray);
+      cursor: pointer;
+    }
+
+    .suggest-chip-remove:hover {
+      background: var(--color-black);
+      color: var(--color-white);
+    }
+
+    .btn-add-another {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 16px;
+      border: 1px solid var(--color-stroke);
+      border-radius: 9999px;
+      background: var(--color-white);
+      padding: 8px 16px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--color-black);
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .btn-add-another:hover:not(:disabled) {
+      border-color: var(--color-black);
+      background: var(--color-bg-secondary);
+    }
+
+    .btn-add-another:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
 
     .btn-suggest-another {
       height: 48px;
@@ -1264,26 +1398,123 @@ const user = Astro.locals.user;
       requestAnimationFrame(tryRender);
     }
 
+    /* ===== Inline step validation =====
+       The browser's own reportValidity() tooltip disappears on the next click
+       and can't say anything specific, so each field gets a persistent inline
+       message instead. Continue stays disabled until the step is actually
+       valid, so nobody reaches the review screen with a broken URL. */
+
+    function fieldLabel(field) {
+      const group = field.closest('.input-group');
+      // childNodes[0] is the label's own text, before any "(optional)" span.
+      const label = group?.querySelector('label');
+      return label?.childNodes[0]?.textContent?.trim() || 'This field';
+    }
+
+    function setFieldError(field, message) {
+      const group = field.closest('.input-group');
+      if (!group) return;
+      let node = group.querySelector('.field-error');
+      if (!node) {
+        node = document.createElement('p');
+        node.className = 'field-error';
+        group.appendChild(node);
+      }
+      node.textContent = message;
+      field.setAttribute('aria-invalid', 'true');
+      field.classList.add('is-invalid');
+    }
+
+    function clearFieldError(field) {
+      const group = field.closest('.input-group');
+      group?.querySelector('.field-error')?.remove();
+      field.removeAttribute('aria-invalid');
+      field.classList.remove('is-invalid');
+    }
+
+    /** Why this field is invalid, or null when it's fine. */
+    function fieldProblem(field) {
+      const value = String(field.value || '').trim();
+      if (field.required && !value) return `${fieldLabel(field)} is required.`;
+      if (!value) return null;
+      if (field.type === 'url' && !/^https?:\/\/[^\s.]+\.\S+$/i.test(value)) {
+        return 'Enter a full address, e.g. https://studio.com';
+      }
+      if (field.name === 'description' && value.length > 1200) {
+        return 'Description must be 1200 characters or fewer.';
+      }
+      return null;
+    }
+
+    function stepFields(step) {
+      return Array.from(step.querySelectorAll('input[required], textarea[required], input[type="url"]'));
+    }
+
+    /** Validate a step. `paint` writes the messages; without it this is a silent check. */
+    function validateStep(step, paint) {
+      let valid = true;
+
+      stepFields(step).forEach((field) => {
+        const problem = fieldProblem(field);
+        if (problem) {
+          valid = false;
+          if (paint) setFieldError(field, problem);
+        } else if (paint) {
+          clearFieldError(field);
+        }
+      });
+
+      if (Number(step.dataset.step || '1') === 2 && !uploadedFile) {
+        valid = false;
+        if (paint) {
+          uploadError?.classList.remove('hidden');
+          if (uploadError) uploadError.textContent = 'Please upload a cover image before continuing.';
+        }
+      }
+
+      return valid;
+    }
+
+    /** Keep each step's Continue button in sync with that step's validity. */
+    function syncContinueButtons() {
+      steps.forEach((step) => {
+        const button = step.querySelector('.btn-continue[data-next], .btn-continue.final-cta');
+        if (!button) return;
+        button.disabled = !validateStep(step, false);
+      });
+    }
+
+    // A URL typed without a scheme is the single most common failure here;
+    // normalise it on blur rather than rejecting it.
+    form?.querySelectorAll('input[type="url"]').forEach((field) => {
+      field.addEventListener('blur', () => {
+        const value = field.value.trim();
+        if (value && !/^https?:\/\//i.test(value) && /^[^\s/]+\.[^\s]+$/.test(value)) {
+          field.value = `https://${value}`;
+        }
+        const problem = fieldProblem(field);
+        if (problem) setFieldError(field, problem);
+        else clearFieldError(field);
+        syncContinueButtons();
+      });
+    });
+
+    form?.querySelectorAll('input, textarea').forEach((field) => {
+      field.addEventListener('input', () => {
+        if (field.classList.contains('is-invalid') && !fieldProblem(field)) {
+          clearFieldError(field);
+        }
+        syncContinueButtons();
+      });
+    });
+
     // Navigation
     document.querySelectorAll('.btn-continue[data-next]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const step = e.currentTarget.closest('.form-step');
-        if (step) {
-          const stepNumber = Number(step.dataset.step || '1');
-          const requiredFields = step.querySelectorAll('input[required], textarea[required]');
-          let allValid = true;
-          requiredFields.forEach((field) => {
-            if (!field.checkValidity()) {
-              field.reportValidity();
-              allValid = false;
-            }
-          });
-          if (stepNumber === 2 && !uploadedFile) {
-            uploadError?.classList.remove('hidden');
-            if (uploadError) uploadError.textContent = 'Please upload a cover image before continuing.';
-            allValid = false;
-          }
-          if (!allValid) return;
+        if (step && !validateStep(step, true)) {
+          step.querySelector('.is-invalid')?.focus();
+          return;
         }
 
         const next = e.currentTarget.dataset.next;
@@ -1321,36 +1552,84 @@ const user = Astro.locals.user;
     }
 
     // File Upload Logic
+    const fileSizeDisplay = document.getElementById('file-size');
+    const MAX_UPLOAD_BYTES = 1024 * 1024; // 1MB — matches the API's own limit
+    const ALLOWED_UPLOAD_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
     uploadZone?.addEventListener('click', () => fileInput?.click());
 
-    fileInput?.addEventListener('change', (e) => {
-      const target = e.target;
-      const file = target.files?.[0];
-      if (!file) return;
+    /** Validate and preview one file. Returns false when it was rejected. */
+    function acceptFile(file) {
+      if (!file) return false;
 
-      // Validation
-      const maxSize = 1024 * 1024; // 1MB
-      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-
-      if (file.size > maxSize || !allowedTypes.includes(file.type)) {
+      // Say which rule was broken — "too large or wrong format" leaves the
+      // person guessing which of the two it was.
+      if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
         uploadError?.classList.remove('hidden');
-        return;
+        if (uploadError) uploadError.textContent = 'That format isn’t supported. Use PNG, JPG or WEBP.';
+        return false;
+      }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        uploadError?.classList.remove('hidden');
+        if (uploadError) {
+          uploadError.textContent = `That image is ${formatBytes(file.size)}. The limit is 1 MB - try compressing it.`;
+        }
+        return false;
       }
 
       uploadError?.classList.add('hidden');
-      if (uploadError) uploadError.textContent = 'File is too large (max 1MB) or invalid format.';
       uploadedFile = file;
 
-      // UI Switch
       uploadUI?.classList.add('hidden');
       uploadPreview?.classList.remove('hidden');
       if (fileNameDisplay) fileNameDisplay.textContent = file.name;
+      if (fileSizeDisplay) fileSizeDisplay.textContent = formatBytes(file.size);
 
       const reader = new FileReader();
       reader.onload = (re) => {
         if (thumb) thumb.style.backgroundImage = `url(${re.target?.result})`;
       };
       reader.readAsDataURL(file);
+
+      syncContinueButtons();
+      return true;
+    }
+
+    fileInput?.addEventListener('change', (e) => {
+      acceptFile(e.target.files?.[0]);
+    });
+
+    ['dragenter', 'dragover'].forEach((type) => {
+      uploadZone?.addEventListener(type, (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('is-dragging');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach((type) => {
+      uploadZone?.addEventListener(type, (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('is-dragging');
+      });
+    });
+
+    uploadZone?.addEventListener('drop', (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+      // Mirror the drop into the file input so the form still carries it if
+      // anything ever falls back to a native submit.
+      if (fileInput && e.dataTransfer) {
+        try {
+          fileInput.files = e.dataTransfer.files;
+        } catch {}
+      }
+      acceptFile(file);
     });
 
     removeBtn?.addEventListener('click', (e) => {
@@ -1359,6 +1638,7 @@ const user = Astro.locals.user;
       if (fileInput) fileInput.value = '';
       uploadUI?.classList.remove('hidden');
       uploadPreview?.classList.add('hidden');
+      syncContinueButtons();
     });
 
     // Preview Logic
@@ -1397,16 +1677,29 @@ const user = Astro.locals.user;
       }
       captchaError?.classList.add('hidden');
 
-      const descriptionValue = String((new FormData(form).get('description') || '')).trim();
+      const submitError = document.getElementById('submit-error');
+      const showSubmitError = (message) => {
+        if (!submitError) return;
+        submitError.textContent = message;
+        submitError.classList.remove('hidden');
+      };
+      submitError?.classList.add('hidden');
+
       if (!uploadedFile) {
         uploadError?.classList.remove('hidden');
         if (uploadError) uploadError.textContent = 'Please upload a cover image before submitting.';
         updateStepUI(2);
         return;
       }
-      if (!descriptionValue || descriptionValue.length > 1200) {
-        alert('Description is required and must be 1200 characters or fewer.');
-        updateStepUI(2);
+
+      // Re-run the earlier steps' checks: a field can be edited after the
+      // review screen was built, and the API rejects anything invalid anyway.
+      const invalidStep = Array.from(steps).find(
+        (step) => Number(step.dataset.step || '1') < 3 && !validateStep(step, true)
+      );
+      if (invalidStep) {
+        updateStepUI(Number(invalidStep.dataset.step || '1'));
+        invalidStep.querySelector('.is-invalid')?.focus();
         return;
       }
 
@@ -1438,7 +1731,7 @@ const user = Astro.locals.user;
           const stepsCount = document.querySelector('.step-path-container');
           if (stepsCount) stepsCount.style.opacity = '0';
         } catch (err) {
-          alert(err?.message || 'Submission failed. Please try again.');
+          showSubmitError(err?.message || 'Submission failed. Please try again.');
           btn.innerHTML = originalHtml;
           btn.disabled = false;
         } finally {
@@ -1476,12 +1769,108 @@ const user = Astro.locals.user;
       suggestCaptchaError?.classList.add('hidden');
     }
 
-    function suggestFieldsReady() {
+    /* ===== Recommendation queue =====
+       /api/suggestions accepts up to 20 entries per POST and de-dupes them
+       server-side. Queuing locally means several places cost one captcha and
+       one round trip instead of one each. */
+    const MAX_QUEUED_SUGGESTIONS = 20;
+    const queuedSuggestions = [];
+    const suggestQueue = document.getElementById('suggest-queue');
+    const suggestQueueList = document.getElementById('suggest-queue-list');
+    const suggestAddAnother = document.getElementById('suggest-add-another');
+    const suggestSubmitBtn = suggestForm?.querySelector('.suggest-submit') || null;
+
+    /** The row currently typed into the form, trimmed. */
+    function currentSuggestion() {
       const fd = new FormData(suggestForm);
-      const type = String(fd.get('suggest_type') || '').trim();
-      const name = String(fd.get('suggest_name') || '').trim();
-      const city = String(fd.get('suggest_city') || '').trim();
-      return Boolean(type && name && city);
+      return {
+        type: String(fd.get('suggest_type') || 'Designer').trim(),
+        name: String(fd.get('suggest_name') || '').trim(),
+        city: String(fd.get('suggest_city') || '').trim(),
+        website: String(fd.get('suggest_website') || '').trim(),
+      };
+    }
+
+    function currentSuggestionComplete() {
+      const s = currentSuggestion();
+      return Boolean(s.type && s.name && s.city);
+    }
+
+    function clearSuggestFields() {
+      ['suggest_name', 'suggest_city', 'suggest_website'].forEach((id) => {
+        const field = document.getElementById(id);
+        if (field) field.value = '';
+      });
+    }
+
+    function renderSuggestQueue() {
+      if (!suggestQueue || !suggestQueueList) return;
+
+      suggestQueue.classList.toggle('hidden', queuedSuggestions.length === 0);
+      suggestQueueList.replaceChildren(
+        ...queuedSuggestions.map((item, index) => {
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'suggest-chip-remove';
+          remove.setAttribute('aria-label', `Remove ${item.name}`);
+          remove.textContent = '×';
+          remove.addEventListener('click', () => {
+            queuedSuggestions.splice(index, 1);
+            renderSuggestQueue();
+          });
+
+          const li = document.createElement('li');
+          li.className = 'suggest-chip';
+
+          const label = document.createElement('span');
+          label.className = 'suggest-chip-label';
+          label.textContent = `${item.name} · ${item.city}`;
+
+          const type = document.createElement('span');
+          type.className = 'suggest-chip-type';
+          type.textContent = item.type;
+
+          li.append(type, label, remove);
+          return li;
+        })
+      );
+
+      if (suggestAddAnother) {
+        suggestAddAnother.disabled = queuedSuggestions.length >= MAX_QUEUED_SUGGESTIONS;
+      }
+
+      // Count the typed-but-not-yet-added row, so the button always names the
+      // number of places that will actually be sent.
+      const total = queuedSuggestions.length + (currentSuggestionComplete() ? 1 : 0);
+      if (suggestSubmitBtn) {
+        suggestSubmitBtn.textContent =
+          total > 1 ? `Send ${total} Recommendations` : 'Send Recommendation';
+        suggestSubmitBtn.disabled = total === 0;
+      }
+    }
+
+    suggestAddAnother?.addEventListener('click', () => {
+      const suggestion = currentSuggestion();
+      if (!suggestion.name || !suggestion.city) {
+        if (suggestError) {
+          suggestError.textContent = 'Add a name and a city before queueing this one.';
+          suggestError.classList.remove('hidden');
+        }
+        return;
+      }
+      if (queuedSuggestions.length >= MAX_QUEUED_SUGGESTIONS) return;
+
+      suggestError?.classList.add('hidden');
+      queuedSuggestions.push(suggestion);
+      clearSuggestFields();
+      renderSuggestQueue();
+      document.getElementById('suggest_name')?.focus();
+    });
+
+    // The captcha appears once there is at least one place to send — whether
+    // it is queued or still in the fields.
+    function suggestFieldsReady() {
+      return queuedSuggestions.length > 0 || currentSuggestionComplete();
     }
 
     function renderSuggestTurnstile() {
@@ -1611,8 +2000,15 @@ const user = Astro.locals.user;
     ].filter(Boolean);
 
     suggestRequiredInputs.forEach((input) => {
-      input.addEventListener('input', maybeRenderSuggestTurnstile);
+      input.addEventListener('input', () => {
+        renderSuggestQueue();
+        maybeRenderSuggestTurnstile();
+      });
     });
+
+    // Paint the initial state: empty queue, disabled submit, hidden captcha.
+    renderSuggestQueue();
+    syncContinueButtons();
 
     /* ===== MOBILE TAB SWITCHER (Submit studio / Suggest place) ===== */
     const subTabBtns = document.querySelectorAll('.sub-tab-btn');
@@ -1650,15 +2046,14 @@ const user = Astro.locals.user;
       }
       suggestCaptchaError?.classList.add('hidden');
 
-      const fd = new FormData(suggestForm);
-      const suggestion = {
-        type: String(fd.get('suggest_type') || 'Designer').trim(),
-        name: String(fd.get('suggest_name') || '').trim(),
-        city: String(fd.get('suggest_city') || '').trim(),
-        website: String(fd.get('suggest_website') || '').trim(),
-      };
+      // Everything queued, plus the row still in the fields if it's complete —
+      // so a single recommendation never needs the "Add another" step first.
+      const payloadSuggestions = queuedSuggestions.slice();
+      if (currentSuggestionComplete()) {
+        payloadSuggestions.push(currentSuggestion());
+      }
 
-      if (!suggestion.name || !suggestion.city) {
+      if (!payloadSuggestions.length) {
         if (suggestError) {
           suggestError.textContent = 'Please provide at least a name and a city.';
           suggestError.classList.remove('hidden');
@@ -1667,7 +2062,7 @@ const user = Astro.locals.user;
       }
 
       const submitBtn = suggestForm.querySelector('.suggest-submit');
-      const originalHtml = submitBtn?.innerHTML || 'Send Suggestion';
+      const originalHtml = submitBtn?.innerHTML || 'Send Recommendation';
       if (submitBtn) {
         submitBtn.innerHTML = 'Sending...';
         submitBtn.disabled = true;
@@ -1677,7 +2072,7 @@ const user = Astro.locals.user;
         try {
           const payload = new FormData();
           payload.set('captcha_token', token);
-          payload.set('suggestions', JSON.stringify([suggestion]));
+          payload.set('suggestions', JSON.stringify(payloadSuggestions));
 
           const res = await fetch('/api/suggestions', {
             method: 'POST',
@@ -1687,6 +2082,24 @@ const user = Astro.locals.user;
           const jsonRes = await res.json().catch(() => ({}));
           if (!res.ok) {
             throw new Error(jsonRes?.error || 'Suggestion failed');
+          }
+
+          queuedSuggestions.length = 0;
+          renderSuggestQueue();
+
+          // The API silently drops places it already knows about; say so
+          // rather than implying everything was new.
+          const successCopy = suggestSuccess?.querySelector('.success-p');
+          if (successCopy && jsonRes?.duplicate) {
+            successCopy.textContent =
+              'We already had these on file - thank you for checking. Nothing new was added.';
+          } else if (successCopy && typeof jsonRes?.count === 'number') {
+            const sent = jsonRes.count;
+            const skipped = payloadSuggestions.length - sent;
+            successCopy.textContent =
+              `${sent} recommendation${sent === 1 ? '' : 's'} received.` +
+              (skipped > 0 ? ` ${skipped} ${skipped === 1 ? 'was' : 'were'} already on our list.` : '') +
+              " We'll research each place before adding it to Acceso.";
           }
 
           suggestForm.classList.add('hidden');
@@ -1711,6 +2124,8 @@ const user = Astro.locals.user;
       suggestForm?.reset();
       csSetValue(csOptions[0].dataset.value || '');
       csActiveIndex = 0;
+      queuedSuggestions.length = 0;
+      renderSuggestQueue();
       suggestError?.classList.add('hidden');
       suggestSuccess?.classList.add('hidden');
       suggestForm?.classList.remove('hidden');

@@ -33,24 +33,24 @@ export const GET: APIRoute = async ({ site, url }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
   const lastmod = toW3CDate(new Date());
 
-  const [fairsRes, museumsRes, schoolsRes, studiosRes] = await Promise.allSettled([
+  const [fairsRes, museumsRes, schoolsRes] = await Promise.allSettled([
     fetchList(url.origin, '/cdn/fairs.json'),
     fetchList(url.origin, '/cdn/museums.json'),
     fetchList(url.origin, '/cdn/universities.json'),
-    fetchList(url.origin, '/cdn/test-studios.json'),
   ]);
 
   const fairPlaces = fairsRes.status === 'fulfilled' ? validPlaces(fairsRes.value) : new Set<string>();
   const museumPlaces = museumsRes.status === 'fulfilled' ? validPlaces(museumsRes.value) : new Set<string>();
   const schoolPlaces = schoolsRes.status === 'fulfilled' ? validPlaces(schoolsRes.value) : new Set<string>();
-  const studioPlaces = studiosRes.status === 'fulfilled' ? validPlaces(studiosRes.value) : new Set<string>();
   // Awards carry no location fields, so their /in/<place> pages always 404.
+  // Designer locations are deliberately absent: sitemaps/designer-locations.xml
+  // owns /designers/in/*. Emitting them here too listed all 106 of them in two
+  // sitemaps at conflicting priorities.
 
   const types: { type: string; places: Set<string>; base: string }[] = [
     { type: 'fairs', places: fairPlaces, base: '/directory/fairs' },
     { type: 'museums', places: museumPlaces, base: '/directory/museums' },
     { type: 'schools', places: schoolPlaces, base: '/directory/schools' },
-    { type: 'designers', places: studioPlaces, base: '/designers' },
   ];
 
   const urls = [];

@@ -12,11 +12,16 @@ const perPage = 18;
 
 const isDev = import.meta.env.DEV;
 const origin = Astro.url.origin;
-const dataOrigin = isDev ? 'https://json.acceso.design' : origin;
+// Same convention as every other page: in dev the CMS JSON is read straight
+// from the prod host at its bare root, in prod from this origin under /cdn.
+// This file used to join '/cdn/<file>.json' onto the dev host too, which
+// resolved to json.acceso.design/cdn/... and 404s - so `all` came back empty,
+// totalPages collapsed to 1, and every page >= 2 redirected to /404 locally
+// while the sitemap advertised 27 of them.
+const domain = isDev ? 'https://json.acceso.design' : `${origin}/cdn`;
 
 async function fetchJson<T>(path: string): Promise<T> {
-  const u = new URL(path, dataOrigin).toString();
-  const r = await fetch(u);
+  const r = await fetch(`${domain}${path}`);
   if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`);
   return (await r.json()) as T;
 }
@@ -26,7 +31,7 @@ let total = 0;
 let totalPages = 1;
 
 try {
-  const data = await fetchJson<any[]>('/cdn/test-studios.json');
+  const data = await fetchJson<any[]>('/test-studios.json');
   all = Array.isArray(data) ? data : [];
   total = all.length;
   totalPages = Math.max(1, Math.ceil(total / perPage));
@@ -45,7 +50,7 @@ const slice = all.slice((page - 1) * perPage, page * perPage).map((s) => {
 });
 
 const title = `Design studios directory (Page ${page}) | Acceso`;
-const description = `Browse independent industrial and furniture design studios — page ${page} of ${totalPages}. Explore profiles and locations.`;
+const description = `Browse independent industrial and furniture design studios - page ${page} of ${totalPages}. Explore profiles and locations.`;
 
 const canonical = new URL(`/designers/page/${page}`, Astro.site);
 
@@ -63,7 +68,7 @@ const schema = {
     breadcrumbList(crumbs),
     itemList({
       url: canonical.toString(),
-      name: `Design studios directory — page ${page}`,
+      name: `Design studios directory - page ${page}`,
       items: slice.map((s) => ({ name: s.name, url: new URL(`/designers/${encodeURIComponent(s.slug)}`, Astro.site).toString() })),
     }),
   ],

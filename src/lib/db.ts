@@ -693,7 +693,6 @@ export interface AdminTursoMetrics {
   saves: { designers: number; objects: number; museums: number; universities: number };
   recentSaves: { designers: number; objects: number; museums: number; universities: number };
   submissionsByStatus: { status: string; count: number }[];
-  pendingStudioRequests: number;
   suggestions: number;
   errors: string[];
 }
@@ -705,7 +704,6 @@ const EMPTY_ADMIN_TURSO_METRICS: AdminTursoMetrics = {
   saves: { designers: 0, objects: 0, museums: 0, universities: 0 },
   recentSaves: { designers: 0, objects: 0, museums: 0, universities: 0 },
   submissionsByStatus: [],
-  pendingStudioRequests: 0,
   suggestions: 0,
   errors: [],
 };
@@ -714,9 +712,9 @@ const EMPTY_ADMIN_TURSO_METRICS: AdminTursoMetrics = {
  * Aggregate app-side metrics for the admin dashboard.
  *
  * Every query is run independently and failures are collected rather than
- * thrown: `submissions`, `studio_requests` and `suggestions` were created
- * outside the setup scripts, so a table missing in one environment must not
- * blank out the whole panel.
+ * thrown: `submissions` and `suggestions` were created outside the setup
+ * scripts, so a table missing in one environment must not blank out the whole
+ * panel.
  */
 export async function getAdminTursoMetrics(env: Env, days: number): Promise<AdminTursoMetrics> {
   const windowDays = Math.min(Math.max(Math.floor(days) || 7, 1), 365);
@@ -799,13 +797,6 @@ export async function getAdminTursoMetrics(env: Env, days: number): Promise<Admi
       }));
     }),
 
-    run('studio_requests', async () => {
-      const result = await turso.execute({
-        sql: "SELECT count(*) AS count FROM studio_requests WHERE status = 'pending'",
-      });
-      metrics.pendingStudioRequests = Number(result.rows[0]?.count ?? 0);
-    }),
-
     run('suggestions', async () => {
       const result = await turso.execute({
         sql: 'SELECT count(*) AS count FROM suggestions WHERE created_at >= ?',
@@ -817,6 +808,20 @@ export async function getAdminTursoMetrics(env: Env, days: number): Promise<Admi
 
   setCache(cacheKey, metrics);
   return metrics;
+}
+
+export const SUBMISSION_STATUSES = ['pending', 'approved', 'rejected'] as const;
+export type SubmissionStatus = (typeof SUBMISSION_STATUSES)[number];
+
+export const SUGGESTION_STATUSES = ['new', 'accepted', 'dismissed'] as const;
+export type SuggestionStatus = (typeof SUGGESTION_STATUSES)[number];
+
+export function isSubmissionStatus(value: unknown): value is SubmissionStatus {
+  return SUBMISSION_STATUSES.includes(value as SubmissionStatus);
+}
+
+export function isSuggestionStatus(value: unknown): value is SuggestionStatus {
+  return SUGGESTION_STATUSES.includes(value as SuggestionStatus);
 }
 
 export interface AdminSubmissionRow {
@@ -833,6 +838,12 @@ export interface AdminSubmissionRow {
   imageUrl: string | null;
   status: string;
   createdAt: string;
+  reviewedAt: number | null;
+  reviewedBy: string | null;
+  adminNotes: string | null;
+  profileUrl: string | null;
+  acceptanceEmailSentAt: number | null;
+  rejectionEmailSentAt: number | null;
 }
 
 export interface AdminSuggestionRow {
@@ -841,25 +852,71 @@ export interface AdminSuggestionRow {
   name: string;
   city: string;
   website: string | null;
+  status: string;
   createdAt: string;
+  reviewedAt: number | null;
 }
 
 export interface AdminInbox {
   submissions: AdminSubmissionRow[];
   suggestions: AdminSuggestionRow[];
+  /** Queue sizes, so the shell can badge nav items without a second request. */
+  counts: {
+    submissions: Record<string, number>;
+    suggestions: Record<string, number>;
+    pendingSubmissions: number;
+    newSuggestions: number;
+  };
   errors: string[];
+}
+
+const ADMIN_INBOX_CACHE_KEY = 'admin_inbox';
+
+/**
+ * Drop the cached inbox. Every admin write calls this: `getAdminInbox` is
+ * cached for CACHE_TTL, so without an explicit bust the queue would keep
+ * showing the pre-action state for up to 30s after an approve or a delete —
+ * which reads as the action having silently failed.
+ */
+export function invalidateAdminInbox(): void {
+  invalidateCache(ADMIN_INBOX_CACHE_KEY);
+}
+
+function toNullableNumber(value: any): number | null {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function tally(rows: { status: string }[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const row of rows) {
+    const key = row.status || 'unknown';
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return counts;
 }
 
 /**
  * Full submission/suggestion rows for the admin inbox. Independent of PostHog.
+ *
+ * The review columns (`reviewed_at`, `admin_notes`, …) are added by
+ * scripts/migrate-review-workflow.ts. Each SELECT is attempted with those
+ * columns first and retried without them, so an un-migrated environment
+ * degrades to the old read-only view instead of erroring out entirely.
  */
 export async function getAdminInbox(env: Env): Promise<AdminInbox> {
-  const cacheKey = getCacheKey('admin_inbox');
+  const cacheKey = getCacheKey(ADMIN_INBOX_CACHE_KEY);
   const cached = getFromCache<AdminInbox>(cacheKey);
   if (cached) return cached;
 
   const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
-  const inbox: AdminInbox = { submissions: [], suggestions: [], errors: [] };
+  const inbox: AdminInbox = {
+    submissions: [],
+    suggestions: [],
+    counts: { submissions: {}, suggestions: {}, pendingSubmissions: 0, newSuggestions: 0 },
+    errors: [],
+  };
 
   const run = async (label: string, fn: () => Promise<void>) => {
     try {
@@ -869,15 +926,34 @@ export async function getAdminInbox(env: Env): Promise<AdminInbox> {
     }
   };
 
+  /** Run `sql`, falling back to `fallbackSql` when the review columns are absent. */
+  const selectWithFallback = async (sql: string, fallbackSql: string) => {
+    try {
+      return await turso.execute({ sql });
+    } catch (error: any) {
+      if (/no such column/i.test(String(error?.message || ''))) {
+        return await turso.execute({ sql: fallbackSql });
+      }
+      throw error;
+    }
+  };
+
   await Promise.all([
     run('submissions', async () => {
-      const result = await turso.execute({
-        sql: `SELECT id, user_id, name, website, city, country, address, instagram,
-                     description, contact_email, image_url, status, created_at
-              FROM submissions
-              ORDER BY created_at DESC
-              LIMIT 200`,
-      });
+      const result = await selectWithFallback(
+        `SELECT id, user_id, name, website, city, country, address, instagram,
+                description, contact_email, image_url, status, created_at,
+                reviewed_at, reviewed_by, admin_notes, profile_url,
+                acceptance_email_sent_at, rejection_email_sent_at
+         FROM submissions
+         ORDER BY created_at DESC
+         LIMIT 200`,
+        `SELECT id, user_id, name, website, city, country, address, instagram,
+                description, contact_email, image_url, status, created_at
+         FROM submissions
+         ORDER BY created_at DESC
+         LIMIT 200`
+      );
       inbox.submissions = result.rows.map((row: any) => ({
         id: String(row.id ?? ''),
         userId: String(row.user_id ?? ''),
@@ -892,26 +968,194 @@ export async function getAdminInbox(env: Env): Promise<AdminInbox> {
         imageUrl: row.image_url != null ? String(row.image_url) : null,
         status: String(row.status ?? 'unknown'),
         createdAt: String(row.created_at ?? ''),
+        reviewedAt: toNullableNumber(row.reviewed_at),
+        reviewedBy: row.reviewed_by != null ? String(row.reviewed_by) : null,
+        adminNotes: row.admin_notes != null ? String(row.admin_notes) : null,
+        profileUrl: row.profile_url != null ? String(row.profile_url) : null,
+        acceptanceEmailSentAt: toNullableNumber(row.acceptance_email_sent_at),
+        rejectionEmailSentAt: toNullableNumber(row.rejection_email_sent_at),
       }));
     }),
     run('suggestions', async () => {
-      const result = await turso.execute({
-        sql: `SELECT id, type, name, city, website, created_at
-              FROM suggestions
-              ORDER BY created_at DESC
-              LIMIT 200`,
-      });
+      const result = await selectWithFallback(
+        `SELECT id, type, name, city, website, created_at, status, reviewed_at
+         FROM suggestions
+         ORDER BY created_at DESC
+         LIMIT 400`,
+        `SELECT id, type, name, city, website, created_at
+         FROM suggestions
+         ORDER BY created_at DESC
+         LIMIT 400`
+      );
       inbox.suggestions = result.rows.map((row: any) => ({
         id: String(row.id ?? ''),
         type: String(row.type ?? ''),
         name: String(row.name ?? ''),
         city: String(row.city ?? ''),
         website: row.website != null ? String(row.website) : null,
+        status: String(row.status ?? 'new'),
         createdAt: String(row.created_at ?? ''),
+        reviewedAt: toNullableNumber(row.reviewed_at),
       }));
     }),
   ]);
 
+  inbox.counts.submissions = tally(inbox.submissions);
+  inbox.counts.suggestions = tally(inbox.suggestions);
+  inbox.counts.pendingSubmissions = inbox.counts.submissions.pending ?? 0;
+  inbox.counts.newSuggestions = inbox.counts.suggestions.new ?? 0;
+
   setCache(cacheKey, inbox);
   return inbox;
+}
+
+/* ============================================================
+   Admin review actions
+   Writes behind /api/admin/*. Each one busts the inbox cache so the queue
+   reflects the change on the next poll.
+   ============================================================ */
+
+/** One submission by id, or null. Used before sending a decision email. */
+export async function getSubmissionById(
+  id: string,
+  env: Env
+): Promise<AdminSubmissionRow | null> {
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  const result = await turso.execute({
+    sql: `SELECT id, user_id, name, website, city, country, address, instagram,
+                 description, contact_email, image_url, status, created_at,
+                 reviewed_at, reviewed_by, admin_notes, profile_url,
+                 acceptance_email_sent_at, rejection_email_sent_at
+          FROM submissions WHERE id = ? LIMIT 1`,
+    args: [id],
+  });
+
+  const row: any = result.rows[0];
+  if (!row) return null;
+
+  return {
+    id: String(row.id ?? ''),
+    userId: String(row.user_id ?? ''),
+    name: String(row.name ?? ''),
+    website: String(row.website ?? ''),
+    city: String(row.city ?? ''),
+    country: String(row.country ?? ''),
+    address: row.address != null ? String(row.address) : null,
+    instagram: row.instagram != null ? String(row.instagram) : null,
+    description: String(row.description ?? ''),
+    contactEmail: String(row.contact_email ?? ''),
+    imageUrl: row.image_url != null ? String(row.image_url) : null,
+    status: String(row.status ?? 'unknown'),
+    createdAt: String(row.created_at ?? ''),
+    reviewedAt: toNullableNumber(row.reviewed_at),
+    reviewedBy: row.reviewed_by != null ? String(row.reviewed_by) : null,
+    adminNotes: row.admin_notes != null ? String(row.admin_notes) : null,
+    profileUrl: row.profile_url != null ? String(row.profile_url) : null,
+    acceptanceEmailSentAt: toNullableNumber(row.acceptance_email_sent_at),
+    rejectionEmailSentAt: toNullableNumber(row.rejection_email_sent_at),
+  };
+}
+
+export interface SubmissionUpdate {
+  status?: SubmissionStatus;
+  adminNotes?: string | null;
+  profileUrl?: string | null;
+}
+
+/**
+ * Apply a review decision to a submission.
+ *
+ * `reviewed_at`/`reviewed_by` are stamped only when the status actually moves
+ * off `pending`, so editing a note on an already-reviewed row doesn't rewrite
+ * who reviewed it. Returns false when no row matched.
+ */
+export async function updateSubmission(
+  id: string,
+  update: SubmissionUpdate,
+  reviewerEmail: string,
+  env: Env
+): Promise<boolean> {
+  const sets: string[] = [];
+  const args: any[] = [];
+
+  if (update.status !== undefined) {
+    sets.push('status = ?', 'updated_at = ?');
+    args.push(update.status, Math.floor(Date.now() / 1000));
+
+    if (update.status === 'pending') {
+      // Reopening a decision clears the review stamp; the email timestamps stay
+      // so an already-notified applicant is still visibly notified.
+      sets.push('reviewed_at = NULL', 'reviewed_by = NULL');
+    } else {
+      sets.push('reviewed_at = ?', 'reviewed_by = ?');
+      args.push(Math.floor(Date.now() / 1000), reviewerEmail);
+    }
+  }
+
+  if (update.adminNotes !== undefined) {
+    sets.push('admin_notes = ?');
+    args.push(update.adminNotes || null);
+  }
+
+  if (update.profileUrl !== undefined) {
+    sets.push('profile_url = ?');
+    args.push(update.profileUrl || null);
+  }
+
+  if (!sets.length) return false;
+
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  const result = await turso.execute({
+    sql: `UPDATE submissions SET ${sets.join(', ')} WHERE id = ?`,
+    args: [...args, id],
+  });
+
+  invalidateAdminInbox();
+  return (result.rowsAffected ?? 0) > 0;
+}
+
+/**
+ * Record that a decision email went out. Called only after Resend accepted the
+ * message, so the timestamp never claims a send that failed.
+ */
+export async function markDecisionEmailSent(
+  id: string,
+  kind: 'acceptance' | 'rejection',
+  env: Env
+): Promise<void> {
+  const column = kind === 'acceptance' ? 'acceptance_email_sent_at' : 'rejection_email_sent_at';
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  await turso.execute({
+    sql: `UPDATE submissions SET ${column} = ? WHERE id = ?`,
+    args: [Math.floor(Date.now() / 1000), id],
+  });
+  invalidateAdminInbox();
+}
+
+/** Triage a recommendation. Returns false when no row matched. */
+export async function updateSuggestion(
+  id: string,
+  status: SuggestionStatus,
+  env: Env
+): Promise<boolean> {
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  const result = await turso.execute({
+    sql: 'UPDATE suggestions SET status = ?, reviewed_at = ? WHERE id = ?',
+    args: [status, status === 'new' ? null : Math.floor(Date.now() / 1000), id],
+  });
+
+  invalidateAdminInbox();
+  return (result.rowsAffected ?? 0) > 0;
+}
+
+/** Permanently remove a recommendation (spam, junk). */
+export async function deleteSuggestion(id: string, env: Env): Promise<boolean> {
+  const turso = new TursoHttpClient(env.TURSO_DATABASE_URL, env.TURSO_AUTH_TOKEN);
+  const result = await turso.execute({
+    sql: 'DELETE FROM suggestions WHERE id = ?',
+    args: [id],
+  });
+
+  invalidateAdminInbox();
+  return (result.rowsAffected ?? 0) > 0;
 }

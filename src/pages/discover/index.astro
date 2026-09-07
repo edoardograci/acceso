@@ -73,7 +73,7 @@ function formatWeekLabel(start: Date, endExclusive: Date): string {
   // endExclusive is the following Monday; step back one day to get Sunday.
   const end = new Date(endExclusive.getTime() - 24 * 60 * 60 * 1000);
   const f = (d: Date) => `${d.getUTCDate()} ${WEEK_MONTHS[d.getUTCMonth()]}`;
-  return `${f(start)} – ${f(end)}`;
+  return `${f(start)} - ${f(end)}`;
 }
 
 let spotlightItems: MoodboardItem[] = [];

@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ site, url }) => {
           const pubDate = s.updated_at ? new Date(s.updated_at) : new Date();
           const description =
             s.description ||
-            (s.city ? `${s.name} — independent design studio in ${s.city}.` : `${s.name} — independent design studio.`);
+            (s.city ? `${s.name} - independent design studio in ${s.city}.` : `${s.name} - independent design studio.`);
           return {
             title: s.name,
             link,
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ site, url }) => {
           const pubDate = p.updated_at ? new Date(p.updated_at) : new Date();
           const description = p.designer ? `${p.name} by ${p.designer}.` : `${p.name}.`;
           return {
-            title: p.designer ? `${p.name} — ${p.designer}` : p.name,
+            title: p.designer ? `${p.name} - ${p.designer}` : p.name,
             link,
             pubDate,
             description,
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ site, url }) => {
     .slice(0, 60);
 
   return rss({
-    title: 'Acceso — Updates',
+    title: 'Acceso - Updates',
     description: 'New studios and projects added to Acceso.',
     site,
     items,

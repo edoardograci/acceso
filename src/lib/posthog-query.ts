@@ -2,6 +2,11 @@
 // Server-side reader for the PostHog Query API (HogQL).
 
 import type { Env } from '../env.d';
+import {
+  quoteHogString,
+  type AnalyticsFilter,
+  type FilterKey,
+} from './analytics-filters';
 
 export interface PostHogConfig {
   apiKey: string;
@@ -16,8 +21,14 @@ export interface HogQLResult {
 
 export interface BreakdownRow {
   label: string;
-  sessions: number;
+  /**
+   * Distinct visitors, via count(DISTINCT VISITOR_ID). Named `sessions` until
+   * 2026-09; it never held sessions and the mismatch was a standing trap.
+   */
+  visitors: number;
   pageviews: number;
+  /** ISO-3166 alpha-2, set only on country rows so the UI can draw a flag. */
+  code?: string;
 }
 
 export interface TrafficPoint {
@@ -61,6 +72,20 @@ export interface LiveStats {
   todayVisitors: number;
 }
 
+/** One row of the "Right now" panel: what is being looked at this minute. */
+export interface LiveRow {
+  label: string;
+  visitors: number;
+  pageviews: number;
+  code?: string;
+}
+
+export interface LiveDetail {
+  pages: LiveRow[];
+  countries: LiveRow[];
+  referrers: LiveRow[];
+}
+
 export interface DateRange {
   /** Inclusive start day YYYY-MM-DD */
   startDay: string;
@@ -97,8 +122,10 @@ const AI_PLATFORM = `multiIf(
   'Other AI'
 )`;
 
+const PATH_EXPR = `coalesce(nullIf(toString(properties.$pathname), ''), '/')`;
+
 const EXPR = {
-  path: `coalesce(nullIf(toString(properties.$pathname), ''), '/')`,
+  path: PATH_EXPR,
   pageType: `coalesce(nullIf(toString(properties.page_type), ''), 'unknown')`,
   referrerType: `multiIf(
     ${REFERRING_DOMAIN} = 'direct', 'direct',
@@ -112,9 +139,80 @@ const EXPR = {
   utmSource: `coalesce(nullIf(toString(properties.utm_source), ''), nullIf(toString(properties.initial_utm_source), ''), 'none')`,
   utmCampaign: `coalesce(nullIf(toString(properties.utm_campaign), ''), nullIf(toString(properties.initial_utm_campaign), ''), 'none')`,
   country: `coalesce(nullIf(toString(properties.$geoip_country_name), ''), nullIf(toString(properties.$geoip_country_code), ''), 'unknown')`,
+  /**
+   * ISO-3166 alpha-2, kept separate from the display name so the UI can derive
+   * a flag. The name alone can't be mapped back to a code reliably.
+   */
+  countryCode: `upper(coalesce(nullIf(toString(properties.$geoip_country_code), ''), 'XX'))`,
   device: `coalesce(nullIf(toString(properties.device_category), ''), nullIf(toString(properties.$device_type), ''), 'unknown')`,
   browser: `coalesce(nullIf(toString(properties.$browser), ''), 'unknown')`,
+  os: `coalesce(nullIf(toString(properties.$os), ''), 'unknown')`,
+  /**
+   * Site section. Single source of truth for the path -> section mapping.
+   *
+   * This has to be SQL, not JS: the previous classifyPath() helper folded
+   * paths into sections client-side, which summed count(DISTINCT visitor)
+   * across paths and counted one visitor once per page they saw. Grouping
+   * here makes the distinct count correct, and makes "section" filterable
+   * like any other dimension.
+   */
+  section: `multiIf(
+    ${PATH_EXPR} = '/' OR ${PATH_EXPR} = '/map' OR startsWith(${PATH_EXPR}, '/map/'), 'Home / Map',
+    startsWith(${PATH_EXPR}, '/designers'), 'Studios',
+    startsWith(${PATH_EXPR}, '/directory/museums') OR startsWith(${PATH_EXPR}, '/events/museums'), 'Museums',
+    startsWith(${PATH_EXPR}, '/directory/schools'), 'Schools',
+    startsWith(${PATH_EXPR}, '/directory/awards') OR startsWith(${PATH_EXPR}, '/events/awards'), 'Awards',
+    startsWith(${PATH_EXPR}, '/directory/fairs') OR startsWith(${PATH_EXPR}, '/events/fairs'), 'Fairs',
+    startsWith(${PATH_EXPR}, '/directory'), 'Directory',
+    startsWith(${PATH_EXPR}, '/events'), 'Events',
+    startsWith(${PATH_EXPR}, '/discover'), 'Discover',
+    startsWith(${PATH_EXPR}, '/moodboard'), 'Moodboard',
+    startsWith(${PATH_EXPR}, '/collections'), 'Collections',
+    startsWith(${PATH_EXPR}, '/profile') OR startsWith(${PATH_EXPR}, '/login'), 'Account',
+    startsWith(${PATH_EXPR}, '/embed'), 'Embed widgets',
+    startsWith(${PATH_EXPR}, '/submission'), 'Submissions',
+    'Other'
+  )`,
+  aiPlatform: AI_PLATFORM,
 } as const;
+
+/**
+ * HogQL expression per filter key. A key absent from this map cannot be
+ * filtered on — buildFilterClause() treats the map as the whitelist.
+ */
+const FILTER_EXPRESSIONS: Record<FilterKey, string> = {
+  path: EXPR.path,
+  section: EXPR.section,
+  pageType: EXPR.pageType,
+  country: EXPR.countryCode,
+  device: EXPR.device,
+  browser: EXPR.browser,
+  os: EXPR.os,
+  referrerType: EXPR.referrerType,
+  referringDomain: EXPR.referringDomain,
+  utmSource: EXPR.utmSource,
+  utmCampaign: EXPR.utmCampaign,
+  aiPlatform: EXPR.aiPlatform,
+};
+
+/**
+ * Turn active filters into an `AND ...` chain appended to every WHERE clause.
+ *
+ * Values are escaped by quoteHogString and keys are looked up in
+ * FILTER_EXPRESSIONS, so an unknown key contributes nothing rather than
+ * reaching the query. Returns '' when there is nothing to add.
+ */
+export function buildFilterClause(filters: AnalyticsFilter[] = []): string {
+  const clauses = filters
+    .map((filter) => {
+      const expression = FILTER_EXPRESSIONS[filter.key];
+      if (!expression) return null;
+      return `${expression} = ${quoteHogString(filter.value)}`;
+    })
+    .filter((clause): clause is string => Boolean(clause));
+
+  return clauses.length ? `AND ${clauses.join(' AND ')}` : '';
+}
 
 const EXTERNAL_ONLY = `coalesce(toString(properties.$referring_domain), '') NOT IN ${OWN_DOMAINS}`;
 const AI_ONLY = `match(toString(properties.$referring_domain), '${AI_DOMAIN_PATTERN}')`;
@@ -223,30 +321,38 @@ async function fetchBreakdownForRange(
   range: DateRange,
   expression: string,
   limit = 25,
-  extraWhere = ''
+  extraWhere = '',
+  filters: AnalyticsFilter[] = [],
+  codeExpression = ''
 ): Promise<BreakdownRow[]> {
   const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 500);
+  const codeSelect = codeExpression ? `, any(${codeExpression}) AS code` : '';
 
   const result = await hogql(
     config,
     `SELECT ${expression} AS label,
-            count(DISTINCT ${VISITOR_ID}) AS sessions,
-            count() AS pageviews
+            count(DISTINCT ${VISITOR_ID}) AS visitors,
+            count() AS pageviews${codeSelect}
      FROM events
      WHERE event = '$pageview'
        AND ${dateFilter(range)}
        AND ${EXCLUDE_ADMIN}
        ${extraWhere ? `AND ${extraWhere}` : ''}
+       ${buildFilterClause(filters)}
      GROUP BY label
-     ORDER BY sessions DESC, pageviews DESC
+     ORDER BY visitors DESC, pageviews DESC
      LIMIT ${safeLimit}`
   );
 
-  return result.rows.map((row) => ({
-    label: String(row[0] ?? 'unknown'),
-    sessions: toNumber(row[1]),
-    pageviews: toNumber(row[2]),
-  }));
+  return result.rows.map((row) => {
+    const item: BreakdownRow = {
+      label: String(row[0] ?? 'unknown'),
+      visitors: toNumber(row[1]),
+      pageviews: toNumber(row[2]),
+    };
+    if (codeExpression) item.code = String(row[3] ?? 'XX');
+    return item;
+  });
 }
 
 async function fetchBreakdown(
@@ -255,15 +361,26 @@ async function fetchBreakdown(
   expression: string,
   limit = 25,
   extraWhere = '',
-  endDay = utcToday()
+  endDay = utcToday(),
+  filters: AnalyticsFilter[] = [],
+  codeExpression = ''
 ): Promise<BreakdownRow[]> {
-  return fetchBreakdownForRange(config, buildDateRange(endDay, days), expression, limit, extraWhere);
+  return fetchBreakdownForRange(
+    config,
+    buildDateRange(endDay, days),
+    expression,
+    limit,
+    extraWhere,
+    filters,
+    codeExpression
+  );
 }
 
 export async function fetchTrafficSeries(
   config: PostHogConfig,
   days: number,
-  endDay = utcToday()
+  endDay = utcToday(),
+  filters: AnalyticsFilter[] = []
 ): Promise<TrafficPoint[]> {
   const range = buildDateRange(endDay, safeDays(days) * 2);
   const result = await hogql(
@@ -276,6 +393,7 @@ export async function fetchTrafficSeries(
      WHERE event = '$pageview'
        AND ${dateFilter(range)}
        AND ${EXCLUDE_ADMIN}
+       ${buildFilterClause(filters)}
      GROUP BY day
      ORDER BY day ASC`
   );
@@ -288,7 +406,11 @@ export async function fetchTrafficSeries(
   }));
 }
 
-export async function fetchHourlyTraffic(config: PostHogConfig, day: string): Promise<HourlyPoint[]> {
+export async function fetchHourlyTraffic(
+  config: PostHogConfig,
+  day: string,
+  filters: AnalyticsFilter[] = []
+): Promise<HourlyPoint[]> {
   const result = await hogql(
     config,
     `SELECT toStartOfHour(timestamp) AS hour,
@@ -298,6 +420,7 @@ export async function fetchHourlyTraffic(config: PostHogConfig, day: string): Pr
      WHERE event = '$pageview'
        AND ${singleDayFilter(day)}
        AND ${EXCLUDE_ADMIN}
+       ${buildFilterClause(filters)}
      GROUP BY hour
      ORDER BY hour ASC`
   );
@@ -333,7 +456,11 @@ export async function fetchLiveStats(config: PostHogConfig): Promise<LiveStats> 
   };
 }
 
-export async function fetchDayTotals(config: PostHogConfig, day: string): Promise<TrafficPoint> {
+export async function fetchDayTotals(
+  config: PostHogConfig,
+  day: string,
+  filters: AnalyticsFilter[] = []
+): Promise<TrafficPoint> {
   const result = await hogql(
     config,
     `SELECT count() AS pageviews,
@@ -342,7 +469,9 @@ export async function fetchDayTotals(config: PostHogConfig, day: string): Promis
      FROM events
      WHERE event = '$pageview'
        AND ${singleDayFilter(day)}
-       AND ${EXCLUDE_ADMIN}`
+       AND ${EXCLUDE_ADMIN}
+       ${buildFilterClause(filters)}
+  `
   );
 
   const row = result.rows[0] || [];
@@ -354,33 +483,45 @@ export async function fetchDayTotals(config: PostHogConfig, day: string): Promis
   };
 }
 
-export const fetchTopPaths = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.path, 300, '', endDay);
-export const fetchPageTypes = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.pageType, 25, '', endDay);
-export const fetchReferrerTypes = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.referrerType, 10, '', endDay);
-export const fetchReferringDomains = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.referringDomain, 15, EXTERNAL_ONLY, endDay);
-export const fetchUtmSources = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.utmSource, 15, '', endDay);
-export const fetchUtmCampaigns = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.utmCampaign, 15, '', endDay);
-export const fetchCountries = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.country, 15, '', endDay);
-export const fetchDevices = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.device, 10, '', endDay);
-export const fetchBrowsers = (c: PostHogConfig, d: number, endDay?: string) =>
-  fetchBreakdown(c, d, EXPR.browser, 12, '', endDay);
+type BreakdownArgs = [PostHogConfig, number, string | undefined, AnalyticsFilter[] | undefined];
 
-export async function fetchAiPlatforms(config: PostHogConfig, days: number, endDay?: string): Promise<BreakdownRow[]> {
-  return fetchBreakdown(config, days, AI_PLATFORM, 15, AI_ONLY, endDay);
+export const fetchTopPaths = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.path, 300, '', endDay, f);
+export const fetchSections = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.section, 25, '', endDay, f);
+export const fetchPageTypes = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.pageType, 25, '', endDay, f);
+export const fetchReferrerTypes = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.referrerType, 10, '', endDay, f);
+export const fetchReferringDomains = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.referringDomain, 15, EXTERNAL_ONLY, endDay, f);
+export const fetchUtmSources = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.utmSource, 15, '', endDay, f);
+export const fetchUtmCampaigns = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.utmCampaign, 15, '', endDay, f);
+export const fetchCountries = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.country, 20, '', endDay, f, EXPR.countryCode);
+export const fetchDevices = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.device, 10, '', endDay, f);
+export const fetchBrowsers = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.browser, 12, '', endDay, f);
+export const fetchOperatingSystems = (...[c, d, endDay, f]: BreakdownArgs) =>
+  fetchBreakdown(c, d, EXPR.os, 12, '', endDay, f);
+
+export async function fetchAiPlatforms(
+  config: PostHogConfig,
+  days: number,
+  endDay?: string,
+  filters: AnalyticsFilter[] = []
+): Promise<BreakdownRow[]> {
+  return fetchBreakdown(config, days, AI_PLATFORM, 15, AI_ONLY, endDay, filters);
 }
 
 export async function fetchAiReferrerDetails(
   config: PostHogConfig,
   days: number,
-  endDay?: string
+  endDay?: string,
+  filters: AnalyticsFilter[] = []
 ): Promise<AiReferrerRow[]> {
   const range = buildDateRange(endDay || utcToday(), safeDays(days));
   const result = await hogql(
@@ -395,6 +536,7 @@ export async function fetchAiReferrerDetails(
        AND ${dateFilter(range)}
        AND ${EXCLUDE_ADMIN}
        AND ${AI_ONLY}
+       ${buildFilterClause(filters)}
      GROUP BY platform, country, path
      ORDER BY pageviews DESC
      LIMIT 50`
@@ -412,7 +554,8 @@ export async function fetchAiReferrerDetails(
 export async function fetchSessionStats(
   config: PostHogConfig,
   days: number,
-  endDay?: string
+  endDay?: string,
+  filters: AnalyticsFilter[] = []
 ): Promise<SessionStats> {
   const range = buildDateRange(endDay || utcToday(), safeDays(days));
   const result = await hogql(
@@ -421,7 +564,7 @@ export async function fetchSessionStats(
             avg(duration_sec) AS avg_duration_sec,
             median(duration_sec) AS median_duration_sec,
             avg(views) AS avg_pageviews,
-            countIf(views <= 1) / count() AS bounce_rate
+            countIf(views = 1) / count() AS bounce_rate
      FROM (
        SELECT properties.$session_id AS session_id,
               dateDiff('second', min(timestamp), max(timestamp)) AS duration_sec,
@@ -431,7 +574,11 @@ export async function fetchSessionStats(
          AND ${dateFilter(range)}
          AND ${EXCLUDE_ADMIN}
          AND notEmpty(toString(properties.$session_id))
+       ${buildFilterClause(filters)}
        GROUP BY session_id
+       -- A session assembled only from $pageleave has views = 0. Counting it
+       -- as a bounce inflated the rate; drop it instead.
+       HAVING views >= 1
      )`
   );
 
@@ -448,7 +595,8 @@ export async function fetchSessionStats(
 export async function fetchCustomEvents(
   config: PostHogConfig,
   days: number,
-  endDay?: string
+  endDay?: string,
+  filters: AnalyticsFilter[] = []
 ): Promise<EventCountRow[]> {
   const range = buildDateRange(endDay || utcToday(), safeDays(days));
   const result = await hogql(
@@ -458,6 +606,7 @@ export async function fetchCustomEvents(
      WHERE ${dateFilter(range)}
        AND event NOT IN ('$pageview', '$pageleave')
        AND ${EXCLUDE_ADMIN}
+       ${buildFilterClause(filters)}
      GROUP BY event
      ORDER BY total DESC
      LIMIT 30`
@@ -467,4 +616,57 @@ export async function fetchCustomEvents(
     event: String(row[0] ?? 'unknown'),
     total: toNumber(row[1]),
   }));
+}
+
+/** Window the "Right now" panel looks back over. Matches liveVisitors. */
+const LIVE_WINDOW_MINUTES = 30;
+
+async function fetchLiveBreakdown(
+  config: PostHogConfig,
+  expression: string,
+  limit: number,
+  codeExpression = ''
+): Promise<LiveRow[]> {
+  const codeSelect = codeExpression ? `, any(${codeExpression}) AS code` : '';
+  const result = await hogql(
+    config,
+    `SELECT ${expression} AS label,
+            count(DISTINCT ${VISITOR_ID}) AS visitors,
+            count() AS pageviews${codeSelect}
+     FROM events
+     WHERE event = '$pageview'
+       AND timestamp >= now() - INTERVAL ${LIVE_WINDOW_MINUTES} MINUTE
+       AND ${EXCLUDE_ADMIN}
+     GROUP BY label
+     ORDER BY visitors DESC, pageviews DESC
+     LIMIT ${Math.min(Math.max(Math.floor(limit), 1), 50)}`
+  );
+
+  return result.rows.map((row) => {
+    const item: LiveRow = {
+      label: String(row[0] ?? 'unknown'),
+      visitors: toNumber(row[1]),
+      pageviews: toNumber(row[2]),
+    };
+    if (codeExpression) item.code = String(row[3] ?? 'XX');
+    return item;
+  });
+}
+
+/**
+ * What is being viewed right now, and where those visitors came from.
+ *
+ * Deliberately unfiltered: this panel answers "what is happening on the site
+ * this minute", which a stale dashboard filter would quietly narrow. The three
+ * queries run in parallel and fail independently — one empty list is better
+ * than an empty panel.
+ */
+export async function fetchLiveDetail(config: PostHogConfig): Promise<LiveDetail> {
+  const [pages, countries, referrers] = await Promise.all([
+    fetchLiveBreakdown(config, EXPR.path, 12).catch(() => [] as LiveRow[]),
+    fetchLiveBreakdown(config, EXPR.country, 8, EXPR.countryCode).catch(() => [] as LiveRow[]),
+    fetchLiveBreakdown(config, EXPR.referringDomain, 8).catch(() => [] as LiveRow[]),
+  ]);
+
+  return { pages, countries, referrers };
 }

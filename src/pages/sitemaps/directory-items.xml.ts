@@ -25,12 +25,14 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
   const lastmod = toW3CDate(new Date());
 
-  const [fairs, museums, awards, schools, studios] = await Promise.allSettled([
+  // Studios are deliberately absent: sitemaps/designers.xml owns /designers/*
+  // from this same JSON. Emitting them here too put every studio in two
+  // sitemaps with conflicting <priority> and different image fields.
+  const [fairs, museums, awards, schools] = await Promise.allSettled([
     fetchList(requestUrl.origin, '/cdn/fairs.json'),
     fetchList(requestUrl.origin, '/cdn/museums.json'),
     fetchList(requestUrl.origin, '/cdn/awards.json'),
     fetchList(requestUrl.origin, '/cdn/universities.json'),
-    fetchList(requestUrl.origin, '/cdn/test-studios.json'),
   ]);
 
   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = [];
@@ -49,7 +51,6 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
   if (museums.status === 'fulfilled') add('/directory/museums', museums.value);
   if (awards.status === 'fulfilled') add('/directory/awards', awards.value);
   if (schools.status === 'fulfilled') add('/directory/schools', schools.value);
-  if (studios.status === 'fulfilled') add('/designers', studios.value);
 
   return new Response(renderUrlSet(urls), {
     status: 200,

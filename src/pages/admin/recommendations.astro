@@ -1,0 +1,416 @@
+---
+// src/pages/admin/recommendations.astro
+// Triage queue for the place recommendations submitted from /submission.
+// These arrive anonymously — no contact address is captured — so the actions
+// here are accept / dismiss / delete, with no email path.
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/admin';
+import type { Env } from '../../env.d';
+
+export const prerender = false;
+
+const runtimeEnv = Astro.locals.runtime?.env || {};
+const metaEnv = import.meta.env || {};
+const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
+
+if (!isAdmin(Astro.locals.user, env)) {
+  return new Response('Not Found', {
+    status: 404,
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+---
+
+<AdminLayout title="Acceso - Recommendations" active="recommendations">
+  <main class="admin-page">
+    <header class="admin-page-head">
+      <div>
+        <h1 class="admin-page-title">Recommendations</h1>
+        <p class="admin-page-sub" data-meta>Loading…</p>
+      </div>
+      <button type="button" class="admin-btn" data-refresh>Refresh</button>
+    </header>
+
+    <div class="admin-toast" data-toast role="status" aria-live="polite"></div>
+    <div data-errors></div>
+
+    <div class="admin-toolbar">
+      <div class="admin-filters" role="tablist" aria-label="Filter by status" data-filters></div>
+      <div class="admin-filters" role="group" aria-label="Filter by type" data-types></div>
+      <input
+        type="search"
+        class="admin-search"
+        placeholder="Search name, city…"
+        aria-label="Search recommendations"
+        data-search
+      />
+    </div>
+
+    <div class="admin-toolbar" data-bulk hidden>
+      <span class="admin-page-sub" data-bulk-count></span>
+      <button type="button" class="admin-btn is-small is-primary" data-bulk-accept>Accept selected</button>
+      <button type="button" class="admin-btn is-small" data-bulk-dismiss>Dismiss selected</button>
+      <button type="button" class="admin-btn is-small is-danger" data-bulk-delete>Delete selected</button>
+      <button type="button" class="admin-btn is-small" data-bulk-clear>Clear</button>
+    </div>
+
+    <div data-list>
+      <div class="admin-list">
+        <div class="admin-skeleton" style="height:64px"></div>
+        <div class="admin-skeleton" style="height:64px"></div>
+        <div class="admin-skeleton" style="height:64px"></div>
+      </div>
+    </div>
+  </main>
+</AdminLayout>
+
+<script>
+  import {
+    adminAction,
+    el,
+    fetchInbox,
+    formatDate,
+    formatRelative,
+    matchesQuery,
+    toast,
+    type AdminInboxResponse,
+  } from '../../lib/admin/queue-ui';
+
+  interface SuggestionRow {
+    id: string;
+    type: string;
+    name: string;
+    city: string;
+    website: string | null;
+    status: string;
+    createdAt: string;
+    reviewedAt: number | null;
+  }
+
+  const STATUS_FILTERS = [
+    { id: 'new', label: 'New' },
+    { id: 'accepted', label: 'Accepted' },
+    { id: 'dismissed', label: 'Dismissed' },
+    { id: 'all', label: 'All' },
+  ];
+
+  const metaEl = document.querySelector<HTMLElement>('[data-meta]')!;
+  const toastEl = document.querySelector<HTMLElement>('[data-toast]')!;
+  const errorsEl = document.querySelector<HTMLElement>('[data-errors]')!;
+  const filtersEl = document.querySelector<HTMLElement>('[data-filters]')!;
+  const typesEl = document.querySelector<HTMLElement>('[data-types]')!;
+  const searchEl = document.querySelector<HTMLInputElement>('[data-search]')!;
+  const listEl = document.querySelector<HTMLElement>('[data-list]')!;
+  const refreshEl = document.querySelector<HTMLButtonElement>('[data-refresh]')!;
+  const bulkEl = document.querySelector<HTMLElement>('[data-bulk]')!;
+  const bulkCountEl = document.querySelector<HTMLElement>('[data-bulk-count]')!;
+
+  let rows: SuggestionRow[] = [];
+  let counts: AdminInboxResponse['counts'] | null = null;
+  let activeStatus = 'new';
+  let activeType = 'all';
+  let query = '';
+  const selected = new Set<string>();
+
+  function updateNavBadges() {
+    if (!counts) return;
+    const badges: Record<string, number> = {
+      submissions: counts.pendingSubmissions ?? 0,
+      recommendations: counts.newSuggestions ?? 0,
+    };
+    for (const [key, value] of Object.entries(badges)) {
+      const badge = document.querySelector<HTMLElement>(`[data-badge="${key}"]`);
+      if (!badge) continue;
+      badge.textContent = String(value);
+      badge.hidden = value === 0;
+    }
+  }
+
+  function pillButton(
+    label: string,
+    count: string | null,
+    isActive: boolean,
+    onClick: () => void
+  ): HTMLElement {
+    const button = el('button', {
+      class: `admin-filter ${isActive ? 'is-active' : ''}`,
+      attrs: { type: 'button', 'aria-pressed': String(isActive) },
+      children: [
+        el('span', { text: label }),
+        count != null ? el('span', { class: 'admin-filter-count', text: count }) : null,
+      ],
+    });
+    button.addEventListener('click', onClick);
+    return button;
+  }
+
+  function renderFilters() {
+    filtersEl.replaceChildren(
+      ...STATUS_FILTERS.map((filter) => {
+        const count =
+          filter.id === 'all' ? rows.length : rows.filter((r) => r.status === filter.id).length;
+        return pillButton(filter.label, String(count), activeStatus === filter.id, () => {
+          activeStatus = filter.id;
+          renderFilters();
+          renderList();
+        });
+      })
+    );
+
+    const types = ['all', ...Array.from(new Set(rows.map((r) => r.type).filter(Boolean))).sort()];
+    typesEl.replaceChildren(
+      ...types.map((type) =>
+        pillButton(type === 'all' ? 'All types' : type, null, activeType === type, () => {
+          activeType = type;
+          renderFilters();
+          renderList();
+        })
+      )
+    );
+  }
+
+  function visibleRows(): SuggestionRow[] {
+    return rows.filter((row) => {
+      if (activeStatus !== 'all' && row.status !== activeStatus) return false;
+      if (activeType !== 'all' && row.type !== activeType) return false;
+      return matchesQuery(query, row.name, row.city, row.type, row.website);
+    });
+  }
+
+  function renderBulkBar() {
+    bulkEl.hidden = selected.size === 0;
+    bulkCountEl.textContent = `${selected.size} selected`;
+  }
+
+  function renderList() {
+    const visible = visibleRows();
+
+    // Drop selections that scrolled out of the current filter, so a bulk
+    // action can never touch a row the admin can no longer see.
+    const visibleIds = new Set(visible.map((r) => r.id));
+    for (const id of Array.from(selected)) {
+      if (!visibleIds.has(id)) selected.delete(id);
+    }
+    renderBulkBar();
+
+    if (!visible.length) {
+      listEl.replaceChildren(
+        el('p', {
+          class: 'admin-empty',
+          text: query ? 'No recommendations match that search.' : 'Nothing in this view.',
+        })
+      );
+      return;
+    }
+
+    const list = el('div', { class: 'admin-list' });
+    for (const row of visible) list.appendChild(renderCard(row));
+    listEl.replaceChildren(list);
+  }
+
+  async function act(row: SuggestionRow, status: string) {
+    await adminAction(`/api/admin/suggestions/${row.id}`, 'POST', { status });
+  }
+
+  function renderCard(row: SuggestionRow): HTMLElement {
+    const checkbox = el('input', {
+      attrs: { type: 'checkbox', 'aria-label': `Select ${row.name}` },
+    });
+    checkbox.checked = selected.has(row.id);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) selected.add(row.id);
+      else selected.delete(row.id);
+      renderBulkBar();
+    });
+
+    const action = (label: string, cls: string, run: () => Promise<void>) => {
+      const button = el('button', {
+        class: `admin-btn is-small ${cls}`,
+        text: label,
+        attrs: { type: 'button' },
+      });
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          await run();
+          await load();
+        } catch (error: any) {
+          // A declined confirm() is a deliberate no-op, not a failure.
+          if (error?.message !== 'Cancelled') toast(toastEl, error.message, 'error');
+          button.disabled = false;
+        }
+      });
+      return button;
+    };
+
+    const actions: HTMLElement[] = [];
+    if (row.status !== 'accepted') {
+      actions.push(
+        action('Accept', 'is-primary', async () => {
+          await act(row, 'accepted');
+          toast(toastEl, `${row.name} accepted.`);
+        })
+      );
+    }
+    if (row.status !== 'dismissed') {
+      actions.push(
+        action('Dismiss', '', async () => {
+          await act(row, 'dismissed');
+          toast(toastEl, `${row.name} dismissed.`);
+        })
+      );
+    }
+    if (row.status !== 'new') {
+      actions.push(
+        action('Reopen', '', async () => {
+          await act(row, 'new');
+          toast(toastEl, `${row.name} reopened.`);
+        })
+      );
+    }
+    actions.push(
+      action('Delete', 'is-danger', async () => {
+        if (!window.confirm(`Permanently delete "${row.name}"? This cannot be undone.`)) {
+          throw new Error('Cancelled');
+        }
+        await adminAction(`/api/admin/suggestions/${row.id}`, 'DELETE');
+        toast(toastEl, `${row.name} deleted.`);
+      })
+    );
+
+    return el('article', {
+      class: 'admin-card',
+      children: [
+        el('div', { attrs: { style: 'padding-top:2px' }, children: [checkbox] }),
+        el('div', {
+          class: 'admin-card-body',
+          children: [
+            el('div', {
+              class: 'admin-card-top',
+              children: [
+                el('h2', { class: 'admin-card-name', text: row.name }),
+                el('span', { class: 'admin-pill', text: row.type || 'unknown' }),
+                el('span', { class: `admin-pill is-${row.status}`, text: row.status }),
+              ],
+            }),
+            el('p', {
+              class: 'admin-card-meta',
+              children: [
+                el('span', { text: row.city || '-' }),
+                row.website
+                  ? el('span', {
+                      children: [
+                        el('span', { text: ' · ' }),
+                        el('a', {
+                          class: 'admin-link',
+                          text: row.website,
+                          attrs: { href: row.website, target: '_blank', rel: 'noreferrer' },
+                        }),
+                      ],
+                    })
+                  : null,
+              ],
+            }),
+          ],
+        }),
+        el('div', {
+          class: 'admin-card-actions',
+          children: [
+            el('span', {
+              class: 'admin-card-meta',
+              text: formatRelative(row.createdAt),
+              attrs: { title: formatDate(row.createdAt) },
+            }),
+            el('div', { class: 'admin-row', children: actions }),
+          ],
+        }),
+      ],
+    });
+  }
+
+  /* ---------------- Bulk actions ---------------- */
+
+  /**
+   * Apply an action to every selected row. Failures are counted rather than
+   * aborting the run, so one bad row can't strand the rest half-processed.
+   */
+  async function runBulk(label: string, run: (id: string) => Promise<void>) {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+
+    let failed = 0;
+    for (const id of ids) {
+      try {
+        await run(id);
+      } catch {
+        failed += 1;
+      }
+    }
+    selected.clear();
+    await load();
+    toast(
+      toastEl,
+      failed
+        ? `${label} ${ids.length - failed} of ${ids.length} - ${failed} failed.`
+        : `${label} ${ids.length}.`,
+      failed ? 'error' : 'ok'
+    );
+  }
+
+  document.querySelector('[data-bulk-accept]')!.addEventListener('click', () =>
+    runBulk('Accepted', (id) => adminAction(`/api/admin/suggestions/${id}`, 'POST', { status: 'accepted' }))
+  );
+
+  document.querySelector('[data-bulk-dismiss]')!.addEventListener('click', () =>
+    runBulk('Dismissed', (id) => adminAction(`/api/admin/suggestions/${id}`, 'POST', { status: 'dismissed' }))
+  );
+
+  document.querySelector('[data-bulk-delete]')!.addEventListener('click', () => {
+    if (!window.confirm(`Permanently delete ${selected.size} recommendation(s)? This cannot be undone.`)) {
+      return;
+    }
+    runBulk('Deleted', (id) => adminAction(`/api/admin/suggestions/${id}`, 'DELETE'));
+  });
+
+  document.querySelector('[data-bulk-clear]')!.addEventListener('click', () => {
+    selected.clear();
+    renderList();
+  });
+
+  /* ---------------- Load ---------------- */
+
+  async function load() {
+    try {
+      const inbox = await fetchInbox();
+      rows = (inbox.suggestions || []) as SuggestionRow[];
+      counts = inbox.counts;
+
+      metaEl.textContent = `${rows.length} total · ${counts.newSuggestions ?? 0} awaiting triage`;
+
+      errorsEl.replaceChildren();
+      if (inbox.errors?.length) {
+        errorsEl.appendChild(el('div', { class: 'admin-error', text: inbox.errors.join(' · ') }));
+      }
+
+      updateNavBadges();
+      renderFilters();
+      renderList();
+    } catch (error: any) {
+      listEl.replaceChildren(el('div', { class: 'admin-error', text: error.message }));
+    }
+  }
+
+  searchEl.addEventListener('input', () => {
+    query = searchEl.value;
+    renderList();
+  });
+
+  refreshEl.addEventListener('click', () => {
+    refreshEl.disabled = true;
+    load().finally(() => {
+      refreshEl.disabled = false;
+    });
+  });
+
+  load();
+</script>

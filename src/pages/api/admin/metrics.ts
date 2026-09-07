@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { adminNotFound, isAdmin } from '../../../lib/admin';
 import { getAdminMetrics, parseRange } from '../../../lib/admin-metrics';
+import { parseFilters } from '../../../lib/analytics-filters';
 import { checkRateLimit, createRateLimitResponse, getClientIdentifier, RateLimits } from '../../../lib/rate-limiter';
 import type { Env } from '../../../env.d';
 
@@ -31,7 +32,13 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const day = url.searchParams.get('day');
     const partRaw = url.searchParams.get('part');
     const part = partRaw === 'core' || partRaw === 'extra' || partRaw === 'all' ? partRaw : 'all';
-    const metrics = await getAdminMetrics(env, range, { refresh, day: day || undefined, part });
+    const filters = parseFilters(url.searchParams);
+    const metrics = await getAdminMetrics(env, range, {
+      refresh,
+      day: day || undefined,
+      part,
+      filters,
+    });
 
     return Response.json(metrics, {
       headers: {

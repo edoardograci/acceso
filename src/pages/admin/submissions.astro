@@ -1,5 +1,6 @@
 ---
 // src/pages/admin/submissions.astro
+// Studio submission review queue: filter, inspect, decide, notify.
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { isAdmin } from '../../lib/admin';
 import type { Env } from '../../env.d';
@@ -18,104 +19,681 @@ if (!isAdmin(Astro.locals.user, env)) {
 }
 ---
 
-<AdminLayout title="Acceso — Submissions" active="submissions">
-  <main class="mx-auto max-w-[1200px] px-4 py-8 sm:px-6">
-    <header class="mb-6">
-      <h1 class="text-xl">Submissions</h1>
-      <p class="mt-1 text-xs text-[#52525B]" data-inbox-meta>Loading…</p>
+<AdminLayout title="Acceso - Submissions" active="submissions">
+  <main class="admin-page">
+    <header class="admin-page-head">
+      <div>
+        <h1 class="admin-page-title">Submissions</h1>
+        <p class="admin-page-sub" data-meta>Loading…</p>
+      </div>
+      <button type="button" class="admin-btn" data-refresh>Refresh</button>
     </header>
-    <div data-inbox-root>
-      <div class="space-y-4">
-        <div class="h-10 animate-pulse rounded bg-[#E4E4E7]"></div>
-        <div class="h-48 animate-pulse rounded bg-[#F4F4F5]"></div>
-        <div class="h-48 animate-pulse rounded bg-[#F4F4F5]"></div>
+
+    <div class="admin-toast" data-toast role="status" aria-live="polite"></div>
+    <div data-errors></div>
+
+    <div class="admin-toolbar">
+      <div class="admin-filters" role="tablist" aria-label="Filter by status" data-filters></div>
+      <input
+        type="search"
+        class="admin-search"
+        placeholder="Search name, city, email…"
+        aria-label="Search submissions"
+        data-search
+      />
+    </div>
+
+    <div data-list>
+      <div class="admin-list">
+        <div class="admin-skeleton" style="height:100px"></div>
+        <div class="admin-skeleton" style="height:100px"></div>
+        <div class="admin-skeleton" style="height:100px"></div>
       </div>
     </div>
   </main>
 </AdminLayout>
 
-<script is:inline>
-  (function () {
-    const root = document.querySelector('[data-inbox-root]');
-    const meta = document.querySelector('[data-inbox-meta]');
-    if (!root) return;
+<script>
+  import {
+    adminAction,
+    el,
+    fetchInbox,
+    formatDate,
+    formatRelative,
+    matchesQuery,
+    slugify,
+    toast,
+    type AdminInboxResponse,
+  } from '../../lib/admin/queue-ui';
 
-    function esc(value) {
-      return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+  interface SubmissionRow {
+    id: string;
+    name: string;
+    website: string;
+    city: string;
+    country: string;
+    address: string | null;
+    instagram: string | null;
+    description: string;
+    contactEmail: string;
+    imageUrl: string | null;
+    status: string;
+    createdAt: string;
+    reviewedAt: number | null;
+    reviewedBy: string | null;
+    adminNotes: string | null;
+    profileUrl: string | null;
+    acceptanceEmailSentAt: number | null;
+    rejectionEmailSentAt: number | null;
+  }
+
+  const FILTERS: { id: string; label: string }[] = [
+    { id: 'pending', label: 'Pending' },
+    { id: 'approved', label: 'Approved' },
+    { id: 'rejected', label: 'Rejected' },
+    { id: 'all', label: 'All' },
+  ];
+
+  const metaEl = document.querySelector<HTMLElement>('[data-meta]')!;
+  const toastEl = document.querySelector<HTMLElement>('[data-toast]')!;
+  const errorsEl = document.querySelector<HTMLElement>('[data-errors]')!;
+  const filtersEl = document.querySelector<HTMLElement>('[data-filters]')!;
+  const searchEl = document.querySelector<HTMLInputElement>('[data-search]')!;
+  const listEl = document.querySelector<HTMLElement>('[data-list]')!;
+  const refreshEl = document.querySelector<HTMLButtonElement>('[data-refresh]')!;
+
+  let rows: SubmissionRow[] = [];
+  let counts: AdminInboxResponse['counts'] | null = null;
+  // Default to the pending queue — the only view with work waiting in it.
+  let activeFilter = 'pending';
+  let query = '';
+  let openId: string | null = null;
+
+  /**
+   * Cover images are stored as absolute `/cdn/...` URLs. Rewriting them to a
+   * same-origin path lets the CDN route resize them, so the queue doesn't pull
+   * a full-size image per card.
+   */
+  function thumbUrl(imageUrl: string | null, width: number): string | null {
+    if (!imageUrl) return null;
+    try {
+      const parsed = new URL(imageUrl, window.location.origin);
+      if (!parsed.pathname.startsWith('/cdn/')) return imageUrl;
+      return `${parsed.pathname}?w=${width}&q=75`;
+    } catch {
+      return imageUrl;
     }
+  }
 
-    function fmt(n) {
-      return new Intl.NumberFormat('en-US').format(n);
+  function statusPill(status: string): HTMLElement {
+    return el('span', { class: `admin-pill is-${status}`, text: status });
+  }
+
+  function updateNavBadges() {
+    if (!counts) return;
+    const badges: Record<string, number> = {
+      submissions: counts.pendingSubmissions ?? 0,
+      recommendations: counts.newSuggestions ?? 0,
+    };
+    for (const [key, value] of Object.entries(badges)) {
+      const badge = document.querySelector<HTMLElement>(`[data-badge="${key}"]`);
+      if (!badge) continue;
+      badge.textContent = String(value);
+      badge.hidden = value === 0;
     }
+  }
 
-    function formatWhen(value) {
-      var numeric = Number(value);
-      var date = isFinite(numeric) && numeric > 1e9
-        ? new Date(numeric > 1e12 ? numeric : numeric * 1000)
-        : new Date(value);
-      if (isNaN(date.getTime())) return value || '—';
-      return date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-    }
-
-    function render(inbox) {
-      if (meta) {
-        meta.textContent = fmt(inbox.submissions.length) + ' studio submissions · ' + fmt(inbox.suggestions.length) + ' place suggestions';
-      }
-
-      var html = '';
-      if (inbox.errors && inbox.errors.length) {
-        html += '<div class="mb-6 rounded-lg border border-[#d13b3b] bg-[#fef6f6] px-4 py-3 text-xs text-[#d13b3b]">' + esc(inbox.errors.join(' · ')) + '</div>';
-      }
-
-      html += '<section class="mb-10"><h2 class="mb-3 text-sm">Studio submissions</h2>';
-      if (!inbox.submissions.length) {
-        html += '<p class="rounded-lg border border-[#E4E4E7] bg-white px-4 py-6 text-xs text-[#52525B]">No studio submissions yet.</p>';
-      } else {
-        html += '<div class="overflow-auto rounded-lg border border-[#E4E4E7] bg-white"><table class="w-full min-w-[860px] text-left text-[13px]"><thead class="border-b border-[#E4E4E7] text-[11px] uppercase tracking-[0.08em] text-[#52525B]"><tr><th class="px-4 py-3 font-normal">Studio</th><th class="px-3 py-3 font-normal">Location</th><th class="px-3 py-3 font-normal">Contact</th><th class="px-3 py-3 font-normal">Status</th><th class="px-4 py-3 font-normal">Submitted</th></tr></thead><tbody>';
-        html += inbox.submissions.map(function (row) {
-          return '<tr class="border-t border-[#F4F4F5] align-top">' +
-            '<td class="px-4 py-3"><p class="font-medium">' + esc(row.name) + '</p>' +
-            (row.website ? '<a href="' + esc(row.website) + '" class="text-[12px] text-[#2a78d6] underline-offset-2 hover:underline" target="_blank" rel="noreferrer">' + esc(row.website) + '</a>' : '') +
-            (row.instagram ? '<p class="text-[12px] text-[#52525B]">' + esc(row.instagram) + '</p>' : '') +
-            (row.description ? '<p class="mt-1 max-w-md text-[12px] text-[#52525B] line-clamp-3">' + esc(row.description) + '</p>' : '') +
-            '</td><td class="px-3 py-3 text-[#52525B]">' + esc([row.city, row.country].filter(Boolean).join(', ')) +
-            (row.address ? '<p class="mt-1 text-[12px]">' + esc(row.address) + '</p>' : '') +
-            '</td><td class="px-3 py-3"><a href="mailto:' + esc(row.contactEmail) + '" class="text-[12px] underline-offset-2 hover:underline">' + esc(row.contactEmail) + '</a></td>' +
-            '<td class="px-3 py-3"><span class="rounded-full border border-[#E4E4E7] px-2 py-0.5 text-[11px] uppercase tracking-[0.06em]">' + esc(row.status) + '</span></td>' +
-            '<td class="px-4 py-3 whitespace-nowrap text-[12px] text-[#52525B]">' + esc(formatWhen(row.createdAt)) + '</td></tr>';
-        }).join('');
-        html += '</tbody></table></div>';
-      }
-      html += '</section>';
-
-      html += '<section><h2 class="mb-3 text-sm">Place suggestions</h2>';
-      if (!inbox.suggestions.length) {
-        html += '<p class="rounded-lg border border-[#E4E4E7] bg-white px-4 py-6 text-xs text-[#52525B]">No suggestions yet.</p>';
-      } else {
-        html += '<div class="overflow-auto rounded-lg border border-[#E4E4E7] bg-white"><table class="w-full min-w-[640px] text-left text-[13px]"><thead class="border-b border-[#E4E4E7] text-[11px] uppercase tracking-[0.08em] text-[#52525B]"><tr><th class="px-4 py-3 font-normal">Name</th><th class="px-3 py-3 font-normal">Type</th><th class="px-3 py-3 font-normal">City</th><th class="px-3 py-3 font-normal">Website</th><th class="px-4 py-3 font-normal">Submitted</th></tr></thead><tbody>';
-        html += inbox.suggestions.map(function (row) {
-          return '<tr class="border-t border-[#F4F4F5]"><td class="px-4 py-3">' + esc(row.name) + '</td><td class="px-3 py-3 text-[#52525B]">' + esc(row.type) + '</td><td class="px-3 py-3 text-[#52525B]">' + esc(row.city) + '</td><td class="px-3 py-3">' +
-            (row.website ? '<a href="' + esc(row.website) + '" class="text-[12px] text-[#2a78d6] underline-offset-2 hover:underline" target="_blank" rel="noreferrer">' + esc(row.website) + '</a>' : '<span class="text-[#52525B]">—</span>') +
-            '</td><td class="px-4 py-3 whitespace-nowrap text-[12px] text-[#52525B]">' + esc(formatWhen(row.createdAt)) + '</td></tr>';
-        }).join('');
-        html += '</tbody></table></div>';
-      }
-      html += '</section>';
-      root.innerHTML = html;
-    }
-
-    fetch('/api/admin/inbox', { credentials: 'same-origin' })
-      .then(function (res) {
-        if (!res.ok) throw new Error('Failed to load submissions');
-        return res.json();
+  function renderFilters() {
+    filtersEl.replaceChildren(
+      ...FILTERS.map((filter) => {
+        const count =
+          filter.id === 'all' ? rows.length : rows.filter((r) => r.status === filter.id).length;
+        const button = el('button', {
+          class: `admin-filter ${activeFilter === filter.id ? 'is-active' : ''}`,
+          attrs: { type: 'button', role: 'tab', 'aria-selected': String(activeFilter === filter.id) },
+          children: [
+            el('span', { text: filter.label }),
+            el('span', { class: 'admin-filter-count', text: String(count) }),
+          ],
+        });
+        button.addEventListener('click', () => {
+          activeFilter = filter.id;
+          renderFilters();
+          renderList();
+        });
+        return button;
       })
-      .then(render)
-      .catch(function (err) {
-        root.innerHTML = '<div class="rounded-lg border border-[#d13b3b] bg-[#fef6f6] px-4 py-3 text-xs text-[#d13b3b]">' + esc(err.message) + '</div>';
+    );
+  }
+
+  function visibleRows(): SubmissionRow[] {
+    return rows.filter((row) => {
+      if (activeFilter !== 'all' && row.status !== activeFilter) return false;
+      return matchesQuery(query, row.name, row.city, row.country, row.contactEmail, row.website);
+    });
+  }
+
+  function renderList() {
+    const visible = visibleRows();
+
+    if (!visible.length) {
+      listEl.replaceChildren(
+        el('p', {
+          class: 'admin-empty',
+          text: query
+            ? 'No submissions match that search.'
+            : activeFilter === 'pending'
+              ? 'Nothing waiting for review. '
+              : 'No submissions in this view.',
+        })
+      );
+      return;
+    }
+
+    const list = el('div', { class: 'admin-list' });
+    for (const row of visible) {
+      list.appendChild(renderCard(row));
+    }
+    listEl.replaceChildren(list);
+  }
+
+  function renderCard(row: SubmissionRow): HTMLElement {
+    const thumb = thumbUrl(row.imageUrl, 240);
+    const location = [row.city, row.country].filter(Boolean).join(', ');
+
+    const media = thumb
+      ? el('img', {
+          class: 'admin-card-thumb',
+          attrs: { src: thumb, alt: '', loading: 'lazy', decoding: 'async' },
+        })
+      : el('div', { class: 'admin-card-thumb admin-card-thumb-empty', text: 'No image' });
+
+    const emailFlags: HTMLElement[] = [];
+    if (row.acceptanceEmailSentAt) {
+      emailFlags.push(el('span', { class: 'admin-pill is-sent', text: 'Acceptance sent' }));
+    }
+    if (row.rejectionEmailSentAt) {
+      emailFlags.push(el('span', { class: 'admin-pill is-sent', text: 'Rejection sent' }));
+    }
+
+    const openButton = el('button', {
+      class: 'admin-btn is-small is-dark',
+      text: 'Review',
+      attrs: { type: 'button' },
+    });
+    openButton.addEventListener('click', () => openDrawer(row.id));
+
+    const card = el('article', {
+      class: `admin-card ${openId === row.id ? 'is-open' : ''}`,
+      children: [
+        media,
+        el('div', {
+          class: 'admin-card-body',
+          children: [
+            el('div', {
+              class: 'admin-card-top',
+              children: [el('h2', { class: 'admin-card-name', text: row.name }), statusPill(row.status)],
+            }),
+            el('p', {
+              class: 'admin-card-meta',
+              text: [location, row.contactEmail].filter(Boolean).join(' · '),
+            }),
+            row.description ? el('p', { class: 'admin-card-desc', text: row.description }) : null,
+            emailFlags.length
+              ? el('div', { class: 'admin-row', children: emailFlags, attrs: { style: 'margin-top:8px' } })
+              : null,
+          ],
+        }),
+        el('div', {
+          class: 'admin-card-actions',
+          children: [
+            el('span', {
+              class: 'admin-card-meta',
+              text: formatRelative(row.createdAt),
+              attrs: { title: formatDate(row.createdAt) },
+            }),
+            openButton,
+          ],
+        }),
+      ],
+    });
+
+    return card;
+  }
+
+  /* ---------------- Drawer ---------------- */
+
+  let drawerNodes: HTMLElement[] = [];
+
+  function closeDrawer() {
+    drawerNodes.forEach((node) => node.remove());
+    drawerNodes = [];
+    document.removeEventListener('keydown', onEscape);
+    openId = null;
+    document.body.style.overflow = '';
+    renderList();
+  }
+
+  function openDrawer(id: string) {
+    const row = rows.find((r) => r.id === id);
+    if (!row) return;
+
+    closeDrawer();
+    openId = id;
+
+    const backdrop = el('div', { class: 'admin-drawer-backdrop' });
+    backdrop.addEventListener('click', closeDrawer);
+
+    const drawer = el('aside', {
+      class: 'admin-drawer',
+      attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-label': `Review ${row.name}` },
+    });
+    drawer.appendChild(buildDrawerHead(row));
+    drawer.appendChild(buildDrawerBody(row));
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(drawer);
+    document.body.style.overflow = 'hidden';
+    drawerNodes = [backdrop, drawer];
+
+    document.addEventListener('keydown', onEscape);
+    renderList();
+  }
+
+  function onEscape(event: KeyboardEvent) {
+    if (event.key === 'Escape' && drawerNodes.length) {
+      document.removeEventListener('keydown', onEscape);
+      closeDrawer();
+    }
+  }
+
+  function buildDrawerHead(row: SubmissionRow): HTMLElement {
+    const close = el('button', {
+      class: 'admin-drawer-close',
+      text: '×',
+      attrs: { type: 'button', 'aria-label': 'Close' },
+    });
+    close.addEventListener('click', closeDrawer);
+
+    return el('div', {
+      class: 'admin-drawer-head',
+      children: [
+        el('div', {
+          children: [
+            el('h2', { class: 'admin-drawer-title', text: row.name }),
+            el('p', {
+              class: 'admin-page-sub',
+              text: `Submitted ${formatDate(row.createdAt)}`,
+            }),
+          ],
+        }),
+        el('div', {
+          class: 'admin-row',
+          children: [statusPill(row.status), close],
+        }),
+      ],
+    });
+  }
+
+  function detailRow(label: string, value: Node | string | null): Node[] {
+    if (value == null || value === '') return [];
+    const dd = el('dd');
+    if (typeof value === 'string') dd.textContent = value;
+    else dd.appendChild(value);
+    return [el('dt', { text: label }), dd];
+  }
+
+  function link(href: string, text = href): HTMLElement {
+    return el('a', {
+      class: 'admin-link',
+      text,
+      attrs: { href, target: '_blank', rel: 'noreferrer' },
+    });
+  }
+
+  function buildDrawerBody(row: SubmissionRow): HTMLElement {
+    const body = el('div', { class: 'admin-drawer-body' });
+    const cover = thumbUrl(row.imageUrl, 960);
+
+    if (cover) {
+      body.appendChild(
+        el('img', { class: 'admin-drawer-cover', attrs: { src: cover, alt: `${row.name} cover` } })
+      );
+    }
+
+    body.appendChild(
+      el('div', {
+        class: 'admin-section',
+        children: [
+          el('h3', { class: 'admin-section-title', text: 'Details' }),
+          el('dl', {
+            class: 'admin-dl',
+            children: [
+              ...detailRow('Website', row.website ? link(row.website) : null),
+              ...detailRow('Instagram', row.instagram),
+              ...detailRow('Location', [row.city, row.country].filter(Boolean).join(', ')),
+              ...detailRow('Address', row.address),
+              ...detailRow(
+                'Contact',
+                row.contactEmail
+                  ? el('a', {
+                      class: 'admin-link',
+                      text: row.contactEmail,
+                      attrs: { href: `mailto:${row.contactEmail}` },
+                    })
+                  : null
+              ),
+              ...detailRow(
+                'Reviewed',
+                row.reviewedAt
+                  ? `${formatDate(row.reviewedAt)}${row.reviewedBy ? ` by ${row.reviewedBy}` : ''}`
+                  : null
+              ),
+              ...detailRow('Profile URL', row.profileUrl ? link(row.profileUrl) : null),
+            ],
+          }),
+        ],
+      })
+    );
+
+    if (row.description) {
+      body.appendChild(
+        el('div', {
+          class: 'admin-section',
+          children: [
+            el('h3', { class: 'admin-section-title', text: 'Description' }),
+            el('p', { class: 'admin-prose', text: row.description }),
+          ],
+        })
+      );
+    }
+
+    body.appendChild(buildDecisionSection(row));
+    body.appendChild(buildNotesSection(row));
+    body.appendChild(buildEmailSection(row));
+
+    return body;
+  }
+
+  function buildDecisionSection(row: SubmissionRow): HTMLElement {
+    const make = (label: string, status: string, cls: string) => {
+      const button = el('button', {
+        class: `admin-btn ${cls}`,
+        text: label,
+        attrs: { type: 'button' },
       });
-  })();
+      button.disabled = row.status === status;
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          await adminAction(`/api/admin/submissions/${row.id}`, 'POST', { status });
+          toast(toastEl, `${row.name} marked ${status}.`);
+          await load({ keepDrawer: true });
+        } catch (error: any) {
+          toast(toastEl, error.message, 'error');
+          button.disabled = false;
+        }
+      });
+      return button;
+    };
+
+    return el('div', {
+      class: 'admin-section',
+      children: [
+        el('h3', { class: 'admin-section-title', text: 'Decision' }),
+        el('div', {
+          class: 'admin-row',
+          children: [
+            make('Approve', 'approved', 'is-primary'),
+            make('Reject', 'rejected', 'is-danger'),
+            make('Reset to pending', 'pending', ''),
+          ],
+        }),
+        el('p', {
+          class: 'admin-hint',
+          text: 'Changing the status never sends an email - use the section below for that.',
+        }),
+      ],
+    });
+  }
+
+  function buildNotesSection(row: SubmissionRow): HTMLElement {
+    const textarea = el('textarea', {
+      class: 'admin-textarea',
+      attrs: { placeholder: 'Internal notes - never shown to the applicant.' },
+    });
+    textarea.value = row.adminNotes || '';
+
+    const save = el('button', { class: 'admin-btn', text: 'Save note', attrs: { type: 'button' } });
+    save.addEventListener('click', async () => {
+      save.disabled = true;
+      try {
+        await adminAction(`/api/admin/submissions/${row.id}`, 'POST', {
+          adminNotes: textarea.value,
+        });
+        toast(toastEl, 'Note saved.');
+        await load({ keepDrawer: true });
+      } catch (error: any) {
+        toast(toastEl, error.message, 'error');
+      } finally {
+        save.disabled = false;
+      }
+    });
+
+    return el('div', {
+      class: 'admin-section',
+      children: [
+        el('h3', { class: 'admin-section-title', text: 'Internal notes' }),
+        textarea,
+        el('div', { class: 'admin-row', attrs: { style: 'margin-top:8px' }, children: [save] }),
+      ],
+    });
+  }
+
+  function buildEmailSection(row: SubmissionRow): HTMLElement {
+    const section = el('div', { class: 'admin-section' });
+    section.appendChild(el('h3', { class: 'admin-section-title', text: 'Notify the applicant' }));
+
+    if (!row.contactEmail) {
+      section.appendChild(
+        el('p', { class: 'admin-hint', text: 'No contact email on this submission - nothing can be sent.' })
+      );
+      return section;
+    }
+
+    section.appendChild(
+      el('p', { class: 'admin-hint', attrs: { style: 'margin-bottom:10px' }, text: `Sends to ${row.contactEmail}` })
+    );
+
+    // Acceptance needs a live profile URL. Prefill the conventional path from
+    // the studio name, but leave it editable — the published slug often differs.
+    const urlInput = el('input', {
+      class: 'admin-input',
+      attrs: { type: 'url', placeholder: 'https://acceso.design/designers/…' },
+    });
+    urlInput.value = row.profileUrl || `https://acceso.design/designers/${slugify(row.name)}`;
+
+    const previewHolder = el('div');
+
+    const makeSendButton = (kind: 'acceptance' | 'rejection', label: string, cls: string) => {
+      const sentAt = kind === 'acceptance' ? row.acceptanceEmailSentAt : row.rejectionEmailSentAt;
+      const button = el('button', {
+        class: `admin-btn ${cls}`,
+        text: sentAt ? `Resend ${kind}` : label,
+        attrs: { type: 'button' },
+      });
+
+      button.addEventListener('click', async () => {
+        const profileUrl = urlInput.value.trim();
+        if (kind === 'acceptance' && !profileUrl) {
+          toast(toastEl, 'Add the live profile URL before sending an acceptance.', 'error');
+          urlInput.focus();
+          return;
+        }
+        const confirmText = sentAt
+          ? `A ${kind} email was already sent to ${row.contactEmail}. Send it again?`
+          : `Send the ${kind} email to ${row.contactEmail}?`;
+        if (!window.confirm(confirmText)) return;
+
+        button.disabled = true;
+        const original = button.textContent;
+        button.textContent = 'Sending…';
+        try {
+          await adminAction(`/api/admin/submissions/${row.id}/email`, 'POST', {
+            kind,
+            ...(kind === 'acceptance' ? { profileUrl } : {}),
+          });
+          toast(toastEl, `${kind === 'acceptance' ? 'Acceptance' : 'Rejection'} email sent to ${row.contactEmail}.`);
+          await load({ keepDrawer: true });
+        } catch (error: any) {
+          toast(toastEl, error.message, 'error');
+          button.disabled = false;
+          button.textContent = original;
+        }
+      });
+
+      return button;
+    };
+
+    const makePreviewButton = (kind: 'acceptance' | 'rejection') => {
+      const button = el('button', {
+        class: 'admin-btn is-small',
+        text: `Preview ${kind}`,
+        attrs: { type: 'button' },
+      });
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          const params = new URLSearchParams({ kind });
+          if (kind === 'acceptance') params.set('profileUrl', urlInput.value.trim());
+          const res = await fetch(
+            `/api/admin/submissions/${row.id}/email?${params.toString()}`,
+            { credentials: 'same-origin' }
+          );
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.error || 'Preview failed');
+
+          // `sandbox="allow-same-origin"` (no allow-scripts) keeps the preview
+          // inert while still letting us write into it. The document is written
+          // through contentDocument rather than srcdoc because the page CSP
+          // only lists `frame-src 'self'`, which srcdoc frames don't reliably
+          // satisfy across browsers; an about:blank frame always does.
+          const frame = el('iframe', {
+            class: 'admin-preview-frame',
+            attrs: { title: `${kind} email preview`, sandbox: 'allow-same-origin', src: 'about:blank' },
+          });
+          previewHolder.replaceChildren(
+            el('div', {
+              class: 'admin-preview',
+              children: [
+                el('div', { class: 'admin-preview-head', text: `Subject: ${data.subject}` }),
+                frame,
+              ],
+            })
+          );
+          const doc = frame.contentDocument;
+          if (doc) {
+            doc.open();
+            doc.write(data.html);
+            doc.close();
+          }
+        } catch (error: any) {
+          toast(toastEl, error.message, 'error');
+        } finally {
+          button.disabled = false;
+        }
+      });
+      return button;
+    };
+
+    const sentNotes: HTMLElement[] = [];
+    if (row.acceptanceEmailSentAt) {
+      sentNotes.push(
+        el('span', { class: 'admin-pill is-sent', text: `Acceptance sent ${formatDate(row.acceptanceEmailSentAt)}` })
+      );
+    }
+    if (row.rejectionEmailSentAt) {
+      sentNotes.push(
+        el('span', { class: 'admin-pill is-sent', text: `Rejection sent ${formatDate(row.rejectionEmailSentAt)}` })
+      );
+    }
+    if (sentNotes.length) {
+      section.appendChild(
+        el('div', { class: 'admin-row', attrs: { style: 'margin-bottom:12px' }, children: sentNotes })
+      );
+    }
+
+    section.appendChild(
+      el('label', {
+        class: 'admin-field',
+        children: [el('span', { class: 'admin-field-label', text: 'Live profile URL (acceptance only)' }), urlInput],
+      })
+    );
+
+    section.appendChild(
+      el('div', {
+        class: 'admin-row',
+        children: [
+          makeSendButton('acceptance', 'Send acceptance', 'is-primary'),
+          makePreviewButton('acceptance'),
+        ],
+      })
+    );
+
+    section.appendChild(
+      el('div', {
+        class: 'admin-row',
+        attrs: { style: 'margin-top:8px' },
+        children: [
+          makeSendButton('rejection', 'Send rejection', 'is-danger'),
+          makePreviewButton('rejection'),
+        ],
+      })
+    );
+
+    section.appendChild(previewHolder);
+    return section;
+  }
+
+  /* ---------------- Load ---------------- */
+
+  async function load({ keepDrawer = false }: { keepDrawer?: boolean } = {}) {
+    const reopenId = keepDrawer ? openId : null;
+    try {
+      const inbox = await fetchInbox();
+      rows = (inbox.submissions || []) as SubmissionRow[];
+      counts = inbox.counts;
+
+      metaEl.textContent = `${rows.length} total · ${counts.pendingSubmissions ?? 0} pending review`;
+
+      errorsEl.replaceChildren();
+      if (inbox.errors?.length) {
+        errorsEl.appendChild(el('div', { class: 'admin-error', text: inbox.errors.join(' · ') }));
+      }
+
+      updateNavBadges();
+      renderFilters();
+      renderList();
+
+      if (reopenId && rows.some((r) => r.id === reopenId)) {
+        openDrawer(reopenId);
+      }
+    } catch (error: any) {
+      listEl.replaceChildren(el('div', { class: 'admin-error', text: error.message }));
+    }
+  }
+
+  searchEl.addEventListener('input', () => {
+    query = searchEl.value;
+    renderList();
+  });
+
+  refreshEl.addEventListener('click', () => {
+    refreshEl.disabled = true;
+    load().finally(() => {
+      refreshEl.disabled = false;
+    });
+  });
+
+  load();
 </script>

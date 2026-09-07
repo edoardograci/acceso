@@ -23,7 +23,7 @@ export function locationTitle(ctx: CityCtx): string {
 export function locationDescription(ctx: CityCtx): string {
   const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
   const count = ctx.totalStudios ? `${ctx.totalStudios}+` : 'independent';
-  return `Browse ${count} industrial and furniture design studios in ${where}. Explore portfolios, locations, and related designers — curated for discovery.`;
+  return `Browse ${count} industrial and furniture design studios in ${where}. Explore portfolios, locations, and related designers - curated for discovery.`;
 }
 
 function joinList(items: string[]): string {
@@ -56,3 +56,50 @@ export function locationIntro(ctx: CityCtx): { paragraphs: string[]; h2s: string
   };
 }
 
+
+type ProjectCtx = {
+  name: string;
+  designer?: string | null;
+  year?: string | null;
+  city?: string | null;
+  client?: string | null;
+  imageCount?: number;
+};
+
+/** Google renders roughly this much of a description; longer text is clipped. */
+const DESCRIPTION_BUDGET = 158;
+
+/**
+ * Meta description for a Discover project page.
+ *
+ * The old text ("{name} by {designer}. Industrial design project gallery.")
+ * ran about 55 characters, well under the ~120-160 Google renders, so results
+ * were padded with scraped page text. Projects only carry name, designer,
+ * year, city and client, so the sentence is assembled from whichever of those
+ * exist, and the closing clause steps down through shorter variants until the
+ * whole thing fits the budget. A long name plus a long studio name can still
+ * exceed it on its own; that is preferable to dropping the identity.
+ */
+export function projectDescription(ctx: ProjectCtx): string {
+  const by = ctx.designer ? ` by ${ctx.designer}` : '';
+  const year = ctx.year ? `, ${ctx.year}` : '';
+  const where = ctx.city ? ` from ${ctx.city}` : '';
+  const forWhom = ctx.client ? ` for ${ctx.client}` : '';
+
+  const head = `${ctx.name}${by}${year}. Independent industrial design project${where}${forWhom}.`;
+
+  // Longest closing first; fall back until one fits.
+  const tails = [
+    ctx.imageCount && ctx.imageCount > 1
+      ? ` Browse ${ctx.imageCount} photographs of the work on Acceso, the curated design directory.`
+      : ` See the full gallery on Acceso, the curated design directory.`,
+    ` See the full gallery on Acceso, the curated design directory.`,
+    ` View the gallery on Acceso.`,
+  ];
+
+  for (const tail of tails) {
+    if (head.length + tail.length <= DESCRIPTION_BUDGET) return head + tail;
+  }
+
+  return head;
+}

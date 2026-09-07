@@ -7,6 +7,7 @@ import { ensureProtocol } from '../../lib/url';
 import { normalizeImage } from '../../lib/images';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { breadcrumbList } from '../../lib/seo/schema';
+import { projectDescription } from '../../lib/seo/copy';
 
 interface ProductImage {
   id: string;
@@ -82,21 +83,45 @@ const itemImages = item?.images ?? [];
 const hasMultipleImages = itemImages.length > 1;
 const citySlug = item?.city ? item.city.toLowerCase().replace(/\s+/g, '-') : null;
 
-// ── SEO: Canonical URL & Product schema ──────────────────────────────────────
+// ── SEO: canonical URL + CreativeWork schema ─────────────────────────────────
 const canonical = new URL(`/discover/${slug}`, Astro.site);
 
+const metaDescription = item
+  ? projectDescription({
+      name: item.name,
+      designer: item.designer,
+      year: item.year,
+      city: item.city,
+      client: item.client,
+      imageCount: itemImages.length,
+    })
+  : '';
+
+// `brand` and `releaseDate` are not properties of CreativeWork - they belong to
+// Product (and SoftwareApplication/Game for releaseDate), which is why the old
+// `@id` ended in "#product". Using them here made the markup invalid. The
+// CreativeWork equivalents are `creator` and `datePublished`. Product would
+// legalise the originals, but these are design projects rather than items for
+// sale, and Product without offers/review/aggregateRating only earns
+// "missing field" warnings.
 const itemSchema = item ? {
   '@context': 'https://schema.org',
   '@graph': [
     {
       '@type': 'CreativeWork',
-      '@id': `${canonical}#product`,
+      '@id': `${canonical}#creativework`,
       name: item.name,
-      description: `${item.name}${item.designer ? ` by ${item.designer}` : ''}. Industrial design project.`,
-      image: item.images?.map((img: any) => img.image_url).filter(Boolean),
+      description: metaDescription,
+      image: itemImages.map((img: any) => img.image_url).filter(Boolean),
       url: canonical.toString(),
-      ...(item.designer ? { brand: { '@type': 'Brand', name: item.designer } } : {}),
-      ...(item.year ? { releaseDate: item.year } : {}),
+      ...(item.designer ? { creator: { '@type': 'Organization', name: item.designer } } : {}),
+      // schema.org Date accepts a bare ISO-8601 year, but guard against the CMS
+      // holding free text like "circa 2020".
+      ...(item.year && /^\d{4}$/.test(String(item.year).trim())
+        ? { datePublished: String(item.year).trim() }
+        : {}),
+      ...(item.city ? { contentLocation: { '@type': 'Place', name: item.city } } : {}),
+      ...(item.client ? { sourceOrganization: { '@type': 'Organization', name: item.client } } : {}),
     },
     breadcrumbList([
       { name: 'Home', url: '/' },
@@ -109,7 +134,7 @@ const itemSchema = item ? {
 
 <Layout 
   title={item ? `${item.name}${item.designer ? ` by ${item.designer}` : ''} | Acceso Discover` : 'Loading...'}
-  description={item ? `${item.name}${item.designer ? ` by ${item.designer}` : ''}. Industrial design project gallery.` : ''}
+  description={metaDescription}
   canonical={canonical}
   schema={itemSchema || undefined}
 >

@@ -216,7 +216,7 @@ const breadcrumbs = breadcrumbList([
 const topCities = cityBrowseList.filter((c) => !c.hidden).slice(0, 24);
 const cityItemListSchema = itemList({
   url: mapUrl,
-  name: `${pageTitle} — cities with ${seoTypePlural}`,
+  name: `${pageTitle} - cities with ${seoTypePlural}`,
   items: topCities.map((c) => ({
     url: new URL(cityHref(c.slug), SITE).toString(),
     name: c.name,
@@ -245,7 +245,7 @@ const faqs = [
 ---
 
 <Layout
-  title={`Acceso — ${mapPageTitle}`}
+  title={`Acceso - ${mapPageTitle}`}
   description={mapPageDescription}
   keywords={seoKeywords}
   schema={pageSchema}

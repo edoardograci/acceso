@@ -2,7 +2,7 @@
 // Assembles admin dashboard payloads from PostHog and Turso.
 
 import type { Env } from '../env.d';
-import { getAdminTursoMetrics, type AdminTursoMetrics } from './db';
+import { filtersCacheKey, type AnalyticsFilter } from './analytics-filters';
 import {
   buildDateRange,
   fetchAiPlatforms,
@@ -13,8 +13,11 @@ import {
   fetchDayTotals,
   fetchDevices,
   fetchHourlyTraffic,
+  fetchLiveDetail,
   fetchLiveStats,
+  fetchOperatingSystems,
   fetchPageTypes,
+  fetchSections,
   fetchReferringDomains,
   fetchReferrerTypes,
   fetchSessionStats,
@@ -29,6 +32,7 @@ import {
   type BreakdownRow,
   type EventCountRow,
   type HourlyPoint,
+  type LiveDetail,
   type LiveStats,
   type PostHogConfig,
   type SessionStats,
@@ -79,6 +83,7 @@ export interface AdminMetrics {
     countries: BreakdownRow[];
     devices: BreakdownRow[];
     browsers: BreakdownRow[];
+    operatingSystems: BreakdownRow[];
   };
   aiReferrers: {
     platforms: BreakdownRow[];
@@ -88,7 +93,8 @@ export interface AdminMetrics {
     sessions: SessionStats;
     customEvents: EventCountRow[];
   };
-  app: AdminTursoMetrics;
+  /** Filters this payload was computed under; echoed back so the UI can verify. */
+  filters: AnalyticsFilter[];
   errors: string[];
 }
 
@@ -104,37 +110,6 @@ export function parseSelectedDay(value: string | null | undefined): string {
 export function percentChange(current: number, previous: number): number | null {
   if (!previous) return current > 0 ? null : 0;
   return ((current - previous) / previous) * 100;
-}
-
-export function classifyPath(path: string): string {
-  const p = path.toLowerCase();
-  if (p === '/' || p === '/map' || p.startsWith('/map/')) return 'Home / Map';
-  if (p.startsWith('/designers')) return 'Studios';
-  if (p.startsWith('/directory/museums') || p.startsWith('/events/museums')) return 'Museums';
-  if (p.startsWith('/directory/schools')) return 'Schools';
-  if (p.startsWith('/directory/awards') || p.startsWith('/events/awards')) return 'Awards';
-  if (p.startsWith('/directory/fairs') || p.startsWith('/events/fairs')) return 'Fairs';
-  if (p.startsWith('/directory')) return 'Directory';
-  if (p.startsWith('/events')) return 'Events';
-  if (p.startsWith('/discover')) return 'Discover';
-  if (p.startsWith('/moodboard')) return 'Moodboard';
-  if (p.startsWith('/collections')) return 'Collections';
-  if (p.startsWith('/profile') || p.startsWith('/login')) return 'Account';
-  if (p.startsWith('/embed')) return 'Embed widgets';
-  if (p.startsWith('/submission')) return 'Submissions';
-  return 'Other';
-}
-
-function aggregateSections(paths: BreakdownRow[]): BreakdownRow[] {
-  const totals = new Map<string, BreakdownRow>();
-  for (const row of paths) {
-    const label = classifyPath(row.label);
-    const entry = totals.get(label) || { label, sessions: 0, pageviews: 0 };
-    entry.sessions += row.sessions;
-    entry.pageviews += row.pageviews;
-    totals.set(label, entry);
-  }
-  return Array.from(totals.values()).sort((a, b) => b.pageviews - a.pageviews);
 }
 
 function isoDay(date: Date): string {
@@ -198,6 +173,7 @@ function emptyPostHogBlocks() {
       countries: [],
       devices: [],
       browsers: [],
+      operatingSystems: [],
     } as AdminMetrics['acquisition'],
     aiReferrers: { platforms: [] as BreakdownRow[], details: [] as AiReferrerRow[] },
     engagement: {
@@ -217,7 +193,8 @@ async function collectPostHog(
   config: PostHogConfig,
   days: number,
   selectedDay: string,
-  part: MetricsPart
+  part: MetricsPart,
+  filters: AnalyticsFilter[]
 ) {
   const blocks = emptyPostHogBlocks();
   const errors: string[] = [];
@@ -231,56 +208,63 @@ async function collectPostHog(
   };
 
   const core: Promise<void>[] = [
-    settle('traffic', fetchTrafficSeries(config, days, selectedDay), (series) => {
+    settle('traffic', fetchTrafficSeries(config, days, selectedDay, filters), (series) => {
       blocks.traffic = splitTrafficSeries(series, days, selectedDay);
     }),
-    settle('top_paths', fetchTopPaths(config, days, selectedDay), (paths) => {
-      blocks.content.sections = aggregateSections(paths);
-      blocks.content.topPages = paths.slice(0, 25);
+    settle('top_paths', fetchTopPaths(config, days, selectedDay, filters), (paths) => {
+      blocks.content.topPages = paths.slice(0, 30);
     }),
-    settle('countries', fetchCountries(config, days, selectedDay), (rows) => {
+    // Sections are grouped in SQL, not folded from topPages: summing
+    // distinct-visitor counts across paths counted one visitor once per page.
+    settle('sections', fetchSections(config, days, selectedDay, filters), (rows) => {
+      blocks.content.sections = rows;
+    }),
+    settle('countries', fetchCountries(config, days, selectedDay, filters), (rows) => {
       blocks.acquisition.countries = rows;
     }),
-    settle('devices', fetchDevices(config, days, selectedDay), (rows) => {
+    settle('devices', fetchDevices(config, days, selectedDay, filters), (rows) => {
       blocks.acquisition.devices = rows;
     }),
-    settle('browsers', fetchBrowsers(config, days, selectedDay), (rows) => {
+    settle('browsers', fetchBrowsers(config, days, selectedDay, filters), (rows) => {
       blocks.acquisition.browsers = rows;
     }),
-    settle('day_totals', fetchDayTotals(config, selectedDay), (totals) => {
+    settle('day_totals', fetchDayTotals(config, selectedDay, filters), (totals) => {
       blocks.selectedDayTotals = totals;
     }),
-    settle('hourly', fetchHourlyTraffic(config, selectedDay), (rows) => {
+    settle('hourly', fetchHourlyTraffic(config, selectedDay, filters), (rows) => {
       blocks.hourly = rows;
     }),
   ];
 
   const extra: Promise<void>[] = [
-    settle('page_types', fetchPageTypes(config, days, selectedDay), (rows) => {
+    settle('page_types', fetchPageTypes(config, days, selectedDay, filters), (rows) => {
       blocks.content.pageTypes = rows;
     }),
-    settle('referrer_types', fetchReferrerTypes(config, days, selectedDay), (rows) => {
+    settle('referrer_types', fetchReferrerTypes(config, days, selectedDay, filters), (rows) => {
       blocks.acquisition.referrerTypes = rows;
     }),
-    settle('referring_domains', fetchReferringDomains(config, days, selectedDay), (rows) => {
+    settle('referring_domains', fetchReferringDomains(config, days, selectedDay, filters), (rows) => {
       blocks.acquisition.referringDomains = rows;
     }),
-    settle('utm_sources', fetchUtmSources(config, days, selectedDay), (rows) => {
+    settle('utm_sources', fetchUtmSources(config, days, selectedDay, filters), (rows) => {
       blocks.acquisition.utmSources = rows;
     }),
-    settle('utm_campaigns', fetchUtmCampaigns(config, days, selectedDay), (rows) => {
+    settle('utm_campaigns', fetchUtmCampaigns(config, days, selectedDay, filters), (rows) => {
       blocks.acquisition.utmCampaigns = rows;
     }),
-    settle('ai_platforms', fetchAiPlatforms(config, days, selectedDay), (rows) => {
+    settle('operating_systems', fetchOperatingSystems(config, days, selectedDay, filters), (rows) => {
+      blocks.acquisition.operatingSystems = rows;
+    }),
+    settle('ai_platforms', fetchAiPlatforms(config, days, selectedDay, filters), (rows) => {
       blocks.aiReferrers.platforms = rows;
     }),
-    settle('ai_details', fetchAiReferrerDetails(config, days, selectedDay), (rows) => {
+    settle('ai_details', fetchAiReferrerDetails(config, days, selectedDay, filters), (rows) => {
       blocks.aiReferrers.details = rows;
     }),
-    settle('session_stats', fetchSessionStats(config, days, selectedDay), (stats) => {
+    settle('session_stats', fetchSessionStats(config, days, selectedDay, filters), (stats) => {
       blocks.engagement.sessions = stats;
     }),
-    settle('custom_events', fetchCustomEvents(config, days, selectedDay), (rows) => {
+    settle('custom_events', fetchCustomEvents(config, days, selectedDay, filters), (rows) => {
       blocks.engagement.customEvents = rows;
     }),
   ];
@@ -290,8 +274,20 @@ async function collectPostHog(
   return { blocks, errors };
 }
 
-function cacheKey(range: RangeKey, day: string, kind: 'metrics' | 'live' | 'core' | 'extra'): string {
-  return `${CACHE_ORIGIN}/${kind}/${range}/${day}`;
+/**
+ * Cache identity for one payload.
+ *
+ * The filter set is part of the key. Without it a filtered request would be
+ * served the cached *unfiltered* payload and the dashboard would silently
+ * ignore the filter that was just clicked.
+ */
+function cacheKey(
+  range: RangeKey,
+  day: string,
+  kind: 'metrics' | 'live' | 'live-detail' | 'core' | 'extra',
+  filters: AnalyticsFilter[] = []
+): string {
+  return `${CACHE_ORIGIN}/${kind}/${range}/${day}/${encodeURIComponent(filtersCacheKey(filters))}`;
 }
 
 async function readCache<T>(key: string): Promise<T | null> {
@@ -323,57 +319,78 @@ async function writeCache(key: string, data: unknown, ttl: number): Promise<void
   }
 }
 
+export interface LiveAnalytics {
+  live: LiveStats | null;
+  detail: LiveDetail | null;
+  posthogConfigured: boolean;
+  generatedAt: string;
+  errors: string[];
+}
+
+const EMPTY_LIVE_DETAIL: LiveDetail = { pages: [], countries: [], referrers: [] };
+
 export async function getLiveAnalytics(
   env: Env,
   options: { refresh?: boolean } = {}
-): Promise<{ live: LiveStats | null; posthogConfigured: boolean; generatedAt: string; errors: string[] }> {
+): Promise<LiveAnalytics> {
   const key = cacheKey(DEFAULT_RANGE, utcToday(), 'live');
   if (!options.refresh) {
-    const cached = await readCache<{ live: LiveStats | null; posthogConfigured: boolean; generatedAt: string; errors: string[] }>(key);
+    const cached = await readCache<LiveAnalytics>(key);
     if (cached) return cached;
   }
 
   const config = getPostHogConfig(env);
   if (!config) {
-    return { live: null, posthogConfigured: false, generatedAt: new Date().toISOString(), errors: [] };
+    return {
+      live: null,
+      detail: null,
+      posthogConfigured: false,
+      generatedAt: new Date().toISOString(),
+      errors: [],
+    };
   }
 
   const errors: string[] = [];
   let live: LiveStats | null = null;
-  try {
-    live = await fetchLiveStats(config);
-  } catch (error: any) {
-    errors.push(`live: ${error?.message || 'query failed'}`);
+  let detail: LiveDetail | null = null;
+
+  // Headline counters and the "Right now" breakdowns are independent: a failure
+  // in one must not blank the other.
+  const [statsResult, detailResult] = await Promise.allSettled([
+    fetchLiveStats(config),
+    fetchLiveDetail(config),
+  ]);
+
+  if (statsResult.status === 'fulfilled') live = statsResult.value;
+  else errors.push(`live: ${statsResult.reason?.message || 'query failed'}`);
+
+  if (detailResult.status === 'fulfilled') detail = detailResult.value;
+  else {
+    detail = EMPTY_LIVE_DETAIL;
+    errors.push(`live_detail: ${detailResult.reason?.message || 'query failed'}`);
   }
 
-  const payload = { live, posthogConfigured: true, generatedAt: new Date().toISOString(), errors };
+  const payload: LiveAnalytics = {
+    live,
+    detail,
+    posthogConfigured: true,
+    generatedAt: new Date().toISOString(),
+    errors,
+  };
   await writeCache(key, payload, LIVE_CACHE_TTL_SECONDS);
   return payload;
-}
-
-function emptyApp(): AdminTursoMetrics {
-  return {
-    totalUsers: 0,
-    newUsers: 0,
-    signupsByDay: [],
-    saves: { designers: 0, objects: 0, museums: 0, universities: 0 },
-    recentSaves: { designers: 0, objects: 0, museums: 0, universities: 0 },
-    submissionsByStatus: [],
-    pendingStudioRequests: 0,
-    suggestions: 0,
-    errors: [],
-  };
 }
 
 export async function getAdminMetrics(
   env: Env,
   range: RangeKey,
-  options: { refresh?: boolean; day?: string; part?: MetricsPart } = {}
+  options: { refresh?: boolean; day?: string; part?: MetricsPart; filters?: AnalyticsFilter[] } = {}
 ): Promise<AdminMetrics> {
   const selectedDay = parseSelectedDay(options.day);
   const part: MetricsPart = options.part || 'all';
+  const filters = options.filters || [];
   const kind = part === 'all' ? 'metrics' : part;
-  const cacheKeyStr = cacheKey(range, selectedDay, kind);
+  const cacheKeyStr = cacheKey(range, selectedDay, kind, filters);
 
   if (!options.refresh) {
     const cached = await readCache<AdminMetrics>(cacheKeyStr);
@@ -383,19 +400,10 @@ export async function getAdminMetrics(
   const days = RANGES[range];
   const config = getPostHogConfig(env);
   const isToday = selectedDay === utcToday();
-  const loadApp = part !== 'core';
 
-  const [posthog, app] = await Promise.all([
-    config
-      ? collectPostHog(config, days, selectedDay, part)
-      : Promise.resolve({ blocks: emptyPostHogBlocks(), errors: [] }),
-    loadApp
-      ? getAdminTursoMetrics(env, days).catch((error: any) => ({
-          ...emptyApp(),
-          errors: [`turso: ${error?.message || 'query failed'}`],
-        }))
-      : Promise.resolve(emptyApp()),
-  ]);
+  const posthog = config
+    ? await collectPostHog(config, days, selectedDay, part, filters)
+    : { blocks: emptyPostHogBlocks(), errors: [] };
 
   const metrics: AdminMetrics = {
     range,
@@ -406,8 +414,8 @@ export async function getAdminMetrics(
     generatedAt: new Date().toISOString(),
     posthogConfigured: Boolean(config),
     ...posthog.blocks,
-    app,
-    errors: [...posthog.errors, ...app.errors],
+    filters,
+    errors: posthog.errors,
   };
 
   await writeCache(cacheKeyStr, metrics, CACHE_TTL_SECONDS);

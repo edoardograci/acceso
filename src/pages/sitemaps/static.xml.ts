@@ -12,7 +12,8 @@ export const GET: APIRoute = ({ site }) => {
 
   const urls = [
     { loc: new URL('/', site).toString(), lastmod, changefreq: 'daily' as const, priority: 1.0 },
-    { loc: new URL('/designers', site).toString(), lastmod, changefreq: 'daily' as const, priority: 0.9 },
+    // /designers lives in sitemaps/designer-directory.xml, which also owns its
+    // pagination. Listing it here as well duplicated it across two sitemaps.
     { loc: new URL('/discover', site).toString(), lastmod, changefreq: 'daily' as const, priority: 0.8 },
     { loc: new URL('/directory', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.7 },
     { loc: new URL('/directory/fairs', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
@@ -21,9 +22,8 @@ export const GET: APIRoute = ({ site }) => {
     { loc: new URL('/directory/schools', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
     { loc: new URL('/info', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.5 },
     { loc: new URL('/submission', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.4 },
-    { loc: new URL('/icon.svg', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.3 },
-    { loc: new URL('/favicon.ico', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.3 },
-    { loc: new URL('/apple-touch-icon.png', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.3 },
+    // The HTML index at /sitemap is itself an indexable page.
+    { loc: new URL('/sitemap', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.3 },
     { loc: new URL('/privacy', site).toString(), lastmod: privacyLastmod, changefreq: 'yearly' as const, priority: 0.2 },
     { loc: new URL('/terms', site).toString(), lastmod: termsLastmod, changefreq: 'yearly' as const, priority: 0.2 },
   ];

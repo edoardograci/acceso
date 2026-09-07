@@ -1,0 +1,180 @@
+---
+// src/pages/admin/app.astro
+// Product metrics from the app's own database — users, signups, saved items.
+// Split out of /admin/analytics so that page is purely traffic.
+//
+// Rendered server-side rather than fetched: it is a single Turso read behind an
+// already admin-gated route, so an extra API round trip would buy nothing.
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/admin';
+import { getAdminTursoMetrics } from '../../lib/db';
+import { parseRange, RANGES } from '../../lib/admin-metrics';
+import type { Env } from '../../env.d';
+
+export const prerender = false;
+
+const runtimeEnv = Astro.locals.runtime?.env || {};
+const metaEnv = import.meta.env || {};
+const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
+
+if (!isAdmin(Astro.locals.user, env)) {
+  return new Response('Not Found', {
+    status: 404,
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+
+const range = parseRange(Astro.url.searchParams.get('range'));
+const days = RANGES[range];
+
+const metrics = await getAdminTursoMetrics(env, days).catch((error: any) => ({
+  totalUsers: 0,
+  newUsers: 0,
+  signupsByDay: [] as { day: string; count: number }[],
+  saves: { designers: 0, objects: 0, museums: 0, universities: 0 },
+  recentSaves: { designers: 0, objects: 0, museums: 0, universities: 0 },
+  submissionsByStatus: [] as { status: string; count: number }[],
+  suggestions: 0,
+  errors: [`turso: ${error?.message || 'query failed'}`],
+}));
+
+const rangeLabels: Record<string, string> = {
+  '1d': 'Today',
+  '7d': '7 days',
+  '30d': '30 days',
+  '90d': '90 days',
+};
+
+const savedRows = [
+  { label: 'Studios', total: metrics.saves.designers, recent: metrics.recentSaves.designers },
+  { label: 'Objects', total: metrics.saves.objects, recent: metrics.recentSaves.objects },
+  { label: 'Museums', total: metrics.saves.museums, recent: metrics.recentSaves.museums },
+  { label: 'Universities', total: metrics.saves.universities, recent: metrics.recentSaves.universities },
+];
+
+const totalSaves = savedRows.reduce((acc, row) => acc + row.total, 0);
+const recentSaves = savedRows.reduce((acc, row) => acc + row.recent, 0);
+const maxSaves = savedRows.reduce((acc, row) => Math.max(acc, row.total), 0);
+
+const maxSignups = metrics.signupsByDay.reduce((acc, row) => Math.max(acc, row.count), 0);
+const nf = new Intl.NumberFormat('en-US');
+---
+
+<AdminLayout title="Acceso - App data" active="app">
+  <main class="an-page">
+    <header class="an-head">
+      <div>
+        <h1 class="an-title">App data</h1>
+        <p class="an-sub">
+          Straight from the database, not PostHog · last {days} days
+        </p>
+      </div>
+      <div class="an-controls">
+        <div class="an-ranges" role="group" aria-label="Date range">
+          {Object.keys(RANGES).map((key) => (
+            <a
+              href={`/admin/app?range=${key}`}
+              class={`an-range ${key === range ? 'is-active' : ''}`}
+              aria-current={key === range ? 'page' : undefined}
+            >
+              {rangeLabels[key] || key}
+            </a>
+          ))}
+        </div>
+      </div>
+    </header>
+
+    {metrics.errors.length > 0 && (
+      <div class="an-notice is-error">
+        <ul>{metrics.errors.map((error) => <li>{error}</li>)}</ul>
+      </div>
+    )}
+
+    <section class="an-tiles">
+      <div class="an-tile">
+        <p class="an-tile-label">Total users</p>
+        <p class="an-tile-value">{nf.format(metrics.totalUsers)}</p>
+        <div class="an-tile-foot"><span class="an-tile-hint">all time</span></div>
+      </div>
+      <div class="an-tile">
+        <p class="an-tile-label">New signups</p>
+        <p class="an-tile-value">{nf.format(metrics.newUsers)}</p>
+        <div class="an-tile-foot"><span class="an-tile-hint">in this period</span></div>
+      </div>
+      <div class="an-tile">
+        <p class="an-tile-label">Saved items</p>
+        <p class="an-tile-value">{nf.format(totalSaves)}</p>
+        <div class="an-tile-foot"><span class="an-tile-hint">all time, all types</span></div>
+      </div>
+      <div class="an-tile">
+        <p class="an-tile-label">Saves in period</p>
+        <p class="an-tile-value">{nf.format(recentSaves)}</p>
+        <div class="an-tile-foot"><span class="an-tile-hint">last {days} days</span></div>
+      </div>
+    </section>
+
+    <div class="an-grid-2">
+      <section class="an-card">
+        <header class="an-card-head">
+          <h2 class="an-card-title">Saved items by type</h2>
+          <span class="an-card-metric">all time</span>
+        </header>
+        {totalSaves === 0 ? (
+          <p class="an-empty">Nothing saved yet.</p>
+        ) : (
+          <ul class="an-list">
+            {savedRows.map((row) => (
+              <li>
+                <div class="an-row">
+                  <span
+                    class="an-row-fill"
+                    style={`width:${maxSaves > 0 ? Math.max((row.total / maxSaves) * 100, 1) : 0}%`}
+                  ></span>
+                  <span class="an-row-label">{row.label}</span>
+                  <span class="an-row-value">{nf.format(row.total)}</span>
+                  <span class="an-row-secondary">{nf.format(row.recent)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p class="an-card-foot">Second column is saves within the selected period.</p>
+      </section>
+
+      <section class="an-card">
+        <header class="an-card-head">
+          <h2 class="an-card-title">Signups per day</h2>
+          <span class="an-card-metric">users</span>
+        </header>
+        {metrics.signupsByDay.length === 0 ? (
+          <p class="an-empty">No signups in this period.</p>
+        ) : (
+          <ul class="an-list">
+            {metrics.signupsByDay
+              .slice()
+              .reverse()
+              .slice(0, 14)
+              .map((row) => (
+                <li>
+                  <div class="an-row">
+                    <span
+                      class="an-row-fill"
+                      style={`width:${maxSignups > 0 ? Math.max((row.count / maxSignups) * 100, 1) : 0}%`}
+                    ></span>
+                    <span class="an-row-label">{row.day}</span>
+                    <span class="an-row-value">{nf.format(row.count)}</span>
+                  </div>
+                </li>
+              ))}
+          </ul>
+        )}
+      </section>
+    </div>
+
+    <footer class="an-footnote">
+      Submissions and recommendations are managed in their own queues - see the
+      <a class="an-link" href="/admin/submissions">Submissions</a> and
+      <a class="an-link" href="/admin/recommendations">Recommendations</a> tabs.
+    </footer>
+  </main>
+</AdminLayout>

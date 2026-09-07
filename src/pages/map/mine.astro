@@ -188,10 +188,10 @@ const pageTitle = mine ? 'My Map' : (itemType === 'museum' ? 'Explore Museums & 
 const titleLead = mine ? 'My' : 'Explore';
 const titleRest = pageTitle.replace(/^(Explore|My)\s+/, '');
 const pageDescription = mine
-  ? 'Your personal map — every studio, museum, and school you have saved, plotted by city.'
+  ? 'Your personal map - every studio, museum, and school you have saved, plotted by city.'
   : (itemType === 'museum' ? 'Interactive map of design museums and foundations worldwide.' : itemType === 'university' ? 'Interactive map of design schools and institutions worldwide.' : 'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.');
 const exploreDescription = mine
-  ? 'Your saved studios, museums, and schools — plotted on the map and listed by city, just like the main directory.'
+  ? 'Your saved studios, museums, and schools - plotted on the map and listed by city, just like the main directory.'
   : (itemType === 'museum'
       ? 'A directory of permanent collections and institutions preserving design culture and history.'
       : itemType === 'university'
@@ -212,7 +212,7 @@ const breadcrumbs = breadcrumbList([
 const topCities = cityBrowseList.filter((c) => !c.hidden).slice(0, 24);
 const cityItemListSchema = itemList({
   url: mapUrl,
-  name: `${pageTitle} — cities with ${seoTypePlural}`,
+  name: `${pageTitle} - cities with ${seoTypePlural}`,
   items: topCities.map((c) => ({
     url: new URL(`/?type=${typeParam}&city=${c.slug}`, SITE).toString(),
     name: c.name,

@@ -118,7 +118,7 @@ const contactParts = university.contact
   ? university.contact.split(/[/,|;]/).map((p: string) => p.trim()).filter(Boolean)
   : [];
 
-const pageTitle = `${university.name} — Design School in ${cityName} | Acceso`;
+const pageTitle = `${university.name} - Design School in ${cityName} | Acceso`;
 const pageDesc = university.description || `Explore ${university.name}, a prominent design institution in ${cityName}, ${countryName}.`;
 
 // ── SEO: Canonical + EducationalOrganization schema ───────────────────────────

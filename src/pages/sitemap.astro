@@ -100,7 +100,7 @@ const sections: { title: string; links: { href: string; label: string; count?: n
   {
     title: 'Designer Directory Pages',
     links: Array.from({ length: totalDesignerPages }, (_, i) =>
-      link(`/designers/page/${i + 1}`, `Designers — Page ${i + 1}`)
+      link(`/designers/page/${i + 1}`, `Designers - Page ${i + 1}`)
     ),
   },
   {
@@ -110,10 +110,10 @@ const sections: { title: string; links: { href: string; label: string; count?: n
     ),
   },
   {
-    title: `Discover — Projects (${projectSlugs.length})`,
+    title: `Discover - Projects (${projectSlugs.length})`,
     links: projectSlugs.map((slug) => {
       const project = projects.find((p) => p.slug === slug);
-      const label = project?.designer ? `${project.name} — ${project.designer}` : (project?.name || slug);
+      const label = project?.designer ? `${project.name} - ${project.designer}` : (project?.name || slug);
       return link(`/discover/${encodeURIComponent(slug)}`, label);
     }),
   },
@@ -138,7 +138,7 @@ const totalUrls = sections.reduce((sum, s) => sum + s.links.length, 0);
 
 <Layout
   title="Sitemap | Acceso"
-  description="A complete index of every page on Acceso — designers, projects, directory entries, and locations — for easy browsing and discovery."
+  description="A complete index of every page on Acceso - designers, projects, directory entries, and locations - for easy browsing and discovery."
   keywords="sitemap, acceso sitemap, site index, design directory index"
 >
   <Navbar />

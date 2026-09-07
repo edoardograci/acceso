@@ -91,7 +91,7 @@ const contactParts = museum.contact
   ? museum.contact.split(/[/,|;]/).map((p: string) => p.trim()).filter(Boolean)
   : [];
 
-const pageTitle = `${museum.name} — Design Museum in ${cityName} | Acceso`;
+const pageTitle = `${museum.name} - Design Museum in ${cityName} | Acceso`;
 const pageDesc = museum.description || `Explore ${museum.name}, a prominent design institution in ${cityName}, ${countryName}.`;
 
 // ── SEO: Canonical + Museum schema ────────────────────────────────────────
