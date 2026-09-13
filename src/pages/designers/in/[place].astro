@@ -208,9 +208,7 @@ const mapStudios = studios.map(s => ({
             ))}
           </div>
 
-          <div class="hidden py-12 text-center text-gray" id="empty-result">
-            <p>No designers found matching your criteria.</p>
-          </div>
+          <div class="hidden py-12 text-center text-gray" id="empty-result"></div>
           
           <!-- Pagination: pinned footer of the panel on mobile (like the homepage) -->
           <div id="pagination-container" class="pagination-wrapper"></div>
@@ -412,7 +410,14 @@ const mapStudios = studios.map(s => ({
         if (filteredStudios.length === 0) {
           grid.style.display = 'none';
           const empty = document.getElementById('empty-result');
-          if (empty) empty.style.display = 'block';
+          if (empty) {
+            empty.style.display = 'block';
+            if (!empty.firstChild) {
+              const p = document.createElement('p');
+              p.textContent = 'No designers found matching your criteria.';
+              empty.appendChild(p);
+            }
+          }
         } else {
           grid.style.display = 'grid';
           const empty = document.getElementById('empty-result');

@@ -7,6 +7,7 @@ import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
+import { entityTitle, entityDescription } from '../../../lib/seo/meta';
 
 // Reusable Components
 import FairHeader from '../../../components/fair/FairHeader.astro';
@@ -133,8 +134,11 @@ const aboutParagraphs = (fair.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
-const pageTitle = `${fair.name} - Design Fair in ${cityName} | Acceso`;
-const pageDesc = fair.description || `Explore ${fair.name}, a premier design event in ${cityName}, ${countryName}.`;
+const pageTitle = entityTitle(fair.name, 'Design Fair', cityName);
+const pageDesc = entityDescription(
+  fair.description,
+  `${fair.name} is a design fair in ${cityName}, ${countryName}. Explore dates, venues, and exhibitors on Acceso.`
+);
 
 // ── SEO: Canonical + Event schema ──────────────────────────────────────────
 const canonical = new URL(`/directory/fairs/${slug}`, Astro.site);

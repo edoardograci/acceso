@@ -6,6 +6,7 @@ import EventBasicCard from '../../../components/EventBasicCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
+import { entityTitle, entityDescription } from '../../../lib/seo/meta';
 
 // Reusable School Components
 import SchoolHeader from '../../../components/school/SchoolHeader.astro';
@@ -118,8 +119,11 @@ const contactParts = university.contact
   ? university.contact.split(/[/,|;]/).map((p: string) => p.trim()).filter(Boolean)
   : [];
 
-const pageTitle = `${university.name} - Design School in ${cityName} | Acceso`;
-const pageDesc = university.description || `Explore ${university.name}, a prominent design institution in ${cityName}, ${countryName}.`;
+const pageTitle = entityTitle(university.name, 'Design School', cityName);
+const pageDesc = entityDescription(
+  university.description,
+  `${university.name} is a design school in ${cityName}, ${countryName}. Explore programs, admissions, and courses on Acceso.`
+);
 
 // ── SEO: Canonical + EducationalOrganization schema ───────────────────────────
 const canonical = new URL(`/directory/schools/${slug}`, Astro.site);

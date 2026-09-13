@@ -211,7 +211,7 @@ if (cityParam) {
 
 <Layout 
   title="Design Fairs Directory | Acceso"
-  description="Discover global design weeks, biennials, and furniture trade shows worldwide."
+  description="Browse design weeks, biennials, and furniture trade fairs worldwide, with dates and venues, organized by city and season."
 >
   <Navbar />
   
@@ -294,9 +294,7 @@ if (cityParam) {
         {processedFairs.length === 0 && <p class="empty-state">No fairs found.</p>}
       </div>
 
-      <div class="hidden py-12 text-center text-gray" id="empty-result">
-        <p>No fairs found matching your criteria.</p>
-      </div>
+      <div class="hidden py-12 text-center text-gray" id="empty-result"></div>
     </div>
   </main>
 
@@ -588,7 +586,13 @@ if (cityParam) {
       wrappers.forEach((w) => { w.style.display = visible.includes(w) ? '' : 'none'; });
 
       countEl.textContent = visible.length + (visible.length === 1 ? ' result' : ' results');
-      emptyEl.classList.toggle('hidden', visible.length !== 0);
+      const isEmpty = visible.length === 0;
+      emptyEl.classList.toggle('hidden', !isEmpty);
+      if (isEmpty && emptyEl && !emptyEl.firstChild) {
+        const p = document.createElement('p');
+        p.textContent = 'No fairs found matching your criteria.';
+        emptyEl.appendChild(p);
+      }
     }
 
     const filterDone = document.getElementById('filter-done-btn');

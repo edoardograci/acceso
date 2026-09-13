@@ -6,7 +6,8 @@ import EventBasicCard from '../../../components/EventBasicCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
-import { breadcrumbList } from '../../../lib/seo/schema';
+import { breadcrumbList, faqPage } from '../../../lib/seo/schema';
+import { entityTitle, entityDescription } from '../../../lib/seo/meta';
 
 // Reusable Award Components
 import AwardHeader from '../../../components/award/AwardHeader.astro';
@@ -118,8 +119,11 @@ const aboutParagraphs = (award.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
-const pageTitle = `${award.name} - Design Award | Acceso`;
-const pageDesc = award.description || `Explore ${award.name}, one of the most prestigious recognitions in industrial and furniture design.`;
+const pageTitle = entityTitle(award.name, 'Design Award', cityName);
+const pageDesc = entityDescription(
+  award.description,
+  `${award.name} is a design award${cityName ? ` based in ${cityName}` : ''}. Explore eligibility, prizes, and deadlines on Acceso.`
+);
 
 // ── SEO: Canonical + schema ────────────────────────────────────────────────────
 const canonical = new URL(`/directory/awards/${slug}`, Astro.site);
@@ -152,6 +156,28 @@ const awardEventSchema = awardStartDate && cityName ? {
   organizer: award.website ? { '@type': 'Organization', name: award.name, url: award.website } : undefined,
 } : null;
 
+const faqs: Array<{ q: string; a: string }> = [
+  ...(award.eligibility
+    ? [{ q: 'Who can enter this award?', a: award.eligibility }]
+    : []),
+  ...(award.prize
+    ? [{ q: 'What is the prize?', a: award.prize }]
+    : []),
+  ...(award.submission_requirements
+    ? [{ q: 'What do I need to submit?', a: award.submission_requirements }]
+    : []),
+  ...(award.prototype
+    ? [{
+        q: 'Do I need to submit a physical prototype?',
+        a: (award.prototype || '').trim() === 'Finalists only'
+          ? 'Only finalists are required to submit a physical prototype. You do not need to submit one when applying or making your initial submission. If selected as a finalist, a physical prototype may need to be sent for evaluation and additional costs may apply. Check the official award website for specific requirements and shipping details.'
+          : (award.prototype || '').trim() === 'Required'
+            ? 'A physical prototype is required as part of the submission. Check the official award website for details on prototype requirements, shipping, evaluation, and any associated costs.'
+            : 'A physical prototype is not required for this award. You can submit your project without providing a physical prototype.',
+      }]
+    : []),
+];
+
 const awardSchema = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -162,6 +188,7 @@ const awardSchema = {
       { name: 'Awards', url: '/directory/awards' },
       { name: award.name, url: `/directory/awards/${slug}` },
     ]),
+    ...(faqs.length ? [faqPage(faqs)] : []),
   ],
 };
 ---

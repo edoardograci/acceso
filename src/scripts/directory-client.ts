@@ -341,6 +341,11 @@ function init() {
       if (visibleData.length === 0) {
         studiosGrid?.classList.add('hidden');
         emptyResult?.classList.remove('hidden');
+        if (emptyResult && !emptyResult.firstChild) {
+          const p = document.createElement('p');
+          p.textContent = 'No designers found matching your criteria.';
+          emptyResult.appendChild(p);
+        }
       } else {
         studiosGrid?.classList.remove('hidden');
         emptyResult?.classList.add('hidden');

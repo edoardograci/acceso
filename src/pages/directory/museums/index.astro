@@ -110,7 +110,7 @@ if (cityParam) {
 
 <Layout
   title="Design Museums Directory | Acceso"
-  description="Discover design museums and institutions preserving design history worldwide."
+  description="Browse design museums and foundations worldwide, from flagship institutions to independent collections. Explore exhibits and locations by city."
 >
   <Navbar />
 
@@ -197,9 +197,7 @@ if (cityParam) {
         {processedMuseums.length === 0 && <p class="empty-state">No museums found.</p>}
       </div>
 
-      <div class="hidden py-12 text-center text-gray" id="empty-result">
-        <p>No museums found matching your criteria.</p>
-      </div>
+      <div class="hidden py-12 text-center text-gray" id="empty-result"></div>
     </div>
   </main>
 
@@ -386,7 +384,13 @@ if (cityParam) {
       wrappers.forEach((w) => { w.style.display = visible.includes(w) ? '' : 'none'; });
 
       countEl.textContent = visible.length + (visible.length === 1 ? ' result' : ' results');
-      emptyEl.classList.toggle('hidden', visible.length !== 0);
+      const isEmpty = visible.length === 0;
+      emptyEl.classList.toggle('hidden', !isEmpty);
+      if (isEmpty && emptyEl && !emptyEl.firstChild) {
+        const p = document.createElement('p');
+        p.textContent = 'No museums found matching your criteria.';
+        emptyEl.appendChild(p);
+      }
     }
 
     const filterDone = document.getElementById('filter-done-btn');

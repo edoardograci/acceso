@@ -6,6 +6,7 @@ import EventBasicCard from '../../../components/EventBasicCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
+import { entityTitle, entityDescription } from '../../../lib/seo/meta';
 
 // Reusable Museum Components
 import MuseumHeader from '../../../components/museum/MuseumHeader.astro';
@@ -91,8 +92,11 @@ const contactParts = museum.contact
   ? museum.contact.split(/[/,|;]/).map((p: string) => p.trim()).filter(Boolean)
   : [];
 
-const pageTitle = `${museum.name} - Design Museum in ${cityName} | Acceso`;
-const pageDesc = museum.description || `Explore ${museum.name}, a prominent design institution in ${cityName}, ${countryName}.`;
+const pageTitle = entityTitle(museum.name, 'Design Museum', cityName);
+const pageDesc = entityDescription(
+  museum.description,
+  `${museum.name} is a design museum in ${cityName}, ${countryName}. Explore programs, admissions, and courses on Acceso.`
+);
 
 // ── SEO: Canonical + Museum schema ────────────────────────────────────────
 const canonical = new URL(`/directory/museums/${slug}`, Astro.site);
