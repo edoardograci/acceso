@@ -67,20 +67,6 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-// Slugs published by the CMS are always lowercase words joined by dashes.
-// Requiring that shape keeps URL-supplied values out of both the attribute
-// selector below (where a quote would throw) and the breadcrumb fallback.
-const CITY_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/i;
-
-function resolveCityFromSlug(slug: string): { name: string; country?: string } | null {
-  if (!CITY_SLUG_RE.test(slug)) return null;
-  const itemEl = document.querySelector(`.city-browse-item[data-slug="${slug}"]`) as HTMLElement | null;
-  return {
-    name: itemEl?.dataset.city || slug,
-    country: itemEl?.querySelector('.city-browse-meta')?.textContent?.trim() || undefined,
-  };
-}
-
 function median(numbers: number[]): number {
   if (numbers.length === 0) return 0;
   const sorted = [...numbers].sort((a, b) => a - b);
@@ -303,11 +289,11 @@ function init() {
     const mapLink = '<a href="/" class="breadcrumb-item">Map</a>';
     let html = mapLink;
 
-    if (panelView === 'browse') {
+    if (panelView === 'browse' && cityBrowse) {
       html += sep + '<span class="breadcrumb-current">More cities</span>';
     } else if (panelView === 'studios') {
       const current = `<span class="breadcrumb-current">${escapeHtml(currentCityName)}</span>`;
-      if (panelOrigin === 'browse') {
+      if (cityBrowse && panelOrigin === 'browse') {
         html += sep + '<a href="#" class="breadcrumb-item" data-bc="more">More cities</a>' + sep + current;
       } else {
         html += sep + current;
@@ -342,7 +328,9 @@ function init() {
     // so going "back" from a city no longer leaves only that city's pins shown.
     mapInstance.hideRecenter?.();
     mapInstance.updateStudios(mapStudios, false, true);
-    if (mapInstance.map) {
+    if (mapInstance.flyToProgrammatic) {
+      mapInstance.flyToProgrammatic({ center: [12.0, 48.0], zoom: 4, duration: 800 });
+    } else if (mapInstance.map) {
       mapInstance.map.flyTo({ center: [12.0, 48.0], zoom: 4, duration: 800 });
     }
   }
@@ -364,12 +352,13 @@ function init() {
   }
 
   function showCityBrowse() {
+    if (!cityBrowse) return;
     hideStudioCardUI();
     panelOrigin = 'browse';
     panelView = 'browse';
     currentCityName = '';
     hideAllPanelViews();
-    cityBrowse?.classList.remove('hidden');
+    cityBrowse.classList.remove('hidden');
     citySearch?.focus();
     showAllStudios();
     updatePanelNavState();
@@ -378,6 +367,10 @@ function init() {
   }
 
   function hideCityBrowse() {
+    if (!cityBrowse) {
+      showQuickNav();
+      return;
+    }
     if (cityStudios && !cityStudios.classList.contains('hidden')) {
       if (panelOrigin === 'browse') showCityBrowse();
       else showQuickNav();
@@ -387,7 +380,7 @@ function init() {
   }
 
   function hideCityStudios() {
-    if (panelOrigin === 'browse') showCityBrowse();
+    if (cityBrowse && panelOrigin === 'browse') showCityBrowse();
     else showQuickNav();
   }
 
@@ -398,17 +391,19 @@ function init() {
   function bindMapInteractions() {
     if (!mapInstance) return;
 
-    document.querySelectorAll('.quick-nav-card[data-city]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const el = btn as HTMLElement;
-        const city = el.dataset.city;
-        if (!city) return;
-        const href = el.getAttribute('href');
-        if (href) window.history.pushState({}, '', href);
-        selectCity(city, city.toLowerCase().replace(/\s+/g, '-'), undefined, 'quick');
+    if (cityBrowse) {
+      document.querySelectorAll('.quick-nav-card[data-city]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const el = btn as HTMLElement;
+          const city = el.dataset.city;
+          if (!city) return;
+          const href = el.getAttribute('href');
+          if (href) window.history.pushState({}, '', href);
+          selectCity(city, city.toLowerCase().replace(/\s+/g, '-'), undefined, 'quick');
+        });
       });
-    });
+    }
 
     document.querySelectorAll('.city-browse-item').forEach((item) => {
       item.addEventListener('click', (e) => {
@@ -577,7 +572,7 @@ function init() {
     // Reset the view to the same default center/zoom as the initial map load,
     // instead of staying zoomed in on the previous type's position.
     if (mapInstance?.map) {
-      mapInstance.map.flyTo({ center: [12.0, 48.0], zoom: 4, duration: 800 });
+      mapInstance.flyToProgrammatic({ center: [12.0, 48.0], zoom: 4, duration: 800 });
     }
     
     // Update URL without refresh
@@ -594,20 +589,10 @@ function init() {
       btn.classList.toggle('active', btnType === newType);
     });
     
-    // Update page title/description
-    const titleEl = document.querySelector('.explore-title');
-    const descEl = document.querySelector('.explore-description');
-    if (titleEl) {
-      titleEl.textContent = newType === 'museum' ? 'Explore Museums & Foundations' : 
-                           newType === 'university' ? 'Explore Design Schools' : 
-                           'Explore Local Design';
-    }
-    if (descEl) {
-      descEl.textContent = newType === 'museum' ? 
-        'A directory of permanent collections and institutions preserving design culture and history.' :
-        newType === 'university' ?
-        'A directory of design schools and institutions shaping the future of design education.' :
-        'A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.';
+    // Update See All link
+    const seeAllBtn = document.querySelector('.see-all-btn');
+    if (seeAllBtn) {
+      seeAllBtn.setAttribute('href', newType === 'museum' ? '/directory/museums' : newType === 'university' ? '/directory/schools' : '/designers');
     }
     
     // Update quick-nav card labels AND hrefs to reflect the current type
@@ -642,15 +627,31 @@ function init() {
       const cityName = el.dataset.city;
       if (!cityName) return;
       const labelEl = el.querySelector('.quick-nav-card-label');
-      if (labelEl) labelEl.textContent = `${typePhrase} ${cityName}`;
+      if (labelEl) labelEl.textContent = cityName;
+      const countEl = el.querySelector('.quick-nav-card-count');
       const citySlug = cityName.toLowerCase().replace(/\s+/g, '-');
       const count = cityCounts[citySlug] || 0;
+      if (countEl) {
+        const category = newType === 'museum' ? 'museums' : newType === 'university' ? 'schools' : 'designers';
+        countEl.textContent = `${count} ${category}`;
+      }
       if (count > 0) {
         el.setAttribute('href', `${newBasePath}/in/${citySlug}`);
       } else {
         el.removeAttribute('href');
       }
     });
+
+    const quickNavList = document.getElementById('quick-nav-default');
+    if (quickNavList) {
+      const cards = Array.from(quickNavList.querySelectorAll('.quick-nav-card[data-city]'));
+      cards.sort((a, b) => {
+        const aSlug = (a as HTMLElement).dataset.city?.toLowerCase().replace(/\s+/g, '-') || '';
+        const bSlug = (b as HTMLElement).dataset.city?.toLowerCase().replace(/\s+/g, '-') || '';
+        return (cityCounts[bSlug] || 0) - (cityCounts[aSlug] || 0);
+      });
+      cards.forEach(card => quickNavList.appendChild(card));
+    }
 
     const cityBrowseListEl = document.getElementById('city-browse-list');
     if (cityBrowseListEl) {
@@ -681,10 +682,9 @@ function init() {
     const params = new URLSearchParams(window.location.search);
     const citySlug = params.get('city');
     if (!citySlug || !mapInstance) return;
-    // Resolve the display name from the city browse list when available.
-    const city = resolveCityFromSlug(citySlug);
-    if (!city) return;
-    showCityStudios(city.name, citySlug, city.country, 'browse');
+    const sample = allStudios.find((s: any) => matchesCity(s, citySlug, citySlug));
+    const cityName = sample?.city || citySlug;
+    showCityStudios(cityName, citySlug, undefined, 'quick');
   }
 
   async function tryInitMap() {
@@ -696,9 +696,7 @@ function init() {
     }
 
     bindMapInteractions();
-    // In personal "my map" mode, open directly on the saved-cities
-    // list (the "More cities" view) instead of the quick-nav default.
-    if ((window as any).isMyMap) {
+    if ((window as any).isMyMap && cityBrowse) {
       showCityBrowse();
     }
     if (!(window as any).isMyMap) {
@@ -876,21 +874,17 @@ function init() {
       switchItemType(type, { skipHistory: true });
     }
 
-    const city = citySlug ? resolveCityFromSlug(citySlug) : null;
-
-    if (city && citySlug) {
-      showCityStudios(city.name, citySlug, city.country, 'browse');
+    if (citySlug) {
+      const sample = allStudios.find((s: any) => matchesCity(s, citySlug, citySlug));
+      const cityName = sample?.city || citySlug;
+      showCityStudios(cityName, citySlug, undefined, 'quick');
     } else {
-      (window as any).isMyMap ? showCityBrowse() : showQuickNav();
+      showQuickNav();
     }
   });
 
   setupPanelSwipe();
   tryInitMap();
-  // Personal "my map": the cities-list back button would normally
-  // return to the quick-nav default (title/paragraph/quick links),
-  // which is forbidden here. Hide it and show the profile "Back"
-  // button instead, so the only way "back" works is to the profile.
   const mapBackBtn = document.getElementById('map-back-btn');
   if ((window as any).isMyMap) {
     if (cityBrowseBack) cityBrowseBack.style.display = 'none';

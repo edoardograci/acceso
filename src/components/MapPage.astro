@@ -99,81 +99,34 @@ if (itemType === 'museum') {
 
 const itemSlug = Astro.url.searchParams.get('item') || null;
 
-let cityBrowseList: { name: string; slug: string; country: string; count: number; hidden: boolean }[] = [];
+const TARGET_CITIES = [
+  { name: 'Milan', slug: 'milan', image: '/images/quick-nav/milan.webp' },
+  { name: 'London', slug: 'london', image: '/images/quick-nav/london.webp' },
+  { name: 'Seoul', slug: 'seoul', image: '/images/quick-nav/seoul.webp' },
+];
 
-try {
-  const [citiesData, countriesData] = await Promise.all([
-    readJsonFromBucket('test-cities.json', env, Astro.url.origin),
-    readJsonFromBucket('test-countries.json', env, Astro.url.origin),
-  ]);
-
-  // Curated metadata is only used to enrich display name/country; the actual
-  // set of cities is derived from the data so no city gets dropped.
-  const citiesList: any[] = toArray(citiesData);
-  const countriesList: any[] = toArray(countriesData);
-  const cityMeta = Object.fromEntries(citiesList.map((c: any) => [c.slug, c]));
-  const countryNames = Object.fromEntries(countriesList.map((c: any) => [c.slug, c.name]));
-
-  // Derive city slug + a representative item for each entry, per data type
-  const buildCityIndex = (data: any[]) => {
-    const index: Record<string, { count: number; sample: any }> = {};
-    data.forEach((item: any) => {
-      let slug = item.city_slug;
-      if (!slug && item.city) slug = item.city.toLowerCase().replace(/\s+/g, '-');
-      if (!slug && item.slug) slug = item.slug;
-      if (!slug) return;
-      if (!index[slug]) index[slug] = { count: 0, sample: item };
-      index[slug].count += 1;
-    });
-    return index;
-  };
-
-  const studioIndex = buildCityIndex(studios);
-  const museumIndex = buildCityIndex(museums);
-  const universityIndex = buildCityIndex(universities);
-
-  // Union of cities that have items in ANY type, so switching types
-  // never loses cities that only exist for another type.
-  const unionSlugs = new Set<string>([
-    ...Object.keys(studioIndex),
-    ...Object.keys(museumIndex),
-    ...Object.keys(universityIndex),
-  ]);
-
-  const currentIndex =
-    itemType === 'museum' ? museumIndex : itemType === 'university' ? universityIndex : studioIndex;
-
-  cityBrowseList = [...unionSlugs]
-    .map((slug) => {
-      const meta = cityMeta[slug];
-      const sample = currentIndex[slug]?.sample ?? museumIndex[slug]?.sample ?? universityIndex[slug]?.sample ?? studioIndex[slug]?.sample;
-      const count = currentIndex[slug]?.count || 0;
-      const name = meta?.name || (sample ? sample.city : slug);
-      const countrySlug = meta?.country || (sample ? sample.country_slug : '');
-      const country = (countrySlug && countryNames[countrySlug]) || (sample ? sample.country : '') || '';
-      return { name, slug, country, count, hidden: count === 0 };
-    })
-    .sort((a: any, b: any) => b.count - a.count);
-} catch (e) {
-  error = e;
-  console.error('[Map] Failed to fetch city metadata:', e);
+function citySlugFor(item: any): string | undefined {
+  if (item.city_slug) return item.city_slug;
+  if (item.city) return item.city.toLowerCase().replace(/\s+/g, '-');
+  return undefined;
 }
 
-const quickNavTypePhrase = itemType === 'museum' ? 'Design museums in' : itemType === 'university' ? 'Design schools in' : 'Designers in';
+function countForCity(data: any[], slug: string): number {
+  return data.reduce((count, item) => count + (citySlugFor(item) === slug ? 1 : 0), 0);
+}
 
-const quickNavCities = [
-  { name: 'Milan, Italy', city: 'Milan', slug: 'milan', image: '/images/quick-nav/milan.webp', isMore: false },
-  { name: 'Seoul, Korea', city: 'Seoul', slug: 'seoul', image: '/images/quick-nav/seoul.webp', isMore: false },
-  { name: 'London, UK', city: 'London', slug: 'london', image: '/images/quick-nav/london.webp', isMore: false },
-  { name: 'More Cities →', city: null, slug: null, image: '/images/quick-nav/more.webp', isMore: true },
-].map((c) => {
-  const cityCount = c.isMore ? null : cityBrowseList.find((entry) => entry.slug === c.slug)?.count ?? 0;
-  return {
-    ...c,
-    label: c.isMore ? c.name : `${quickNavTypePhrase} ${c.name}`,
-    href: c.isMore || !cityCount ? null : cityHref(c.slug),
-  };
-});
+const currentDataForCounts = itemType === 'museum' ? museums : itemType === 'university' ? universities : studios;
+
+const quickNavCities = TARGET_CITIES
+  .map((city) => ({
+    ...city,
+    count: countForCity(currentDataForCounts, city.slug),
+  }))
+  .sort((a, b) => b.count - a.count)
+  .map((city) => ({
+    ...city,
+    href: cityHref(city.slug),
+  }));
 
 const quickNavImageWidth = 640;
 const quickNavImageHeight = 176;
@@ -186,12 +139,13 @@ const mapFilters = [
 
 const pageTitle = itemType === 'museum' ? 'Explore Museums & Foundations' : itemType === 'university' ? 'Explore Design Schools' : 'Explore Local Design';
 const titleLead = 'Explore';
-const titleRest = pageTitle.replace(/^Explore\s+/, '');
+const titleRest = 'Local Design';
 const pageDescription = itemType === 'museum' ? 'Interactive map of design museums and foundations worldwide.' : itemType === 'university' ? 'Interactive map of design schools and institutions worldwide.' : 'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.';
 
 const seoTypeLabel = itemType === 'museum' ? 'design museum' : itemType === 'university' ? 'design school' : 'design studio';
 const seoTypePlural = itemType === 'museum' ? 'design museums' : itemType === 'university' ? 'design schools' : 'design studios';
 const seoTypePluralCap = seoTypePlural.charAt(0).toUpperCase() + seoTypePlural.slice(1);
+const quickNavCategory = itemType === 'museum' ? 'museums' : itemType === 'university' ? 'schools' : 'designers';
 
 const SITE = Astro.site?.toString() || 'https://acceso.design';
 const mapUrl = new URL('/', SITE).toString();
@@ -213,7 +167,11 @@ const breadcrumbs = breadcrumbList([
   { name: 'Map', url: mapUrl },
 ]);
 
-const topCities = cityBrowseList.filter((c) => !c.hidden).slice(0, 24);
+const topCities = [
+  { name: 'Milan', slug: 'milan', count: 0 },
+  { name: 'Seoul', slug: 'seoul', count: 0 },
+  { name: 'London', slug: 'london', count: 0 },
+];
 const cityItemListSchema = itemList({
   url: mapUrl,
   name: `${pageTitle} - cities with ${seoTypePlural}`,
@@ -278,128 +236,45 @@ const faqs = [
             <header class="explore-header" id="explore-header">
               <h1 class="explore-title">{titleLead}<br>{titleRest}</h1>
               <p class="explore-description">
-                {itemType === 'museum'
-                  ? 'A directory of permanent collections and institutions preserving design culture and history.'
-                  : itemType === 'university'
-                  ? 'A directory of design schools and institutions shaping the future of design education.'
-                  : 'A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.'
-                }
+                A modern index of independent furniture & industrial design studios, with projects and events. Built for browsing by city and finding your next collaboration.
               </p>
             </header>
 
             <section class="quick-nav" aria-labelledby="quick-nav-label">
-              <p id="quick-nav-label" class="quick-nav-label">Quick navigation</p>
+              <div class="quick-nav-header">
+                <p id="quick-nav-label" class="quick-nav-label">BROWSE BY CITY</p>
+                <a href={TYPE_BASE_PATH[itemType]} class="see-all-btn">
+                  See All
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </a>
+              </div>
 
               <div class="quick-nav-list" id="quick-nav-default">
                 {quickNavCities.map((item) => (
-                  item.isMore ? (
-                    <button type="button" class="quick-nav-card quick-nav-card--more" id="more-cities-btn">
-                      <img
-                        src={item.image}
-                        alt=""
-                        class="quick-nav-card-bg"
-                        width={quickNavImageWidth}
-                        height={quickNavImageHeight}
-                        loading="lazy"
-                        decoding="async"
-                        fetchpriority="low"
-                      />
-                      <span class="quick-nav-card-label">{item.label}</span>
-                    </button>
-                  ) : (
-                    <a
-                      href={item.href}
-                      class="quick-nav-card"
-                      data-city={item.city}
-                    >
-                      <img
-                        src={item.image}
-                        alt=""
-                        class="quick-nav-card-bg"
-                        width={quickNavImageWidth}
-                        height={quickNavImageHeight}
-                        loading="lazy"
-                        decoding="async"
-                        fetchpriority="low"
-                      />
-                      <span class="quick-nav-card-label">{item.label}</span>
-                    </a>
-                  )
+                  <a
+                    href={item.href}
+                    class="quick-nav-card"
+                    data-city={item.name}
+                  >
+                    <img
+                      src={item.image}
+                      alt=""
+                      class="quick-nav-card-bg"
+                      width={quickNavImageWidth}
+                      height={quickNavImageHeight}
+                      loading="lazy"
+                      decoding="async"
+                      fetchpriority="low"
+                    />
+                    <span class="quick-nav-card-label">{item.name}</span>
+                    <span class="quick-nav-card-count">{item.count} {quickNavCategory}</span>
+                    <svg class="quick-nav-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </a>
                 ))}
-              </div>
-
-              <div class="city-browse hidden" id="city-browse">
-                <div class="panel-nav-row">
-                  <button type="button" class="city-browse-back" id="city-browse-back">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Back
-                  </button>
-                  <nav class="breadcrumbs explore-breadcrumb" id="breadcrumb-browse" aria-label="Breadcrumb"></nav>
-                </div>
-                <div class="city-search-wrap">
-                  <svg class="city-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3" stroke-linecap="round"/>
-                  </svg>
-                  <input
-                    type="search"
-                    id="city-search"
-                    class="city-search-input"
-                    placeholder="Search cities..."
-                    aria-label="Search cities"
-                  />
-                </div>
-                <div class="city-browse-list" id="city-browse-list">
-                  {cityBrowseList.map((city, index) => (
-                    <a
-                      href={city.count > 0 ? cityHref(city.slug) : undefined}
-                      class:list={['city-browse-item', { hidden: city.hidden }]}
-                      data-city={city.name}
-                      data-slug={city.slug}
-                      style={`--city-hue: ${(index * 47 + 180) % 360}`}
-                    >
-                       <span class="city-browse-badge" aria-hidden="true">{(city.name || city.slug || '?').charAt(0)}</span>
-                      <span class="city-browse-body">
-                        <span class="city-browse-name">{city.name} · {city.count} {itemType === 'museum' ? 'museums' : itemType === 'university' ? 'schools' : 'studios'}</span>
-                        <span class="city-browse-meta">{city.country || 'Worldwide'}</span>
-                      </span>
-                      <svg class="city-browse-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <div class="city-studios hidden" id="city-studios">
-                <div class="panel-nav-row">
-                  <button type="button" class="city-browse-back" id="city-studios-back">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Back
-                  </button>
-                  <nav class="breadcrumbs explore-breadcrumb" id="breadcrumb-studios" aria-label="Breadcrumb"></nav>
-                </div>
-                <header class="city-studios-header">
-                  <h2 class="city-studios-title" id="city-studios-title"></h2>
-                </header>
-                <div class="city-studios-body">
-                  <div class="city-studios-grid" id="city-studios-grid"></div>
-                  <div class="city-studios-pagination hidden" id="city-studios-pagination">
-                    <button type="button" class="city-studios-page-btn" id="city-studios-prev" aria-label="Previous page" disabled>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M15 18L9 12L15 6" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                    <span class="city-studios-page-info" id="city-studios-page-info"></span>
-                    <button type="button" class="city-studios-page-btn" id="city-studios-next" aria-label="Next page">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
               </div>
             </section>
           </div>
@@ -488,7 +363,7 @@ const faqs = [
 
           <h2>Browse {seoTypePlural} by city</h2>
           <p class="map-seo-lead">
-            {seoTypePluralCap} are currently listed in {topCities.length} {topCities.length === 1 ? 'city' : 'cities'}.
+            {seoTypePluralCap} are currently listed in {topCities.length} cities.
             Select a city to open its dedicated directory view.
           </p>
           <ul class="seo-city-list">
@@ -496,7 +371,6 @@ const faqs = [
               <li>
                 <a href={cityHref(c.slug)}>
                   {c.name}
-                  <span class="seo-city-count">{c.count}</span>
                 </a>
               </li>
             ))}
@@ -724,9 +598,10 @@ const faqs = [
     font-size: clamp(48px, 5.5vw, 80px);
     font-weight: 400;
     line-height: 1;
-    letter-spacing: -0.08em;
+    letter-spacing: -0.065em;
     color: var(--color-black);
     margin: 0 0 16px;
+    margin-left: -0.3vw;
   }
 
   .explore-description {
@@ -746,7 +621,37 @@ const faqs = [
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-text-muted);
-    margin: 0 0 16px;
+    margin: 0;
+  }
+
+  .quick-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .see-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-black);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s ease;
+  }
+
+  .see-all-btn svg {
+    display: block;
+    margin-top: -1.5px;
+  }
+
+  .see-all-btn:hover {
+    opacity: 0.7;
   }
 
   .quick-nav-list {
@@ -758,9 +663,10 @@ const faqs = [
   .quick-nav-card {
     position: relative;
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+    justify-content: center;
     width: 100%;
-    min-height: 88px;
+    min-height: 100px;
     padding: 20px 24px;
     border: none;
     border-radius: 16px;
@@ -800,13 +706,30 @@ const faqs = [
     z-index: 2;
     font-family: var(--font-sans);
     font-size: 18px;
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.2;
     color: #fff;
   }
 
-  .quick-nav-card--more {
-    min-height: 88px;
+  .quick-nav-card-count {
+    position: relative;
+    z-index: 2;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 2px;
+  }
+
+  .quick-nav-card-chevron {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #fff;
+    z-index: 2;
+    pointer-events: none;
   }
 
   /* Shorter desktop screens (e.g. laptops): shrink the header and the cards
@@ -821,6 +744,7 @@ const faqs = [
     .explore-title {
       font-size: clamp(32px, 3.8vw, 52px);
       margin: 0 0 10px;
+      margin-left: -0.2vw;
     }
 
     .explore-description {
@@ -829,18 +753,17 @@ const faqs = [
       max-width: 40ch;
     }
 
-    .quick-nav-label {
-      margin: 0 0 10px;
+    .quick-nav-header {
+      margin-bottom: 10px;
     }
 
     .quick-nav-list {
       gap: 8px;
     }
 
-    .quick-nav-card,
-    .quick-nav-card--more {
-      min-height: 68px;
-      padding: 16px 22px;
+    .quick-nav-card {
+      min-height: 80px;
+      padding: 14px 20px;
     }
   }
 
@@ -851,12 +774,12 @@ const faqs = [
 
     .explore-title {
       font-size: clamp(28px, 3.2vw, 44px);
+      margin-left: -0.15vw;
     }
 
-    .quick-nav-card,
-    .quick-nav-card--more {
-      min-height: 56px;
-      padding: 12px 20px;
+    .quick-nav-card {
+      min-height: 80px;
+      padding: 14px 20px;
     }
 
     .quick-nav-card-label {
@@ -864,288 +787,8 @@ const faqs = [
     }
   }
 
-  .city-browse {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .city-browse.hidden {
-    display: none;
-  }
-
   .quick-nav-list.hidden {
     display: none;
-  }
-
-  .city-browse-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 36px;
-    padding: 0 14px;
-    border: 1px solid var(--color-stroke);
-    border-radius: 999px;
-    background: var(--color-bg-secondary);
-    color: var(--color-black);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    align-self: flex-start;
-    transition: border-color 0.2s ease, background 0.2s ease;
-  }
-
-  .city-browse-back:hover {
-    border-color: #D4D4D8;
-    background: #EBEBED;
-    color: var(--color-black);
-  }
-
-  .city-search-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-
-  .city-search-icon {
-    position: absolute;
-    left: 16px;
-    color: var(--color-text-muted);
-    pointer-events: none;
-  }
-
-  .city-search-input {
-    width: 100%;
-    height: 48px;
-    padding: 0 16px 0 44px;
-    border: 1px solid var(--color-stroke);
-    border-radius: 12px;
-    background: var(--color-bg-secondary);
-    color: var(--color-black);
-    font-family: var(--font-sans);
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .city-search-input:focus {
-    border-color: var(--color-black);
-    background: var(--color-white);
-    box-shadow: 0 0 0 3px rgba(15, 17, 19, 0.06);
-  }
-
-  .city-search-input::placeholder {
-    color: var(--color-text-muted);
-  }
-
-  .city-browse-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 4px 2px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-stroke) transparent;
-  }
-
-  .city-browse-list::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .city-browse-list::-webkit-scrollbar-thumb {
-    background: var(--color-stroke);
-    border-radius: 10px;
-  }
-
-  .city-browse-item.hidden {
-    display: none;
-  }
-
-  .city-browse-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 100%;
-    padding: 14px 16px;
-    border: 1px solid var(--color-stroke);
-    border-radius: 14px;
-    background: linear-gradient(135deg, hsl(var(--city-hue, 200) 18% 97%) 0%, var(--color-white) 55%);
-    cursor: pointer;
-    text-align: left;
-    text-decoration: none;
-    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .city-browse-item:hover {
-    border-color: var(--color-black);
-    background: linear-gradient(135deg, hsl(var(--city-hue, 200) 28% 94%) 0%, var(--color-bg-secondary) 60%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  }
-
-  .city-browse-badge {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-sans);
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-black);
-    background: hsl(var(--city-hue, 200) 65% 88%);
-    border: 1px solid hsl(var(--city-hue, 200) 40% 80%);
-  }
-
-  .city-browse-body {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .city-browse-name {
-    font-family: var(--font-sans);
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--color-black);
-    line-height: 1.2;
-  }
-
-  .city-browse-meta {
-    font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 400;
-    color: var(--color-text-muted);
-    line-height: 1.3;
-  }
-
-  .city-browse-count {
-    display: none;
-  }
-
-  .city-studios {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .city-studios.hidden {
-    display: none;
-  }
-
-  .city-browse-arrow {
-    flex-shrink: 0;
-    color: var(--color-text-muted);
-    transition: transform 0.2s ease, color 0.2s ease;
-  }
-
-  .city-browse-item:hover .city-browse-arrow {
-    color: var(--color-black);
-    transform: translateX(2px);
-  }
-
-  .city-studios-header {
-    flex-shrink: 0;
-  }
-
-  .city-studios-title {
-    font-family: var(--font-sans);
-    font-size: clamp(22px, 3vw, 28px);
-    font-weight: 400;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    color: var(--color-black);
-    margin: 0;
-  }
-
-  .city-studios-body {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .explore-panel--navigated .city-studios-grid {
-    flex: 1;
-    min-height: 0;
-    max-height: none;
-  }
-
-  .city-studios-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    padding-top: 4px;
-    flex-shrink: 0;
-  }
-
-  .city-studios-pagination.hidden {
-    display: none;
-  }
-
-  .city-studios-page-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--color-stroke);
-    background: var(--color-bg-secondary);
-    color: var(--color-black);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
-  }
-
-  .city-studios-page-btn:hover:not(:disabled) {
-    border-color: var(--color-black);
-    background: var(--color-white);
-  }
-
-  .city-studios-page-btn:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
-
-  .city-studios-page-info {
-    font-family: var(--font-sans);
-    font-size: 13px;
-    color: var(--color-text-muted);
-    min-width: 72px;
-    text-align: center;
-  }
-
-  .city-studios-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 2px;
-    scrollbar-width: thin;
-  }
-
-  .city-studios-grid::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .city-studios-grid::-webkit-scrollbar-thumb {
-    background: var(--color-stroke);
-    border-radius: 10px;
   }
 
   :global(.city-studio-card) {
@@ -1198,13 +841,6 @@ const faqs = [
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .city-studios-empty {
-    font-family: var(--font-sans);
-    font-size: 14px;
-    color: var(--color-text-muted);
-    margin: 0;
   }
 
   .map-browse-fab {
@@ -1700,29 +1336,8 @@ const faqs = [
       display: none !important;
     }
 
-    .city-studios-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      flex: 1 1 auto;
-      min-height: 0;
-      max-height: none;
-      overflow-y: auto;
-    }
-
-    /* On mobile the city list scrolls inside the sheet (the desktop pattern),
-       so keep the studio grid bounded and scrollable instead of relying on
-       the whole sheet overflowing. */
-    .explore-panel--navigated .city-studios,
-    .explore-panel--navigated .city-studios-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      max-height: none;
-      overflow: visible;
-    }
-
-    /* quick-nav / city-browse still let the whole sheet scroll */
-    .quick-nav,
-    .city-browse,
-    .city-browse-list {
+    /* quick-nav still lets the whole sheet scroll */
+    .quick-nav {
       flex: 0 0 auto;
       min-height: 0;
       max-height: none;
@@ -1803,42 +1418,6 @@ const faqs = [
 
     .map-panel :global(.maplibregl-ctrl-top-right) {
       display: none !important;
-    }
-
-    .city-search-input {
-      height: 52px;
-      font-size: 16px;
-      border-radius: 14px;
-    }
-
-    .city-browse-item {
-      padding: 16px;
-      border-radius: 16px;
-      gap: 12px;
-    }
-
-    .city-browse-badge {
-      width: 48px;
-      height: 48px;
-      font-size: 20px;
-    }
-
-    .city-browse-count {
-      display: none;
-    }
-
-    .city-browse-name {
-      font-size: 17px;
-    }
-
-    .city-browse-meta {
-      font-size: 14px;
-    }
-
-    .city-browse-back {
-      height: 44px;
-      padding: 0 18px;
-      font-size: 15px;
     }
   }
 </style>

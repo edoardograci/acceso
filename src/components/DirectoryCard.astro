@@ -5,9 +5,10 @@ import { normalizeImage } from '../lib/images';
 interface Props {
   studio: Studio;
   index?: number;
+  cover?: string | null;
 }
 
-const { studio, index = 0 } = Astro.props;
+const { studio, index = 0, cover } = Astro.props;
 ---
 
 <a
@@ -23,9 +24,9 @@ const { studio, index = 0 } = Astro.props;
   data-slug={studio.slug}
 >
   <div class="directory-card-media">
-    {studio.cover ? (
+    {cover ?? studio.cover ? (
       <img
-        src={normalizeImage(studio.cover, Astro)}
+        src={normalizeImage(cover ?? studio.cover, Astro)}
         alt={studio.name}
         width="400"
         height="400"

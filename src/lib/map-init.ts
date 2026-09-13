@@ -20,6 +20,7 @@ interface MapInstance {
   recenter: () => void;
   showRecenter: () => void;
   hideRecenter: () => void;
+  flyToProgrammatic: (opts: { center: [number, number]; zoom: number; duration?: number }) => void;
   itemType: 'studio' | 'museum' | 'university';
   // Single, shared hover-pill marker. Created once and reused across every
   // layer rebuild so type switches never leak an extra pill (each leaked pill
@@ -302,6 +303,7 @@ export async function initializeMap(
     recenter: () => { },
     showRecenter: () => { },
     hideRecenter: () => { },
+    flyToProgrammatic: () => { },
     itemType,
     hoverMarker: undefined,
     hoverPill: undefined,
@@ -405,8 +407,10 @@ export async function initializeMap(
   let loadedCamera: { center: [number, number]; zoom: number; bearing: number; pitch: number } | null = null;
   let isProgrammaticMove = false;
   let recenterVisible = false;
+  let suppressRecenter = false;
 
   const showRecenter = () => {
+    if (suppressRecenter) return;
     if (!recenterBtn || recenterVisible) return;
     recenterVisible = true;
     recenterBtn.classList.add('visible');
@@ -423,9 +427,9 @@ export async function initializeMap(
   // Show the button as soon as the user starts a non-programmatic move, so
   // even a tiny pan reveals it (a small drag can change center by < 0.001°,
   // which a post-hoc threshold check would wrongly ignore).
-  state.map.on('mousedown touchstart', () => { isProgrammaticMove = false; });
+  state.map.on('mousedown touchstart', () => { isProgrammaticMove = false; suppressRecenter = false; });
   state.map.on('wheel', () => { isProgrammaticMove = false; });
-  state.map.on('moveend', () => { isProgrammaticMove = false; });
+  state.map.on('moveend', () => { isProgrammaticMove = false; suppressRecenter = false; });
   state.map.on('movestart', () => {
     if (isProgrammaticMove || !loadedCamera) return;
     if (!recenterVisible) showRecenter();
@@ -603,9 +607,8 @@ export async function initializeMap(
 
   state.recenter = () => {
     if (!loadedCamera) return;
-    // Mark the move as programmatic so the button doesn't reappear while we
-    // glide back to the loaded framing.
     isProgrammaticMove = true;
+    suppressRecenter = true;
     hideRecenter();
     state.map.easeTo({
       center: loadedCamera.center,
@@ -625,6 +628,12 @@ export async function initializeMap(
   state.hideRecenter = () => {
     isProgrammaticMove = true;
     hideRecenter();
+  };
+
+  state.flyToProgrammatic = (opts) => {
+    isProgrammaticMove = true;
+    suppressRecenter = true;
+    state.map.flyTo({ ...opts, essential: true });
   };
 
   // If target studio provided, center on it and show card

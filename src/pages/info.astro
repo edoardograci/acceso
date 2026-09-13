@@ -290,7 +290,17 @@ const actionCards = [
     text-transform: uppercase;
   }
 
-  .info-hero h1,
+  .info-hero h1 {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    color: var(--color-black);
+    letter-spacing: -0.04em;
+    max-width: 11ch;
+    font-size: clamp(46px, 5.8vw, 88px);
+    line-height: 0.96;
+  }
+
   .section-heading h2,
   .feature-copy h2,
   .contribute-section h2,
@@ -300,12 +310,6 @@ const actionCards = [
     font-weight: 400;
     color: var(--color-black);
     letter-spacing: -0.06em;
-  }
-
-  .info-hero h1 {
-    max-width: 11ch;
-    font-size: clamp(46px, 5.8vw, 88px);
-    line-height: 0.96;
   }
 
   .hero-description {
@@ -640,7 +644,7 @@ const actionCards = [
     .info-hero h1 {
       max-width: 9ch;
       font-size: clamp(52px, 15vw, 72px);
-      letter-spacing: -0.07em;
+      letter-spacing: -0.065em;
     }
 
     .hero-description,

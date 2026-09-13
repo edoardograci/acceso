@@ -106,29 +106,36 @@ const crumbs =
       ];
 
 // Related Locations Logic
+function studioMatchesCity(studio: any, citySlug: string, cityName: string): boolean {
+  const studioSlug = (studio.city_slug || '').toLowerCase();
+  const studioCity = (studio.city || '').toLowerCase();
+  const targetSlug = citySlug.toLowerCase();
+  const targetName = cityName.toLowerCase();
+  return (
+    studioSlug === targetSlug ||
+    studioCity === targetName ||
+    studioCity.startsWith(`${targetName},`) ||
+    studioCity.startsWith(`${targetName} `)
+  );
+}
+
+const cityToCountrySlug: Record<string, string> = {};
+cities.forEach((ct: any) => {
+  if (!ct.slug) return;
+  const match = allStudios.find((s: any) => s.country_slug && studioMatchesCity(s, ct.slug, ct.name));
+  if (match) cityToCountrySlug[ct.slug] = match.country_slug;
+});
+
 let relatedLocations: { name: string; slug: string }[] = [];
 if (mode === 'country') {
   relatedLocations = cities
-    .filter(c => c.country === place)
+    .filter(c => c.slug !== place && cityToCountrySlug[c.slug] === place)
     .map(c => ({ name: c.name, slug: c.slug }));
-  if (relatedLocations.length === 0) {
-    relatedLocations = countries
-      .filter(c => c.slug !== place)
-      .slice(0, 15)
-      .map(c => ({ name: c.name, slug: c.slug }));
-  }
 } else if (mode === 'city') {
-  if (cityObj?.country) {
+  const currentCountry = cityToCountrySlug[place] || cityObj?.country || null;
+  if (currentCountry) {
     relatedLocations = cities
-      .filter(c => c.country === cityObj.country && c.slug !== place)
-      .slice(0, 12)
-      .map(c => ({ name: c.name, slug: c.slug }));
-  }
-  if (relatedLocations.length === 0) {
-    relatedLocations = cities
-      .filter(c => c.slug !== place)
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 15)
+      .filter(c => c.slug !== place && cityToCountrySlug[c.slug] === currentCountry)
       .map(c => ({ name: c.name, slug: c.slug }));
   }
 }
@@ -205,30 +212,35 @@ const mapStudios = studios.map(s => ({
             <p>No designers found matching your criteria.</p>
           </div>
           
-          <!-- New Cards Section -->
-          <div class="bottom-cards-section mt-16 pb-12">
-            <div class="cards-split-grid">
-               <GetListedCard
-                 className="full-height-card"
-                 title={`Are you based in ${placeName}?`}
-                 subtitle={`Submit your studio for free. Once approved, it will appear on the ${placeName} design map and directory.`}
-                 ctaLabel="Submit for free"
-               />
-               
-               <div class="related-locations-card">
-                  <div class="rl-header">
-                     <h3 class="rl-title">Related locations</h3>
-                  </div>
-                  <div class="rl-content">
-                     {relatedLocations.map(loc => (
-                       <a href={`/designers/in/${loc.slug}`} class="pill-btn">
-                         {loc.name}
-                       </a>
-                     ))}
-                  </div>
-               </div>
-            </div>
-          </div>
+          <!-- Pagination: pinned footer of the panel on mobile (like the homepage) -->
+          <div id="pagination-container" class="pagination-wrapper"></div>
+           
+           <!-- New Cards Section -->
+           <div class="bottom-cards-section mt-16 pb-12">
+             <div class:list={['cards-split-grid', { 'single-card': relatedLocations.length === 0 }]}>
+                <GetListedCard
+                  className="full-height-card"
+                  title={`Are you based in ${placeName}?`}
+                  subtitle={`Submit your studio for free. Once approved, it will appear on the ${placeName} design map and directory.`}
+                  ctaLabel="Submit for free"
+                />
+                
+                 {relatedLocations.length > 0 && (
+                   <div class="related-locations-card">
+                      <div class="rl-header">
+                         <h3 class="rl-title">Related locations</h3>
+                      </div>
+                      <div class="rl-content">
+                         {relatedLocations.slice(0, 10).map(loc => (
+                           <a href={`/designers/in/${loc.slug}`} class="pill-btn">
+                             {loc.name}
+                           </a>
+                         ))}
+                      </div>
+                   </div>
+                 )}
+             </div>
+           </div>
 
           <!-- SEO Text Section -->
           <div class="seo-text-area mt-20 pt-16 border-t border-stroke">
@@ -239,9 +251,6 @@ const mapStudios = studios.map(s => ({
             </div>
           </div>
         </div>
-
-        <!-- Pagination: pinned footer of the panel on mobile (like the homepage) -->
-        <div id="pagination-container" class="pagination-wrapper"></div>
       </aside>
 
       <!-- Right Column: Map Panel -->
@@ -574,6 +583,29 @@ const mapStudios = studios.map(s => ({
       panel?.addEventListener('touchcancel', endDrag);
     </script>
 
+  <script>
+    (function () {
+      const referrer = document.referrer;
+      let referrerPath = '';
+      try {
+        referrerPath = new URL(referrer).pathname;
+      } catch (e) {}
+
+      if (referrerPath !== '/') return;
+
+      const breadcrumbNav = document.querySelector('.breadcrumbs');
+      if (!breadcrumbNav) return;
+
+      const backBtn = breadcrumbNav.querySelector('.breadcrumb-back');
+      const items = breadcrumbNav.querySelectorAll('.breadcrumb-item');
+      const separators = breadcrumbNav.querySelectorAll('.breadcrumb-separator');
+
+      if (backBtn) backBtn.href = '/';
+      if (items.length >= 2) items[1].remove();
+      if (separators.length >= 1) separators[0].remove();
+    })();
+  </script>
+
   <style>
     .designers-page {
       background: var(--color-white);
@@ -722,8 +754,12 @@ const mapStudios = studios.map(s => ({
     /* Cards Section */
     .cards-split-grid {
        display: grid;
-       grid-template-columns: 1fr 1fr;
+       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
        gap: 16px;
+    }
+
+    .cards-split-grid.single-card {
+       grid-template-columns: 1fr;
     }
 
     .related-locations-card {
@@ -1060,9 +1096,6 @@ const mapStudios = studios.map(s => ({
       .studios-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 14px;
-      }
-      .cards-split-grid {
-        grid-template-columns: 1fr;
       }
       /* Hide page footer on mobile/tablet viewports to prevent layout bleeding */
       :global(main.designers-page ~ footer) {

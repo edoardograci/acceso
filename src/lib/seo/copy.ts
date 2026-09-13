@@ -56,6 +56,84 @@ export function locationIntro(ctx: CityCtx): { paragraphs: string[]; h2s: string
   };
 }
 
+type UniCtx = {
+  cityName: string;
+  countryName?: string | null;
+  totalUniversities?: number | null;
+  exampleUniversities?: string[];
+};
+
+export function universityTitle(ctx: UniCtx): string {
+  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+  return `Design Schools in ${where} | Acceso`;
+}
+
+export function universityDescription(ctx: UniCtx): string {
+  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+  const count = ctx.totalUniversities ? `${ctx.totalUniversities}+` : 'leading';
+  return `Browse ${count} design schools and institutions in ${where}. Explore programs in industrial, furniture, and product design - curated for discovery.`;
+}
+
+export function universityIntro(ctx: UniCtx): { paragraphs: string[]; h2s: string[] } {
+  const place = ctx.cityName;
+  const isCity = !!ctx.countryName;
+
+  const p1 = ` researching where to study industrial or furniture design in ${place}? Acceso is a curated guide to ${place}'s design education scene, helping you discover local schools, universities, and creative institutions.`;
+
+  const countPhrase = ctx.totalUniversities
+    ? `${ctx.totalUniversities} design schools`
+    : `design schools`;
+  const examples = joinList((ctx.exampleUniversities ?? []).slice(0, 3));
+  const includingPhrase = examples ? `, including ${examples}` : '';
+  const mapPhrase = isCity ? 'the city map' : 'the map';
+
+  const p2 = `This page currently features ${countPhrase} in ${place}${includingPhrase}. Browse school profiles, explore ${mapPhrase}, and discover related designers, museums, awards, and other resources connected to ${place}'s design community.`;
+
+  return {
+    paragraphs: uniq([p1, p2]),
+    h2s: uniq([`Schools in ${place}`, `Related locations`, `Explore more design education`]),
+  };
+}
+
+type MuseumCtx = {
+  cityName: string;
+  countryName?: string | null;
+  totalMuseums?: number | null;
+  exampleMuseums?: string[];
+};
+
+export function museumTitle(ctx: MuseumCtx): string {
+  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+  return `Design Museums in ${where} | Acceso`;
+}
+
+export function museumDescription(ctx: MuseumCtx): string {
+  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+  const count = ctx.totalMuseums ? `${ctx.totalMuseums}+` : 'notable';
+  return `Browse ${count} design museums and foundations in ${where}. Explore collections dedicated to furniture, product, and industrial design - curated for discovery.`;
+}
+
+export function museumIntro(ctx: MuseumCtx): { paragraphs: string[]; h2s: string[] } {
+  const place = ctx.cityName;
+  const isCity = !!ctx.countryName;
+
+  const p1 = `Looking for design museums and foundations in ${place}? Acceso is a curated guide to ${place}'s design heritage, helping you discover local museums, collections, and cultural institutions.`;
+
+  const countPhrase = ctx.totalMuseums
+    ? `${ctx.totalMuseums} design museums`
+    : `design museums`;
+  const examples = joinList((ctx.exampleMuseums ?? []).slice(0, 3));
+  const includingPhrase = examples ? `, including ${examples}` : '';
+  const mapPhrase = isCity ? 'the city map' : 'the map';
+
+  const p2 = `This page currently features ${countPhrase} in ${place}${includingPhrase}. Browse museum profiles, explore ${mapPhrase}, and discover related designers, schools, fairs, and other resources connected to ${place}'s design community.`;
+
+  return {
+    paragraphs: uniq([p1, p2]),
+    h2s: uniq([`Museums in ${place}`, `Related locations`, `Explore more design heritage`]),
+  };
+}
+
 
 type ProjectCtx = {
   name: string;
