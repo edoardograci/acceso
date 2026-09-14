@@ -202,7 +202,7 @@ if (mode === 'country') {
 
           <div class="studios-grid" id="museums-grid">
             {initialMuseums.map((museum, index) => (
-              <DirectoryCard studio={museum as any} index={index} cover={museum.cover} />
+              <DirectoryCard studio={museum as any} index={index} cover={museum.cover} basePath="/directory/museums" />
             ))}
           </div>
 

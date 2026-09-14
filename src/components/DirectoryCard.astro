@@ -6,13 +6,14 @@ interface Props {
   studio: Studio;
   index?: number;
   cover?: string | null;
+  basePath?: string;
 }
 
-const { studio, index = 0, cover } = Astro.props;
+const { studio, index = 0, cover, basePath = '/designers' } = Astro.props;
 ---
 
 <a
-  href={`/designers/${studio.slug}`}
+  href={`${basePath}/${studio.slug}`}
   class="directory-card"
   data-name={String(studio.name ?? '').toLowerCase()}
   data-city={studio.city}
