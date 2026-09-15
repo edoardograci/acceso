@@ -9,16 +9,18 @@ import '../styles/global.css';
 
 interface Props {
   title: string;
-  active: 'analytics' | 'app' | 'submissions' | 'recommendations';
+  active: 'overview' | 'analytics' | 'app' | 'submissions' | 'recommendations' | 'ads';
 }
 
 const { title, active } = Astro.props;
 
 const nav = [
+  { href: '/admin', id: 'overview', label: 'Overview', badge: null },
   { href: '/admin/analytics', id: 'analytics', label: 'Analytics', badge: null },
   { href: '/admin/app', id: 'app', label: 'App data', badge: null },
   { href: '/admin/submissions', id: 'submissions', label: 'Submissions', badge: 'submissions' },
   { href: '/admin/recommendations', id: 'recommendations', label: 'Recommendations', badge: 'recommendations' },
+  { href: '/admin/ads', id: 'ads', label: 'ADS', badge: null },
 ] as const;
 ---
 

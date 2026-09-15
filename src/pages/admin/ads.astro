@@ -1,0 +1,174 @@
+---
+// src/pages/admin/ads.astro
+// Admin panel ADS dashboard for tracking ad campaigns, referral links, impressions, and clicks.
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin } from '../../lib/admin';
+import { getAdMetrics } from '../../lib/ad-tracker';
+import type { Env } from '../../env.d';
+
+export const prerender = false;
+
+const runtimeEnv = Astro.locals.runtime?.env || {};
+const metaEnv = import.meta.env || {};
+const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
+
+if (!isAdmin(Astro.locals.user, env)) {
+  return new Response('Not Found', {
+    status: 404,
+    headers: { 'Content-Type': 'text/plain' },
+  });
+}
+
+const adMetrics = await getAdMetrics(env);
+const referralLink = 'https://marioalessiani.substack.com?r=93gy42';
+---
+
+<AdminLayout title="Acceso - ADS Dashboard" active="ads">
+  <main class="an-page">
+    <header class="an-head">
+      <div>
+        <h1 class="an-title">ADS Dashboard</h1>
+        <p class="an-sub">Track ad performance, referral links, impressions, and click metrics without cookies (EU privacy compliant).</p>
+      </div>
+      <div class="an-controls">
+        <button type="button" class="an-refresh" id="refresh-ads-btn">Refresh</button>
+      </div>
+    </header>
+
+    <section class="an-tiles" style="margin-bottom: 24px;">
+      <div class="an-tile">
+        <p class="an-tile-label">Total Clicks</p>
+        <span class="an-tile-value" id="val-clicks">{adMetrics.clicks}</span>
+        <span class="an-tile-foot"><span class="an-tile-hint">Ad card click counts</span></span>
+      </div>
+      <div class="an-tile">
+        <p class="an-tile-label">Total Impressions</p>
+        <span class="an-tile-value" id="val-impressions">{adMetrics.impressions}</span>
+        <span class="an-tile-foot"><span class="an-tile-hint">Times ad was viewed</span></span>
+      </div>
+      <div class="an-tile">
+        <p class="an-tile-label">CTR (Click-Through Rate)</p>
+        <span class="an-tile-value" id="val-ctr">{adMetrics.ctr}</span>
+        <span class="an-tile-foot"><span class="an-tile-hint">Clicks ÷ Impressions</span></span>
+      </div>
+    </section>
+
+    <section class="an-card" style="margin-bottom: 24px; padding: 20px;">
+      <header class="an-card-head" style="margin-bottom: 16px;">
+        <h2 class="an-card-title">Active Ad Campaign</h2>
+        <span class="admin-pill is-approved">ACTIVE</span>
+      </header>
+
+      <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+        <img
+          src="/images/quick-nav/newsletter.webp"
+          alt="Designer from Nowhere"
+          style="width: 140px; height: 70px; object-fit: cover; border-radius: 12px; border: 1px solid #E4E4E7;"
+        />
+        <div style="flex: 1; min-width: 240px;">
+          <h3 style="margin: 0 0 4px; font-size: 16px; font-weight: 500;">Designer from Nowhere.</h3>
+          <p style="margin: 0 0 8px; font-size: 13px; color: #52525B;">By Mario Alessiani · 1.7k subscribers</p>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-size: 12px; color: #71717A; font-weight: 500;">Referral Link:</span>
+            <a
+              href={referralLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="admin-link"
+              style="font-size: 13px; word-break: break-all;"
+            >
+              {referralLink}
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="an-card" style="padding: 20px;">
+      <header class="an-card-head" style="margin-bottom: 16px;">
+        <h2 class="an-card-title">Recent Click Log</h2>
+        <span style="font-size: 12px; color: #71717A;">Cookie-free tracking (Clicks only)</span>
+      </header>
+
+      <div class="an-table-wrap">
+        <table class="an-table">
+          <thead>
+            <tr>
+              <th>Ad Campaign</th>
+              <th>Event Type</th>
+              <th style="text-align: right;">Time</th>
+            </tr>
+          </thead>
+          <tbody id="events-tbody">
+            {adMetrics.recentEvents.length === 0 ? (
+              <tr>
+                <td colspan="3" class="an-empty">No ad clicks recorded yet. Click the ad card on the homepage to log a click.</td>
+              </tr>
+            ) : (
+              adMetrics.recentEvents.map((evt) => (
+                <tr>
+                  <td>{evt.id}</td>
+                  <td>
+                    <span class={evt.type === 'click' ? 'admin-pill is-pending' : 'admin-pill'}>
+                      {evt.type.toUpperCase()}
+                    </span>
+                  </td>
+                  <td style="text-align: right; color: #71717A; font-size: 12px;">
+                    {new Date(evt.timestamp * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</AdminLayout>
+
+<script>
+  const refreshBtn = document.getElementById('refresh-ads-btn');
+  const valClicks = document.getElementById('val-clicks');
+  const valImpressions = document.getElementById('val-impressions');
+  const valCtr = document.getElementById('val-ctr');
+  const tbody = document.getElementById('events-tbody');
+
+  async function fetchMetrics() {
+    try {
+      const res = await fetch('/api/ad-click');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (valClicks) valClicks.textContent = data.clicks;
+      if (valImpressions) valImpressions.textContent = data.impressions;
+      if (valCtr) valCtr.textContent = data.ctr;
+
+      if (tbody && data.recentEvents) {
+        if (data.recentEvents.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="an-empty">No events recorded yet.</td></tr>';
+        } else {
+          tbody.innerHTML = data.recentEvents
+            .map(
+              (evt: any) => `
+              <tr>
+                <td>${evt.id}</td>
+                <td>
+                  <span class="${evt.type === 'click' ? 'admin-pill is-pending' : 'admin-pill'}">
+                    ${evt.type.toUpperCase()}
+                  </span>
+                </td>
+                <td style="text-align: right; color: #71717A; font-size: 12px;">
+                  ${new Date(evt.timestamp * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                </td>
+              </tr>
+            `
+            )
+            .join('');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch ad metrics:', e);
+    }
+  }
+
+  refreshBtn?.addEventListener('click', fetchMetrics);
+</script>

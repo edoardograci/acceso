@@ -418,6 +418,23 @@ function init() {
         selectCity(city, slug, country, 'browse');
       });
     });
+
+    const adCard = document.querySelector('.quick-nav-card--ad');
+    if (adCard) {
+      try {
+        fetch('/api/ad-click?id=designer-from-nowhere&type=impression', { method: 'POST' });
+      } catch {}
+
+      adCard.addEventListener('click', () => {
+        try {
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/ad-click?id=designer-from-nowhere&type=click');
+          } else {
+            fetch('/api/ad-click?id=designer-from-nowhere&type=click', { method: 'POST' });
+          }
+        } catch {}
+      });
+    }
   }
 
   function setupPanelSwipe() {
@@ -651,6 +668,10 @@ function init() {
         return (cityCounts[bSlug] || 0) - (cityCounts[aSlug] || 0);
       });
       cards.forEach(card => quickNavList.appendChild(card));
+      const adCard = quickNavList.querySelector('.quick-nav-card--ad');
+      if (adCard) {
+        quickNavList.appendChild(adCard);
+      }
     }
 
     const cityBrowseListEl = document.getElementById('city-browse-list');
