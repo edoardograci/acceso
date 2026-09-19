@@ -3,9 +3,8 @@ import PostHogLayout from '../../../layouts/PostHogLayout.astro';
 import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import DirectoryCard from '../../../components/DirectoryCard.astro';
-import GetListedCard from '../../../components/GetListedCard.astro';
-import { locationTitle, locationDescription, locationIntro } from '../../../lib/seo/copy';
-import { breadcrumbList, itemList } from '../../../lib/seo/schema';
+import { locationTitle, locationDescription, locationIntro, locationH1Parts, LOCATION_BREADCRUMB_LABEL } from '../../../lib/seo/copy';
+import { breadcrumbList, itemList, faqPage, studioBusinessNodes } from '../../../lib/seo/schema';
 import { normalizeImage } from '../../../lib/images';
 import type { Studio } from '../../../lib/types';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
@@ -32,6 +31,7 @@ let allStudios: Studio[] = [];
 let mode: 'city' | 'country' | 'unknown' = 'unknown';
 let cityName: string | null = null;
 let countryName: string | null = null;
+let countrySlug: string | null = null;
 let totalStudios: number = 0;
 
 try {
@@ -54,6 +54,7 @@ if (cityObj) {
   cityName = cityObj.name;
   const c = countries.find((x) => x.slug === (cityObj.country ?? '')) ?? null;
   countryName = c?.name ?? null;
+  countrySlug = cityObj.country ?? null;
   studios = allStudios.filter(s => {
     const studioSlug = (s.city_slug || '').toLowerCase();
     const studioCity = (s.city || '').toLowerCase();
@@ -88,7 +89,8 @@ const where =
 
 const pageTitle = locationTitle(where);
 const pageDesc = locationDescription(where);
-const { paragraphs } = locationIntro(where);
+const { paragraph } = locationIntro(where);
+const { prefix: h1Prefix, place: h1Place } = locationH1Parts(where);
 
 const canonical = new URL(`/designers/in/${place}`, Astro.site);
 
@@ -96,12 +98,12 @@ const crumbs =
   mode === 'city' 
     ? [
         { name: 'Home', url: '/' },
-        { name: 'Designers', url: '/designers' },
+        { name: LOCATION_BREADCRUMB_LABEL, url: '/designers' },
         { name: `in ${cityName}`, url: canonical.pathname }
       ]
     : [
         { name: 'Home', url: '/' },
-        { name: 'Designers', url: '/designers' },
+        { name: LOCATION_BREADCRUMB_LABEL, url: '/designers' },
         { name: `in ${countryName}`, url: canonical.pathname }
       ];
 
@@ -134,11 +136,27 @@ if (mode === 'country') {
 } else if (mode === 'city') {
   const currentCountry = cityToCountrySlug[place] || cityObj?.country || null;
   if (currentCountry) {
+    if (!countryName) {
+      const c = countries.find((x) => x.slug === currentCountry) ?? null;
+      if (c) countryName = c.name;
+    }
+    if (!countrySlug) {
+      countrySlug = currentCountry;
+    }
     relatedLocations = cities
       .filter(c => c.slug !== place && cityToCountrySlug[c.slug] === currentCountry)
       .map(c => ({ name: c.name, slug: c.slug }));
   }
 }
+
+const relatedLocationsHeading =
+  mode === 'country'
+    ? `Cities in ${countryName}`
+    : countryName
+      ? `Other design cities in ${countryName}`
+      : 'Related locations';
+
+const placeName = mode === 'city' ? cityName : countryName;
 
 const listSchema = itemList({
   url: canonical.toString(),
@@ -149,12 +167,56 @@ const listSchema = itemList({
   })),
 });
 
+// "Last verified" = the most recently updated studio in this result set, so
+// the freshness claim shown on the page (and in schema below) is a real
+// fact about the data, never a hardcoded date.
+const updatedTimestamps = studios
+  .map((s) => (s.updated_at ? new Date(s.updated_at) : null))
+  .filter((d): d is Date => !!d && !isNaN(d.getTime()))
+  .map((d) => d.getTime());
+
+const lastVerifiedDate = updatedTimestamps.length ? new Date(Math.max(...updatedTimestamps)) : new Date();
+const lastVerifiedLabel = lastVerifiedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+const lastVerifiedIso = lastVerifiedDate.toISOString();
+
+const businessNodes = studioBusinessNodes({
+  items: studios.slice(0, 50).map((s) => ({
+    name: s.name,
+    url: new URL(`/designers/${encodeURIComponent(s.slug)}`, Astro.site).toString(),
+    website: s.website,
+    description: s.description,
+    city: s.city,
+    country: s.country || countryName,
+  })),
+});
+
+// Two entries, shared by the visible pill links (q + href) and the
+// FAQPage schema (q + a) — a single source so the label on the page and
+// the answer in structured data can never drift apart. Each question maps
+// to a real page the pill actually sends you to.
+const faqItems = [
+  {
+    q: 'How is this list curated?',
+    a: `Studios are added by self-submission and reviewed by Acceso's editorial team before publishing. See the Info page for our full curation methodology.`,
+    href: '/info',
+  },
+  {
+    q: 'Can I add my studio to this list?',
+    a: `Yes — submitting a studio is free. Once approved by Acceso's editorial team, it will appear on the ${placeName} design map and directory.`,
+    href: '/submission',
+  },
+];
+const faqSchema = faqPage(faqItems.map(({ q, a }) => ({ q, a })));
+
 const schema = {
   '@context': 'https://schema.org',
-  '@graph': [breadcrumbList(crumbs), listSchema],
+  '@graph': [
+    breadcrumbList(crumbs),
+    { ...listSchema, dateModified: lastVerifiedIso },
+    faqSchema,
+    ...businessNodes,
+  ],
 };
-
-const placeName = mode === 'city' ? cityName : countryName;
 
 const initialStudios = studios.slice(0, 18);
 const mapStudios = studios.map(s => ({
@@ -181,19 +243,33 @@ const mapStudios = studios.map(s => ({
         <div class="results-panel-content">
           <Breadcrumbs items={[
             { label: 'Home', href: '/' },
-            { label: 'Designers', href: '/designers' },
+            { label: LOCATION_BREADCRUMB_LABEL, href: '/designers' },
             { label: `In ${mode === 'city' ? cityName : countryName}` }
           ]} />
 
           <header class="panel-header">
              <h1 class="location-heading">
-                Design studios<br />
-                in <span class="location-accent">{mode === 'city' ? cityName : countryName}</span>
+                {h1Prefix} <span class="location-accent">{h1Place}</span>
              </h1>
-             
-             {mode === 'city' && countryName && (
-               <div class="country-subtitle">({countryName})</div>
+
+             {mode === 'city' && countryName && countrySlug && (
+               <a href={`/designers/in/${countrySlug}`} class="country-subtitle">
+                 {countryName} <svg class="country-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+               </a>
              )}
+
+             <p class="location-intro">{paragraph}</p>
+
+             <div class="location-byline">
+               <img src="/icon.svg" alt="" width="20" height="20" class="byline-icon" />
+               <span>Curated by <span style="font-weight: 600; color: var(--color-black);">Acceso's Editorial Team</span> · Last verified {lastVerifiedLabel}</span>
+             </div>
+
+             <div class="mini-faq">
+               {faqItems.map((item) => (
+                 <a href={item.href} class="pill-btn">{item.q}</a>
+               ))}
+             </div>
           </header>
 
           <div class="results-meta">
@@ -204,7 +280,7 @@ const mapStudios = studios.map(s => ({
 
           <div class="studios-grid" id="studios-grid">
             {initialStudios.map((studio, index) => (
-              <DirectoryCard studio={studio} index={index} />
+              <DirectoryCard studio={studio} index={index} showDescription description={studio.description} />
             ))}
           </div>
 
@@ -212,42 +288,25 @@ const mapStudios = studios.map(s => ({
           
           <!-- Pagination: pinned footer of the panel on mobile (like the homepage) -->
           <div id="pagination-container" class="pagination-wrapper"></div>
-           
-           <!-- New Cards Section -->
-           <div class="bottom-cards-section mt-16 pb-12">
-             <div class:list={['cards-split-grid', { 'single-card': relatedLocations.length === 0 }]}>
-                <GetListedCard
-                  className="full-height-card"
-                  title={`Are you based in ${placeName}?`}
-                  subtitle={`Submit your studio for free. Once approved, it will appear on the ${placeName} design map and directory.`}
-                  ctaLabel="Submit for free"
-                />
-                
-                 {relatedLocations.length > 0 && (
-                   <div class="related-locations-card">
-                      <div class="rl-header">
-                         <h3 class="rl-title">Related locations</h3>
-                      </div>
-                      <div class="rl-content">
-                         {relatedLocations.slice(0, 10).map(loc => (
-                           <a href={`/designers/in/${loc.slug}`} class="pill-btn">
-                             {loc.name}
-                           </a>
-                         ))}
-                      </div>
-                   </div>
-                 )}
-             </div>
-           </div>
 
-          <!-- SEO Text Section -->
-          <div class="seo-text-area mt-20 pt-16 border-t border-stroke">
-            <div class="max-w-[70ch] space-y-8">
-              {paragraphs.map((p) => (
-                <p class="font-sans text-[16px] leading-[1.8] text-gray">{p}</p>
-              ))}
+          <!-- Related locations (bottom, no more submission card here — the
+               two pills above already cover "how do I get listed") -->
+          {relatedLocations.length > 0 && (
+            <div class="bottom-cards-section">
+              <div class="related-locations-card">
+                 <div class="rl-header">
+                    <h3 class="rl-title">{relatedLocationsHeading}</h3>
+                 </div>
+                 <div class="rl-content">
+                    {relatedLocations.slice(0, 10).map(loc => (
+                      <a href={`/designers/in/${loc.slug}`} class="pill-btn">
+                        {loc.name}
+                      </a>
+                    ))}
+                 </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </aside>
 
@@ -300,6 +359,7 @@ const mapStudios = studios.map(s => ({
 
   <script>
     import { initializeMap } from '../../../lib/map-init';
+    import { firstSentence } from '../../../lib/text';
 
     const ALL_STUDIOS = (window as any).INITIAL_STUDIOS;
     const MAP_STUDIOS = (window as any).MAP_STUDIOS;
@@ -310,9 +370,6 @@ const mapStudios = studios.map(s => ({
 
     async function initMap() {
       if (MAP_STUDIOS?.length > 0) {
-        // Build the bounding box of this location's studios so the map can be
-        // framed on it immediately (no recenter animation from the default
-        // Europe view after the tiles load).
         const bounds: [[number, number], [number, number]] | null = (() => {
           let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
           MAP_STUDIOS.forEach((s: any) => {
@@ -331,8 +388,6 @@ const mapStudios = studios.map(s => ({
         mapInstance = await initializeMap(MAP_STUDIOS, null, 'studio', bounds);
         if (!mapInstance || !mapInstance.map) return;
 
-        // Refresh the studios without re-centering: the map is already framed
-        // on this location by initializeMap (instant jump, no animation).
         const focusLocation = () => {
           mapInstance.map.resize();
           if (mapInstance.updateStudios) {
@@ -346,8 +401,6 @@ const mapStudios = studios.map(s => ({
           mapInstance.map.once('load', focusLocation);
         }
 
-        // Recenter pill: glide back to the map's original loaded framing
-        // (this city/country), which initializeMap captured on first load.
         const recenterBtn = document.getElementById('map-recenter-btn');
         recenterBtn?.addEventListener('click', () => {
           mapInstance?.recenter();
@@ -360,7 +413,6 @@ const mapStudios = studios.map(s => ({
 
       renderGrid();
 
-      // Center map on card click (desktop)
       const studiosGrid = document.getElementById('studios-grid');
       studiosGrid?.addEventListener('click', (e) => {
         const card = (e.target as HTMLElement).closest('.directory-card') as HTMLElement;
@@ -378,10 +430,61 @@ const mapStudios = studios.map(s => ({
           }
         }
       });
+
+      // Desktop-only: hovering a studio card in the list shows the map
+      // hover pill on the corresponding unclustered pin (Airbnb-style).
+      if (window.innerWidth > 1024) {
+        setupCardHoverPill();
+      }
     }
 
-    // Card markup below is built as an HTML string, so every CMS value
-    // interpolated into it has to be escaped first.
+    function setupCardHoverPill() {
+      const studiosGrid = document.getElementById('studios-grid');
+      if (!studiosGrid) return;
+
+      let hoveredCard: HTMLElement | null = null;
+
+      studiosGrid.addEventListener('mouseover', (e) => {
+        const card = (e.target as HTMLElement).closest('.directory-card') as HTMLElement | null;
+        if (card === hoveredCard) return; // same card, no-op
+
+        // Moving to a different card or out of any card
+        if (hoveredCard && mapInstance?.hidePill) {
+          mapInstance.hidePill();
+        }
+        hoveredCard = card;
+
+        if (!card || !mapInstance || !mapInstance.showPill || !mapInstance.map) return;
+
+        const slug = card.dataset.slug;
+        const lat = parseFloat(card.dataset.lat || '');
+        const lng = parseFloat(card.dataset.lng || '');
+        if (!slug || isNaN(lat) || isNaN(lng)) return;
+
+        const studio = mapInstance.studiosData.find((s: any) => s.slug === slug);
+        if (!studio) return;
+
+        try {
+          const features = mapInstance.map.queryRenderedFeatures(undefined, {
+            layers: ['unclustered-point'],
+          });
+          const match = features.find((f: any) => String(f.properties?.id) === String(studio.id));
+          if (!match) return; // pin is clustered or not visible
+
+          mapInstance.showPill(studio.name, [lng, lat]);
+        } catch (_) {
+          // layer may not exist yet
+        }
+      });
+
+      studiosGrid.addEventListener('mouseleave', () => {
+        hoveredCard = null;
+        if (mapInstance?.hidePill) {
+          mapInstance.hidePill();
+        }
+      });
+    }
+
     function escapeHtml(value: string) {
       return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -427,6 +530,7 @@ const mapStudios = studios.map(s => ({
             const cover = resolveCover(s.cover);
             const cityClean = (s.city || '').split(',')[0].trim();
             const location = cityClean || '';
+            const snippet = firstSentence(s.description);
             return `
             <a href="/designers/${encodeURIComponent(s.slug || '')}"
                class="directory-card"
@@ -439,6 +543,7 @@ const mapStudios = studios.map(s => ({
               </div>
               <h3 class="directory-card-name">${escapeHtml(s.name || '')}</h3>
               <p class="directory-card-location">${escapeHtml(location)}</p>
+              ${snippet ? `<p class="directory-card-desc">${escapeHtml(snippet)}</p>` : ''}
             </a>
           `;
           }).join('');
@@ -460,14 +565,14 @@ const mapStudios = studios.map(s => ({
       }
       container.style.display = '';
 
-      let html = `<button class="pagination-btn pagination-arrow" ${currentPage === 1 ? 'disabled' : ''} data-page="prev">‹</button>`;
+      let html = `<button class="pagination-btn pagination-arrow" ${currentPage === 1 ? 'disabled' : ''} data-page="prev"><svg class="pagination-icon-prev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>`;
       let startPage = Math.max(1, currentPage - 2);
       let endPage = Math.min(totalPages, startPage + 4);
       if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
       for (let i = startPage; i <= endPage; i++) {
         html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
       }
-      html += `<button class="pagination-btn pagination-arrow" ${currentPage === totalPages ? 'disabled' : ''} data-page="next">›</button>`;
+      html += `<button class="pagination-btn pagination-arrow" ${currentPage === totalPages ? 'disabled' : ''} data-page="next"><svg class="pagination-icon-next" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>`;
       container.innerHTML = html;
 
       container.querySelectorAll('.pagination-btn').forEach(btn => {
@@ -477,7 +582,6 @@ const mapStudios = studios.map(s => ({
           else if (page === 'next') currentPage++;
           else currentPage = parseInt(page!);
           renderGrid();
-          // On mobile the list scrolls inside the panel, not the window.
           const inner = document.querySelector('.results-panel-content') as HTMLElement | null;
           if (inner && window.innerWidth <= 1024) {
             inner.scrollTo({ top: 0, behavior: 'smooth' });
@@ -490,15 +594,10 @@ const mapStudios = studios.map(s => ({
 
     init();
 
-      // Mobile bottom sheet — swipe to expand/collapse the list over the map.
-      // Mirrors the smooth, scroll-aware snap used on the map (homepage):
-      // the panel snaps between a collapsed peek and an expanded sheet, and a
-      // drag only hijacks the gesture when the list is scrolled to the very
-      // top (otherwise the swipe scrolls the list natively).
       const panel = document.querySelector('.results-panel') as HTMLElement | null;
       const panelInner = panel ? panel.querySelector('.results-panel-content') as HTMLElement | null : null;
 
-      const COLLAPSED_PEEK = 240; // keep in sync with the CSS collapsed max-height
+      const COLLAPSED_PEEK = 240;
       const isMobilePanel = () => window.innerWidth <= 1024;
 
       let startY = 0;
@@ -555,8 +654,6 @@ const mapStudios = studios.map(s => ({
         if (!startedOnHandle && panelInner && panelInner.scrollTop > 0) return;
 
         const delta = e.touches[0].clientY - startY;
-        // When expanded, an upward swipe scrolls the list instead of growing
-        // the sheet further — only a downward swipe collapses it.
         if (!startedOnHandle && delta < 0 && !collapsed) return;
 
         let next = startMaxH - delta;
@@ -624,7 +721,6 @@ const mapStudios = studios.map(s => ({
       width: 100%;
     }
 
-    /* Left Column */
     .results-panel {
       width: clamp(360px, 40%, 620px);
       flex: 0 0 auto;
@@ -633,20 +729,19 @@ const mapStudios = studios.map(s => ({
       z-index: 1000;
     }
 
-    /* Sheet grip only exists on the mobile bottom sheet */
     .panel-handle { display: none; }
 
     .results-panel-content {
-      padding: var(--page-top-spacing) 40px 60px;
+      padding: var(--page-top-spacing) 40px 24px;
     }
 
     .panel-header {
-      margin-bottom: 40px;
+      margin-bottom: 24px;
     }
 
     .location-heading {
       font-family: var(--font-sans);
-      font-size: clamp(40px, 5vw, 68px);
+      font-size: clamp(36px, 5vw, 48px);
       font-weight: 400;
       line-height: 0.96;
       letter-spacing: -0.02em;
@@ -664,11 +759,64 @@ const mapStudios = studios.map(s => ({
 
     .country-subtitle {
        font-family: var(--font-sans);
-       font-size: 24px;
+       font-size: 22px;
        color: var(--color-gray);
-       margin-top: 12px;
+       margin-top: 14px;
        font-weight: 400;
        letter-spacing: 0;
+       text-decoration: none;
+       display: inline-flex;
+       align-items: center;
+       gap: 4px;
+       transition: color 0.2s ease;
+    }
+
+    .country-subtitle:hover {
+       color: var(--color-black);
+       text-decoration: underline;
+       text-decoration-color: var(--color-stroke);
+       text-underline-offset: 8px;
+       text-decoration-thickness: 2px;
+    }
+
+    .country-chevron {
+       display: block;
+       margin-top: 1px;
+    }
+
+    .location-intro {
+      font-family: var(--font-sans);
+      font-size: clamp(14px, 2vh, 16px);
+      line-height: 1.6;
+      color: var(--color-gray);
+      max-width: 62ch;
+      margin: 20px 0 0;
+      font-weight: 400;
+    }
+
+    .location-byline {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-gray);
+      margin-top: 12px;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .byline-icon {
+      display: block;
+      opacity: 0.8;
+      border-radius: 4px;
+    }
+
+    .mini-faq {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
     }
 
     .results-meta {
@@ -697,76 +845,7 @@ const mapStudios = studios.map(s => ({
       min-width: 0;
     }
 
-    :global(.directory-card) {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      text-decoration: none;
-      color: inherit;
-      transition: transform 0.2s ease;
-    }
-
-    :global(.directory-card:hover) {
-      transform: translateY(-2px);
-      color: inherit;
-    }
-
-    :global(.directory-card-media) {
-      aspect-ratio: 1;
-      overflow: hidden;
-      background: #E8E8EA;
-      border-radius: 12px;
-    }
-
-    :global(.directory-card-image) {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    :global(.directory-card-placeholder) {
-      width: 100%;
-      height: 100%;
-      background: #E8E8EA;
-    }
-
-    :global(.directory-card-name) {
-      font-family: var(--font-sans);
-      font-size: 14px;
-      font-weight: 400;
-      color: var(--color-black);
-      margin: 0;
-      line-height: 1.25;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    :global(.directory-card-location) {
-      font-family: var(--font-sans);
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--color-text-muted);
-      margin: -6px 0 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
     /* Cards Section */
-    .cards-split-grid {
-       display: grid;
-       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-       gap: 16px;
-    }
-
-    .cards-split-grid.single-card {
-       grid-template-columns: 1fr;
-    }
-
     .related-locations-card {
        background: rgba(0,0,0,0.04);
        border: 1px solid var(--color-stroke);
@@ -813,15 +892,12 @@ const mapStudios = studios.map(s => ({
        color: var(--color-black);
     }
 
-    /* Copy removed — using directory card styles */
-
-    /* Pagination — matches the standard style used on the Designers index */
     .pagination-wrapper {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 16px;
-      padding: 48px 0;
+      padding: 32px 0;
       border-top: 1px solid var(--color-stroke);
     }
 
@@ -846,7 +922,6 @@ const mapStudios = studios.map(s => ({
     :global(.pagination-btn:disabled) { opacity: 0.3; cursor: not-allowed; }
     :global(.pagination-arrow) { background: var(--color-bg-secondary) !important; border: 1px solid var(--color-stroke) !important; color: var(--color-black); }
 
-    /* Right Column: Map */
     .map-panel {
       flex: 1;
       min-width: 0;
@@ -909,7 +984,6 @@ const mapStudios = studios.map(s => ({
       transform: translateX(-50%) translateY(0);
     }
 
-    /* Custom Cluster Styles */
     :global(.cluster-icon) {
       background: var(--color-yellow) !important;
       color: #000000 !important;
@@ -929,8 +1003,6 @@ const mapStudios = studios.map(s => ({
       transform: scale(1.1);
     }
 
-    /* Studio Card on Map — positioned by JS (left/top), so it must be a
-       fixed-size box, not a stretched full-width container. */
     .studio-ui-container {
       position: absolute;
       left: 0;
@@ -976,7 +1048,6 @@ const mapStudios = studios.map(s => ({
     .studio-card-address-row { margin: 0; }
     .studio-card-address { font-family: var(--font-sans); font-size: 13px; font-weight: 400; color: var(--color-text-muted); margin: 0; opacity: 0.85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    /* ── Tablet & Mobile layout (≤1024px) ────────────────────── */
     @media (max-width: 1024px) {
       .split-container {
         display: block !important;
@@ -1069,22 +1140,14 @@ const mapStudios = studios.map(s => ({
         min-height: 0;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
       }
       .results-panel:not(.is-expanded) .results-panel-content {
         overflow: hidden;
       }
       .results-panel-content::-webkit-scrollbar {
-        width: 6px;
+        display: none;
       }
-      .results-panel-content::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .results-panel-content::-webkit-scrollbar-thumb {
-        background-color: var(--color-stroke);
-        border-radius: 20px;
-      }
-      /* Pagination is pinned to the bottom of the panel (like the homepage),
-         always visible while expanded, with a gap from the phone's bottom. */
       #pagination-container {
         flex-shrink: 0;
         display: flex;
@@ -1093,7 +1156,8 @@ const mapStudios = studios.map(s => ({
         gap: 16px;
         background: var(--color-white);
         border-top: 1px solid var(--color-stroke);
-        padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
+        padding-top: 32px;
+        padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
       }
       .results-panel:not(.is-expanded) #pagination-container {
         display: none;
@@ -1102,13 +1166,11 @@ const mapStudios = studios.map(s => ({
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 14px;
       }
-      /* Hide page footer on mobile/tablet viewports to prevent layout bleeding */
       :global(main.designers-page ~ footer) {
         display: none !important;
       }
     }
 
-    /* ── Mobile: ≤640px ─────────────────────────────────────── */
     @media (max-width: 640px) {
       .studios-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));

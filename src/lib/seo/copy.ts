@@ -15,15 +15,39 @@ function uniq(parts: Array<string | null | undefined>): string[] {
   return out;
 }
 
+/** Past this many characters a title starts getting clipped in the SERP. */
+const TITLE_BUDGET = 60;
+const BRAND_SUFFIX = ' | Acceso';
+
+/**
+ * Prefix + place, split so the H1 can wrap just the place name in its own
+ * <span> (for the underline accent) while still rendering the exact same
+ * text content as locationTitle() below. Title and H1 must never say
+ * something different from each other, so both are built from this one
+ * source instead of two separately-written strings.
+ */
+export function locationH1Parts(ctx: CityCtx): { prefix: string; place: string } {
+  const place = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+  return { prefix: 'Industrial & Furniture Design Studios in', place };
+}
+
+export function locationH1(ctx: CityCtx): string {
+  const { prefix, place } = locationH1Parts(ctx);
+  return `${prefix} ${place}`;
+}
+
 export function locationTitle(ctx: CityCtx): string {
-  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
-  return `Industrial Designers & Studios in ${where} | Acceso`;
+  const base = locationH1(ctx);
+  // Drop the brand suffix for longer city/country names rather than let the
+  // title run past the safe SERP length — better to lose "| Acceso" than
+  // to lose the city name to truncation.
+  return base.length + BRAND_SUFFIX.length <= TITLE_BUDGET ? `${base}${BRAND_SUFFIX}` : base;
 }
 
 export function locationDescription(ctx: CityCtx): string {
   const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
-  const count = ctx.totalStudios ? `${ctx.totalStudios}+` : 'independent';
-  return `Browse ${count} industrial and furniture design studios in ${where}. Explore portfolios, locations, and related designers - curated for discovery.`;
+  const count = ctx.totalStudios ? `${ctx.totalStudios}+` : 'a curated list of';
+  return `${where} is home to ${count} independent industrial and furniture design studios. Browse portfolios, specialties, and locations, curated by Acceso.`;
 }
 
 function joinList(items: string[]): string {
@@ -33,28 +57,24 @@ function joinList(items: string[]): string {
   return `${list.slice(0, -1).join(', ')}, and ${list[list.length - 1]}`;
 }
 
-export function locationIntro(ctx: CityCtx): { paragraphs: string[]; h2s: string[] } {
-  // The bare place name (city name for a city page, country name for a country
-  // page) reads best for possessives like "{place}'s design scene".
-  const place = ctx.cityName;
-  const isCity = !!ctx.countryName;
-
-  const p1 = `Looking for independent industrial designers or furniture design studios in ${place}? Acceso is a curated guide to ${place}'s design scene, helping you discover local studios, designers, and creative businesses.`;
-
-  const countPhrase = ctx.totalStudios
-    ? `${ctx.totalStudios} independent design studios`
-    : `independent design studios`;
-  const examples = joinList((ctx.exampleStudios ?? []).slice(0, 3));
-  const includingPhrase = examples ? `, including ${examples}` : '';
-  const mapPhrase = isCity ? 'the city map' : 'the map';
-
-  const p2 = `This page currently features ${countPhrase} based in ${place}${includingPhrase}. Browse studio profiles, explore ${mapPhrase}, and discover related designers, schools, awards, and other resources connected to ${place}'s industrial and furniture design community.`;
-
-  return {
-    paragraphs: uniq([p1, p2]),
-    h2s: uniq([`Studios in ${place}`, `Related locations`, `Explore more designers`]),
-  };
+/**
+ * Single, quotable direct-answer paragraph. Replaces the old two-paragraph
+ * SEO filler block that used to sit at the bottom of the page — this one
+ * renders directly under the H1, ahead of the results grid.
+ */
+export function locationIntro(ctx: CityCtx): { paragraph: string } {
+  const countPhrase = ctx.totalStudios ? `${ctx.totalStudios}+` : 'a growing number of';
+  const paragraph = `${ctx.cityName} is home to ${countPhrase} independent design studios working in industrial and furniture design, from solo practices to multidisciplinary teams.`;
+  return { paragraph };
 }
+
+/**
+ * Shared label so the visible breadcrumb and the BreadcrumbList schema never
+ * say something different from the title/H1 above ("Designers" was too
+ * generic — it overlaps with interior, graphic and fashion design studios
+ * that show up for the same query).
+ */
+export const LOCATION_BREADCRUMB_LABEL = 'Industrial & Furniture Designers';
 
 type UniCtx = {
   cityName: string;

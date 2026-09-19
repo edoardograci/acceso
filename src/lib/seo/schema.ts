@@ -83,3 +83,41 @@ export function faqPage(faqs: Array<{ q: string; a: string }>) {
     })),
   };
 }
+
+/**
+ * One LocalBusiness node per listed studio: real external website (sameAs)
+ * and first-hand description, additive to the existing ItemList (which
+ * stays as-is, pointing at internal profile URLs for site navigation). This
+ * data is never rendered as a visible link on the page — it's what lets a
+ * crawler or AI engine read "studio X, based in Y, official site Z" as a
+ * structured fact even though the card itself only shows a name, photo and
+ * one-line description.
+ */
+export function studioBusinessNodes(params: {
+  items: Array<{
+    name: string;
+    url: string;
+    website?: string | null;
+    description?: string | null;
+    city?: string | null;
+    country?: string | null;
+  }>;
+}) {
+  return params.items.map((it) => ({
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: it.name,
+    url: it.url,
+    ...(it.website ? { sameAs: [it.website] } : {}),
+    ...(it.description ? { description: it.description } : {}),
+    ...(it.city || it.country
+      ? {
+          address: {
+            '@type': 'PostalAddress',
+            ...(it.city ? { addressLocality: it.city } : {}),
+            ...(it.country ? { addressCountry: it.country } : {}),
+          },
+        }
+      : {}),
+  }));
+}

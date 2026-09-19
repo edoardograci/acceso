@@ -363,14 +363,14 @@ function init() {
     if (!paginationContainer) return;
     if (totalPages <= 1) { paginationContainer.innerHTML = ''; return; }
 
-    let html = `<button class="pagination-btn pagination-arrow" ${currentPage === 1 ? 'disabled' : ''} data-page="prev">‹</button>`;
+    let html = `<button class="pagination-btn pagination-arrow" ${currentPage === 1 ? 'disabled' : ''} data-page="prev"><svg class="pagination-icon-prev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>`;
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, startPage + 4);
     if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
     for (let i = startPage; i <= endPage; i++) {
       html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
     }
-    html += `<button class="pagination-btn pagination-arrow" ${currentPage === totalPages ? 'disabled' : ''} data-page="next">›</button>`;
+    html += `<button class="pagination-btn pagination-arrow" ${currentPage === totalPages ? 'disabled' : ''} data-page="next"><svg class="pagination-icon-next" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>`;
     paginationContainer.innerHTML = html;
 
     paginationContainer.querySelectorAll('.pagination-btn').forEach(btn => {

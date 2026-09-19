@@ -1,15 +1,20 @@
 ---
 import type { Studio } from '../lib/types';
 import { normalizeImage } from '../lib/images';
+import { firstSentence } from '../lib/text';
 
 interface Props {
   studio: Studio;
   index?: number;
   cover?: string | null;
   basePath?: string;
+  /** Opt-in: renders a one-line specialty/description snippet on the card.
+   *  Off by default so existing pages using this component are unaffected. */
+  showDescription?: boolean;
 }
 
-const { studio, index = 0, cover, basePath = '/designers' } = Astro.props;
+const { studio, index = 0, cover, basePath = '/designers', showDescription = false } = Astro.props;
+const snippet = showDescription ? firstSentence(studio.description) : '';
 ---
 
 <a
@@ -41,9 +46,10 @@ const { studio, index = 0, cover, basePath = '/designers' } = Astro.props;
   </div>
   <h3 class="directory-card-name">{studio.name}</h3>
   <p class="directory-card-location">{(studio.city || '').split(',')[0].trim()}</p>
+  {snippet && <p class="directory-card-desc">{snippet}</p>}
 </a>
 
-<style>
+<style is:global>
   .directory-card {
     display: flex;
     flex-direction: column;
@@ -109,5 +115,19 @@ const { studio, index = 0, cover, basePath = '/designers' } = Astro.props;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .directory-card-desc {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    margin: -4px 0 0;
+    line-height: 1.4;
+    opacity: 0.85;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 </style>

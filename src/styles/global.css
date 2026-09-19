@@ -424,6 +424,13 @@
     color: var(--color-black);
   }
 
+  .pagination-icon-prev {
+    transform: translateX(-1px);
+  }
+  .pagination-icon-next {
+    transform: translateX(1px);
+  }
+
   .btn-icon img {
     width: 16px;
     height: auto;

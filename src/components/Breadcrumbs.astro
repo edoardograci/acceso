@@ -34,7 +34,7 @@ const back = backHref ?? fallbackBack ?? '/';
         </span>
       )}
       {item.href ? (
-        <a class="breadcrumb-item" href={item.href}>{item.label}</a>
+        <a class:list={["breadcrumb-item", { "breadcrumb-home": i === 0 }]} href={item.href}>{item.label}</a>
       ) : (
         <span class="breadcrumb-current" aria-current="page">{item.label}</span>
       )}
@@ -83,11 +83,18 @@ const back = backHref ?? fallbackBack ?? '/';
   .breadcrumb-back-icon { display: block; }
 
   .breadcrumb-item {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: var(--color-gray);
     text-decoration: none;
     transition: color 0.2s;
     white-space: nowrap;
+  }
+
+  .breadcrumb-home {
+    flex: none;
   }
 
   .breadcrumb-item:hover { color: var(--color-black); }
