@@ -26,6 +26,7 @@ const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
 let award: any = null;
 let relatedAwards: any[] = [];
 let citiesMapping: any[] = [];
+let fetchFailed = false;
 
 try {
   const [awardsRes, citiesRes] = await Promise.all([
@@ -33,33 +34,40 @@ try {
     fetch(`${domain}/test-cities.json`)
   ]);
 
-  if (awardsRes.ok) {
-    const rawAwards = await awardsRes.json();
-    const allAwards = Array.isArray(rawAwards) ? rawAwards : (rawAwards.items || []);
+  if (!awardsRes.ok) throw new Error(`Failed to fetch awards.json: ${awardsRes.status}`);
 
-    award = allAwards.find((a: any) => a.slug === slug) || null;
+  const rawAwards = await awardsRes.json();
+  const allAwards = Array.isArray(rawAwards) ? rawAwards : (rawAwards.items || []);
 
-    if (award && !award.website && award.url) award.website = award.url;
+  award = allAwards.find((a: any) => a.slug === slug) || null;
 
-    if (award && award.image === 'awards/if-award.webp') {
-      award.image = 'awards/if-award/logo.webp';
-    }
+  if (award && !award.website && award.url) award.website = award.url;
 
-    if (award) {
-      relatedAwards = allAwards
-        .filter((a: any) => a.slug !== slug && getAwardStatus(a.deadlines) === 'status-open')
-        .slice(0, 10);
-    }
+  if (award && award.image === 'awards/if-award.webp') {
+    award.image = 'awards/if-award/logo.webp';
+  }
+
+  if (award) {
+    relatedAwards = allAwards
+      .filter((a: any) => a.slug !== slug && getAwardStatus(a.deadlines) === 'status-open')
+      .slice(0, 10);
   }
 
   if (citiesRes.ok) citiesMapping = await citiesRes.json();
 
 } catch (e) {
+  fetchFailed = true;
   console.error('[Award Slug] Fail to fetch data:', e);
 }
 
+// An upstream fetch failure is transient, not "not found" — don't tell
+// crawlers this URL is permanently gone when the CDN proxy just hiccupped.
+if (fetchFailed) {
+  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
+}
+
 if (!award) {
-  return Astro.redirect('/404');
+  return new Response(null, { status: 404 });
 }
 
 function getAwardStatus(deadlinesStr: string) {

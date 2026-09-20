@@ -83,37 +83,43 @@ type UniCtx = {
   exampleUniversities?: string[];
 };
 
+export function universityH1Parts(ctx: UniCtx): { prefix: string; place: string } {
+  const place = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+  return { prefix: 'Design Schools in', place };
+}
+
+export function universityH1(ctx: UniCtx): string {
+  const { prefix, place } = universityH1Parts(ctx);
+  return `${prefix} ${place}`;
+}
+
 export function universityTitle(ctx: UniCtx): string {
-  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
-  return `Design Schools in ${where} | Acceso`;
+  const base = universityH1(ctx);
+  return base.length + BRAND_SUFFIX.length <= TITLE_BUDGET ? `${base}${BRAND_SUFFIX}` : base;
 }
 
 export function universityDescription(ctx: UniCtx): string {
   const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
   const count = ctx.totalUniversities ? `${ctx.totalUniversities}+` : 'leading';
-  return `Browse ${count} design schools and institutions in ${where}. Explore programs in industrial, furniture, and product design - curated for discovery.`;
+  return `${where} is home to ${count} design schools and institutions. Browse programs in industrial, furniture, and product design, curated by Acceso.`;
 }
 
-export function universityIntro(ctx: UniCtx): { paragraphs: string[]; h2s: string[] } {
-  const place = ctx.cityName;
-  const isCity = !!ctx.countryName;
-
-  const p1 = ` researching where to study industrial or furniture design in ${place}? Acceso is a curated guide to ${place}'s design education scene, helping you discover local schools, universities, and creative institutions.`;
-
-  const countPhrase = ctx.totalUniversities
-    ? `${ctx.totalUniversities} design schools`
-    : `design schools`;
-  const examples = joinList((ctx.exampleUniversities ?? []).slice(0, 3));
-  const includingPhrase = examples ? `, including ${examples}` : '';
-  const mapPhrase = isCity ? 'the city map' : 'the map';
-
-  const p2 = `This page currently features ${countPhrase} in ${place}${includingPhrase}. Browse school profiles, explore ${mapPhrase}, and discover related designers, museums, awards, and other resources connected to ${place}'s design community.`;
-
-  return {
-    paragraphs: uniq([p1, p2]),
-    h2s: uniq([`Schools in ${place}`, `Related locations`, `Explore more design education`]),
-  };
+/**
+ * Single, quotable direct-answer paragraph. Replaces the old two-paragraph
+ * SEO filler block that used to sit at the bottom of the page — this one
+ * renders directly under the H1, ahead of the results grid.
+ */
+export function universityIntro(ctx: UniCtx): { paragraph: string } {
+  const countPhrase = ctx.totalUniversities ? `${ctx.totalUniversities}+` : 'a growing number of';
+  const paragraph = `${ctx.cityName} is home to ${countPhrase} schools and institutions teaching industrial, furniture, and product design, from foundation courses to postgraduate studios.`;
+  return { paragraph };
 }
+
+/**
+ * Shared label so the visible breadcrumb and the BreadcrumbList schema never
+ * say something different from the title/H1 above.
+ */
+export const UNIVERSITY_BREADCRUMB_LABEL = 'Design Schools';
 
 type MuseumCtx = {
   cityName: string;
@@ -122,37 +128,43 @@ type MuseumCtx = {
   exampleMuseums?: string[];
 };
 
+export function museumH1Parts(ctx: MuseumCtx): { prefix: string; place: string } {
+  const place = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+  return { prefix: 'Design Museums in', place };
+}
+
+export function museumH1(ctx: MuseumCtx): string {
+  const { prefix, place } = museumH1Parts(ctx);
+  return `${prefix} ${place}`;
+}
+
 export function museumTitle(ctx: MuseumCtx): string {
-  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
-  return `Design Museums in ${where} | Acceso`;
+  const base = museumH1(ctx);
+  return base.length + BRAND_SUFFIX.length <= TITLE_BUDGET ? `${base}${BRAND_SUFFIX}` : base;
 }
 
 export function museumDescription(ctx: MuseumCtx): string {
   const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
   const count = ctx.totalMuseums ? `${ctx.totalMuseums}+` : 'notable';
-  return `Browse ${count} design museums and foundations in ${where}. Explore collections dedicated to furniture, product, and industrial design - curated for discovery.`;
+  return `${where} is home to ${count} design museums and foundations. Explore collections in furniture, product, and industrial design, curated by Acceso.`;
 }
 
-export function museumIntro(ctx: MuseumCtx): { paragraphs: string[]; h2s: string[] } {
-  const place = ctx.cityName;
-  const isCity = !!ctx.countryName;
-
-  const p1 = `Looking for design museums and foundations in ${place}? Acceso is a curated guide to ${place}'s design heritage, helping you discover local museums, collections, and cultural institutions.`;
-
-  const countPhrase = ctx.totalMuseums
-    ? `${ctx.totalMuseums} design museums`
-    : `design museums`;
-  const examples = joinList((ctx.exampleMuseums ?? []).slice(0, 3));
-  const includingPhrase = examples ? `, including ${examples}` : '';
-  const mapPhrase = isCity ? 'the city map' : 'the map';
-
-  const p2 = `This page currently features ${countPhrase} in ${place}${includingPhrase}. Browse museum profiles, explore ${mapPhrase}, and discover related designers, schools, fairs, and other resources connected to ${place}'s design community.`;
-
-  return {
-    paragraphs: uniq([p1, p2]),
-    h2s: uniq([`Museums in ${place}`, `Related locations`, `Explore more design heritage`]),
-  };
+/**
+ * Single, quotable direct-answer paragraph. Replaces the old two-paragraph
+ * SEO filler block that used to sit at the bottom of the page — this one
+ * renders directly under the H1, ahead of the results grid.
+ */
+export function museumIntro(ctx: MuseumCtx): { paragraph: string } {
+  const countPhrase = ctx.totalMuseums ? `${ctx.totalMuseums}+` : 'a growing number of';
+  const paragraph = `${ctx.cityName} is home to ${countPhrase} museums and foundations with collections in furniture, product, and industrial design, from permanent galleries to rotating exhibitions.`;
+  return { paragraph };
 }
+
+/**
+ * Shared label so the visible breadcrumb and the BreadcrumbList schema never
+ * say something different from the title/H1 above.
+ */
+export const MUSEUM_BREADCRUMB_LABEL = 'Design Museums';
 
 
 type ProjectCtx = {

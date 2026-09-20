@@ -27,6 +27,7 @@ let university: any = null;
 let relatedUniversities: any[] = [];
 let citiesMapping: any[] = [];
 let countriesMapping: any[] = [];
+let fetchFailed = false;
 
 try {
   const [uniRes, citiesRes, countriesRes] = await Promise.all([
@@ -35,36 +36,43 @@ try {
     fetch(`${domain}/test-countries.json`)
   ]);
 
-  if (uniRes.ok) {
-    const rawData = await uniRes.json();
-    const allUniversities = Array.isArray(rawData) ? rawData : (rawData.items || []);
+  if (!uniRes.ok) throw new Error(`Failed to fetch universities.json: ${uniRes.status}`);
 
-    const processedUniversities = allUniversities;
+  const rawData = await uniRes.json();
+  const allUniversities = Array.isArray(rawData) ? rawData : (rawData.items || []);
 
-    university = processedUniversities.find((u: any) => u.slug === slug) || null;
+  const processedUniversities = allUniversities;
 
-    if (university) {
-      // Discovery: curated set of other universities prioritizing country/city
-      relatedUniversities = processedUniversities
-        .filter((u: any) => u.slug !== slug)
-        .sort((a: any, b: any) => {
-          const aCountry = a.country_slug === university.country_slug ? 0 : 1;
-          const bCountry = b.country_slug === university.country_slug ? 0 : 1;
-          if (aCountry !== bCountry) return aCountry - bCountry;
-          const aCity = a.city_slug === university.city_slug ? 0 : 1;
-          const bCity = b.city_slug === university.city_slug ? 0 : 1;
-          if (aCity !== bCity) return aCity - bCity;
-          return 0;
-        })
-        .slice(0, 5);
-    }
+  university = processedUniversities.find((u: any) => u.slug === slug) || null;
+
+  if (university) {
+    // Discovery: curated set of other universities prioritizing country/city
+    relatedUniversities = processedUniversities
+      .filter((u: any) => u.slug !== slug)
+      .sort((a: any, b: any) => {
+        const aCountry = a.country_slug === university.country_slug ? 0 : 1;
+        const bCountry = b.country_slug === university.country_slug ? 0 : 1;
+        if (aCountry !== bCountry) return aCountry - bCountry;
+        const aCity = a.city_slug === university.city_slug ? 0 : 1;
+        const bCity = b.city_slug === university.city_slug ? 0 : 1;
+        if (aCity !== bCity) return aCity - bCity;
+        return 0;
+      })
+      .slice(0, 5);
   }
 
   if (citiesRes.ok) citiesMapping = await citiesRes.json();
   if (countriesRes.ok) countriesMapping = await countriesRes.json();
 
 } catch (e) {
+  fetchFailed = true;
   console.error('[University Slug] Fail to fetch data:', e);
+}
+
+// An upstream fetch failure is transient, not "not found" — don't tell
+// crawlers this URL is permanently gone when the CDN proxy just hiccupped.
+if (fetchFailed) {
+  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
 }
 
 if (!university) {

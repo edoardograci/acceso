@@ -85,15 +85,17 @@ export function faqPage(faqs: Array<{ q: string; a: string }>) {
 }
 
 /**
- * One LocalBusiness node per listed studio: real external website (sameAs)
- * and first-hand description, additive to the existing ItemList (which
- * stays as-is, pointing at internal profile URLs for site navigation). This
- * data is never rendered as a visible link on the page — it's what lets a
- * crawler or AI engine read "studio X, based in Y, official site Z" as a
- * structured fact even though the card itself only shows a name, photo and
- * one-line description.
+ * One node per listed entity: real external website (sameAs) and first-hand
+ * description, additive to the existing ItemList (which stays as-is,
+ * pointing at internal profile URLs for site navigation). This data is
+ * never rendered as a visible link on the page — it's what lets a crawler
+ * or AI engine read "X, based in Y, official site Z" as a structured fact
+ * even though the card itself only shows a name, photo and one-line
+ * description.
  */
-export function studioBusinessNodes(params: {
+export function entityBusinessNodes(params: {
+  /** schema.org @type for every node, e.g. 'LocalBusiness', 'Museum', 'EducationalOrganization'. */
+  type: string;
   items: Array<{
     name: string;
     url: string;
@@ -105,7 +107,7 @@ export function studioBusinessNodes(params: {
 }) {
   return params.items.map((it) => ({
     '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
+    '@type': params.type,
     name: it.name,
     url: it.url,
     ...(it.website ? { sameAs: [it.website] } : {}),
@@ -120,4 +122,28 @@ export function studioBusinessNodes(params: {
         }
       : {}),
   }));
+}
+
+/** @deprecated Use entityBusinessNodes({ type: 'LocalBusiness', ... }) — kept so existing call sites don't need a type argument. */
+export function studioBusinessNodes(params: {
+  items: Array<{
+    name: string;
+    url: string;
+    website?: string | null;
+    description?: string | null;
+    city?: string | null;
+    country?: string | null;
+  }>;
+}) {
+  return entityBusinessNodes({ type: 'LocalBusiness', items: params.items });
+}
+
+/** Design museums: schema.org/Museum, not LocalBusiness — matches what these actually are. */
+export function museumBusinessNodes(params: Parameters<typeof studioBusinessNodes>[0]) {
+  return entityBusinessNodes({ type: 'Museum', items: params.items });
+}
+
+/** Design schools: schema.org/EducationalOrganization, not LocalBusiness. */
+export function schoolBusinessNodes(params: Parameters<typeof studioBusinessNodes>[0]) {
+  return entityBusinessNodes({ type: 'EducationalOrganization', items: params.items });
 }

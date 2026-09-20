@@ -3,9 +3,8 @@ import PostHogLayout from '../../../../layouts/PostHogLayout.astro';
 import Navbar from '../../../../components/Navbar.astro';
 import Footer from '../../../../components/Footer.astro';
 import DirectoryCard from '../../../../components/DirectoryCard.astro';
-import GetListedCard from '../../../../components/GetListedCard.astro';
-import { universityTitle, universityDescription, universityIntro } from '../../../../lib/seo/copy';
-import { breadcrumbList, itemList } from '../../../../lib/seo/schema';
+import { universityTitle, universityDescription, universityIntro, universityH1Parts, UNIVERSITY_BREADCRUMB_LABEL } from '../../../../lib/seo/copy';
+import { breadcrumbList, itemList, faqPage, schoolBusinessNodes } from '../../../../lib/seo/schema';
 import { normalizeImage } from '../../../../lib/images';
 import type { University } from '../../../../lib/types';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
@@ -32,6 +31,7 @@ let allUniversities: University[] = [];
 let mode: 'city' | 'country' | 'unknown' = 'unknown';
 let cityName: string | null = null;
 let countryName: string | null = null;
+let countrySlug: string | null = null;
 let totalUniversities: number = 0;
 
 try {
@@ -54,6 +54,7 @@ if (cityObj) {
   cityName = cityObj.name;
   const c = countries.find((x) => x.slug === (cityObj.country ?? '')) ?? null;
   countryName = c?.name ?? null;
+  countrySlug = cityObj.country ?? null;
   universities = allUniversities.filter((u) => {
     const uniSlug = (u.city_slug || '').toLowerCase();
     const uniCity = (u.city || '').toLowerCase();
@@ -87,7 +88,8 @@ const where =
 
 const pageTitle = universityTitle(where);
 const pageDesc = universityDescription(where);
-const { paragraphs } = universityIntro(where);
+const { paragraph } = universityIntro(where);
+const { prefix: h1Prefix, place: h1Place } = universityH1Parts(where);
 
 const canonical = new URL(`/directory/schools/in/${place}`, Astro.site);
 
@@ -95,44 +97,16 @@ const crumbs =
   mode === 'city'
     ? [
         { name: 'Home', url: '/' },
-        { name: 'Schools', url: '/directory/schools' },
+        { name: UNIVERSITY_BREADCRUMB_LABEL, url: '/directory/schools' },
         { name: `in ${cityName}`, url: canonical.pathname }
       ]
     : [
         { name: 'Home', url: '/' },
-        { name: 'Schools', url: '/directory/schools' },
+        { name: UNIVERSITY_BREADCRUMB_LABEL, url: '/directory/schools' },
         { name: `in ${countryName}`, url: canonical.pathname }
       ];
 
-const listSchema = itemList({
-  url: canonical.toString(),
-  name: mode === 'city' ? `Schools in ${cityName}${countryName ? `, ${countryName}` : ''}` : `Schools in ${countryName}`,
-  items: universities.slice(0, 50).map((u) => ({
-    name: u.name,
-    url: new URL(`/directory/schools/${encodeURIComponent(u.slug)}`, Astro.site).toString(),
-  })),
-});
-
-const schema = {
-  '@context': 'https://schema.org',
-  '@graph': [breadcrumbList(crumbs), listSchema],
-};
-
-const placeName = mode === 'city' ? cityName : countryName;
-
-const initialUniversities = universities.slice(0, 18);
-const mapUniversities = universities.map((u) => ({
-  id: u.id,
-  name: u.name,
-  city: u.city,
-  country: u.country,
-  address: u.address,
-  latitude: u.latitude,
-  longitude: u.longitude,
-  slug: u.slug,
-  cover: u.cover
-}));
-
+// Related Locations Logic
 function universityMatchesCity(university: any, citySlug: string, cityName: string): boolean {
   const uniSlug = (university.city_slug || '').toLowerCase();
   const uniCity = (university.city || '').toLowerCase();
@@ -161,11 +135,100 @@ if (mode === 'country') {
 } else if (mode === 'city') {
   const currentCountry = cityToCountrySlug[place] || cityObj?.country || null;
   if (currentCountry) {
+    if (!countryName) {
+      const c = countries.find((x) => x.slug === currentCountry) ?? null;
+      if (c) countryName = c.name;
+    }
+    if (!countrySlug) {
+      countrySlug = currentCountry;
+    }
     relatedLocations = cities
       .filter(c => c.slug !== place && cityToCountrySlug[c.slug] === currentCountry)
       .map(c => ({ name: c.name, slug: c.slug }));
   }
 }
+
+const relatedLocationsHeading =
+  mode === 'country'
+    ? `Cities in ${countryName}`
+    : countryName
+      ? `Other design cities in ${countryName}`
+      : 'Related locations';
+
+const placeName = mode === 'city' ? cityName : countryName;
+
+const listSchema = itemList({
+  url: canonical.toString(),
+  name: mode === 'city' ? `Schools in ${cityName}${countryName ? `, ${countryName}` : ''}` : `Schools in ${countryName}`,
+  items: universities.slice(0, 50).map((u) => ({
+    name: u.name,
+    url: new URL(`/directory/schools/${encodeURIComponent(u.slug)}`, Astro.site).toString(),
+  })),
+});
+
+// "Last verified" = the most recently updated school in this result set, so
+// the freshness claim shown on the page (and in schema below) is a real
+// fact about the data, never a hardcoded date.
+const updatedTimestamps = universities
+  .map((u) => ((u as any).updated_at ? new Date((u as any).updated_at) : null))
+  .filter((d): d is Date => !!d && !isNaN(d.getTime()))
+  .map((d) => d.getTime());
+
+const lastVerifiedDate = updatedTimestamps.length ? new Date(Math.max(...updatedTimestamps)) : new Date();
+const lastVerifiedLabel = lastVerifiedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+const lastVerifiedIso = lastVerifiedDate.toISOString();
+
+const businessNodes = schoolBusinessNodes({
+  items: universities.slice(0, 50).map((u) => ({
+    name: u.name,
+    url: new URL(`/directory/schools/${encodeURIComponent(u.slug)}`, Astro.site).toString(),
+    website: (u as any).website,
+    description: (u as any).description,
+    city: u.city,
+    country: u.country || countryName,
+  })),
+});
+
+// Two entries, shared by the visible pill links (q + href) and the
+// FAQPage schema (q + a) — a single source so the label on the page and
+// the answer in structured data can never drift apart. Each question maps
+// to a real page the pill actually sends you to.
+const faqItems = [
+  {
+    q: 'How is this list curated?',
+    a: `Schools are added by self-submission and reviewed by Acceso's editorial team before publishing. See the Info page for our full curation methodology.`,
+    href: '/info',
+  },
+  {
+    q: 'Can I add a school to this list?',
+    a: `Yes — submitting a school is free. Once approved by Acceso's editorial team, it will appear on the ${placeName} design map and directory.`,
+    href: '/submission',
+  },
+];
+const faqSchema = faqPage(faqItems.map(({ q, a }) => ({ q, a })));
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    breadcrumbList(crumbs),
+    { ...listSchema, dateModified: lastVerifiedIso },
+    faqSchema,
+    ...businessNodes,
+  ],
+};
+
+const initialUniversities = universities.slice(0, 18);
+const mapUniversities = universities.map((u) => ({
+  id: u.id,
+  name: u.name,
+  city: u.city,
+  country: u.country,
+  address: u.address,
+  latitude: u.latitude,
+  longitude: u.longitude,
+  slug: u.slug,
+  cover: u.cover
+}));
 ---
 
 <PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
@@ -179,19 +242,33 @@ if (mode === 'country') {
         <div class="results-panel-content">
           <Breadcrumbs items={[
             { label: 'Home', href: '/' },
-            { label: 'Schools', href: '/directory/schools' },
+            { label: UNIVERSITY_BREADCRUMB_LABEL, href: '/directory/schools' },
             { label: `In ${mode === 'city' ? cityName : countryName}` }
           ]} />
 
           <header class="panel-header">
              <h1 class="location-heading">
-                Design schools<br />
-                in <span class="location-accent">{mode === 'city' ? cityName : countryName}</span>
+                {h1Prefix} <span class="location-accent">{h1Place}</span>
              </h1>
 
-             {mode === 'city' && countryName && (
-               <div class="country-subtitle">({countryName})</div>
+             {mode === 'city' && countryName && countrySlug && (
+               <a href={`/directory/schools/in/${countrySlug}`} class="country-subtitle">
+                 {countryName} <svg class="country-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+               </a>
              )}
+
+             <p class="location-intro">{paragraph}</p>
+
+             <div class="location-byline">
+               <img src="/icon.svg" alt="" width="20" height="20" class="byline-icon" />
+               <span>Curated by <span style="font-weight: 600; color: var(--color-black);">Acceso's Editorial Team</span> · Last verified {lastVerifiedLabel}</span>
+             </div>
+
+             <div class="mini-faq">
+               {faqItems.map((item) => (
+                 <a href={item.href} class="pill-btn">{item.q}</a>
+               ))}
+             </div>
           </header>
 
           <div class="results-meta">
@@ -202,7 +279,7 @@ if (mode === 'country') {
 
           <div class="studios-grid" id="universities-grid">
             {initialUniversities.map((university, index) => (
-              <DirectoryCard studio={university as any} index={index} cover={university.cover} basePath="/directory/schools" />
+              <DirectoryCard studio={university as any} index={index} cover={university.cover} basePath="/directory/schools" showDescription description={(university as any).description} />
             ))}
           </div>
 
@@ -211,41 +288,24 @@ if (mode === 'country') {
           <!-- Pagination: pinned footer of the panel on mobile (like the homepage) -->
           <div id="pagination-container" class="pagination-wrapper"></div>
 
-           <!-- New Cards Section -->
-           <div class="bottom-cards-section mt-16 pb-12">
-             <div class:list={['cards-split-grid', { 'single-card': relatedLocations.length === 0 }]}>
-                <GetListedCard
-                  className="full-height-card"
-                  title={`Are you based in ${placeName}?`}
-                  subtitle={`Submit your school for free. Once approved, it will appear on the ${placeName} design map and directory.`}
-                  ctaLabel="Submit for free"
-                />
-
-                {relatedLocations.length > 0 && (
-                  <div class="related-locations-card">
-                     <div class="rl-header">
-                        <h3 class="rl-title">Related locations</h3>
-                     </div>
-                     <div class="rl-content">
-                        {relatedLocations.slice(0, 10).map(loc => (
-                          <a href={`/directory/schools/in/${loc.slug}`} class="pill-btn">
-                            {loc.name}
-                          </a>
-                        ))}
-                     </div>
-                  </div>
-                )}
-             </div>
-           </div>
-
-           <!-- SEO Text Section -->
-           <div class="seo-text-area mt-20 pt-16 border-t border-stroke">
-             <div class="max-w-[70ch] space-y-8">
-               {paragraphs.map((p) => (
-                 <p class="font-sans text-[16px] leading-[1.8] text-gray">{p}</p>
-               ))}
-             </div>
-           </div>
+          <!-- Related locations (bottom, no more submission card here — the
+               two pills above already cover "how do I get listed") -->
+          {relatedLocations.length > 0 && (
+            <div class="bottom-cards-section">
+              <div class="related-locations-card">
+                 <div class="rl-header">
+                    <h3 class="rl-title">{relatedLocationsHeading}</h3>
+                 </div>
+                 <div class="rl-content">
+                    {relatedLocations.slice(0, 10).map(loc => (
+                      <a href={`/directory/schools/in/${loc.slug}`} class="pill-btn">
+                        {loc.name}
+                      </a>
+                    ))}
+                 </div>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -298,6 +358,7 @@ if (mode === 'country') {
 
   <script>
     import { initializeMap } from '../../../../lib/map-init';
+    import { firstSentence } from '../../../../lib/text';
 
     const ALL_UNIVERSITIES = (window as any).INITIAL_UNIVERSITIES;
     const MAP_UNIVERSITIES = (window as any).MAP_UNIVERSITIES;
@@ -368,6 +429,58 @@ if (mode === 'country') {
           }
         }
       });
+
+      // Desktop-only: hovering a school card in the list shows the map
+      // hover pill on the corresponding unclustered pin (Airbnb-style).
+      if (window.innerWidth > 1024) {
+        setupCardHoverPill();
+      }
+    }
+
+    function setupCardHoverPill() {
+      const universitiesGrid = document.getElementById('universities-grid');
+      if (!universitiesGrid) return;
+
+      let hoveredCard: HTMLElement | null = null;
+
+      universitiesGrid.addEventListener('mouseover', (e) => {
+        const card = (e.target as HTMLElement).closest('.directory-card') as HTMLElement | null;
+        if (card === hoveredCard) return;
+
+        if (hoveredCard && mapInstance?.hidePill) {
+          mapInstance.hidePill();
+        }
+        hoveredCard = card;
+
+        if (!card || !mapInstance || !mapInstance.showPill || !mapInstance.map) return;
+
+        const slug = card.dataset.slug;
+        const lat = parseFloat(card.dataset.lat || '');
+        const lng = parseFloat(card.dataset.lng || '');
+        if (!slug || isNaN(lat) || isNaN(lng)) return;
+
+        const university = mapInstance.studiosData.find((s: any) => s.slug === slug);
+        if (!university) return;
+
+        try {
+          const features = mapInstance.map.queryRenderedFeatures(undefined, {
+            layers: ['unclustered-point'],
+          });
+          const match = features.find((f: any) => String(f.properties?.id) === String(university.id));
+          if (!match) return;
+
+          mapInstance.showPill(university.name, [lng, lat]);
+        } catch (_) {
+          // layer may not exist yet
+        }
+      });
+
+      universitiesGrid.addEventListener('mouseleave', () => {
+        hoveredCard = null;
+        if (mapInstance?.hidePill) {
+          mapInstance.hidePill();
+        }
+      });
     }
 
     function escapeHtml(value: string) {
@@ -415,6 +528,7 @@ if (mode === 'country') {
             const cover = resolveCover(u.cover);
             const cityClean = (u.city || '').split(',')[0].trim();
             const location = cityClean || '';
+            const snippet = firstSentence(u.description);
             return `
             <a href="/directory/schools/${encodeURIComponent(u.slug || '')}"
                class="directory-card"
@@ -427,6 +541,7 @@ if (mode === 'country') {
               </div>
               <h3 class="directory-card-name">${escapeHtml(u.name || '')}</h3>
               <p class="directory-card-location">${escapeHtml(location)}</p>
+              ${snippet ? `<p class="directory-card-desc">${escapeHtml(snippet)}</p>` : ''}
             </a>
           `;
           }).join('');
@@ -615,16 +730,16 @@ if (mode === 'country') {
     .panel-handle { display: none; }
 
     .results-panel-content {
-      padding: var(--page-top-spacing) 40px 60px;
+      padding: var(--page-top-spacing) 40px 24px;
     }
 
     .panel-header {
-      margin-bottom: 40px;
+      margin-bottom: 24px;
     }
 
     .location-heading {
       font-family: var(--font-sans);
-      font-size: clamp(40px, 5vw, 68px);
+      font-size: clamp(36px, 5vw, 48px);
       font-weight: 400;
       line-height: 0.96;
       letter-spacing: -0.02em;
@@ -642,11 +757,64 @@ if (mode === 'country') {
 
     .country-subtitle {
        font-family: var(--font-sans);
-       font-size: 24px;
+       font-size: 22px;
        color: var(--color-gray);
-       margin-top: 12px;
+       margin-top: 14px;
        font-weight: 400;
        letter-spacing: 0;
+       text-decoration: none;
+       display: inline-flex;
+       align-items: center;
+       gap: 4px;
+       transition: color 0.2s ease;
+    }
+
+    .country-subtitle:hover {
+       color: var(--color-black);
+       text-decoration: underline;
+       text-decoration-color: var(--color-stroke);
+       text-underline-offset: 8px;
+       text-decoration-thickness: 2px;
+    }
+
+    .country-chevron {
+       display: block;
+       margin-top: 1px;
+    }
+
+    .location-intro {
+      font-family: var(--font-sans);
+      font-size: clamp(14px, 2vh, 16px);
+      line-height: 1.6;
+      color: var(--color-gray);
+      max-width: 62ch;
+      margin: 20px 0 0;
+      font-weight: 400;
+    }
+
+    .location-byline {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-gray);
+      margin-top: 12px;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .byline-icon {
+      display: block;
+      opacity: 0.8;
+      border-radius: 4px;
+    }
+
+    .mini-faq {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
     }
 
     .results-meta {
@@ -675,76 +843,7 @@ if (mode === 'country') {
       min-width: 0;
     }
 
-    :global(.directory-card) {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      text-decoration: none;
-      color: inherit;
-      transition: transform 0.2s ease;
-    }
-
-    :global(.directory-card:hover) {
-      transform: translateY(-2px);
-      color: inherit;
-    }
-
-    :global(.directory-card-media) {
-      aspect-ratio: 1;
-      overflow: hidden;
-      background: #E8E8EA;
-      border-radius: 12px;
-    }
-
-    :global(.directory-card-image) {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    :global(.directory-card-placeholder) {
-      width: 100%;
-      height: 100%;
-      background: #E8E8EA;
-    }
-
-    :global(.directory-card-name) {
-      font-family: var(--font-sans);
-      font-size: 14px;
-      font-weight: 400;
-      color: var(--color-black);
-      margin: 0;
-      line-height: 1.25;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    :global(.directory-card-location) {
-      font-family: var(--font-sans);
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--color-text-muted);
-      margin: -6px 0 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
     /* Cards Section */
-    .cards-split-grid {
-       display: grid;
-       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-       gap: 16px;
-    }
-
-    .cards-split-grid.single-card {
-       grid-template-columns: 1fr;
-    }
-
     .related-locations-card {
        background: rgba(0,0,0,0.04);
        border: 1px solid var(--color-stroke);
@@ -799,7 +898,7 @@ if (mode === 'country') {
       justify-content: center;
       align-items: center;
       gap: 16px;
-      padding: 48px 0;
+      padding: 32px 0;
       border-top: 1px solid var(--color-stroke);
     }
 
@@ -1047,22 +1146,14 @@ if (mode === 'country') {
         min-height: 0;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
       }
       .results-panel:not(.is-expanded) .results-panel-content {
         overflow: hidden;
       }
       .results-panel-content::-webkit-scrollbar {
-        width: 6px;
+        display: none;
       }
-      .results-panel-content::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .results-panel-content::-webkit-scrollbar-thumb {
-        background-color: var(--color-stroke);
-        border-radius: 20px;
-      }
-      /* Pagination is pinned to the bottom of the panel (like the homepage),
-         always visible while expanded, with a gap from the phone's bottom. */
       #pagination-container {
         flex-shrink: 0;
         display: flex;
@@ -1071,7 +1162,8 @@ if (mode === 'country') {
         gap: 16px;
         background: var(--color-white);
         border-top: 1px solid var(--color-stroke);
-        padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
+        padding-top: 32px;
+        padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
       }
       .results-panel:not(.is-expanded) #pagination-container {
         display: none;

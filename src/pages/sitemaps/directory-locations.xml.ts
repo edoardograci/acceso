@@ -29,9 +29,29 @@ function validPlaces(items: any[]): Set<string> {
   return places;
 }
 
+// A location page's real "last changed" date is when the most recently
+// touched item at that place was updated — not the moment this sitemap was
+// requested. Places with no dated items get no lastmod at all, rather than
+// a fabricated one.
+function lastmodByPlace(items: any[]): Map<string, string> {
+  const latest = new Map<string, number>();
+  const bump = (slug: string | undefined | null, t: number) => {
+    if (!slug || isNaN(t)) return;
+    const cur = latest.get(slug);
+    if (cur === undefined || t > cur) latest.set(slug, t);
+  };
+  for (const it of items) {
+    const t = it?.updated_at ? new Date(it.updated_at).getTime() : NaN;
+    bump(it?.city_slug, t);
+    bump(it?.country_slug, t);
+  }
+  const out = new Map<string, string>();
+  for (const [slug, t] of latest) out.set(slug, toW3CDate(new Date(t)));
+  return out;
+}
+
 export const GET: APIRoute = async ({ site, url }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
-  const lastmod = toW3CDate(new Date());
 
   const [fairsRes, museumsRes, schoolsRes] = await Promise.allSettled([
     fetchList(url.origin, '/cdn/fairs.json'),
@@ -39,26 +59,34 @@ export const GET: APIRoute = async ({ site, url }) => {
     fetchList(url.origin, '/cdn/universities.json'),
   ]);
 
-  const fairPlaces = fairsRes.status === 'fulfilled' ? validPlaces(fairsRes.value) : new Set<string>();
-  const museumPlaces = museumsRes.status === 'fulfilled' ? validPlaces(museumsRes.value) : new Set<string>();
-  const schoolPlaces = schoolsRes.status === 'fulfilled' ? validPlaces(schoolsRes.value) : new Set<string>();
+  const fairItems = fairsRes.status === 'fulfilled' ? fairsRes.value : [];
+  const museumItems = museumsRes.status === 'fulfilled' ? museumsRes.value : [];
+  const schoolItems = schoolsRes.status === 'fulfilled' ? schoolsRes.value : [];
+
+  const fairPlaces = validPlaces(fairItems);
+  const museumPlaces = validPlaces(museumItems);
+  const schoolPlaces = validPlaces(schoolItems);
+
+  const fairLastmod = lastmodByPlace(fairItems);
+  const museumLastmod = lastmodByPlace(museumItems);
+  const schoolLastmod = lastmodByPlace(schoolItems);
   // Awards carry no location fields, so their /in/<place> pages always 404.
   // Designer locations are deliberately absent: sitemaps/designer-locations.xml
   // owns /designers/in/*. Emitting them here too listed all 106 of them in two
   // sitemaps at conflicting priorities.
 
-  const types: { type: string; places: Set<string>; base: string }[] = [
-    { type: 'fairs', places: fairPlaces, base: '/directory/fairs' },
-    { type: 'museums', places: museumPlaces, base: '/directory/museums' },
-    { type: 'schools', places: schoolPlaces, base: '/directory/schools' },
+  const types: { type: string; places: Set<string>; base: string; lastmod: Map<string, string> }[] = [
+    { type: 'fairs', places: fairPlaces, base: '/directory/fairs', lastmod: fairLastmod },
+    { type: 'museums', places: museumPlaces, base: '/directory/museums', lastmod: museumLastmod },
+    { type: 'schools', places: schoolPlaces, base: '/directory/schools', lastmod: schoolLastmod },
   ];
 
   const urls = [];
-  for (const { places, base } of types) {
+  for (const { places, base, lastmod } of types) {
     for (const p of places) {
       urls.push({
         loc: new URL(`${base}/in/${encodeURIComponent(p)}`, site).toString(),
-        lastmod,
+        lastmod: lastmod.get(p),
         changefreq: 'weekly' as const,
         priority: 0.3,
       });

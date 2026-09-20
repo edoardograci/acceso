@@ -23,7 +23,6 @@ async function fetchList(origin: string, path: string): Promise<DirectoryItem[]>
 
 export const GET: APIRoute = async ({ site, url: requestUrl }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
-  const lastmod = toW3CDate(new Date());
 
   // Studios are deliberately absent: sitemaps/designers.xml owns /designers/*
   // from this same JSON. Emitting them here too put every studio in two
@@ -36,6 +35,9 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
   ]);
 
   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = [];
+  // lastmod is per-entity, from that entity's own updated_at — never "now".
+  // A fake "changed right now" on every one of these URLs, on every crawl,
+  // is what eventually makes Google ignore a sitemap's dates altogether.
   const add = (base: string, list: DirectoryItem[]) => {
     for (const e of list) {
       if (!e?.slug) continue;
@@ -43,6 +45,8 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
       const images: string[] = [];
       const normalized = normalizeImage(e.image, requestUrl.origin);
       if (normalized) images.push(normalized);
+      const updated = e.updated_at ? new Date(e.updated_at) : null;
+      const lastmod = updated && !isNaN(updated.getTime()) ? toW3CDate(updated) : undefined;
       urls.push({ loc, lastmod, changefreq: 'monthly' as const, priority: 0.5, images });
     }
   };

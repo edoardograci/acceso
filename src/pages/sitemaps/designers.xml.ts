@@ -21,7 +21,6 @@ async function fetchStudios(origin: string): Promise<Studio[]> {
 export const GET: APIRoute = async ({ site, url }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
 
-  const lastmod = toW3CDate(new Date());
   let studios: Studio[] = [];
   try {
     studios = await fetchStudios(url.origin);
@@ -29,6 +28,11 @@ export const GET: APIRoute = async ({ site, url }) => {
     studios = [];
   }
 
+  // lastmod must reflect this studio's own updated_at, never the moment the
+  // sitemap happened to be requested — a fabricated "changed right now" on
+  // every URL, every crawl, is exactly the kind of inaccuracy that makes
+  // Google stop trusting (and eventually stop reading) a sitemap's dates.
+  // Omit the tag entirely rather than guess when the real date is missing.
   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = studios
     .filter((s) => typeof s?.slug === 'string' && s.slug.length > 0)
     .map((s) => {
@@ -36,6 +40,8 @@ export const GET: APIRoute = async ({ site, url }) => {
       const images: string[] = [];
       const normalized = normalizeImage(s.cover, url.origin);
       if (normalized) images.push(normalized);
+      const updated = s.updated_at ? new Date(s.updated_at) : null;
+      const lastmod = updated && !isNaN(updated.getTime()) ? toW3CDate(updated) : undefined;
       return { loc, lastmod, changefreq: 'monthly' as const, priority: 0.7, images };
     });
 

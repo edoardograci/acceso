@@ -1,0 +1,1872 @@
+diff --git a/src/lib/seo/copy.ts b/src/lib/seo/copy.ts
+index bd455a4..4c313c4 100644
+--- a/src/lib/seo/copy.ts
++++ b/src/lib/seo/copy.ts
+@@ -83,38 +83,44 @@ type UniCtx = {
+   exampleUniversities?: string[];
+ };
+ 
++export function universityH1Parts(ctx: UniCtx): { prefix: string; place: string } {
++  const place = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
++  return { prefix: 'Design Schools in', place };
++}
++
++export function universityH1(ctx: UniCtx): string {
++  const { prefix, place } = universityH1Parts(ctx);
++  return `${prefix} ${place}`;
++}
++
+ export function universityTitle(ctx: UniCtx): string {
+-  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+-  return `Design Schools in ${where} | Acceso`;
++  const base = universityH1(ctx);
++  return base.length + BRAND_SUFFIX.length <= TITLE_BUDGET ? `${base}${BRAND_SUFFIX}` : base;
+ }
+ 
+ export function universityDescription(ctx: UniCtx): string {
+   const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+   const count = ctx.totalUniversities ? `${ctx.totalUniversities}+` : 'leading';
+-  return `Browse ${count} design schools and institutions in ${where}. Explore programs in industrial, furniture, and product design - curated for discovery.`;
++  return `${where} is home to ${count} design schools and institutions. Browse programs in industrial, furniture, and product design, curated by Acceso.`;
+ }
+ 
+-export function universityIntro(ctx: UniCtx): { paragraphs: string[]; h2s: string[] } {
+-  const place = ctx.cityName;
+-  const isCity = !!ctx.countryName;
+-
+-  const p1 = ` researching where to study industrial or furniture design in ${place}? Acceso is a curated guide to ${place}'s design education scene, helping you discover local schools, universities, and creative institutions.`;
+-
+-  const countPhrase = ctx.totalUniversities
+-    ? `${ctx.totalUniversities} design schools`
+-    : `design schools`;
+-  const examples = joinList((ctx.exampleUniversities ?? []).slice(0, 3));
+-  const includingPhrase = examples ? `, including ${examples}` : '';
+-  const mapPhrase = isCity ? 'the city map' : 'the map';
+-
+-  const p2 = `This page currently features ${countPhrase} in ${place}${includingPhrase}. Browse school profiles, explore ${mapPhrase}, and discover related designers, museums, awards, and other resources connected to ${place}'s design community.`;
+-
+-  return {
+-    paragraphs: uniq([p1, p2]),
+-    h2s: uniq([`Schools in ${place}`, `Related locations`, `Explore more design education`]),
+-  };
++/**
++ * Single, quotable direct-answer paragraph. Replaces the old two-paragraph
++ * SEO filler block that used to sit at the bottom of the page — this one
++ * renders directly under the H1, ahead of the results grid.
++ */
++export function universityIntro(ctx: UniCtx): { paragraph: string } {
++  const countPhrase = ctx.totalUniversities ? `${ctx.totalUniversities}+` : 'a growing number of';
++  const paragraph = `${ctx.cityName} is home to ${countPhrase} schools and institutions teaching industrial, furniture, and product design, from foundation courses to postgraduate studios.`;
++  return { paragraph };
+ }
+ 
++/**
++ * Shared label so the visible breadcrumb and the BreadcrumbList schema never
++ * say something different from the title/H1 above.
++ */
++export const UNIVERSITY_BREADCRUMB_LABEL = 'Design Schools';
++
+ type MuseumCtx = {
+   cityName: string;
+   countryName?: string | null;
+@@ -122,38 +128,44 @@ type MuseumCtx = {
+   exampleMuseums?: string[];
+ };
+ 
++export function museumH1Parts(ctx: MuseumCtx): { prefix: string; place: string } {
++  const place = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
++  return { prefix: 'Design Museums in', place };
++}
++
++export function museumH1(ctx: MuseumCtx): string {
++  const { prefix, place } = museumH1Parts(ctx);
++  return `${prefix} ${place}`;
++}
++
+ export function museumTitle(ctx: MuseumCtx): string {
+-  const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+-  return `Design Museums in ${where} | Acceso`;
++  const base = museumH1(ctx);
++  return base.length + BRAND_SUFFIX.length <= TITLE_BUDGET ? `${base}${BRAND_SUFFIX}` : base;
+ }
+ 
+ export function museumDescription(ctx: MuseumCtx): string {
+   const where = ctx.countryName ? `${ctx.cityName}, ${ctx.countryName}` : ctx.cityName;
+   const count = ctx.totalMuseums ? `${ctx.totalMuseums}+` : 'notable';
+-  return `Browse ${count} design museums and foundations in ${where}. Explore collections dedicated to furniture, product, and industrial design - curated for discovery.`;
++  return `${where} is home to ${count} design museums and foundations. Explore collections in furniture, product, and industrial design, curated by Acceso.`;
+ }
+ 
+-export function museumIntro(ctx: MuseumCtx): { paragraphs: string[]; h2s: string[] } {
+-  const place = ctx.cityName;
+-  const isCity = !!ctx.countryName;
+-
+-  const p1 = `Looking for design museums and foundations in ${place}? Acceso is a curated guide to ${place}'s design heritage, helping you discover local museums, collections, and cultural institutions.`;
+-
+-  const countPhrase = ctx.totalMuseums
+-    ? `${ctx.totalMuseums} design museums`
+-    : `design museums`;
+-  const examples = joinList((ctx.exampleMuseums ?? []).slice(0, 3));
+-  const includingPhrase = examples ? `, including ${examples}` : '';
+-  const mapPhrase = isCity ? 'the city map' : 'the map';
+-
+-  const p2 = `This page currently features ${countPhrase} in ${place}${includingPhrase}. Browse museum profiles, explore ${mapPhrase}, and discover related designers, schools, fairs, and other resources connected to ${place}'s design community.`;
+-
+-  return {
+-    paragraphs: uniq([p1, p2]),
+-    h2s: uniq([`Museums in ${place}`, `Related locations`, `Explore more design heritage`]),
+-  };
++/**
++ * Single, quotable direct-answer paragraph. Replaces the old two-paragraph
++ * SEO filler block that used to sit at the bottom of the page — this one
++ * renders directly under the H1, ahead of the results grid.
++ */
++export function museumIntro(ctx: MuseumCtx): { paragraph: string } {
++  const countPhrase = ctx.totalMuseums ? `${ctx.totalMuseums}+` : 'a growing number of';
++  const paragraph = `${ctx.cityName} is home to ${countPhrase} museums and foundations with collections in furniture, product, and industrial design, from permanent galleries to rotating exhibitions.`;
++  return { paragraph };
+ }
+ 
++/**
++ * Shared label so the visible breadcrumb and the BreadcrumbList schema never
++ * say something different from the title/H1 above.
++ */
++export const MUSEUM_BREADCRUMB_LABEL = 'Design Museums';
++
+ 
+ type ProjectCtx = {
+   name: string;
+diff --git a/src/lib/seo/schema.ts b/src/lib/seo/schema.ts
+index d902112..bedf353 100644
+--- a/src/lib/seo/schema.ts
++++ b/src/lib/seo/schema.ts
+@@ -85,15 +85,17 @@ export function faqPage(faqs: Array<{ q: string; a: string }>) {
+ }
+ 
+ /**
+- * One LocalBusiness node per listed studio: real external website (sameAs)
+- * and first-hand description, additive to the existing ItemList (which
+- * stays as-is, pointing at internal profile URLs for site navigation). This
+- * data is never rendered as a visible link on the page — it's what lets a
+- * crawler or AI engine read "studio X, based in Y, official site Z" as a
+- * structured fact even though the card itself only shows a name, photo and
+- * one-line description.
++ * One node per listed entity: real external website (sameAs) and first-hand
++ * description, additive to the existing ItemList (which stays as-is,
++ * pointing at internal profile URLs for site navigation). This data is
++ * never rendered as a visible link on the page — it's what lets a crawler
++ * or AI engine read "X, based in Y, official site Z" as a structured fact
++ * even though the card itself only shows a name, photo and one-line
++ * description.
+  */
+-export function studioBusinessNodes(params: {
++export function entityBusinessNodes(params: {
++  /** schema.org @type for every node, e.g. 'LocalBusiness', 'Museum', 'EducationalOrganization'. */
++  type: string;
+   items: Array<{
+     name: string;
+     url: string;
+@@ -105,7 +107,7 @@ export function studioBusinessNodes(params: {
+ }) {
+   return params.items.map((it) => ({
+     '@context': 'https://schema.org',
+-    '@type': 'LocalBusiness',
++    '@type': params.type,
+     name: it.name,
+     url: it.url,
+     ...(it.website ? { sameAs: [it.website] } : {}),
+@@ -121,3 +123,27 @@ export function studioBusinessNodes(params: {
+       : {}),
+   }));
+ }
++
++/** @deprecated Use entityBusinessNodes({ type: 'LocalBusiness', ... }) — kept so existing call sites don't need a type argument. */
++export function studioBusinessNodes(params: {
++  items: Array<{
++    name: string;
++    url: string;
++    website?: string | null;
++    description?: string | null;
++    city?: string | null;
++    country?: string | null;
++  }>;
++}) {
++  return entityBusinessNodes({ type: 'LocalBusiness', items: params.items });
++}
++
++/** Design museums: schema.org/Museum, not LocalBusiness — matches what these actually are. */
++export function museumBusinessNodes(params: Parameters<typeof studioBusinessNodes>[0]) {
++  return entityBusinessNodes({ type: 'Museum', items: params.items });
++}
++
++/** Design schools: schema.org/EducationalOrganization, not LocalBusiness. */
++export function schoolBusinessNodes(params: Parameters<typeof studioBusinessNodes>[0]) {
++  return entityBusinessNodes({ type: 'EducationalOrganization', items: params.items });
++}
+diff --git a/src/pages/designers/[slug].astro b/src/pages/designers/[slug].astro
+index d75e7ce..be962ef 100644
+--- a/src/pages/designers/[slug].astro
++++ b/src/pages/designers/[slug].astro
+@@ -41,7 +41,8 @@ try {
+   const studiosUrl = `${domain}/test-studios.json`;
+   
+   const response = await fetch(studiosUrl);
+-  if (response.ok) {
++  if (!response.ok) throw new Error('Failed to fetch studios');
++  {
+     const rawStudios: Studio[] = await response.json();
+     const mappedStudios = rawStudios;
+     studio = mappedStudios.find(s => s.slug === slug) || null;
+@@ -76,15 +77,23 @@ try {
+         }
+       }
+     }
+-  } else {
+-    throw new Error('Failed to fetch studios');
+   }
+ } catch (e) {
+   error = e;
+   console.error('Failure to fetch data:', e);
+ }
+ 
+-if (!studio && !error) {
++// An upstream fetch failure is not "not found" — it's transient. Serving it
++// as a 200 page titled "Loading..." tells Google (and anyone who hits this
++// URL while the CDN proxy is having a bad moment) that this is the real,
++// permanent content of the page. A 503 says "try again later" and, with
++// Retry-After, keeps crawlers from treating the failure as a signal to drop
++// the URL the way a real 404 would.
++if (error) {
++  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
++}
++
++if (!studio) {
+   return new Response(null, { status: 404 });
+ }
+ 
+diff --git a/src/pages/directory/awards/[slug].astro b/src/pages/directory/awards/[slug].astro
+index 67f376d..516ad48 100644
+--- a/src/pages/directory/awards/[slug].astro
++++ b/src/pages/directory/awards/[slug].astro
+@@ -26,6 +26,7 @@ const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+ let award: any = null;
+ let relatedAwards: any[] = [];
+ let citiesMapping: any[] = [];
++let fetchFailed = false;
+ 
+ try {
+   const [awardsRes, citiesRes] = await Promise.all([
+@@ -33,33 +34,40 @@ try {
+     fetch(`${domain}/test-cities.json`)
+   ]);
+ 
+-  if (awardsRes.ok) {
+-    const rawAwards = await awardsRes.json();
+-    const allAwards = Array.isArray(rawAwards) ? rawAwards : (rawAwards.items || []);
++  if (!awardsRes.ok) throw new Error(`Failed to fetch awards.json: ${awardsRes.status}`);
+ 
+-    award = allAwards.find((a: any) => a.slug === slug) || null;
++  const rawAwards = await awardsRes.json();
++  const allAwards = Array.isArray(rawAwards) ? rawAwards : (rawAwards.items || []);
+ 
+-    if (award && !award.website && award.url) award.website = award.url;
++  award = allAwards.find((a: any) => a.slug === slug) || null;
+ 
+-    if (award && award.image === 'awards/if-award.webp') {
+-      award.image = 'awards/if-award/logo.webp';
+-    }
++  if (award && !award.website && award.url) award.website = award.url;
+ 
+-    if (award) {
+-      relatedAwards = allAwards
+-        .filter((a: any) => a.slug !== slug && getAwardStatus(a.deadlines) === 'status-open')
+-        .slice(0, 10);
+-    }
++  if (award && award.image === 'awards/if-award.webp') {
++    award.image = 'awards/if-award/logo.webp';
++  }
++
++  if (award) {
++    relatedAwards = allAwards
++      .filter((a: any) => a.slug !== slug && getAwardStatus(a.deadlines) === 'status-open')
++      .slice(0, 10);
+   }
+ 
+   if (citiesRes.ok) citiesMapping = await citiesRes.json();
+ 
+ } catch (e) {
++  fetchFailed = true;
+   console.error('[Award Slug] Fail to fetch data:', e);
+ }
+ 
++// An upstream fetch failure is transient, not "not found" — don't tell
++// crawlers this URL is permanently gone when the CDN proxy just hiccupped.
++if (fetchFailed) {
++  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
++}
++
+ if (!award) {
+-  return Astro.redirect('/404');
++  return new Response(null, { status: 404 });
+ }
+ 
+ function getAwardStatus(deadlinesStr: string) {
+diff --git a/src/pages/directory/fairs/[slug].astro b/src/pages/directory/fairs/[slug].astro
+index 8c95226..894aeb5 100644
+--- a/src/pages/directory/fairs/[slug].astro
++++ b/src/pages/directory/fairs/[slug].astro
+@@ -46,6 +46,8 @@ let relatedTitle = 'More design fairs';
+ let citiesMapping: any[] = [];
+ let countriesMapping: any[] = [];
+ 
++let fetchFailed = false;
++
+ try {
+   const [fairsRes, citiesRes, countriesRes] = await Promise.all([
+     fetch(`${domain}/fairs.json`),
+@@ -53,50 +55,57 @@ try {
+     fetch(`${domain}/test-countries.json`)
+   ]);
+ 
+-  if (fairsRes.ok) {
+-    const rawFairs = await fairsRes.json();
+-    const allFairs = Array.isArray(rawFairs) ? rawFairs : (rawFairs.items || []);
+-
+-    fair = allFairs.find((f: any) => f.slug === slug) || null;
+-
+-    if (fair) {
+-      const fairDate = fair.start_date ? new Date(fair.start_date) : null;
+-      const hasFairDate = !!fairDate && !isNaN(fairDate.getTime());
+-
+-      // Discovery: fairs happening in the same month
+-      const sameMonth = allFairs
+-        .filter((f: any) => f.slug !== slug && f.start_date)
+-        .filter((f: any) => {
+-          if (!hasFairDate) return false;
+-          const d = new Date(f.start_date);
+-          return d.getFullYear() === fairDate.getFullYear() && d.getMonth() === fairDate.getMonth();
+-        })
+-        .sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+-
+-      const pool = sameMonth.length > 0 ? sameMonth : allFairs
+-        .filter((f: any) => f.slug !== slug && f.start_date)
+-        .sort((a: any, b: any) => {
+-          if (!hasFairDate) return 0;
+-          return Math.abs(new Date(a.start_date).getTime() - fairDate.getTime())
+-               - Math.abs(new Date(b.start_date).getTime() - fairDate.getTime());
+-        });
+-
+-      relatedFairs = pool.slice(0, 5);
+-      relatedTitle = hasFairDate
+-        ? `Design fairs in ${monthNames[fairDate.getMonth()]} ${fairDate.getFullYear()}`
+-        : 'More design fairs';
+-    }
++  if (!fairsRes.ok) throw new Error(`Failed to fetch fairs.json: ${fairsRes.status}`);
++
++  const rawFairs = await fairsRes.json();
++  const allFairs = Array.isArray(rawFairs) ? rawFairs : (rawFairs.items || []);
++
++  fair = allFairs.find((f: any) => f.slug === slug) || null;
++
++  if (fair) {
++    const fairDate = fair.start_date ? new Date(fair.start_date) : null;
++    const hasFairDate = !!fairDate && !isNaN(fairDate.getTime());
++
++    // Discovery: fairs happening in the same month
++    const sameMonth = allFairs
++      .filter((f: any) => f.slug !== slug && f.start_date)
++      .filter((f: any) => {
++        if (!hasFairDate) return false;
++        const d = new Date(f.start_date);
++        return d.getFullYear() === fairDate.getFullYear() && d.getMonth() === fairDate.getMonth();
++      })
++      .sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
++
++    const pool = sameMonth.length > 0 ? sameMonth : allFairs
++      .filter((f: any) => f.slug !== slug && f.start_date)
++      .sort((a: any, b: any) => {
++        if (!hasFairDate) return 0;
++        return Math.abs(new Date(a.start_date).getTime() - fairDate.getTime())
++             - Math.abs(new Date(b.start_date).getTime() - fairDate.getTime());
++      });
++
++    relatedFairs = pool.slice(0, 5);
++    relatedTitle = hasFairDate
++      ? `Design fairs in ${monthNames[fairDate.getMonth()]} ${fairDate.getFullYear()}`
++      : 'More design fairs';
+   }
+ 
+   if (citiesRes.ok) citiesMapping = await citiesRes.json();
+   if (countriesRes.ok) countriesMapping = await countriesRes.json();
+ 
+ } catch (e) {
++  fetchFailed = true;
+   console.error('[Fair Slug] Fail to fetch data:', e);
+ }
+ 
++// An upstream fetch failure is transient, not "not found" — don't tell
++// crawlers this URL is permanently gone when the CDN proxy just hiccupped.
++if (fetchFailed) {
++  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
++}
++
+ if (!fair) {
+-  return Astro.redirect('/404');
++  return new Response(null, { status: 404 });
+ }
+ 
+ function getPeriod(startStr: string, endStr: string) {
+diff --git a/src/pages/directory/museums/[slug].astro b/src/pages/directory/museums/[slug].astro
+index 1af8b5d..c51c667 100644
+--- a/src/pages/directory/museums/[slug].astro
++++ b/src/pages/directory/museums/[slug].astro
+@@ -27,6 +27,7 @@ let museum: any = null;
+ let relatedMuseums: any[] = [];
+ let citiesMapping: any[] = [];
+ let countriesMapping: any[] = [];
++let fetchFailed = false;
+ 
+ try {
+   const [musRes, citiesRes, countriesRes] = await Promise.all([
+@@ -35,38 +36,45 @@ try {
+     fetch(`${domain}/test-countries.json`)
+   ]);
+ 
+-  if (musRes.ok) {
+-    const rawData = await musRes.json();
+-    const allMuseums = Array.isArray(rawData) ? rawData : (rawData.items || []);
+-    
+-    const processedMuseums = allMuseums;
+-
+-    museum = processedMuseums.find((m: any) => m.slug === slug) || null;
+-
+-    if (museum) {
+-      // Discovery: curated set of other museums prioritizing country/city
+-      relatedMuseums = processedMuseums
+-        .filter((m: any) => m.slug !== slug)
+-        .sort((a: any, b: any) => {
+-          const aCountry = a.country_slug === museum.country_slug ? 0 : 1;
+-          const bCountry = b.country_slug === museum.country_slug ? 0 : 1;
+-          if (aCountry !== bCountry) return aCountry - bCountry;
+-          const aCity = a.city_slug === museum.city_slug ? 0 : 1;
+-          const bCity = b.city_slug === museum.city_slug ? 0 : 1;
+-          if (aCity !== bCity) return aCity - bCity;
+-          return 0;
+-        })
+-        .slice(0, 5);
+-    }
++  if (!musRes.ok) throw new Error(`Failed to fetch museums.json: ${musRes.status}`);
++
++  const rawData = await musRes.json();
++  const allMuseums = Array.isArray(rawData) ? rawData : (rawData.items || []);
++
++  const processedMuseums = allMuseums;
++
++  museum = processedMuseums.find((m: any) => m.slug === slug) || null;
++
++  if (museum) {
++    // Discovery: curated set of other museums prioritizing country/city
++    relatedMuseums = processedMuseums
++      .filter((m: any) => m.slug !== slug)
++      .sort((a: any, b: any) => {
++        const aCountry = a.country_slug === museum.country_slug ? 0 : 1;
++        const bCountry = b.country_slug === museum.country_slug ? 0 : 1;
++        if (aCountry !== bCountry) return aCountry - bCountry;
++        const aCity = a.city_slug === museum.city_slug ? 0 : 1;
++        const bCity = b.city_slug === museum.city_slug ? 0 : 1;
++        if (aCity !== bCity) return aCity - bCity;
++        return 0;
++      })
++      .slice(0, 5);
+   }
+ 
+   if (citiesRes.ok) citiesMapping = await citiesRes.json();
+   if (countriesRes.ok) countriesMapping = await countriesRes.json();
+ 
+ } catch (e) {
++  fetchFailed = true;
+   console.error('[Museum Slug] Fail to fetch data:', e);
+ }
+ 
++// An upstream fetch failure is transient, not "not found" — don't tell
++// crawlers this URL is permanently gone when the CDN proxy just hiccupped.
++if (fetchFailed) {
++  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
++}
++
+ if (!museum) {
+   return new Response(null, { status: 404 });
+ }
+diff --git a/src/pages/directory/museums/in/[place].astro b/src/pages/directory/museums/in/[place].astro
+index 821925f..642adaf 100644
+--- a/src/pages/directory/museums/in/[place].astro
++++ b/src/pages/directory/museums/in/[place].astro
+@@ -3,9 +3,8 @@ import PostHogLayout from '../../../../layouts/PostHogLayout.astro';
+ import Navbar from '../../../../components/Navbar.astro';
+ import Footer from '../../../../components/Footer.astro';
+ import DirectoryCard from '../../../../components/DirectoryCard.astro';
+-import GetListedCard from '../../../../components/GetListedCard.astro';
+-import { museumTitle, museumDescription, museumIntro } from '../../../../lib/seo/copy';
+-import { breadcrumbList, itemList } from '../../../../lib/seo/schema';
++import { museumTitle, museumDescription, museumIntro, museumH1Parts, MUSEUM_BREADCRUMB_LABEL } from '../../../../lib/seo/copy';
++import { breadcrumbList, itemList, faqPage, museumBusinessNodes } from '../../../../lib/seo/schema';
+ import { normalizeImage } from '../../../../lib/images';
+ import type { Museum } from '../../../../lib/types';
+ import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
+@@ -32,6 +31,7 @@ let allMuseums: Museum[] = [];
+ let mode: 'city' | 'country' | 'unknown' = 'unknown';
+ let cityName: string | null = null;
+ let countryName: string | null = null;
++let countrySlug: string | null = null;
+ let totalMuseums: number = 0;
+ 
+ try {
+@@ -54,6 +54,7 @@ if (cityObj) {
+   cityName = cityObj.name;
+   const c = countries.find((x) => x.slug === (cityObj.country ?? '')) ?? null;
+   countryName = c?.name ?? null;
++  countrySlug = cityObj.country ?? null;
+   museums = allMuseums.filter((m) => {
+     const museumSlug = (m.city_slug || '').toLowerCase();
+     const museumCity = (m.city || '').toLowerCase();
+@@ -87,7 +88,8 @@ const where =
+ 
+ const pageTitle = museumTitle(where);
+ const pageDesc = museumDescription(where);
+-const { paragraphs } = museumIntro(where);
++const { paragraph } = museumIntro(where);
++const { prefix: h1Prefix, place: h1Place } = museumH1Parts(where);
+ 
+ const canonical = new URL(`/directory/museums/in/${place}`, Astro.site);
+ 
+@@ -95,44 +97,16 @@ const crumbs =
+   mode === 'city'
+     ? [
+         { name: 'Home', url: '/' },
+-        { name: 'Museums', url: '/directory/museums' },
++        { name: MUSEUM_BREADCRUMB_LABEL, url: '/directory/museums' },
+         { name: `in ${cityName}`, url: canonical.pathname }
+       ]
+     : [
+         { name: 'Home', url: '/' },
+-        { name: 'Museums', url: '/directory/museums' },
++        { name: MUSEUM_BREADCRUMB_LABEL, url: '/directory/museums' },
+         { name: `in ${countryName}`, url: canonical.pathname }
+       ];
+ 
+-const listSchema = itemList({
+-  url: canonical.toString(),
+-  name: mode === 'city' ? `Museums in ${cityName}${countryName ? `, ${countryName}` : ''}` : `Museums in ${countryName}`,
+-  items: museums.slice(0, 50).map((m) => ({
+-    name: m.name,
+-    url: new URL(`/directory/museums/${encodeURIComponent(m.slug)}`, Astro.site).toString(),
+-  })),
+-});
+-
+-const schema = {
+-  '@context': 'https://schema.org',
+-  '@graph': [breadcrumbList(crumbs), listSchema],
+-};
+-
+-const placeName = mode === 'city' ? cityName : countryName;
+-
+-const initialMuseums = museums.slice(0, 18);
+-const mapMuseums = museums.map((m) => ({
+-  id: m.id,
+-  name: m.name,
+-  city: m.city,
+-  country: m.country,
+-  address: m.address,
+-  latitude: m.latitude,
+-  longitude: m.longitude,
+-  slug: m.slug,
+-  cover: m.cover
+-}));
+-
++// Related Locations Logic
+ function museumMatchesCity(museum: any, citySlug: string, cityName: string): boolean {
+   const museumSlug = (museum.city_slug || '').toLowerCase();
+   const museumCity = (museum.city || '').toLowerCase();
+@@ -161,11 +135,100 @@ if (mode === 'country') {
+ } else if (mode === 'city') {
+   const currentCountry = cityToCountrySlug[place] || cityObj?.country || null;
+   if (currentCountry) {
++    if (!countryName) {
++      const c = countries.find((x) => x.slug === currentCountry) ?? null;
++      if (c) countryName = c.name;
++    }
++    if (!countrySlug) {
++      countrySlug = currentCountry;
++    }
+     relatedLocations = cities
+       .filter(c => c.slug !== place && cityToCountrySlug[c.slug] === currentCountry)
+       .map(c => ({ name: c.name, slug: c.slug }));
+   }
+ }
++
++const relatedLocationsHeading =
++  mode === 'country'
++    ? `Cities in ${countryName}`
++    : countryName
++      ? `Other design cities in ${countryName}`
++      : 'Related locations';
++
++const placeName = mode === 'city' ? cityName : countryName;
++
++const listSchema = itemList({
++  url: canonical.toString(),
++  name: mode === 'city' ? `Museums in ${cityName}${countryName ? `, ${countryName}` : ''}` : `Museums in ${countryName}`,
++  items: museums.slice(0, 50).map((m) => ({
++    name: m.name,
++    url: new URL(`/directory/museums/${encodeURIComponent(m.slug)}`, Astro.site).toString(),
++  })),
++});
++
++// "Last verified" = the most recently updated museum in this result set, so
++// the freshness claim shown on the page (and in schema below) is a real
++// fact about the data, never a hardcoded date.
++const updatedTimestamps = museums
++  .map((m) => ((m as any).updated_at ? new Date((m as any).updated_at) : null))
++  .filter((d): d is Date => !!d && !isNaN(d.getTime()))
++  .map((d) => d.getTime());
++
++const lastVerifiedDate = updatedTimestamps.length ? new Date(Math.max(...updatedTimestamps)) : new Date();
++const lastVerifiedLabel = lastVerifiedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
++const lastVerifiedIso = lastVerifiedDate.toISOString();
++
++const businessNodes = museumBusinessNodes({
++  items: museums.slice(0, 50).map((m) => ({
++    name: m.name,
++    url: new URL(`/directory/museums/${encodeURIComponent(m.slug)}`, Astro.site).toString(),
++    website: (m as any).website,
++    description: (m as any).description,
++    city: m.city,
++    country: m.country || countryName,
++  })),
++});
++
++// Two entries, shared by the visible pill links (q + href) and the
++// FAQPage schema (q + a) — a single source so the label on the page and
++// the answer in structured data can never drift apart. Each question maps
++// to a real page the pill actually sends you to.
++const faqItems = [
++  {
++    q: 'How is this list curated?',
++    a: `Museums are added by self-submission and reviewed by Acceso's editorial team before publishing. See the Info page for our full curation methodology.`,
++    href: '/info',
++  },
++  {
++    q: 'Can I add a museum to this list?',
++    a: `Yes — submitting a museum is free. Once approved by Acceso's editorial team, it will appear on the ${placeName} design map and directory.`,
++    href: '/submission',
++  },
++];
++const faqSchema = faqPage(faqItems.map(({ q, a }) => ({ q, a })));
++
++const schema = {
++  '@context': 'https://schema.org',
++  '@graph': [
++    breadcrumbList(crumbs),
++    { ...listSchema, dateModified: lastVerifiedIso },
++    faqSchema,
++    ...businessNodes,
++  ],
++};
++
++const initialMuseums = museums.slice(0, 18);
++const mapMuseums = museums.map((m) => ({
++  id: m.id,
++  name: m.name,
++  city: m.city,
++  country: m.country,
++  address: m.address,
++  latitude: m.latitude,
++  longitude: m.longitude,
++  slug: m.slug,
++  cover: m.cover
++}));
+ ---
+ 
+ <PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
+@@ -179,19 +242,33 @@ if (mode === 'country') {
+         <div class="results-panel-content">
+           <Breadcrumbs items={[
+             { label: 'Home', href: '/' },
+-            { label: 'Museums', href: '/directory/museums' },
++            { label: MUSEUM_BREADCRUMB_LABEL, href: '/directory/museums' },
+             { label: `In ${mode === 'city' ? cityName : countryName}` }
+           ]} />
+ 
+           <header class="panel-header">
+              <h1 class="location-heading">
+-                Design museums<br />
+-                in <span class="location-accent">{mode === 'city' ? cityName : countryName}</span>
++                {h1Prefix} <span class="location-accent">{h1Place}</span>
+              </h1>
+ 
+-             {mode === 'city' && countryName && (
+-               <div class="country-subtitle">({countryName})</div>
++             {mode === 'city' && countryName && countrySlug && (
++               <a href={`/directory/museums/in/${countrySlug}`} class="country-subtitle">
++                 {countryName} <svg class="country-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
++               </a>
+              )}
++
++             <p class="location-intro">{paragraph}</p>
++
++             <div class="location-byline">
++               <img src="/icon.svg" alt="" width="20" height="20" class="byline-icon" />
++               <span>Curated by <span style="font-weight: 600; color: var(--color-black);">Acceso's Editorial Team</span> · Last verified {lastVerifiedLabel}</span>
++             </div>
++
++             <div class="mini-faq">
++               {faqItems.map((item) => (
++                 <a href={item.href} class="pill-btn">{item.q}</a>
++               ))}
++             </div>
+           </header>
+ 
+           <div class="results-meta">
+@@ -202,7 +279,7 @@ if (mode === 'country') {
+ 
+           <div class="studios-grid" id="museums-grid">
+             {initialMuseums.map((museum, index) => (
+-              <DirectoryCard studio={museum as any} index={index} cover={museum.cover} basePath="/directory/museums" />
++              <DirectoryCard studio={museum as any} index={index} cover={museum.cover} basePath="/directory/museums" showDescription description={(museum as any).description} />
+             ))}
+           </div>
+ 
+@@ -211,41 +288,24 @@ if (mode === 'country') {
+           <!-- Pagination: pinned footer of the panel on mobile (like the homepage) -->
+           <div id="pagination-container" class="pagination-wrapper"></div>
+ 
+-           <!-- New Cards Section -->
+-           <div class="bottom-cards-section mt-16 pb-12">
+-             <div class:list={['cards-split-grid', { 'single-card': relatedLocations.length === 0 }]}>
+-                <GetListedCard
+-                  className="full-height-card"
+-                  title={`Are you based in ${placeName}?`}
+-                  subtitle={`Submit your museum for free. Once approved, it will appear on the ${placeName} design map and directory.`}
+-                  ctaLabel="Submit for free"
+-                />
+-
+-                {relatedLocations.length > 0 && (
+-                  <div class="related-locations-card">
+-                     <div class="rl-header">
+-                        <h3 class="rl-title">Related locations</h3>
+-                     </div>
+-                     <div class="rl-content">
+-                        {relatedLocations.slice(0, 10).map(loc => (
+-                          <a href={`/directory/museums/in/${loc.slug}`} class="pill-btn">
+-                            {loc.name}
+-                          </a>
+-                        ))}
+-                     </div>
+-                  </div>
+-                )}
+-             </div>
+-           </div>
+-
+-           <!-- SEO Text Section -->
+-           <div class="seo-text-area mt-20 pt-16 border-t border-stroke">
+-             <div class="max-w-[70ch] space-y-8">
+-               {paragraphs.map((p) => (
+-                 <p class="font-sans text-[16px] leading-[1.8] text-gray">{p}</p>
+-               ))}
+-             </div>
+-           </div>
++          <!-- Related locations (bottom, no more submission card here — the
++               two pills above already cover "how do I get listed") -->
++          {relatedLocations.length > 0 && (
++            <div class="bottom-cards-section">
++              <div class="related-locations-card">
++                 <div class="rl-header">
++                    <h3 class="rl-title">{relatedLocationsHeading}</h3>
++                 </div>
++                 <div class="rl-content">
++                    {relatedLocations.slice(0, 10).map(loc => (
++                      <a href={`/directory/museums/in/${loc.slug}`} class="pill-btn">
++                        {loc.name}
++                      </a>
++                    ))}
++                 </div>
++              </div>
++            </div>
++          )}
+         </div>
+       </aside>
+ 
+@@ -298,6 +358,7 @@ if (mode === 'country') {
+ 
+   <script>
+     import { initializeMap } from '../../../../lib/map-init';
++    import { firstSentence } from '../../../../lib/text';
+ 
+     const ALL_MUSEUMS = (window as any).INITIAL_MUSEUMS;
+     const MAP_MUSEUMS = (window as any).MAP_MUSEUMS;
+@@ -415,6 +476,7 @@ if (mode === 'country') {
+             const cover = resolveCover(m.cover);
+             const cityClean = (m.city || '').split(',')[0].trim();
+             const location = cityClean || '';
++            const snippet = firstSentence(m.description);
+             return `
+             <a href="/directory/museums/${encodeURIComponent(m.slug || '')}"
+                class="directory-card"
+@@ -427,6 +489,7 @@ if (mode === 'country') {
+               </div>
+               <h3 class="directory-card-name">${escapeHtml(m.name || '')}</h3>
+               <p class="directory-card-location">${escapeHtml(location)}</p>
++              ${snippet ? `<p class="directory-card-desc">${escapeHtml(snippet)}</p>` : ''}
+             </a>
+           `;
+           }).join('');
+@@ -615,16 +678,16 @@ if (mode === 'country') {
+     .panel-handle { display: none; }
+ 
+     .results-panel-content {
+-      padding: var(--page-top-spacing) 40px 60px;
++      padding: var(--page-top-spacing) 40px 24px;
+     }
+ 
+     .panel-header {
+-      margin-bottom: 40px;
++      margin-bottom: 24px;
+     }
+ 
+     .location-heading {
+       font-family: var(--font-sans);
+-      font-size: clamp(40px, 5vw, 68px);
++      font-size: clamp(36px, 5vw, 48px);
+       font-weight: 400;
+       line-height: 0.96;
+       letter-spacing: -0.02em;
+@@ -642,11 +705,64 @@ if (mode === 'country') {
+ 
+     .country-subtitle {
+        font-family: var(--font-sans);
+-       font-size: 24px;
++       font-size: 22px;
+        color: var(--color-gray);
+-       margin-top: 12px;
++       margin-top: 14px;
+        font-weight: 400;
+        letter-spacing: 0;
++       text-decoration: none;
++       display: inline-flex;
++       align-items: center;
++       gap: 4px;
++       transition: color 0.2s ease;
++    }
++
++    .country-subtitle:hover {
++       color: var(--color-black);
++       text-decoration: underline;
++       text-decoration-color: var(--color-stroke);
++       text-underline-offset: 8px;
++       text-decoration-thickness: 2px;
++    }
++
++    .country-chevron {
++       display: block;
++       margin-top: 1px;
++    }
++
++    .location-intro {
++      font-family: var(--font-sans);
++      font-size: clamp(14px, 2vh, 16px);
++      line-height: 1.6;
++      color: var(--color-gray);
++      max-width: 62ch;
++      margin: 20px 0 0;
++      font-weight: 400;
++    }
++
++    .location-byline {
++      font-family: var(--font-sans);
++      font-size: 13px;
++      font-weight: 500;
++      color: var(--color-gray);
++      margin-top: 12px;
++      letter-spacing: 0.01em;
++      display: flex;
++      align-items: center;
++      gap: 6px;
++    }
++
++    .byline-icon {
++      display: block;
++      opacity: 0.8;
++      border-radius: 4px;
++    }
++
++    .mini-faq {
++      display: flex;
++      flex-wrap: wrap;
++      gap: 8px;
++      margin-top: 16px;
+     }
+ 
+     .results-meta {
+@@ -675,76 +791,7 @@ if (mode === 'country') {
+       min-width: 0;
+     }
+ 
+-    :global(.directory-card) {
+-      display: flex;
+-      flex-direction: column;
+-      gap: 10px;
+-      text-decoration: none;
+-      color: inherit;
+-      transition: transform 0.2s ease;
+-    }
+-
+-    :global(.directory-card:hover) {
+-      transform: translateY(-2px);
+-      color: inherit;
+-    }
+-
+-    :global(.directory-card-media) {
+-      aspect-ratio: 1;
+-      overflow: hidden;
+-      background: #E8E8EA;
+-      border-radius: 12px;
+-    }
+-
+-    :global(.directory-card-image) {
+-      width: 100%;
+-      height: 100%;
+-      object-fit: cover;
+-      display: block;
+-    }
+-
+-    :global(.directory-card-placeholder) {
+-      width: 100%;
+-      height: 100%;
+-      background: #E8E8EA;
+-    }
+-
+-    :global(.directory-card-name) {
+-      font-family: var(--font-sans);
+-      font-size: 14px;
+-      font-weight: 400;
+-      color: var(--color-black);
+-      margin: 0;
+-      line-height: 1.25;
+-      text-transform: uppercase;
+-      letter-spacing: 0.02em;
+-      overflow: hidden;
+-      text-overflow: ellipsis;
+-      white-space: nowrap;
+-    }
+-
+-    :global(.directory-card-location) {
+-      font-family: var(--font-sans);
+-      font-size: 13px;
+-      font-weight: 400;
+-      color: var(--color-text-muted);
+-      margin: -6px 0 0;
+-      overflow: hidden;
+-      text-overflow: ellipsis;
+-      white-space: nowrap;
+-    }
+-
+     /* Cards Section */
+-    .cards-split-grid {
+-       display: grid;
+-       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+-       gap: 16px;
+-    }
+-
+-    .cards-split-grid.single-card {
+-       grid-template-columns: 1fr;
+-    }
+-
+     .related-locations-card {
+        background: rgba(0,0,0,0.04);
+        border: 1px solid var(--color-stroke);
+@@ -799,7 +846,7 @@ if (mode === 'country') {
+       justify-content: center;
+       align-items: center;
+       gap: 16px;
+-      padding: 48px 0;
++      padding: 32px 0;
+       border-top: 1px solid var(--color-stroke);
+     }
+ 
+@@ -1047,22 +1094,14 @@ if (mode === 'country') {
+         min-height: 0;
+         overflow-y: auto;
+         -webkit-overflow-scrolling: touch;
++        scrollbar-width: none;
+       }
+       .results-panel:not(.is-expanded) .results-panel-content {
+         overflow: hidden;
+       }
+       .results-panel-content::-webkit-scrollbar {
+-        width: 6px;
+-      }
+-      .results-panel-content::-webkit-scrollbar-track {
+-        background: transparent;
+-      }
+-      .results-panel-content::-webkit-scrollbar-thumb {
+-        background-color: var(--color-stroke);
+-        border-radius: 20px;
++        display: none;
+       }
+-      /* Pagination is pinned to the bottom of the panel (like the homepage),
+-         always visible while expanded, with a gap from the phone's bottom. */
+       #pagination-container {
+         flex-shrink: 0;
+         display: flex;
+@@ -1071,7 +1110,8 @@ if (mode === 'country') {
+         gap: 16px;
+         background: var(--color-white);
+         border-top: 1px solid var(--color-stroke);
+-        padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
++        padding-top: 32px;
++        padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+       }
+       .results-panel:not(.is-expanded) #pagination-container {
+         display: none;
+diff --git a/src/pages/directory/schools/[slug].astro b/src/pages/directory/schools/[slug].astro
+index 39c7c37..a770c02 100644
+--- a/src/pages/directory/schools/[slug].astro
++++ b/src/pages/directory/schools/[slug].astro
+@@ -27,6 +27,7 @@ let university: any = null;
+ let relatedUniversities: any[] = [];
+ let citiesMapping: any[] = [];
+ let countriesMapping: any[] = [];
++let fetchFailed = false;
+ 
+ try {
+   const [uniRes, citiesRes, countriesRes] = await Promise.all([
+@@ -35,38 +36,45 @@ try {
+     fetch(`${domain}/test-countries.json`)
+   ]);
+ 
+-  if (uniRes.ok) {
+-    const rawData = await uniRes.json();
+-    const allUniversities = Array.isArray(rawData) ? rawData : (rawData.items || []);
+-
+-    const processedUniversities = allUniversities;
+-
+-    university = processedUniversities.find((u: any) => u.slug === slug) || null;
+-
+-    if (university) {
+-      // Discovery: curated set of other universities prioritizing country/city
+-      relatedUniversities = processedUniversities
+-        .filter((u: any) => u.slug !== slug)
+-        .sort((a: any, b: any) => {
+-          const aCountry = a.country_slug === university.country_slug ? 0 : 1;
+-          const bCountry = b.country_slug === university.country_slug ? 0 : 1;
+-          if (aCountry !== bCountry) return aCountry - bCountry;
+-          const aCity = a.city_slug === university.city_slug ? 0 : 1;
+-          const bCity = b.city_slug === university.city_slug ? 0 : 1;
+-          if (aCity !== bCity) return aCity - bCity;
+-          return 0;
+-        })
+-        .slice(0, 5);
+-    }
++  if (!uniRes.ok) throw new Error(`Failed to fetch universities.json: ${uniRes.status}`);
++
++  const rawData = await uniRes.json();
++  const allUniversities = Array.isArray(rawData) ? rawData : (rawData.items || []);
++
++  const processedUniversities = allUniversities;
++
++  university = processedUniversities.find((u: any) => u.slug === slug) || null;
++
++  if (university) {
++    // Discovery: curated set of other universities prioritizing country/city
++    relatedUniversities = processedUniversities
++      .filter((u: any) => u.slug !== slug)
++      .sort((a: any, b: any) => {
++        const aCountry = a.country_slug === university.country_slug ? 0 : 1;
++        const bCountry = b.country_slug === university.country_slug ? 0 : 1;
++        if (aCountry !== bCountry) return aCountry - bCountry;
++        const aCity = a.city_slug === university.city_slug ? 0 : 1;
++        const bCity = b.city_slug === university.city_slug ? 0 : 1;
++        if (aCity !== bCity) return aCity - bCity;
++        return 0;
++      })
++      .slice(0, 5);
+   }
+ 
+   if (citiesRes.ok) citiesMapping = await citiesRes.json();
+   if (countriesRes.ok) countriesMapping = await countriesRes.json();
+ 
+ } catch (e) {
++  fetchFailed = true;
+   console.error('[University Slug] Fail to fetch data:', e);
+ }
+ 
++// An upstream fetch failure is transient, not "not found" — don't tell
++// crawlers this URL is permanently gone when the CDN proxy just hiccupped.
++if (fetchFailed) {
++  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
++}
++
+ if (!university) {
+   return new Response(null, { status: 404 });
+ }
+diff --git a/src/pages/directory/schools/in/[place].astro b/src/pages/directory/schools/in/[place].astro
+index d9562f5..120f09f 100644
+--- a/src/pages/directory/schools/in/[place].astro
++++ b/src/pages/directory/schools/in/[place].astro
+@@ -3,9 +3,8 @@ import PostHogLayout from '../../../../layouts/PostHogLayout.astro';
+ import Navbar from '../../../../components/Navbar.astro';
+ import Footer from '../../../../components/Footer.astro';
+ import DirectoryCard from '../../../../components/DirectoryCard.astro';
+-import GetListedCard from '../../../../components/GetListedCard.astro';
+-import { universityTitle, universityDescription, universityIntro } from '../../../../lib/seo/copy';
+-import { breadcrumbList, itemList } from '../../../../lib/seo/schema';
++import { universityTitle, universityDescription, universityIntro, universityH1Parts, UNIVERSITY_BREADCRUMB_LABEL } from '../../../../lib/seo/copy';
++import { breadcrumbList, itemList, faqPage, schoolBusinessNodes } from '../../../../lib/seo/schema';
+ import { normalizeImage } from '../../../../lib/images';
+ import type { University } from '../../../../lib/types';
+ import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
+@@ -32,6 +31,7 @@ let allUniversities: University[] = [];
+ let mode: 'city' | 'country' | 'unknown' = 'unknown';
+ let cityName: string | null = null;
+ let countryName: string | null = null;
++let countrySlug: string | null = null;
+ let totalUniversities: number = 0;
+ 
+ try {
+@@ -54,6 +54,7 @@ if (cityObj) {
+   cityName = cityObj.name;
+   const c = countries.find((x) => x.slug === (cityObj.country ?? '')) ?? null;
+   countryName = c?.name ?? null;
++  countrySlug = cityObj.country ?? null;
+   universities = allUniversities.filter((u) => {
+     const uniSlug = (u.city_slug || '').toLowerCase();
+     const uniCity = (u.city || '').toLowerCase();
+@@ -87,7 +88,8 @@ const where =
+ 
+ const pageTitle = universityTitle(where);
+ const pageDesc = universityDescription(where);
+-const { paragraphs } = universityIntro(where);
++const { paragraph } = universityIntro(where);
++const { prefix: h1Prefix, place: h1Place } = universityH1Parts(where);
+ 
+ const canonical = new URL(`/directory/schools/in/${place}`, Astro.site);
+ 
+@@ -95,44 +97,16 @@ const crumbs =
+   mode === 'city'
+     ? [
+         { name: 'Home', url: '/' },
+-        { name: 'Schools', url: '/directory/schools' },
++        { name: UNIVERSITY_BREADCRUMB_LABEL, url: '/directory/schools' },
+         { name: `in ${cityName}`, url: canonical.pathname }
+       ]
+     : [
+         { name: 'Home', url: '/' },
+-        { name: 'Schools', url: '/directory/schools' },
++        { name: UNIVERSITY_BREADCRUMB_LABEL, url: '/directory/schools' },
+         { name: `in ${countryName}`, url: canonical.pathname }
+       ];
+ 
+-const listSchema = itemList({
+-  url: canonical.toString(),
+-  name: mode === 'city' ? `Schools in ${cityName}${countryName ? `, ${countryName}` : ''}` : `Schools in ${countryName}`,
+-  items: universities.slice(0, 50).map((u) => ({
+-    name: u.name,
+-    url: new URL(`/directory/schools/${encodeURIComponent(u.slug)}`, Astro.site).toString(),
+-  })),
+-});
+-
+-const schema = {
+-  '@context': 'https://schema.org',
+-  '@graph': [breadcrumbList(crumbs), listSchema],
+-};
+-
+-const placeName = mode === 'city' ? cityName : countryName;
+-
+-const initialUniversities = universities.slice(0, 18);
+-const mapUniversities = universities.map((u) => ({
+-  id: u.id,
+-  name: u.name,
+-  city: u.city,
+-  country: u.country,
+-  address: u.address,
+-  latitude: u.latitude,
+-  longitude: u.longitude,
+-  slug: u.slug,
+-  cover: u.cover
+-}));
+-
++// Related Locations Logic
+ function universityMatchesCity(university: any, citySlug: string, cityName: string): boolean {
+   const uniSlug = (university.city_slug || '').toLowerCase();
+   const uniCity = (university.city || '').toLowerCase();
+@@ -161,11 +135,100 @@ if (mode === 'country') {
+ } else if (mode === 'city') {
+   const currentCountry = cityToCountrySlug[place] || cityObj?.country || null;
+   if (currentCountry) {
++    if (!countryName) {
++      const c = countries.find((x) => x.slug === currentCountry) ?? null;
++      if (c) countryName = c.name;
++    }
++    if (!countrySlug) {
++      countrySlug = currentCountry;
++    }
+     relatedLocations = cities
+       .filter(c => c.slug !== place && cityToCountrySlug[c.slug] === currentCountry)
+       .map(c => ({ name: c.name, slug: c.slug }));
+   }
+ }
++
++const relatedLocationsHeading =
++  mode === 'country'
++    ? `Cities in ${countryName}`
++    : countryName
++      ? `Other design cities in ${countryName}`
++      : 'Related locations';
++
++const placeName = mode === 'city' ? cityName : countryName;
++
++const listSchema = itemList({
++  url: canonical.toString(),
++  name: mode === 'city' ? `Schools in ${cityName}${countryName ? `, ${countryName}` : ''}` : `Schools in ${countryName}`,
++  items: universities.slice(0, 50).map((u) => ({
++    name: u.name,
++    url: new URL(`/directory/schools/${encodeURIComponent(u.slug)}`, Astro.site).toString(),
++  })),
++});
++
++// "Last verified" = the most recently updated school in this result set, so
++// the freshness claim shown on the page (and in schema below) is a real
++// fact about the data, never a hardcoded date.
++const updatedTimestamps = universities
++  .map((u) => ((u as any).updated_at ? new Date((u as any).updated_at) : null))
++  .filter((d): d is Date => !!d && !isNaN(d.getTime()))
++  .map((d) => d.getTime());
++
++const lastVerifiedDate = updatedTimestamps.length ? new Date(Math.max(...updatedTimestamps)) : new Date();
++const lastVerifiedLabel = lastVerifiedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
++const lastVerifiedIso = lastVerifiedDate.toISOString();
++
++const businessNodes = schoolBusinessNodes({
++  items: universities.slice(0, 50).map((u) => ({
++    name: u.name,
++    url: new URL(`/directory/schools/${encodeURIComponent(u.slug)}`, Astro.site).toString(),
++    website: (u as any).website,
++    description: (u as any).description,
++    city: u.city,
++    country: u.country || countryName,
++  })),
++});
++
++// Two entries, shared by the visible pill links (q + href) and the
++// FAQPage schema (q + a) — a single source so the label on the page and
++// the answer in structured data can never drift apart. Each question maps
++// to a real page the pill actually sends you to.
++const faqItems = [
++  {
++    q: 'How is this list curated?',
++    a: `Schools are added by self-submission and reviewed by Acceso's editorial team before publishing. See the Info page for our full curation methodology.`,
++    href: '/info',
++  },
++  {
++    q: 'Can I add a school to this list?',
++    a: `Yes — submitting a school is free. Once approved by Acceso's editorial team, it will appear on the ${placeName} design map and directory.`,
++    href: '/submission',
++  },
++];
++const faqSchema = faqPage(faqItems.map(({ q, a }) => ({ q, a })));
++
++const schema = {
++  '@context': 'https://schema.org',
++  '@graph': [
++    breadcrumbList(crumbs),
++    { ...listSchema, dateModified: lastVerifiedIso },
++    faqSchema,
++    ...businessNodes,
++  ],
++};
++
++const initialUniversities = universities.slice(0, 18);
++const mapUniversities = universities.map((u) => ({
++  id: u.id,
++  name: u.name,
++  city: u.city,
++  country: u.country,
++  address: u.address,
++  latitude: u.latitude,
++  longitude: u.longitude,
++  slug: u.slug,
++  cover: u.cover
++}));
+ ---
+ 
+ <PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
+@@ -179,19 +242,33 @@ if (mode === 'country') {
+         <div class="results-panel-content">
+           <Breadcrumbs items={[
+             { label: 'Home', href: '/' },
+-            { label: 'Schools', href: '/directory/schools' },
++            { label: UNIVERSITY_BREADCRUMB_LABEL, href: '/directory/schools' },
+             { label: `In ${mode === 'city' ? cityName : countryName}` }
+           ]} />
+ 
+           <header class="panel-header">
+              <h1 class="location-heading">
+-                Design schools<br />
+-                in <span class="location-accent">{mode === 'city' ? cityName : countryName}</span>
++                {h1Prefix} <span class="location-accent">{h1Place}</span>
+              </h1>
+ 
+-             {mode === 'city' && countryName && (
+-               <div class="country-subtitle">({countryName})</div>
++             {mode === 'city' && countryName && countrySlug && (
++               <a href={`/directory/schools/in/${countrySlug}`} class="country-subtitle">
++                 {countryName} <svg class="country-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
++               </a>
+              )}
++
++             <p class="location-intro">{paragraph}</p>
++
++             <div class="location-byline">
++               <img src="/icon.svg" alt="" width="20" height="20" class="byline-icon" />
++               <span>Curated by <span style="font-weight: 600; color: var(--color-black);">Acceso's Editorial Team</span> · Last verified {lastVerifiedLabel}</span>
++             </div>
++
++             <div class="mini-faq">
++               {faqItems.map((item) => (
++                 <a href={item.href} class="pill-btn">{item.q}</a>
++               ))}
++             </div>
+           </header>
+ 
+           <div class="results-meta">
+@@ -202,7 +279,7 @@ if (mode === 'country') {
+ 
+           <div class="studios-grid" id="universities-grid">
+             {initialUniversities.map((university, index) => (
+-              <DirectoryCard studio={university as any} index={index} cover={university.cover} basePath="/directory/schools" />
++              <DirectoryCard studio={university as any} index={index} cover={university.cover} basePath="/directory/schools" showDescription description={(university as any).description} />
+             ))}
+           </div>
+ 
+@@ -211,41 +288,24 @@ if (mode === 'country') {
+           <!-- Pagination: pinned footer of the panel on mobile (like the homepage) -->
+           <div id="pagination-container" class="pagination-wrapper"></div>
+ 
+-           <!-- New Cards Section -->
+-           <div class="bottom-cards-section mt-16 pb-12">
+-             <div class:list={['cards-split-grid', { 'single-card': relatedLocations.length === 0 }]}>
+-                <GetListedCard
+-                  className="full-height-card"
+-                  title={`Are you based in ${placeName}?`}
+-                  subtitle={`Submit your school for free. Once approved, it will appear on the ${placeName} design map and directory.`}
+-                  ctaLabel="Submit for free"
+-                />
+-
+-                {relatedLocations.length > 0 && (
+-                  <div class="related-locations-card">
+-                     <div class="rl-header">
+-                        <h3 class="rl-title">Related locations</h3>
+-                     </div>
+-                     <div class="rl-content">
+-                        {relatedLocations.slice(0, 10).map(loc => (
+-                          <a href={`/directory/schools/in/${loc.slug}`} class="pill-btn">
+-                            {loc.name}
+-                          </a>
+-                        ))}
+-                     </div>
+-                  </div>
+-                )}
+-             </div>
+-           </div>
+-
+-           <!-- SEO Text Section -->
+-           <div class="seo-text-area mt-20 pt-16 border-t border-stroke">
+-             <div class="max-w-[70ch] space-y-8">
+-               {paragraphs.map((p) => (
+-                 <p class="font-sans text-[16px] leading-[1.8] text-gray">{p}</p>
+-               ))}
+-             </div>
+-           </div>
++          <!-- Related locations (bottom, no more submission card here — the
++               two pills above already cover "how do I get listed") -->
++          {relatedLocations.length > 0 && (
++            <div class="bottom-cards-section">
++              <div class="related-locations-card">
++                 <div class="rl-header">
++                    <h3 class="rl-title">{relatedLocationsHeading}</h3>
++                 </div>
++                 <div class="rl-content">
++                    {relatedLocations.slice(0, 10).map(loc => (
++                      <a href={`/directory/schools/in/${loc.slug}`} class="pill-btn">
++                        {loc.name}
++                      </a>
++                    ))}
++                 </div>
++              </div>
++            </div>
++          )}
+         </div>
+       </aside>
+ 
+@@ -298,6 +358,7 @@ if (mode === 'country') {
+ 
+   <script>
+     import { initializeMap } from '../../../../lib/map-init';
++    import { firstSentence } from '../../../../lib/text';
+ 
+     const ALL_UNIVERSITIES = (window as any).INITIAL_UNIVERSITIES;
+     const MAP_UNIVERSITIES = (window as any).MAP_UNIVERSITIES;
+@@ -415,6 +476,7 @@ if (mode === 'country') {
+             const cover = resolveCover(u.cover);
+             const cityClean = (u.city || '').split(',')[0].trim();
+             const location = cityClean || '';
++            const snippet = firstSentence(u.description);
+             return `
+             <a href="/directory/schools/${encodeURIComponent(u.slug || '')}"
+                class="directory-card"
+@@ -427,6 +489,7 @@ if (mode === 'country') {
+               </div>
+               <h3 class="directory-card-name">${escapeHtml(u.name || '')}</h3>
+               <p class="directory-card-location">${escapeHtml(location)}</p>
++              ${snippet ? `<p class="directory-card-desc">${escapeHtml(snippet)}</p>` : ''}
+             </a>
+           `;
+           }).join('');
+@@ -615,16 +678,16 @@ if (mode === 'country') {
+     .panel-handle { display: none; }
+ 
+     .results-panel-content {
+-      padding: var(--page-top-spacing) 40px 60px;
++      padding: var(--page-top-spacing) 40px 24px;
+     }
+ 
+     .panel-header {
+-      margin-bottom: 40px;
++      margin-bottom: 24px;
+     }
+ 
+     .location-heading {
+       font-family: var(--font-sans);
+-      font-size: clamp(40px, 5vw, 68px);
++      font-size: clamp(36px, 5vw, 48px);
+       font-weight: 400;
+       line-height: 0.96;
+       letter-spacing: -0.02em;
+@@ -642,11 +705,64 @@ if (mode === 'country') {
+ 
+     .country-subtitle {
+        font-family: var(--font-sans);
+-       font-size: 24px;
++       font-size: 22px;
+        color: var(--color-gray);
+-       margin-top: 12px;
++       margin-top: 14px;
+        font-weight: 400;
+        letter-spacing: 0;
++       text-decoration: none;
++       display: inline-flex;
++       align-items: center;
++       gap: 4px;
++       transition: color 0.2s ease;
++    }
++
++    .country-subtitle:hover {
++       color: var(--color-black);
++       text-decoration: underline;
++       text-decoration-color: var(--color-stroke);
++       text-underline-offset: 8px;
++       text-decoration-thickness: 2px;
++    }
++
++    .country-chevron {
++       display: block;
++       margin-top: 1px;
++    }
++
++    .location-intro {
++      font-family: var(--font-sans);
++      font-size: clamp(14px, 2vh, 16px);
++      line-height: 1.6;
++      color: var(--color-gray);
++      max-width: 62ch;
++      margin: 20px 0 0;
++      font-weight: 400;
++    }
++
++    .location-byline {
++      font-family: var(--font-sans);
++      font-size: 13px;
++      font-weight: 500;
++      color: var(--color-gray);
++      margin-top: 12px;
++      letter-spacing: 0.01em;
++      display: flex;
++      align-items: center;
++      gap: 6px;
++    }
++
++    .byline-icon {
++      display: block;
++      opacity: 0.8;
++      border-radius: 4px;
++    }
++
++    .mini-faq {
++      display: flex;
++      flex-wrap: wrap;
++      gap: 8px;
++      margin-top: 16px;
+     }
+ 
+     .results-meta {
+@@ -675,76 +791,7 @@ if (mode === 'country') {
+       min-width: 0;
+     }
+ 
+-    :global(.directory-card) {
+-      display: flex;
+-      flex-direction: column;
+-      gap: 10px;
+-      text-decoration: none;
+-      color: inherit;
+-      transition: transform 0.2s ease;
+-    }
+-
+-    :global(.directory-card:hover) {
+-      transform: translateY(-2px);
+-      color: inherit;
+-    }
+-
+-    :global(.directory-card-media) {
+-      aspect-ratio: 1;
+-      overflow: hidden;
+-      background: #E8E8EA;
+-      border-radius: 12px;
+-    }
+-
+-    :global(.directory-card-image) {
+-      width: 100%;
+-      height: 100%;
+-      object-fit: cover;
+-      display: block;
+-    }
+-
+-    :global(.directory-card-placeholder) {
+-      width: 100%;
+-      height: 100%;
+-      background: #E8E8EA;
+-    }
+-
+-    :global(.directory-card-name) {
+-      font-family: var(--font-sans);
+-      font-size: 14px;
+-      font-weight: 400;
+-      color: var(--color-black);
+-      margin: 0;
+-      line-height: 1.25;
+-      text-transform: uppercase;
+-      letter-spacing: 0.02em;
+-      overflow: hidden;
+-      text-overflow: ellipsis;
+-      white-space: nowrap;
+-    }
+-
+-    :global(.directory-card-location) {
+-      font-family: var(--font-sans);
+-      font-size: 13px;
+-      font-weight: 400;
+-      color: var(--color-text-muted);
+-      margin: -6px 0 0;
+-      overflow: hidden;
+-      text-overflow: ellipsis;
+-      white-space: nowrap;
+-    }
+-
+     /* Cards Section */
+-    .cards-split-grid {
+-       display: grid;
+-       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+-       gap: 16px;
+-    }
+-
+-    .cards-split-grid.single-card {
+-       grid-template-columns: 1fr;
+-    }
+-
+     .related-locations-card {
+        background: rgba(0,0,0,0.04);
+        border: 1px solid var(--color-stroke);
+@@ -799,7 +846,7 @@ if (mode === 'country') {
+       justify-content: center;
+       align-items: center;
+       gap: 16px;
+-      padding: 48px 0;
++      padding: 32px 0;
+       border-top: 1px solid var(--color-stroke);
+     }
+ 
+@@ -1047,22 +1094,14 @@ if (mode === 'country') {
+         min-height: 0;
+         overflow-y: auto;
+         -webkit-overflow-scrolling: touch;
++        scrollbar-width: none;
+       }
+       .results-panel:not(.is-expanded) .results-panel-content {
+         overflow: hidden;
+       }
+       .results-panel-content::-webkit-scrollbar {
+-        width: 6px;
+-      }
+-      .results-panel-content::-webkit-scrollbar-track {
+-        background: transparent;
+-      }
+-      .results-panel-content::-webkit-scrollbar-thumb {
+-        background-color: var(--color-stroke);
+-        border-radius: 20px;
++        display: none;
+       }
+-      /* Pagination is pinned to the bottom of the panel (like the homepage),
+-         always visible while expanded, with a gap from the phone's bottom. */
+       #pagination-container {
+         flex-shrink: 0;
+         display: flex;
+@@ -1071,7 +1110,8 @@ if (mode === 'country') {
+         gap: 16px;
+         background: var(--color-white);
+         border-top: 1px solid var(--color-stroke);
+-        padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
++        padding-top: 32px;
++        padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+       }
+       .results-panel:not(.is-expanded) #pagination-container {
+         display: none;
+diff --git a/src/pages/sitemaps/designer-locations.xml.ts b/src/pages/sitemaps/designer-locations.xml.ts
+index 9216c17..89ea1ec 100644
+--- a/src/pages/sitemaps/designer-locations.xml.ts
++++ b/src/pages/sitemaps/designer-locations.xml.ts
+@@ -3,7 +3,6 @@ import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
+ 
+ export const GET: APIRoute = async ({ site, url }) => {
+   if (!site) return new Response('Missing site config', { status: 500 });
+-  const lastmod = toW3CDate(new Date());
+ 
+   // Derive location slugs from actual studio data so we never submit an empty
+   // /designers/in/{slug} page. Mirrors the pattern already used by
+@@ -19,19 +18,31 @@ export const GET: APIRoute = async ({ site, url }) => {
+     studios = [];
+   }
+ 
+-  // Collect unique city and country slugs that have at least one studio.
++  // Collect unique city and country slugs that have at least one studio, and
++  // the most recent updated_at among the studios at each — never "now".
+   const citySlugs = new Set<string>();
+   const countrySlugs = new Set<string>();
++  const latest = new Map<string, number>();
++  const bump = (slug: string | undefined | null, t: number) => {
++    if (!slug || isNaN(t)) return;
++    const cur = latest.get(slug);
++    if (cur === undefined || t > cur) latest.set(slug, t);
++  };
+   for (const s of studios) {
+-    if (s?.city_slug) citySlugs.add(s.city_slug);
+-    if (s?.country_slug) countrySlugs.add(s.country_slug);
++    const t = s?.updated_at ? new Date(s.updated_at).getTime() : NaN;
++    if (s?.city_slug) { citySlugs.add(s.city_slug); bump(s.city_slug, t); }
++    if (s?.country_slug) { countrySlugs.add(s.country_slug); bump(s.country_slug, t); }
+   }
++  const lastmodFor = (slug: string): string | undefined => {
++    const t = latest.get(slug);
++    return t === undefined ? undefined : toW3CDate(new Date(t));
++  };
+ 
+   const urls = [];
+   for (const slug of citySlugs) {
+     urls.push({
+       loc: new URL(`/designers/in/${encodeURIComponent(slug)}`, site).toString(),
+-      lastmod,
++      lastmod: lastmodFor(slug),
+       changefreq: 'weekly' as const,
+       priority: 0.6,
+     });
+@@ -41,7 +52,7 @@ export const GET: APIRoute = async ({ site, url }) => {
+     if (citySlugs.has(slug)) continue;
+     urls.push({
+       loc: new URL(`/designers/in/${encodeURIComponent(slug)}`, site).toString(),
+-      lastmod,
++      lastmod: lastmodFor(slug),
+       changefreq: 'weekly' as const,
+       priority: 0.5,
+     });
+diff --git a/src/pages/sitemaps/designers.xml.ts b/src/pages/sitemaps/designers.xml.ts
+index dd48933..8823d08 100644
+--- a/src/pages/sitemaps/designers.xml.ts
++++ b/src/pages/sitemaps/designers.xml.ts
+@@ -21,7 +21,6 @@ async function fetchStudios(origin: string): Promise<Studio[]> {
+ export const GET: APIRoute = async ({ site, url }) => {
+   if (!site) return new Response('Missing site config', { status: 500 });
+ 
+-  const lastmod = toW3CDate(new Date());
+   let studios: Studio[] = [];
+   try {
+     studios = await fetchStudios(url.origin);
+@@ -29,6 +28,11 @@ export const GET: APIRoute = async ({ site, url }) => {
+     studios = [];
+   }
+ 
++  // lastmod must reflect this studio's own updated_at, never the moment the
++  // sitemap happened to be requested — a fabricated "changed right now" on
++  // every URL, every crawl, is exactly the kind of inaccuracy that makes
++  // Google stop trusting (and eventually stop reading) a sitemap's dates.
++  // Omit the tag entirely rather than guess when the real date is missing.
+   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = studios
+     .filter((s) => typeof s?.slug === 'string' && s.slug.length > 0)
+     .map((s) => {
+@@ -36,6 +40,8 @@ export const GET: APIRoute = async ({ site, url }) => {
+       const images: string[] = [];
+       const normalized = normalizeImage(s.cover, url.origin);
+       if (normalized) images.push(normalized);
++      const updated = s.updated_at ? new Date(s.updated_at) : null;
++      const lastmod = updated && !isNaN(updated.getTime()) ? toW3CDate(updated) : undefined;
+       return { loc, lastmod, changefreq: 'monthly' as const, priority: 0.7, images };
+     });
+ 
+diff --git a/src/pages/sitemaps/directory-items.xml.ts b/src/pages/sitemaps/directory-items.xml.ts
+index e0711c3..b942096 100644
+--- a/src/pages/sitemaps/directory-items.xml.ts
++++ b/src/pages/sitemaps/directory-items.xml.ts
+@@ -23,7 +23,6 @@ async function fetchList(origin: string, path: string): Promise<DirectoryItem[]>
+ 
+ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
+   if (!site) return new Response('Missing site config', { status: 500 });
+-  const lastmod = toW3CDate(new Date());
+ 
+   // Studios are deliberately absent: sitemaps/designers.xml owns /designers/*
+   // from this same JSON. Emitting them here too put every studio in two
+@@ -36,6 +35,9 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
+   ]);
+ 
+   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = [];
++  // lastmod is per-entity, from that entity's own updated_at — never "now".
++  // A fake "changed right now" on every one of these URLs, on every crawl,
++  // is what eventually makes Google ignore a sitemap's dates altogether.
+   const add = (base: string, list: DirectoryItem[]) => {
+     for (const e of list) {
+       if (!e?.slug) continue;
+@@ -43,6 +45,8 @@ export const GET: APIRoute = async ({ site, url: requestUrl }) => {
+       const images: string[] = [];
+       const normalized = normalizeImage(e.image, requestUrl.origin);
+       if (normalized) images.push(normalized);
++      const updated = e.updated_at ? new Date(e.updated_at) : null;
++      const lastmod = updated && !isNaN(updated.getTime()) ? toW3CDate(updated) : undefined;
+       urls.push({ loc, lastmod, changefreq: 'monthly' as const, priority: 0.5, images });
+     }
+   };
+diff --git a/src/pages/sitemaps/directory-locations.xml.ts b/src/pages/sitemaps/directory-locations.xml.ts
+index f9ce57c..8319e37 100644
+--- a/src/pages/sitemaps/directory-locations.xml.ts
++++ b/src/pages/sitemaps/directory-locations.xml.ts
+@@ -29,9 +29,29 @@ function validPlaces(items: any[]): Set<string> {
+   return places;
+ }
+ 
++// A location page's real "last changed" date is when the most recently
++// touched item at that place was updated — not the moment this sitemap was
++// requested. Places with no dated items get no lastmod at all, rather than
++// a fabricated one.
++function lastmodByPlace(items: any[]): Map<string, string> {
++  const latest = new Map<string, number>();
++  const bump = (slug: string | undefined | null, t: number) => {
++    if (!slug || isNaN(t)) return;
++    const cur = latest.get(slug);
++    if (cur === undefined || t > cur) latest.set(slug, t);
++  };
++  for (const it of items) {
++    const t = it?.updated_at ? new Date(it.updated_at).getTime() : NaN;
++    bump(it?.city_slug, t);
++    bump(it?.country_slug, t);
++  }
++  const out = new Map<string, string>();
++  for (const [slug, t] of latest) out.set(slug, toW3CDate(new Date(t)));
++  return out;
++}
++
+ export const GET: APIRoute = async ({ site, url }) => {
+   if (!site) return new Response('Missing site config', { status: 500 });
+-  const lastmod = toW3CDate(new Date());
+ 
+   const [fairsRes, museumsRes, schoolsRes] = await Promise.allSettled([
+     fetchList(url.origin, '/cdn/fairs.json'),
+@@ -39,26 +59,34 @@ export const GET: APIRoute = async ({ site, url }) => {
+     fetchList(url.origin, '/cdn/universities.json'),
+   ]);
+ 
+-  const fairPlaces = fairsRes.status === 'fulfilled' ? validPlaces(fairsRes.value) : new Set<string>();
+-  const museumPlaces = museumsRes.status === 'fulfilled' ? validPlaces(museumsRes.value) : new Set<string>();
+-  const schoolPlaces = schoolsRes.status === 'fulfilled' ? validPlaces(schoolsRes.value) : new Set<string>();
++  const fairItems = fairsRes.status === 'fulfilled' ? fairsRes.value : [];
++  const museumItems = museumsRes.status === 'fulfilled' ? museumsRes.value : [];
++  const schoolItems = schoolsRes.status === 'fulfilled' ? schoolsRes.value : [];
++
++  const fairPlaces = validPlaces(fairItems);
++  const museumPlaces = validPlaces(museumItems);
++  const schoolPlaces = validPlaces(schoolItems);
++
++  const fairLastmod = lastmodByPlace(fairItems);
++  const museumLastmod = lastmodByPlace(museumItems);
++  const schoolLastmod = lastmodByPlace(schoolItems);
+   // Awards carry no location fields, so their /in/<place> pages always 404.
+   // Designer locations are deliberately absent: sitemaps/designer-locations.xml
+   // owns /designers/in/*. Emitting them here too listed all 106 of them in two
+   // sitemaps at conflicting priorities.
+ 
+-  const types: { type: string; places: Set<string>; base: string }[] = [
+-    { type: 'fairs', places: fairPlaces, base: '/directory/fairs' },
+-    { type: 'museums', places: museumPlaces, base: '/directory/museums' },
+-    { type: 'schools', places: schoolPlaces, base: '/directory/schools' },
++  const types: { type: string; places: Set<string>; base: string; lastmod: Map<string, string> }[] = [
++    { type: 'fairs', places: fairPlaces, base: '/directory/fairs', lastmod: fairLastmod },
++    { type: 'museums', places: museumPlaces, base: '/directory/museums', lastmod: museumLastmod },
++    { type: 'schools', places: schoolPlaces, base: '/directory/schools', lastmod: schoolLastmod },
+   ];
+ 
+   const urls = [];
+-  for (const { places, base } of types) {
++  for (const { places, base, lastmod } of types) {
+     for (const p of places) {
+       urls.push({
+         loc: new URL(`${base}/in/${encodeURIComponent(p)}`, site).toString(),
+-        lastmod,
++        lastmod: lastmod.get(p),
+         changefreq: 'weekly' as const,
+         priority: 0.3,
+       });
+diff --git a/src/pages/sitemaps/projects.xml.ts b/src/pages/sitemaps/projects.xml.ts
+index a617cc3..fb02dd2 100644
+--- a/src/pages/sitemaps/projects.xml.ts
++++ b/src/pages/sitemaps/projects.xml.ts
+@@ -20,7 +20,6 @@ async function fetchProjects(origin: string): Promise<MoodboardItem[]> {
+ export const GET: APIRoute = async ({ site, url }) => {
+   if (!site) return new Response('Missing site config', { status: 500 });
+ 
+-  const lastmod = toW3CDate(new Date());
+   let items: MoodboardItem[] = [];
+   try {
+     items = await fetchProjects(url.origin);
+@@ -28,6 +27,8 @@ export const GET: APIRoute = async ({ site, url }) => {
+     items = [];
+   }
+ 
++  // lastmod comes from each project's own updated_at, not the moment this
++  // sitemap happened to be generated.
+   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = items
+     .filter((i) => typeof i?.slug === 'string' && i.slug.length > 0)
+     .map((i) => {
+@@ -35,6 +36,8 @@ export const GET: APIRoute = async ({ site, url }) => {
+       const images: string[] = [];
+       const normalized = normalizeImage(i.cover, url.origin);
+       if (normalized) images.push(normalized);
++      const updated = i.updated_at ? new Date(i.updated_at) : null;
++      const lastmod = updated && !isNaN(updated.getTime()) ? toW3CDate(updated) : undefined;
+       return { loc, lastmod, changefreq: 'monthly' as const, priority: 0.6, images };
+     });
+ 

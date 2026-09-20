@@ -20,7 +20,6 @@ async function fetchProjects(origin: string): Promise<MoodboardItem[]> {
 export const GET: APIRoute = async ({ site, url }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
 
-  const lastmod = toW3CDate(new Date());
   let items: MoodboardItem[] = [];
   try {
     items = await fetchProjects(url.origin);
@@ -28,6 +27,8 @@ export const GET: APIRoute = async ({ site, url }) => {
     items = [];
   }
 
+  // lastmod comes from each project's own updated_at, not the moment this
+  // sitemap happened to be generated.
   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = items
     .filter((i) => typeof i?.slug === 'string' && i.slug.length > 0)
     .map((i) => {
@@ -35,6 +36,8 @@ export const GET: APIRoute = async ({ site, url }) => {
       const images: string[] = [];
       const normalized = normalizeImage(i.cover, url.origin);
       if (normalized) images.push(normalized);
+      const updated = i.updated_at ? new Date(i.updated_at) : null;
+      const lastmod = updated && !isNaN(updated.getTime()) ? toW3CDate(updated) : undefined;
       return { loc, lastmod, changefreq: 'monthly' as const, priority: 0.6, images };
     });
 

@@ -27,6 +27,7 @@ let museum: any = null;
 let relatedMuseums: any[] = [];
 let citiesMapping: any[] = [];
 let countriesMapping: any[] = [];
+let fetchFailed = false;
 
 try {
   const [musRes, citiesRes, countriesRes] = await Promise.all([
@@ -35,36 +36,43 @@ try {
     fetch(`${domain}/test-countries.json`)
   ]);
 
-  if (musRes.ok) {
-    const rawData = await musRes.json();
-    const allMuseums = Array.isArray(rawData) ? rawData : (rawData.items || []);
-    
-    const processedMuseums = allMuseums;
+  if (!musRes.ok) throw new Error(`Failed to fetch museums.json: ${musRes.status}`);
 
-    museum = processedMuseums.find((m: any) => m.slug === slug) || null;
+  const rawData = await musRes.json();
+  const allMuseums = Array.isArray(rawData) ? rawData : (rawData.items || []);
 
-    if (museum) {
-      // Discovery: curated set of other museums prioritizing country/city
-      relatedMuseums = processedMuseums
-        .filter((m: any) => m.slug !== slug)
-        .sort((a: any, b: any) => {
-          const aCountry = a.country_slug === museum.country_slug ? 0 : 1;
-          const bCountry = b.country_slug === museum.country_slug ? 0 : 1;
-          if (aCountry !== bCountry) return aCountry - bCountry;
-          const aCity = a.city_slug === museum.city_slug ? 0 : 1;
-          const bCity = b.city_slug === museum.city_slug ? 0 : 1;
-          if (aCity !== bCity) return aCity - bCity;
-          return 0;
-        })
-        .slice(0, 5);
-    }
+  const processedMuseums = allMuseums;
+
+  museum = processedMuseums.find((m: any) => m.slug === slug) || null;
+
+  if (museum) {
+    // Discovery: curated set of other museums prioritizing country/city
+    relatedMuseums = processedMuseums
+      .filter((m: any) => m.slug !== slug)
+      .sort((a: any, b: any) => {
+        const aCountry = a.country_slug === museum.country_slug ? 0 : 1;
+        const bCountry = b.country_slug === museum.country_slug ? 0 : 1;
+        if (aCountry !== bCountry) return aCountry - bCountry;
+        const aCity = a.city_slug === museum.city_slug ? 0 : 1;
+        const bCity = b.city_slug === museum.city_slug ? 0 : 1;
+        if (aCity !== bCity) return aCity - bCity;
+        return 0;
+      })
+      .slice(0, 5);
   }
 
   if (citiesRes.ok) citiesMapping = await citiesRes.json();
   if (countriesRes.ok) countriesMapping = await countriesRes.json();
 
 } catch (e) {
+  fetchFailed = true;
   console.error('[Museum Slug] Fail to fetch data:', e);
+}
+
+// An upstream fetch failure is transient, not "not found" — don't tell
+// crawlers this URL is permanently gone when the CDN proxy just hiccupped.
+if (fetchFailed) {
+  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
 }
 
 if (!museum) {

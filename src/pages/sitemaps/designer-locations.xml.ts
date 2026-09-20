@@ -3,7 +3,6 @@ import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
 
 export const GET: APIRoute = async ({ site, url }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
-  const lastmod = toW3CDate(new Date());
 
   // Derive location slugs from actual studio data so we never submit an empty
   // /designers/in/{slug} page. Mirrors the pattern already used by
@@ -19,19 +18,31 @@ export const GET: APIRoute = async ({ site, url }) => {
     studios = [];
   }
 
-  // Collect unique city and country slugs that have at least one studio.
+  // Collect unique city and country slugs that have at least one studio, and
+  // the most recent updated_at among the studios at each — never "now".
   const citySlugs = new Set<string>();
   const countrySlugs = new Set<string>();
+  const latest = new Map<string, number>();
+  const bump = (slug: string | undefined | null, t: number) => {
+    if (!slug || isNaN(t)) return;
+    const cur = latest.get(slug);
+    if (cur === undefined || t > cur) latest.set(slug, t);
+  };
   for (const s of studios) {
-    if (s?.city_slug) citySlugs.add(s.city_slug);
-    if (s?.country_slug) countrySlugs.add(s.country_slug);
+    const t = s?.updated_at ? new Date(s.updated_at).getTime() : NaN;
+    if (s?.city_slug) { citySlugs.add(s.city_slug); bump(s.city_slug, t); }
+    if (s?.country_slug) { countrySlugs.add(s.country_slug); bump(s.country_slug, t); }
   }
+  const lastmodFor = (slug: string): string | undefined => {
+    const t = latest.get(slug);
+    return t === undefined ? undefined : toW3CDate(new Date(t));
+  };
 
   const urls = [];
   for (const slug of citySlugs) {
     urls.push({
       loc: new URL(`/designers/in/${encodeURIComponent(slug)}`, site).toString(),
-      lastmod,
+      lastmod: lastmodFor(slug),
       changefreq: 'weekly' as const,
       priority: 0.6,
     });
@@ -41,7 +52,7 @@ export const GET: APIRoute = async ({ site, url }) => {
     if (citySlugs.has(slug)) continue;
     urls.push({
       loc: new URL(`/designers/in/${encodeURIComponent(slug)}`, site).toString(),
-      lastmod,
+      lastmod: lastmodFor(slug),
       changefreq: 'weekly' as const,
       priority: 0.5,
     });

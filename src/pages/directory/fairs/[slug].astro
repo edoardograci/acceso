@@ -46,6 +46,8 @@ let relatedTitle = 'More design fairs';
 let citiesMapping: any[] = [];
 let countriesMapping: any[] = [];
 
+let fetchFailed = false;
+
 try {
   const [fairsRes, citiesRes, countriesRes] = await Promise.all([
     fetch(`${domain}/fairs.json`),
@@ -53,50 +55,57 @@ try {
     fetch(`${domain}/test-countries.json`)
   ]);
 
-  if (fairsRes.ok) {
-    const rawFairs = await fairsRes.json();
-    const allFairs = Array.isArray(rawFairs) ? rawFairs : (rawFairs.items || []);
+  if (!fairsRes.ok) throw new Error(`Failed to fetch fairs.json: ${fairsRes.status}`);
 
-    fair = allFairs.find((f: any) => f.slug === slug) || null;
+  const rawFairs = await fairsRes.json();
+  const allFairs = Array.isArray(rawFairs) ? rawFairs : (rawFairs.items || []);
 
-    if (fair) {
-      const fairDate = fair.start_date ? new Date(fair.start_date) : null;
-      const hasFairDate = !!fairDate && !isNaN(fairDate.getTime());
+  fair = allFairs.find((f: any) => f.slug === slug) || null;
 
-      // Discovery: fairs happening in the same month
-      const sameMonth = allFairs
-        .filter((f: any) => f.slug !== slug && f.start_date)
-        .filter((f: any) => {
-          if (!hasFairDate) return false;
-          const d = new Date(f.start_date);
-          return d.getFullYear() === fairDate.getFullYear() && d.getMonth() === fairDate.getMonth();
-        })
-        .sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+  if (fair) {
+    const fairDate = fair.start_date ? new Date(fair.start_date) : null;
+    const hasFairDate = !!fairDate && !isNaN(fairDate.getTime());
 
-      const pool = sameMonth.length > 0 ? sameMonth : allFairs
-        .filter((f: any) => f.slug !== slug && f.start_date)
-        .sort((a: any, b: any) => {
-          if (!hasFairDate) return 0;
-          return Math.abs(new Date(a.start_date).getTime() - fairDate.getTime())
-               - Math.abs(new Date(b.start_date).getTime() - fairDate.getTime());
-        });
+    // Discovery: fairs happening in the same month
+    const sameMonth = allFairs
+      .filter((f: any) => f.slug !== slug && f.start_date)
+      .filter((f: any) => {
+        if (!hasFairDate) return false;
+        const d = new Date(f.start_date);
+        return d.getFullYear() === fairDate.getFullYear() && d.getMonth() === fairDate.getMonth();
+      })
+      .sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
-      relatedFairs = pool.slice(0, 5);
-      relatedTitle = hasFairDate
-        ? `Design fairs in ${monthNames[fairDate.getMonth()]} ${fairDate.getFullYear()}`
-        : 'More design fairs';
-    }
+    const pool = sameMonth.length > 0 ? sameMonth : allFairs
+      .filter((f: any) => f.slug !== slug && f.start_date)
+      .sort((a: any, b: any) => {
+        if (!hasFairDate) return 0;
+        return Math.abs(new Date(a.start_date).getTime() - fairDate.getTime())
+             - Math.abs(new Date(b.start_date).getTime() - fairDate.getTime());
+      });
+
+    relatedFairs = pool.slice(0, 5);
+    relatedTitle = hasFairDate
+      ? `Design fairs in ${monthNames[fairDate.getMonth()]} ${fairDate.getFullYear()}`
+      : 'More design fairs';
   }
 
   if (citiesRes.ok) citiesMapping = await citiesRes.json();
   if (countriesRes.ok) countriesMapping = await countriesRes.json();
 
 } catch (e) {
+  fetchFailed = true;
   console.error('[Fair Slug] Fail to fetch data:', e);
 }
 
+// An upstream fetch failure is transient, not "not found" — don't tell
+// crawlers this URL is permanently gone when the CDN proxy just hiccupped.
+if (fetchFailed) {
+  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
+}
+
 if (!fair) {
-  return Astro.redirect('/404');
+  return new Response(null, { status: 404 });
 }
 
 function getPeriod(startStr: string, endStr: string) {

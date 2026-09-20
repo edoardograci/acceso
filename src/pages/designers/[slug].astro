@@ -41,7 +41,8 @@ try {
   const studiosUrl = `${domain}/test-studios.json`;
   
   const response = await fetch(studiosUrl);
-  if (response.ok) {
+  if (!response.ok) throw new Error('Failed to fetch studios');
+  {
     const rawStudios: Studio[] = await response.json();
     const mappedStudios = rawStudios;
     studio = mappedStudios.find(s => s.slug === slug) || null;
@@ -76,15 +77,23 @@ try {
         }
       }
     }
-  } else {
-    throw new Error('Failed to fetch studios');
   }
 } catch (e) {
   error = e;
   console.error('Failure to fetch data:', e);
 }
 
-if (!studio && !error) {
+// An upstream fetch failure is not "not found" — it's transient. Serving it
+// as a 200 page titled "Loading..." tells Google (and anyone who hits this
+// URL while the CDN proxy is having a bad moment) that this is the real,
+// permanent content of the page. A 503 says "try again later" and, with
+// Retry-After, keeps crawlers from treating the failure as a signal to drop
+// the URL the way a real 404 would.
+if (error) {
+  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
+}
+
+if (!studio) {
   return new Response(null, { status: 404 });
 }
 
