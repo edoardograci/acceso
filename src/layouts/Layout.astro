@@ -52,7 +52,14 @@ const baseGraph: any[] = siteUrl
       organization({
         url: siteUrl,
         name: 'Acceso',
+        description: DEFAULT_DESCRIPTION,
         logo: new URL('/icon.svg', Astro.site).toString(),
+        sameAs: [
+          'https://instagram.com/acceso_design',
+          'https://linkedin.com/company/accesodesign',
+          'https://pinterest.com/accesodesign/',
+        ],
+        contactEmail: 'hello@acceso.design',
       }),
       website({ url: siteUrl, name: 'Acceso' }),
     ]

@@ -42,8 +42,10 @@ export function itemList(params: { url: string; name: string; items: Array<{ url
 export function organization(params: {
   url: string;
   name: string;
+  description?: string;
   logo?: string;
   sameAs?: string[];
+  contactEmail?: string;
 }) {
   return {
     '@context': 'https://schema.org',
@@ -51,8 +53,21 @@ export function organization(params: {
     '@id': `${params.url}#organization`,
     name: params.name,
     url: params.url,
+    ...(params.description ? { description: params.description } : {}),
     ...(params.logo ? { logo: params.logo } : {}),
     ...(params.sameAs?.length ? { sameAs: params.sameAs } : {}),
+    // No public office, so no PostalAddress here — inventing one would be
+    // worse than omitting it. contactEmail is the real, verifiable trust
+    // anchor for a fully-online business like this one.
+    ...(params.contactEmail
+      ? {
+          contactPoint: {
+            '@type': 'ContactPoint',
+            email: params.contactEmail,
+            contactType: 'customer support',
+          },
+        }
+      : {}),
   };
 }
 
