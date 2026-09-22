@@ -3,9 +3,17 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import type { Studio, Museum, University } from '../lib/types';
-import { breadcrumbList, itemList } from '../lib/seo/schema';
+import { breadcrumbList, itemList, faqPage } from '../lib/seo/schema';
 import { readJsonFromBucket, toArray, trimArrayForMap } from '../lib/readJson';
+import { normalizeImage } from '../lib/images';
+import { homeFaqs } from '../lib/homeFaqs';
 import type { Env } from '../env.d';
+import HomeStats from './home/HomeStats.astro';
+import HomeDirectory from './home/HomeDirectory.astro';
+import HomeCities from './home/HomeCities.astro';
+import HomeSpotlight from './home/HomeSpotlight.astro';
+import HomeContribute from './home/HomeContribute.astro';
+import HomeFaq from './home/HomeFaq.astro';
 
 const typeParam = Astro.url.searchParams.get('type') || 'designers';
 const itemType = typeParam === 'schools' ? 'university' : typeParam === 'museums' ? 'museum' : 'studio';
@@ -50,19 +58,25 @@ const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
 let studios: Studio[] = [];
 let museums: Museum[] = [];
 let universities: University[] = [];
+let citiesList: any[] = [];
+let countriesList: any[] = [];
 let error = null;
 
 try {
   // Read directly from the JSON R2 bucket (no self-fetch hop); always fresh.
-  const [studiosData, museumsData, universitiesData] = await Promise.all([
+  const [studiosData, museumsData, universitiesData, citiesData, countriesData] = await Promise.all([
     readJsonFromBucket('test-studios.json', env, Astro.url.origin),
     readJsonFromBucket('museums.json', env, Astro.url.origin),
     readJsonFromBucket('universities.json', env, Astro.url.origin),
+    readJsonFromBucket('test-cities.json', env, Astro.url.origin),
+    readJsonFromBucket('test-countries.json', env, Astro.url.origin),
   ]);
 
   studios = trimArrayForMap(toArray(studiosData)) as Studio[];
   museums = trimArrayForMap(toArray(museumsData)) as Museum[];
   universities = trimArrayForMap(toArray(universitiesData)) as University[];
+  citiesList = toArray(citiesData);
+  countriesList = toArray(countriesData);
 } catch (e) {
   error = e;
   console.error('[Map] Failed to fetch data:', e);
@@ -131,6 +145,33 @@ const quickNavCities = TARGET_CITIES
 const quickNavImageWidth = 640;
 const quickNavImageHeight = 176;
 
+// ── Homepage sections: stats strip + "explore by city" ──────────────────────
+const homeStats = {
+  cities: citiesList.length,
+  studios: studios.length,
+  countries: countriesList.length,
+};
+
+// A handful of cities already have a bespoke, art-directed cover in
+// /images/quick-nav; everything else falls back to a real studio photo from
+// that city so the cards never need a placeholder.
+function representativeImageForCity(slug: string): string | null {
+  const match = (studios as any[]).find((s) => citySlugFor(s) === slug && s.cover);
+  return match ? normalizeImage(match.cover, Astro, { width: 480 }) : null;
+}
+
+const topCityCards = citiesList
+  .filter((c: any) => c.slug && c.name)
+  .map((c: any) => ({
+    name: c.name as string,
+    slug: c.slug as string,
+    count: countForCity(studios, c.slug),
+  }))
+  .filter((c) => c.count > 0)
+  .sort((a, b) => b.count - a.count)
+  .slice(0, 8)
+  .map((c) => ({ ...c, image: representativeImageForCity(c.slug) }));
+
 const mapFilters = [
   { label: 'Designers', href: '/?type=designers', active: typeParam === 'designers', type: 'designers' },
   { label: 'Schools', href: '/?type=schools', active: typeParam === 'schools', type: 'universities' },
@@ -181,7 +222,9 @@ const cityItemListSchema = itemList({
   })),
 });
 
-const pageSchema = { '@graph': [breadcrumbs, cityItemListSchema] };
+const homeFaqSchema = faqPage(homeFaqs.map((f) => ({ q: f.q, a: f.a.replace(/<[^>]+>/g, '') })));
+
+const pageSchema = { '@graph': [breadcrumbs, cityItemListSchema, homeFaqSchema] };
 
 const seoTypeKeyword = itemType === 'museum' ? 'museums and foundations' : itemType === 'university' ? 'design schools' : 'furniture and industrial design studios';
 const seoKeywords = `${seoTypePlural}, ${seoTypeKeyword}, design map, browse designers by city, ${topCities.slice(0, 6).map((c) => c.name).join(', ')}`;
@@ -413,6 +456,15 @@ const faqs = [
       </div>
     </main>
 
+    <div class="home-sections is-hidden">
+      <HomeStats stats={homeStats} />
+      <HomeDirectory />
+      <HomeCities cities={topCityCards} />
+      <HomeSpotlight />
+      <HomeContribute />
+      <HomeFaq />
+    </div>
+
     <script is:inline define:vars={{ allStudios: studios, studiosWithCoords: currentDataWithCoords, allStudiosDataByType: { studio: studios, museum: museums, university: universities }, studioSlug: itemSlug, itemType }}>
       // Full dataset (every studio, with or without coordinates) powers the
       // list/lists. Only the coordinate-bearing subset is shown on the map.
@@ -479,6 +531,24 @@ const faqs = [
     overflow: hidden;
     display: flex;
     flex-direction: column;
+  }
+
+  /* Below-the-fold homepage sections (stats, directory, cities, spotlight,
+     contribute, FAQ). These live outside .map-explore-page's fixed-height,
+     overflow-hidden viewport, so the page scrolls normally once past the
+     map — same width rhythm as the rest of the site (info/directory pages). */
+  .home-sections {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 72px 40px 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 760px) {
+    .home-sections {
+      padding: 56px 16px 0;
+    }
   }
 
   .sr-only {
@@ -1159,7 +1229,6 @@ const faqs = [
 
   .studio-card:hover {
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
-    border-color: var(--color-black);
     transform: translateY(-2px);
   }
 
@@ -1336,8 +1405,37 @@ const faqs = [
       min-height: calc(100dvh - var(--navbar-height));
     }
 
-    .map-page-root :global(footer) {
+    .home-sections {
+      padding-top: 24px;
+      max-width: none;
+      margin: 0;
+    }
+
+    .home-sections.is-hidden {
       display: none;
+    }
+
+    footer.is-hidden,
+    #page-footer.is-hidden {
+      display: none;
+    }
+
+    .map-page-root #page-footer {
+      display: none;
+    }
+
+    .map-page-root #page-footer.is-placed {
+      display: block;
+    }
+
+    .explore-panel-inner .home-sections {
+      margin-top: 24px;
+      padding: 24px 0 0;
+      max-width: none;
+    }
+
+    .explore-panel-inner > .home-sections + * {
+      margin-top: 24px;
     }
 
     .explore-panel-backdrop {

@@ -1,0 +1,123 @@
+---
+interface Props {
+  stats: { cities: number; studios: number; countries: number };
+}
+
+const { stats } = Astro.props;
+
+function formatCount(value: number, fallback: string) {
+  if (!value) return fallback;
+  if (value >= 1000) return `${Math.floor(value / 100) / 10}k`;
+  return value.toLocaleString('en-US');
+}
+---
+
+<section class="home-stats" aria-labelledby="home-stats-heading">
+  <div class="home-stats-heading">
+    <h2 id="home-stats-heading">A growing map of local design</h2>
+  </div>
+
+  <div class="stats-strip" aria-label="Acceso coverage">
+    <div>
+      <strong>{formatCount(stats.cities, '300+')}</strong>
+      <span>Cities mapped</span>
+    </div>
+    <div>
+      <strong>{formatCount(stats.studios, '1k+')}</strong>
+      <span>Design studios</span>
+    </div>
+    <div>
+      <strong>{formatCount(stats.countries, '60+')}</strong>
+      <span>Countries covered</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .home-stats {
+    margin-bottom: 96px;
+  }
+
+  .eyebrow {
+    margin: 0 0 14px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  .home-stats-heading {
+    margin-bottom: 32px;
+  }
+
+  .home-stats-heading h2 {
+    margin: 0;
+    max-width: 20ch;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: clamp(30px, 3.6vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.05em;
+    color: var(--color-black);
+  }
+
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--color-stroke);
+    border-bottom: 1px solid var(--color-stroke);
+  }
+
+  .stats-strip div {
+    min-height: 164px;
+    padding: 24px;
+    border-right: 1px solid var(--color-stroke);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .stats-strip div:last-child {
+    border-right: 0;
+  }
+
+  .stats-strip strong {
+    font-family: var(--font-sans);
+    font-size: clamp(56px, 8vw, 122px);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+    color: var(--color-black);
+  }
+
+  .stats-strip span {
+    max-width: 16ch;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 760px) {
+    .home-stats {
+      margin-bottom: 72px;
+    }
+
+    .stats-strip {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-strip div {
+      min-height: 112px;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-stroke);
+    }
+
+    .stats-strip div:last-child {
+      border-bottom: 0;
+    }
+  }
+</style>

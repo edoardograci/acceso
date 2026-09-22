@@ -185,6 +185,51 @@ function init() {
     }
   }
 
+  function syncHomeSectionsPosition() {
+    const homeSections = document.querySelector('.home-sections');
+    const footer = document.getElementById('page-footer');
+    const explorePanel = document.getElementById('explore-panel');
+    const mapExplorePage = document.querySelector('.map-explore-page');
+    const mapPageRoot = document.querySelector('.map-page-root');
+    if (!homeSections || !explorePanel || !mapExplorePage || !mapPageRoot) return;
+
+    const explorePanelInner = explorePanel.querySelector('.explore-panel-inner');
+    if (!explorePanelInner) return;
+
+    const mobile = window.innerWidth <= 1024;
+
+    if (mobile) {
+      homeSections.classList.add('is-hidden');
+      footer?.classList.add('is-hidden');
+      if (homeSections.parentElement !== explorePanelInner) {
+        explorePanelInner.appendChild(homeSections);
+      }
+      if (footer && footer.parentElement !== explorePanelInner) {
+        explorePanelInner.appendChild(footer);
+      }
+      homeSections.classList.remove('is-hidden');
+      footer?.classList.remove('is-hidden');
+      footer?.classList.add('is-placed');
+    } else {
+      homeSections.classList.add('is-hidden');
+      footer?.classList.add('is-hidden');
+      if (homeSections.parentElement !== mapPageRoot) {
+        mapPageRoot.insertBefore(homeSections, mapExplorePage.nextSibling);
+      }
+      if (footer && footer.parentElement !== mapPageRoot) {
+        const nextSibling = homeSections.nextSibling;
+        if (nextSibling) {
+          mapPageRoot.insertBefore(footer, nextSibling);
+        } else {
+          mapPageRoot.appendChild(footer);
+        }
+      }
+      homeSections.classList.remove('is-hidden');
+      footer?.classList.remove('is-hidden');
+      footer?.classList.add('is-placed');
+    }
+  }
+
   function setPanelSnap(mode: 'compact' | 'full') {
     if (!isMobilePanel()) return;
 
@@ -853,6 +898,7 @@ function init() {
 
   window.addEventListener('resize', () => {
     setTimeout(() => mapInstance?.map?.resize(), 200);
+    syncHomeSectionsPosition();
     if (!isMobilePanel()) {
       closeMobilePanel();
       explorePanel?.classList.remove('is-compact');
@@ -919,6 +965,8 @@ function init() {
     explorePanelBackdrop?.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
+
+  syncHomeSectionsPosition();
 }
 
 init();

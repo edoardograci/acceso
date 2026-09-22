@@ -1,0 +1,197 @@
+---
+interface CityCard {
+  name: string;
+  slug: string;
+  count: number;
+  image: string | null;
+}
+
+interface Props {
+  cities: CityCard[];
+  basePath?: string;
+}
+
+const { cities, basePath = '/designers/in' } = Astro.props;
+---
+
+{cities.length > 0 && (
+  <section class="home-cities" aria-labelledby="home-cities-heading">
+    <div class="home-cities-heading">
+      <h2 id="home-cities-heading">Explore local design scenes</h2>
+      <p class="home-cities-lead">Discover the cities with the most independent design studios on Acceso.</p>
+    </div>
+
+    <div class="city-grid">
+      {cities.map((city) => (
+        <a href={`${basePath}/${city.slug}`} class="city-tile" data-city={city.name}>
+          <div class="city-tile-image-bg">
+            {city.image && (
+              <img src={city.image} alt={city.name} loading="lazy" decoding="async" />
+            )}
+            <div class="city-tile-overlay"></div>
+          </div>
+          <div class="city-tile-content">
+            <h3 class="city-tile-name">{city.name}</h3>
+            <span class="city-tile-count">{city.count} designers</span>
+          </div>
+          <svg class="city-tile-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </a>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .home-cities {
+    margin-bottom: 96px;
+  }
+
+  .eyebrow {
+    margin: 0 0 14px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  .home-cities-heading {
+    max-width: 640px;
+    margin-bottom: 32px;
+  }
+
+  .home-cities-heading h2 {
+    margin: 0 0 12px;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: clamp(30px, 3.6vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.05em;
+    color: var(--color-black);
+  }
+
+  .home-cities-lead {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+  }
+
+  .city-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .city-tile {
+    position: relative;
+    height: 176px;
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px solid var(--color-stroke);
+    overflow: hidden;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), border-color 0.2s ease;
+  }
+
+  .city-tile:hover {
+    transform: translateY(-4px);
+    color: inherit;
+  }
+
+  .city-tile-image-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: var(--color-bg-secondary);
+  }
+
+  .city-tile-image-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .city-tile:hover .city-tile-image-bg img {
+    transform: scale(1.08);
+  }
+
+  .city-tile-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.15) 55%, transparent 100%);
+  }
+
+  .city-tile-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .city-tile-name {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 19px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: #fff;
+  }
+
+  .city-tile-count {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .city-tile-chevron {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 1;
+    color: #fff;
+    transition: transform 0.2s ease;
+  }
+
+  .city-tile:hover .city-tile-chevron {
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 1024px) {
+    .city-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .home-cities {
+      margin-bottom: 72px;
+    }
+
+    .city-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .city-tile {
+      height: 148px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .city-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

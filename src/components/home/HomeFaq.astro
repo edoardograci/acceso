@@ -1,0 +1,157 @@
+---
+import { homeFaqs } from '../../lib/homeFaqs';
+---
+
+<section class="home-faq" aria-labelledby="home-faq-heading">
+  <div class="home-faq-grid">
+    <div class="home-faq-heading">
+      <h2 id="home-faq-heading">Frequently asked questions</h2>
+    </div>
+
+    <div class="home-faq-list">
+      {homeFaqs.map((f) => (
+        <details class="home-faq-item" name="home-faq">
+          <summary>
+            <span>{f.q}</span>
+            <svg class="home-faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </summary>
+          <p set:html={f.a} />
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .home-faq {
+    margin-bottom: 96px;
+  }
+
+  .eyebrow {
+    margin: 0 0 14px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  .home-faq-heading {
+    margin-bottom: 28px;
+  }
+
+  .home-faq-heading h2 {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: clamp(30px, 3.6vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.05em;
+    color: var(--color-black);
+  }
+
+  .home-faq-list {
+    max-width: 880px;
+    border-top: 1px solid var(--color-stroke);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .home-faq-item {
+    border-bottom: 1px solid var(--color-stroke);
+  }
+
+  .home-faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 4px;
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .home-faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .home-faq-chevron {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: transform 0.25s ease;
+  }
+
+  .home-faq-item[open] .home-faq-chevron {
+    transform: rotate(180deg);
+  }
+
+  .home-faq-item p {
+    margin: 0;
+    padding: 0 4px 22px;
+    max-width: 68ch;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+  }
+
+  .home-faq-item p :global(a) {
+    color: var(--color-black);
+    text-decoration: underline;
+  }
+
+  @media (min-width: 1025px) {
+    .home-faq-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .home-faq-heading {
+      grid-column: 1;
+      margin-bottom: 0;
+    }
+
+    .home-faq-list {
+      grid-column: 2;
+      max-width: none;
+      border-top: 1px solid var(--color-stroke);
+      display: block;
+    }
+
+    .home-faq-item {
+      border-bottom: 1px solid var(--color-stroke);
+    }
+
+    .home-faq-item p {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .home-faq {
+      margin-bottom: 72px;
+    }
+
+    .home-faq-item summary {
+      font-size: 16px;
+      padding: 18px 2px;
+    }
+
+    .home-faq-item p {
+      padding: 0 2px 18px;
+      font-size: 14px;
+    }
+  }
+</style>

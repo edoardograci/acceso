@@ -4,9 +4,26 @@ import { normalizeImage } from '../lib/images';
 interface Props {
   items: Array<{ slug: string; name: string; designer: string | null; cover: string | null }>;
   weekLabel?: string;
+  /** Overrides the intro card's body copy. Defaults to the /discover wording. */
+  introText?: string;
+  /** When set, renders a button in the intro card linking to this href (e.g. "/discover"). */
+  ctaHref?: string;
+  /** Label for the optional CTA button. Defaults to "See all projects". */
+  ctaLabel?: string;
+  /** Mobile-only CTA label. Defaults to `ctaLabel`. */
+  ctaLabelMobile?: string;
+  variant?: 'default' | 'yellow';
 }
 
-const { items, weekLabel } = Astro.props;
+const {
+  items,
+  weekLabel,
+  introText = 'A weekly selection of furniture, product and material design projects from independent studios worldwide.',
+  ctaHref,
+  ctaLabel = 'See all projects',
+  ctaLabelMobile,
+  variant = 'default',
+} = Astro.props;
 
 // Resolve designer names to their profile slugs so the names can link through.
 let studioSlugs = new Map<string, string>();
@@ -25,12 +42,21 @@ try {
 {items.length > 0 && (
   <section class="weekly-spotlight" id="discover-spotlight">
     <div class="spotlight-cards">
-      <div class="spotlight-card spotlight-intro">
+      <div class="spotlight-card spotlight-intro" class:list={[variant === 'yellow' ? 'spotlight-intro--yellow' : 'spotlight-intro--default']}>
         {weekLabel && <span class="spotlight-badge">{weekLabel}</span>}
         <h2 class="spotlight-heading">Weekly<br />Spotlight</h2>
         <p class="spotlight-intro-text">
-          Three industrial design projects selected each week, highlighting furniture, products and material explorations from independent studios around the world.
+          {introText}
         </p>
+        {ctaHref && (
+          <a href={ctaHref} class="spotlight-cta">
+            <span class="spotlight-cta-desktop">{ctaLabel}</span>
+            <span class="spotlight-cta-mobile">{ctaLabelMobile ?? ctaLabel}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </a>
+        )}
       </div>
 
       {items.map((item) => {
@@ -112,6 +138,22 @@ try {
     background: transparent;
   }
 
+  .spotlight-intro--default {
+    background: transparent;
+    border-color: var(--color-stroke);
+  }
+
+  .spotlight-intro--yellow .spotlight-badge {
+    background: var(--color-black);
+    border-color: var(--color-black);
+    color: #fff;
+  }
+
+  .spotlight-intro--yellow {
+    background: rgba(237, 255, 119, 0.5);
+    border-color: rgba(237, 255, 119, 0.5);
+  }
+
   .spotlight-heading {
     font-family: var(--font-sans);
     font-size: clamp(34px, 4vw, 52px);
@@ -129,6 +171,53 @@ try {
     line-height: 1.5;
     color: var(--color-text-muted);
     margin: 0;
+  }
+
+  .spotlight-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    margin-top: 18px;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    border: 1px solid var(--color-stroke);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .spotlight-cta:hover {
+    background: #EBEBED;
+    border-color: #D4D4D8;
+    color: var(--color-black);
+  }
+
+  .spotlight-cta svg {
+    flex-shrink: 0;
+  }
+
+  .spotlight-cta-desktop {
+    display: inline;
+  }
+
+  .spotlight-cta-mobile {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    .spotlight-cta-desktop {
+      display: none;
+    }
+
+    .spotlight-cta-mobile {
+      display: inline;
+    }
   }
 
   .spotlight-link {

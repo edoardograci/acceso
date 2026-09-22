@@ -1,0 +1,65 @@
+---
+import WeeklySpotlight from '../WeeklySpotlight.astro';
+import { getWeeklySpotlight } from '../../lib/spotlight';
+
+let rawItems: any[] = [];
+
+try {
+  const moodboardUrl = new URL('/cdn/moodboard.json', Astro.url.origin).toString();
+  const response = await fetch(moodboardUrl);
+  if (!response.ok) throw new Error('CDN proxy not ready');
+  rawItems = await response.json();
+} catch {
+  try {
+    const localUrl = new URL('/moodboard.json', Astro.url.origin).toString();
+    const localRes = await fetch(localUrl);
+    rawItems = await localRes.json();
+  } catch {
+    rawItems = [];
+  }
+}
+
+const { spotlightItems, weekLabel } = getWeeklySpotlight(rawItems);
+---
+
+{spotlightItems.length > 0 && (
+  <section class="home-spotlight-section" aria-labelledby="home-spotlight-heading">
+    <h2 id="home-spotlight-heading" class="sr-only-heading">Weekly spotlight</h2>
+    <WeeklySpotlight
+      items={spotlightItems}
+      weekLabel={weekLabel}
+      introText="A weekly selection of furniture, product and material design projects from independent studios worldwide."
+      ctaHref="/discover"
+      ctaLabel="See all projects"
+      ctaLabelMobile="See all"
+      variant="default"
+    />
+  </section>
+)}
+
+<style>
+  .home-spotlight-section {
+    margin-bottom: 96px;
+  }
+
+  /* Visually hidden — WeeklySpotlight already renders its own on-page
+     "Weekly Spotlight" heading; this just gives the section an accessible
+     landmark name without duplicating a visible heading. */
+  .sr-only-heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 760px) {
+    .home-spotlight-section {
+      margin-bottom: 72px;
+    }
+  }
+</style>
