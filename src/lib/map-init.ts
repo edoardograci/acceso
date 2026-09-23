@@ -369,6 +369,40 @@ export async function initializeMap(
           }
         }
         mapStyle = styleJson;
+
+// CARTO-style label treatment: uppercase + smaller + tracked, applied only
+// to the layers where all-caps actually stays legible (countries, capitals).
+// Regular town/village names are left as-is — uppercase at 9-12px turns to
+// mush, which is why CARTO itself doesn't cap those either.
+const CARTO_LABELS: Record<string, { size: any; letterSpacing?: number }> = {
+  label_country_1:   { size: ['interpolate', ['linear'], ['zoom'], 1, 8, 4, 14], letterSpacing: 0.01 },
+  label_country_2:   { size: ['interpolate', ['linear'], ['zoom'], 2, 8, 5, 14], letterSpacing: 0.01 },
+  label_country_3:   { size: ['interpolate', ['linear'], ['zoom'], 3, 8, 7, 14], letterSpacing: 0.01 },
+  label_city_capital:{ size: ['interpolate', ['exponential', 1.2], ['zoom'], 4, 10, 7, 12, 11, 17], letterSpacing: 0.01 },
+};
+
+for (const layer of styleJson.layers) {
+  //const colorOverride = COLOR_OVERRIDES[layer.id];
+  //if (colorOverride) layer.paint = { ...layer.paint, ...colorOverride };
+
+  // Uppercase + resize the CARTO-style layers.
+  const cartoLabel = CARTO_LABELS[layer.id];
+  if (cartoLabel) {
+    layer.layout['text-transform'] = 'uppercase';
+    layer.layout['text-size'] = cartoLabel.size;
+    if (cartoLabel.letterSpacing) layer.layout['text-letter-spacing'] = cartoLabel.letterSpacing;
+  }
+
+  // Let road labels keep growing past zoom 14 instead of capping at 13px.
+  if (['highway-name-major', 'highway-name-minor', 'highway-name-path'].includes(layer.id)) {
+    layer.layout['text-size'] = ['interpolate', ['linear'], ['zoom'], 13, 12, 16, 14, 18, 16];
+  }
+
+  // Slightly crisper halo everywhere it already exists.
+  if (layer.type === 'symbol' && layer.paint?.['text-halo-color']) {
+    layer.paint['text-halo-width'] = Math.max(layer.paint['text-halo-width'] ?? 1, 1.2);
+  }
+}
       }
     }
   } catch (e) {
@@ -541,6 +575,8 @@ export async function initializeMap(
     const source: any = state.map.getSource('studios');
 
     try {
+
+      
       // MapLibre GL JS v4+ returns a Promise; v3 uses a callback.
       // Support both to be safe.
       const zoomResult = source.getClusterExpansionZoom(clusterId);
