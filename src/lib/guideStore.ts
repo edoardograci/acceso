@@ -75,6 +75,10 @@ function toEntry(slug: string, raw: any): GuideEntry | null {
   };
 }
 
+export function guideDate(d: Date | undefined): Date | undefined {
+  return d && Number.isFinite(d.getTime()) ? d : undefined;
+}
+
 /** Published guide or null (missing, invalid, or draft unless includeDrafts). */
 export async function getGuide(
   slug: string,
