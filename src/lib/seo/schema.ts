@@ -118,6 +118,8 @@ export function entityBusinessNodes(params: {
     description?: string | null;
     city?: string | null;
     country?: string | null;
+    address?: string | null;
+    image?: string | null;
   }>;
 }) {
   return params.items.map((it) => ({
@@ -125,12 +127,14 @@ export function entityBusinessNodes(params: {
     '@type': params.type,
     name: it.name,
     url: it.url,
+    ...(it.image ? { image: it.image } : {}),
     ...(it.website ? { sameAs: [it.website] } : {}),
     ...(it.description ? { description: it.description } : {}),
-    ...(it.city || it.country
+    ...(it.city || it.country || it.address
       ? {
           address: {
             '@type': 'PostalAddress',
+            ...(it.address ? { streetAddress: it.address } : {}),
             ...(it.city ? { addressLocality: it.city } : {}),
             ...(it.country ? { addressCountry: it.country } : {}),
           },
@@ -148,6 +152,8 @@ export function studioBusinessNodes(params: {
     description?: string | null;
     city?: string | null;
     country?: string | null;
+    address?: string | null;
+    image?: string | null;
   }>;
 }) {
   return entityBusinessNodes({ type: 'LocalBusiness', items: params.items });

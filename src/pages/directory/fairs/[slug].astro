@@ -8,6 +8,8 @@ import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
 import { entityTitle, entityDescription } from '../../../lib/seo/meta';
+import { readJsonFromBucket, toArray } from '../../../lib/readJson';
+import type { Env } from '../../../env.d';
 
 // Reusable Components
 import FairHeader from '../../../components/fair/FairHeader.astro';
@@ -20,10 +22,6 @@ import FairPromoCard from '../../../components/fair/FairPromoCard.astro';
 import ReportIssueModal from '../../../components/school/ReportIssueModal.astro';
 
 const { slug } = Astro.params;
-
-// R2 URLs
-const isDev = import.meta.env.DEV;
-const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
 
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -49,16 +47,17 @@ let countriesMapping: any[] = [];
 let fetchFailed = false;
 
 try {
-  const [fairsRes, citiesRes, countriesRes] = await Promise.all([
-    fetch(`${domain}/fairs.json`),
-    fetch(`${domain}/test-cities.json`),
-    fetch(`${domain}/test-countries.json`)
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const origin = Astro.url.origin;
+  const [rawFairs, citiesData, countriesData] = await Promise.all([
+    readJsonFromBucket('fairs.json', env, origin),
+    readJsonFromBucket('test-cities.json', env, origin),
+    readJsonFromBucket('test-countries.json', env, origin),
   ]);
 
-  if (!fairsRes.ok) throw new Error(`Failed to fetch fairs.json: ${fairsRes.status}`);
+  if (!rawFairs) throw new Error('Failed to read fairs.json');
 
-  const rawFairs = await fairsRes.json();
-  const allFairs = Array.isArray(rawFairs) ? rawFairs : (rawFairs.items || []);
+  const allFairs = toArray(rawFairs);
 
   fair = allFairs.find((f: any) => f.slug === slug) || null;
 
@@ -90,8 +89,8 @@ try {
       : 'More design fairs';
   }
 
-  if (citiesRes.ok) citiesMapping = await citiesRes.json();
-  if (countriesRes.ok) countriesMapping = await countriesRes.json();
+  citiesMapping = toArray(citiesData);
+  countriesMapping = toArray(countriesData);
 
 } catch (e) {
   fetchFailed = true;

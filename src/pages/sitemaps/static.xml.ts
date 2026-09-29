@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
+import { listGuides, guideDate } from '../../lib/guideStore';
 import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
 
-export const GET: APIRoute = ({ site }) => {
+export const GET: APIRoute = async ({ site, locals }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
 
   const lastmod = toW3CDate(new Date());
@@ -9,6 +10,25 @@ export const GET: APIRoute = ({ site }) => {
   // doesn't see these as changing every crawl.
   const privacyLastmod = '2025-12-30';
   const termsLastmod = '2025-12-30';
+
+  // Guides live in R2 (json bucket, guides/*.json). A failure here must never take
+  // down the rest of the sitemap, so it degrades to "no guide URLs".
+  let guideUrls: { loc: string; lastmod: string; changefreq: 'monthly'; priority: number }[] = [];
+  let guidesLastmod = lastmod;
+  try {
+    const env = (locals as any)?.runtime?.env || import.meta.env;
+    const guides = await listGuides(env);
+    guideUrls = guides.map((g) => ({
+      loc: new URL(`/guides/${g.slug}`, site).toString(),
+      lastmod: toW3CDate(guideDate(g.updatedDate) ?? guideDate(g.publishDate) ?? new Date()),
+      changefreq: 'monthly' as const,
+      priority: 0.6,
+    }));
+    // The index changes when any guide does, so mirror the newest guide date.
+    if (guideUrls.length) guidesLastmod = [...guideUrls.map((u) => u.lastmod)].sort().at(-1)!;
+  } catch (e) {
+    console.error('[sitemap] failed to list guides:', e);
+  }
 
   const urls = [
     { loc: new URL('/', site).toString(), lastmod, changefreq: 'daily' as const, priority: 1.0 },
@@ -20,6 +40,8 @@ export const GET: APIRoute = ({ site }) => {
     { loc: new URL('/directory/museums', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
     { loc: new URL('/directory/awards', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
     { loc: new URL('/directory/schools', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
+    { loc: new URL('/guides', site).toString(), lastmod: guidesLastmod, changefreq: 'weekly' as const, priority: 0.6 },
+    ...guideUrls,
     { loc: new URL('/info', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.5 },
     { loc: new URL('/submission', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.4 },
     // The HTML index at /sitemap is itself an indexable page.

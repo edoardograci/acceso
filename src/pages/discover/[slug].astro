@@ -8,6 +8,8 @@ import { normalizeImage } from '../../lib/images';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { breadcrumbList } from '../../lib/seo/schema';
 import { projectDescription } from '../../lib/seo/copy';
+import { readJsonFromBucket, toArray } from '../../lib/readJson';
+import type { Env } from '../../env.d';
 
 interface ProductImage {
   id: string;
@@ -39,44 +41,35 @@ const { slug } = Astro.params;
 
 let item: MoodboardItem | null = null;
 let error = null;
+let designerSlug: string | null = null;
 
 try {
-  const moodboardUrl = new URL('/cdn/moodboard.json', Astro.url.origin).toString();
-  const response = await fetch(moodboardUrl);
-  if (!response.ok) throw new Error('CDN Proxy Not Ready');
-  
-  const items: MoodboardItem[] = await response.json();
-  item = items.find(i => i.slug === slug) || null;
-} catch (e) {
-  try {
-     const localUrl = new URL('/moodboard.json', Astro.url.origin);
-     const localRes = await fetch(localUrl.toString());
-     const items: MoodboardItem[] = await localRes.json();
-     item = items.find(i => i.slug === slug) || null;
-  } catch (localErr) {
-     error = localErr;
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const origin = Astro.url.origin;
+  const [moodboardData, studiosData] = await Promise.all([
+    readJsonFromBucket('moodboard.json', env, origin),
+    readJsonFromBucket('test-studios.json', env, origin),
+  ]);
+  if (!moodboardData) throw new Error('Failed to read moodboard');
+
+  const items = toArray(moodboardData) as MoodboardItem[];
+  item = items.find((i) => i.slug === slug) || null;
+
+  if (item?.designer) {
+    const studios = toArray(studiosData);
+    designerSlug = studios.find((s: any) => s.name === item!.designer)?.slug || null;
   }
+} catch (e) {
+  error = e;
 }
 
-if (!item && !error) {
+if (error) {
+  return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
+}
+
+if (!item) {
   return Astro.redirect('/404');
 }
-
-async function getDesignerSlug(designerName: string | null): Promise<string | null> {
-  if (!designerName) return null;
-  try {
-    const studiosUrl = new URL('/cdn/test-studios.json', Astro.url.origin).toString();
-    const response = await fetch(studiosUrl);
-    if (!response.ok) return null;
-    const studios = await response.json();
-    const studio = studios.find((s: any) => s.name === designerName);
-    return studio?.slug || null;
-  } catch {
-    return null;
-  }
-}
-
-const designerSlug = item ? await getDesignerSlug(item.designer) : null;
 // The CMS omits `images` entirely on records without a gallery, so normalise it
 // once here rather than guarding each of the four uses below.
 const itemImages = item?.images ?? [];

@@ -96,7 +96,8 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    /* Using clip instead of hidden prevents breaking position: sticky in many browsers */
+    overflow-x: clip;
   }
 
   h1,

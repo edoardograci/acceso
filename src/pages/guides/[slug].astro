@@ -1,0 +1,35 @@
+---
+// Guides live in R2 (json bucket, guides/<slug>.json) and are rendered per request,
+// so uploading or editing a JSON file goes live without a rebuild.
+export const prerender = false;
+
+import { createMarkdownProcessor } from '@astrojs/markdown-remark';
+import GuideLayout from '../../layouts/GuideLayout.astro';
+import { expandGuideEmbeds, finalizeGuideHtml } from '../../lib/guides';
+import { getGuide, isValidGuideSlug } from '../../lib/guideStore';
+
+const { slug } = Astro.params;
+const env = (Astro.locals.runtime?.env || import.meta.env) as any;
+
+// Invalid slugs never reach R2. Missing, invalid or draft guides are a real 404.
+const entry = isValidGuideSlug(slug) ? await getGuide(slug, env) : null;
+if (!entry) {
+  return Astro.rewrite('/404');
+}
+
+// Syntax highlighting (Shiki/wasm) is off: it can't compile wasm inside a Worker
+// and guides don't need it.
+const processor = await createMarkdownProcessor({ syntaxHighlight: false });
+const markdown = expandGuideEmbeds(entry.data.body ?? '', entry.data.embeds ?? []);
+const { code } = await processor.render(markdown);
+const { html: bodyHtml, headings } = finalizeGuideHtml(code);
+
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, max-age=60, s-maxage=300, stale-while-revalidate=3600'
+);
+---
+
+<GuideLayout entry={entry} headings={headings}>
+  <Fragment set:html={bodyHtml} />
+</GuideLayout>

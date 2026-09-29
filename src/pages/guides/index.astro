@@ -1,0 +1,217 @@
+---
+// Guides live in R2 (json bucket, guides/*.json), so this page is server-rendered:
+// uploading a new guide shows up without a rebuild.
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { itemList } from '../../lib/seo/schema';
+import { listGuides } from '../../lib/guideStore';
+
+const env = (Astro.locals.runtime?.env || import.meta.env) as any;
+const guides = await listGuides(env); // published only, newest first
+
+// Cache at the edge / browser; new uploads appear within a few minutes.
+Astro.response.headers.set(
+  'Cache-Control',
+  'public, max-age=60, s-maxage=300, stale-while-revalidate=3600'
+);
+
+const listSchema = itemList({
+  url: '/guides',
+  name: 'Acceso Guides',
+  items: guides.map((g) => ({ url: `/guides/${g.id}`, name: g.data.title })),
+});
+---
+
+<Layout
+  title="Guides | Acceso"
+  description="Practical guides for design students and young designers, from competitions and portfolios to finding opportunities and starting a career in design."
+  schema={listSchema}
+>
+  <Navbar />
+
+  <main class="guides-page">
+    <div class="guides-inner">
+      <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Guides' }]} />
+
+      <header class="guides-hero">
+        <h1 class="guides-title">Guides</h1>
+        <p class="guides-description">
+          Practical guides for design students and young designers, from competitions and portfolios to finding opportunities and starting a career in design.
+        </p>
+      </header>
+
+      <div class="guides-grid">
+        {guides.map((g) => (
+          <a href={`/guides/${g.id}`} class="guide-card">
+            <div class="guide-card-image">
+              {g.data.coverImage && (
+                <img
+                  src={g.data.coverImage}
+                  alt={g.data.coverImageAlt || g.data.title}
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
+            </div>
+            <div class="guide-card-body">
+              {g.data.tags[0] && <span class="guide-card-kicker">{g.data.tags[0]}</span>}
+              <h2 class="guide-card-title">{g.data.title}</h2>
+              <p class="guide-card-excerpt">{g.data.lede || g.data.excerpt || g.data.description}</p>
+              {g.data.readingTime && <span class="guide-card-meta">{g.data.readingTime}</span>}
+            </div>
+          </a>
+        ))}
+
+        {guides.length === 0 && <p class="empty-state">New guides are coming soon.</p>}
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .guides-page {
+    background: var(--color-white);
+  }
+
+  .guides-inner {
+    max-width: 1600px; /* matches .navbar-inner so the breadcrumb lines up with the nav */
+    margin: 0 auto;
+    padding: var(--page-top-spacing) 40px 100px;
+  }
+
+  .guides-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 48px;
+    max-width: 640px;
+  }
+
+  .guides-title {
+    font-family: var(--font-sans);
+    font-size: clamp(40px, 5.5vw, 64px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: var(--color-black);
+    margin: 0;
+  }
+
+  .guides-description {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .guides-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px;
+  }
+
+  .guide-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    gap: 16px;
+    transition: transform 0.2s ease;
+  }
+
+  .guide-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .guide-card-image {
+    aspect-ratio: 1.4;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+  }
+
+  .guide-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .guide-card:hover .guide-card-image img {
+    transform: scale(1.04);
+  }
+
+  .guide-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .guide-card-kicker {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-gray);
+  }
+
+  .guide-card-title {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--color-black);
+    margin: 0;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .guide-card-excerpt {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  .guide-card-meta {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-gray);
+  }
+
+  .empty-state {
+    font-family: var(--font-sans);
+    color: var(--color-gray);
+    font-size: 14px;
+  }
+
+  @media (max-width: 1400px) {
+    .guides-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .guides-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .guides-inner {
+      padding: var(--page-top-spacing) 20px 60px;
+    }
+    .guides-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

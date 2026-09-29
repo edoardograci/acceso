@@ -8,18 +8,16 @@ import { breadcrumbList, itemList, faqPage, studioBusinessNodes } from '../../..
 import { normalizeImage } from '../../../lib/images';
 import type { Studio } from '../../../lib/types';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { readJsonFromBucket, toArray } from '../../../lib/readJson';
+import type { Env } from '../../../env.d';
 
 const { place } = Astro.params;
 
-const isDev = import.meta.env.DEV;
+const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
 const origin = Astro.url.origin;
-const domain = isDev ? 'https://json.acceso.design' : `${origin}/cdn`;
 
 async function fetchJson<T>(path: string): Promise<T> {
-  const u = `${domain}${path.startsWith('/') ? '' : '/'}${path}`;
-  const r = await fetch(u);
-  if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`);
-  return (await r.json()) as T;
+  return toArray(await readJsonFromBucket(path, env, origin)) as T;
 }
 
 type City = { slug: string; name: string; country?: string };
@@ -177,7 +175,6 @@ const updatedTimestamps = studios
 
 const lastVerifiedDate = updatedTimestamps.length ? new Date(Math.max(...updatedTimestamps)) : new Date();
 const lastVerifiedLabel = lastVerifiedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-const lastVerifiedIso = lastVerifiedDate.toISOString();
 
 const businessNodes = studioBusinessNodes({
   items: studios.slice(0, 50).map((s) => ({
@@ -187,6 +184,8 @@ const businessNodes = studioBusinessNodes({
     description: s.description,
     city: s.city,
     country: s.country || countryName,
+    address: s.address,
+    image: s.cover ? new URL(s.cover, Astro.site).toString() : null,
   })),
 });
 
@@ -212,7 +211,7 @@ const schema = {
   '@context': 'https://schema.org',
   '@graph': [
     breadcrumbList(crumbs),
-    { ...listSchema, dateModified: lastVerifiedIso },
+    listSchema, // Google requires ItemList to not have dateModified
     faqSchema,
     ...businessNodes,
   ],

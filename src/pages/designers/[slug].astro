@@ -9,6 +9,8 @@ import { ensureProtocol } from '../../lib/url';
 import type { Studio } from '../../lib/types';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { breadcrumbList } from '../../lib/seo/schema';
+import { readJsonFromBucket, toArray } from '../../lib/readJson';
+import type { Env } from '../../env.d';
 
 const { slug } = Astro.params;
 
@@ -36,15 +38,11 @@ let sameCountryStudios: Studio[] = [];
 let worldStudios: Studio[] = [];
 
 try {
-  const isDev = import.meta.env.DEV;
-  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  const studiosUrl = `${domain}/test-studios.json`;
-  
-  const response = await fetch(studiosUrl);
-  if (!response.ok) throw new Error('Failed to fetch studios');
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const raw = await readJsonFromBucket('test-studios.json', env, Astro.url.origin);
+  if (!raw) throw new Error('Failed to read studios');
   {
-    const rawStudios: Studio[] = await response.json();
-    const mappedStudios = rawStudios;
+    const mappedStudios = toArray(raw) as Studio[];
     studio = mappedStudios.find(s => s.slug === slug) || null;
     cover = studio ? (studio.cover || (studio as any).image || null) : null;
 

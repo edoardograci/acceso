@@ -6,6 +6,8 @@ import FilterSidebar from '../../components/FilterSidebar.astro';
 import Footer from '../../components/Footer.astro';
 import type { Studio} from '../../lib/types';
 import { itemList } from '../../lib/seo/schema';
+import { readJsonFromBucket, toArray } from '../../lib/readJson';
+import type { Env } from '../../env.d';
 
 // Fetch Data
 let studios: Studio[] = [];
@@ -31,34 +33,29 @@ function distributeGroupsForColumns(groups: any[], columns = 6) {
 }
 
 try {
-  const isDev = import.meta.env.DEV;
-  const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-  
-  const metadataUrl = `${domain}/metadata.json`;
-  const countriesUrl = `${domain}/test-countries.json`;
-  const citiesUrl = `${domain}/test-cities.json`;
-  
-  const [metaRes, cRes, ciRes] = await Promise.all([
-    fetch(metadataUrl),
-    fetch(countriesUrl),
-    fetch(citiesUrl)
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const origin = Astro.url.origin;
+
+  const [metaData, countriesData, citiesData, studiosData] = await Promise.all([
+    readJsonFromBucket('metadata.json', env, origin),
+    readJsonFromBucket('test-countries.json', env, origin),
+    readJsonFromBucket('test-cities.json', env, origin),
+    readJsonFromBucket('test-studios.json', env, origin),
   ]);
 
-  if (metaRes.ok && cRes.ok && ciRes.ok) {
-    metadata = await metaRes.json();
-    totalStudios = metadata.totalStudios || 0;
-    const countriesList = await cRes.json();
-    const citiesList = await ciRes.json();
-    
+  if (metaData && countriesData && citiesData) {
+    metadata = metaData;
+    totalStudios = (metadata as any).totalStudios || 0;
+    const countriesList = toArray(countriesData);
+    const citiesList = toArray(citiesData);
+
     cities = ['Milan', 'Berlin', 'Copenhagen', 'London', 'Paris', 'Seoul', 'Stockholm', 'Tokyo'];
 
-    // Load page-1 of ALL studios natively from test-studios.json (since no all/page-1 exists)
-    const studiosRes = await fetch(`${domain}/test-studios.json`);
-    if (studiosRes.ok) {
-      const rawAll = await studiosRes.json();
-      totalStudios = rawAll.length; // Use actual count from studios data
-      studios = rawAll.slice(0, 20);
-      
+    const rawAll = toArray(studiosData);
+    // Keep the metadata count if the studios file failed to load (toArray(null) is []).
+    if (rawAll.length) totalStudios = rawAll.length;
+    studios = rawAll.slice(0, 20);
+
       function studioMatchesCity(studio: any, citySlug: string, cityName: string): boolean {
         const studioSlug = (studio.city_slug || '').toLowerCase();
         const studioCity = (studio.city || '').toLowerCase();
@@ -110,7 +107,6 @@ try {
         return a.name.localeCompare(b.name);
       });
       orderedFilterData = distributeGroupsForColumns(sortedGroups, 6);
-    }
   }
 } catch (e) {
   error = e;

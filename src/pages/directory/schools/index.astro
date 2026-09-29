@@ -5,10 +5,11 @@ import Footer from '../../../components/Footer.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
 import FilterSidebar from '../../../components/FilterSidebar.astro';
 import { normalizeImage } from '../../../lib/images';
+import { readJsonFromBucket, toArray } from '../../../lib/readJson';
+import type { Env } from '../../../env.d';
 
-// R2 URLs
-const isDev = import.meta.env.DEV;
-const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+const origin = Astro.url.origin;
 
 let universities = [];
 let error = null;
@@ -41,20 +42,19 @@ function distributeGroupsForColumns(groups: any[], columns = 3) {
 }
 
 try {
-  const [uRes, cRes, ciRes] = await Promise.all([
-    fetch(`${domain}/universities.json`),
-    fetch(`${domain}/test-countries.json`),
-    fetch(`${domain}/test-cities.json`)
+  const [universitiesData, countriesData, citiesData] = await Promise.all([
+    readJsonFromBucket('universities.json', env, origin),
+    readJsonFromBucket('test-countries.json', env, origin),
+    readJsonFromBucket('test-cities.json', env, origin),
   ]);
 
-  if (uRes.ok) {
-    const data = await uRes.json();
-    universities = Array.isArray(data) ? data : (data.items || []);
+  if (universitiesData) {
+    universities = toArray(universitiesData);
   }
 
-  if (cRes.ok && ciRes.ok) {
-    const countriesList = await cRes.json();
-    const citiesList = await ciRes.json();
+  if (countriesData && citiesData) {
+    const countriesList = toArray(countriesData);
+    const citiesList = toArray(citiesData);
     const countryNames = Object.fromEntries(countriesList.map((c: any) => [c.slug, c.name]));
 
     // Count universities per city from the actual data

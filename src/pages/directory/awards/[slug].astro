@@ -8,6 +8,8 @@ import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList, faqPage } from '../../../lib/seo/schema';
 import { entityTitle, entityDescription } from '../../../lib/seo/meta';
+import { readJsonFromBucket, toArray } from '../../../lib/readJson';
+import type { Env } from '../../../env.d';
 
 // Reusable Award Components
 import AwardHeader from '../../../components/award/AwardHeader.astro';
@@ -19,25 +21,22 @@ import AwardPromoCard from '../../../components/award/AwardPromoCard.astro';
 
 const { slug } = Astro.params;
 
-// R2 URLs
-const isDev = import.meta.env.DEV;
-const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-
 let award: any = null;
 let relatedAwards: any[] = [];
 let citiesMapping: any[] = [];
 let fetchFailed = false;
 
 try {
-  const [awardsRes, citiesRes] = await Promise.all([
-    fetch(`${domain}/awards.json`),
-    fetch(`${domain}/test-cities.json`)
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const origin = Astro.url.origin;
+  const [awardsData, citiesData] = await Promise.all([
+    readJsonFromBucket('awards.json', env, origin),
+    readJsonFromBucket('test-cities.json', env, origin),
   ]);
 
-  if (!awardsRes.ok) throw new Error(`Failed to fetch awards.json: ${awardsRes.status}`);
+  if (!awardsData) throw new Error('Failed to read awards.json');
 
-  const rawAwards = await awardsRes.json();
-  const allAwards = Array.isArray(rawAwards) ? rawAwards : (rawAwards.items || []);
+  const allAwards = toArray(awardsData);
 
   award = allAwards.find((a: any) => a.slug === slug) || null;
 
@@ -53,7 +52,7 @@ try {
       .slice(0, 10);
   }
 
-  if (citiesRes.ok) citiesMapping = await citiesRes.json();
+  citiesMapping = toArray(citiesData);
 
 } catch (e) {
   fetchFailed = true;

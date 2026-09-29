@@ -7,6 +7,8 @@ import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
 import { entityTitle, entityDescription } from '../../../lib/seo/meta';
+import { readJsonFromBucket, toArray } from '../../../lib/readJson';
+import type { Env } from '../../../env.d';
 
 // Reusable Museum Components
 import MuseumHeader from '../../../components/museum/MuseumHeader.astro';
@@ -19,10 +21,6 @@ import ReportIssueModal from '../../../components/school/ReportIssueModal.astro'
 
 const { slug } = Astro.params;
 
-// R2 URLs
-const isDev = import.meta.env.DEV;
-const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
-
 let museum: any = null;
 let relatedMuseums: any[] = [];
 let citiesMapping: any[] = [];
@@ -30,18 +28,17 @@ let countriesMapping: any[] = [];
 let fetchFailed = false;
 
 try {
-  const [musRes, citiesRes, countriesRes] = await Promise.all([
-    fetch(`${domain}/museums.json`),
-    fetch(`${domain}/test-cities.json`),
-    fetch(`${domain}/test-countries.json`)
+  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+  const origin = Astro.url.origin;
+  const [musData, citiesData, countriesData] = await Promise.all([
+    readJsonFromBucket('museums.json', env, origin),
+    readJsonFromBucket('test-cities.json', env, origin),
+    readJsonFromBucket('test-countries.json', env, origin),
   ]);
 
-  if (!musRes.ok) throw new Error(`Failed to fetch museums.json: ${musRes.status}`);
+  if (!musData) throw new Error('Failed to read museums.json');
 
-  const rawData = await musRes.json();
-  const allMuseums = Array.isArray(rawData) ? rawData : (rawData.items || []);
-
-  const processedMuseums = allMuseums;
+  const processedMuseums = toArray(musData);
 
   museum = processedMuseums.find((m: any) => m.slug === slug) || null;
 
@@ -61,8 +58,8 @@ try {
       .slice(0, 5);
   }
 
-  if (citiesRes.ok) citiesMapping = await citiesRes.json();
-  if (countriesRes.ok) countriesMapping = await countriesRes.json();
+  citiesMapping = toArray(citiesData);
+  countriesMapping = toArray(countriesData);
 
 } catch (e) {
   fetchFailed = true;

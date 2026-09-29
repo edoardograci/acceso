@@ -7,18 +7,18 @@ import DirectoryCard from '../../../../components/DirectoryCard.astro';
 import { normalizeImage } from '../../../../lib/images';
 import { withCovers } from '../../../../lib/moodboard';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
+import { readJsonFromBucket, toArray } from '../../../../lib/readJson';
+import type { Env } from '../../../../env.d';
 
 const place = Astro.params.place!;
 
-const isDev = import.meta.env.DEV;
+const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
 const origin = Astro.url.origin;
-const domain = isDev ? 'https://json.acceso.design' : `${origin}/cdn`;
 
 async function fetchJson<T>(path: string): Promise<T> {
-  const u = `${domain}${path.startsWith('/') ? '' : '/'}${path}`;
-  const r = await fetch(u);
-  if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`);
-  return (await r.json()) as T;
+  const data = await readJsonFromBucket(path, env, origin);
+  if (data == null) throw new Error(`Failed to read ${path}`);
+  return data as T;
 }
 
 function asArray(d: any): any[] {

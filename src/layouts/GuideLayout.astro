@@ -1,0 +1,1156 @@
+---
+import type { GuideEntry } from '../lib/guideStore';
+import Layout from './Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { breadcrumbList, faqPage } from '../lib/seo/schema';
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  entry: GuideEntry;
+  headings: Heading[];
+}
+
+const { entry, headings } = Astro.props;
+const {
+  title,
+  metaTitle,
+  description,
+  publishDate,
+  updatedDate,
+  author,
+  tags,
+  readingTime,
+  faqs,
+  usefulLinks,
+  sidebarCta,
+} = entry.data;
+
+const coverImage = entry.data.coverImage;
+
+const path = `/guides/${entry.id}`;
+const canonical = new URL(path, Astro.site);
+const pageTitle = metaTitle || `${title} | Acceso Guides`;
+
+// Only top-level (##) headings become TOC entries - one entry per
+// competition/section rather than every sub-heading inside it.
+const toc = headings.filter((h) => h.depth === 2);
+
+function formatLong(d: Date): string {
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatMonthYear(d: Date): string {
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description,
+  ...(coverImage ? { image: [new URL(coverImage, Astro.site).toString()] } : {}),
+  datePublished: publishDate.toISOString(),
+  dateModified: (updatedDate ?? publishDate).toISOString(),
+  author: {
+    '@type': 'Person',
+    name: author.name,
+    ...(author.role ? { jobTitle: author.role } : {}),
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Acceso',
+    logo: {
+      '@type': 'ImageObject',
+      url: new URL('/icon.svg', Astro.site).toString(),
+    },
+  },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': canonical.toString() },
+  ...(tags.length ? { keywords: tags.join(', ') } : {}),
+};
+
+const crumbSchema = breadcrumbList([
+  { name: 'Home', url: '/' },
+  { name: 'Guides', url: '/guides' },
+  { name: title, url: path },
+]);
+
+const faqSchema = faqs.length ? faqPage(faqs.map((f) => ({ q: f.q, a: f.a }))) : null;
+
+const graph = [articleSchema, crumbSchema, ...(faqSchema ? [faqSchema] : [])];
+---
+
+<Layout
+  title={pageTitle}
+  description={description}
+  image={coverImage}
+  canonical={canonical}
+  ogType="article"
+  keywords={tags.join(', ')}
+  schema={{ '@graph': graph }}
+>
+  <Navbar />
+
+  <div class="breadcrumbs-container">
+    <Breadcrumbs
+      items={[
+        { label: 'Home', href: '/' },
+        { label: 'Guides', href: '/guides' },
+        { label: title },
+      ]}
+    />
+  </div>
+
+  <main class="guide-detail-container">
+
+    {/* ── Cover image hero ──────────────────────────────────────────── */}
+    {coverImage && (
+      <div class="guide-cover">
+        <img src={coverImage} alt={entry.data.coverImageAlt || title} loading="eager" decoding="async" width="1200" height="480" />
+      </div>
+    )}
+
+    <header class="guide-header">
+      {/* kicker removed (task 4) */}
+      <h1 class="guide-title">{title}</h1>
+      {description && <p class="guide-lede">{description}</p>}
+
+      <div class="guide-meta-row">
+        {/* Acceso logo 20×20 (task 6) */}
+        <img src="/icon.svg" alt="" width="20" height="20" class="byline-icon" />
+        <span class="guide-meta-author">{author.name}</span>
+        <span class="guide-meta-sep">·</span>
+        <span class="guide-meta-date">{formatLong(publishDate)}</span>
+        {readingTime && (
+          <>
+            <span class="guide-meta-sep">·</span>
+            <span class="guide-meta-time">{readingTime}</span>
+          </>
+        )}
+      </div>
+    </header>
+
+    <div class="guide-share">
+      <span class="side-card-label">Share this guide</span>
+      <div class="share-icons">
+        <a
+          href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(canonical.toString())}&text=${encodeURIComponent(title)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="share-icon-btn"
+          aria-label="Share on X (Twitter)"
+        >
+          {/* X / Twitter */}
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.741l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(canonical.toString())}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="share-icon-btn"
+          aria-label="Share on LinkedIn"
+        >
+          {/* LinkedIn */}
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <a
+          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(canonical.toString())}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="share-icon-btn"
+          aria-label="Share on Facebook"
+        >
+          {/* Facebook */}
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+        </a>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(title + ' ' + canonical.toString())}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="share-icon-btn"
+          aria-label="Share on WhatsApp"
+        >
+          {/* WhatsApp */}
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        </a>
+        <button
+          class="share-icon-btn share-copy-btn"
+          id="guide-copy-link-btn"
+          aria-label="Copy link"
+          data-url={canonical.toString()}
+        >
+          {/* Copy link */}
+          <svg class="share-copy-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <svg class="share-check-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="guide-grid">
+      <div class="guide-main-col">
+        <div class="guide-content">
+          <slot />
+        </div>
+
+        {faqs.length > 0 && (
+          <section class="guide-faq" aria-labelledby="faq-heading">
+            <h2 id="faq-heading">Frequently asked questions</h2>
+            <div class="guide-faq-list">
+              {faqs.map((f) => (
+                <details class="guide-faq-item">
+                  <summary>
+                    <span>{f.q}</span>
+                    <svg class="guide-faq-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </summary>
+                  <p>{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {usefulLinks && usefulLinks.length > 0 && (
+          <section class="guide-useful-links" aria-labelledby="useful-links-heading">
+            <h2 id="useful-links-heading">Useful Links</h2>
+            <ul class="guide-useful-links-list">
+              {usefulLinks.map((link) => (
+                <li>
+                  <a href={link.href} target="_blank" rel="noopener noreferrer">
+                    {link.label}
+                    <svg class="guide-useful-link-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {tags.length > 0 && (
+          <div class="guide-tags" aria-label="Topics">
+            {tags.map((t) => <span class="guide-tag">{t}</span>)}
+          </div>
+        )}
+
+        <div class="guide-back">
+          <a href="/guides" class="guide-back-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            <span>Back to all guides</span>
+          </a>
+        </div>
+      </div>
+
+      {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
+      <aside class="guide-sidebar-col">
+        <div class="sidebar-sticky-wrapper">
+
+          {toc.length > 0 && (
+            <details class="side-card guide-toc-card" open id="guide-toc-details">
+              <summary class="side-card-summary" aria-label="Toggle table of contents">
+                <span class="side-card-label">In this guide</span>
+                <svg class="toc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </summary>
+              <ol class="guide-toc-list">
+                {toc.map((h) => (
+                  <li><a href={`#${h.slug}`}>{h.text}</a></li>
+                ))}
+              </ol>
+            </details>
+          )}
+
+          {sidebarCta && (
+          <div class="side-card guide-promo-card promo-peach">
+            <div class="promo-top-row">
+              <div class="promo-icon-badge" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                  <path d="M4 22h16"/>
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+              </div>
+            </div>
+
+            <h4 class="promo-heading">{sidebarCta.title}</h4>
+            <p class="promo-text">{sidebarCta.text}</p>
+
+            <a href={sidebarCta.href} class="promo-cta-btn">
+              <span>{sidebarCta.ctaLabel}</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+          )}
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* ── Page containers (mirrors the award detail page) ─────────────── */
+  .breadcrumbs-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--page-top-spacing) 40px 0;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .guide-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--page-top-spacing) 40px 100px;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  /* ── Cover image hero ─────────────────────────────────────────────── */
+  .guide-cover {
+    width: 100%;
+    /* Fixed responsive height via aspect-ratio — clamp keeps it from getting too tall */
+    aspect-ratio: 5 / 2;
+    max-height: 420px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    flex-shrink: 0;
+  }
+
+  .guide-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  /* ── Header ────────────────────────────────────────────────────────── */
+  .guide-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 860px;
+    margin-bottom: 24px;
+  }
+
+  .guide-title {
+    font-family: var(--font-sans);
+    font-size: clamp(32px, 4.5vw, 48px);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+    margin: 0;
+  }
+
+  .guide-lede {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .guide-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-gray);
+    margin-top: 4px;
+    letter-spacing: 0.01em;
+  }
+
+  /* Acceso logo 20×20 (task 6) */
+  .guide-meta-row .byline-icon {
+    display: block;
+    opacity: 0.8;
+    border-radius: 4px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .guide-meta-author {
+    font-weight: 600;
+    color: var(--color-black);
+  }
+
+  .guide-meta-sep {
+    color: var(--color-gray);
+    opacity: 0.6;
+  }
+
+  .guide-meta-date,
+  .guide-meta-time {
+    color: var(--color-gray);
+  }
+
+  /* ── Two-column grid ───────────────────────────────────────────────── */
+  .guide-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 48px;
+    align-items: start;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .guide-main-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ── Sidebar — sticky on desktop ─────────────────────────────────── */
+  .guide-sidebar-col {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    /* Must be stretch (or not set) so the column is as tall as the main column.
+       If it is start, it shrinks to content height and sticky has no room to slide. */
+    align-self: stretch;
+  }
+
+  .sidebar-sticky-wrapper {
+    position: sticky;
+    top: calc(var(--navbar-height, 64px) + 24px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ── Side cards ────────────────────────────────────────────────────── */
+  .side-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Fix asymmetry when TOC card is collapsed */
+  .guide-toc-card:not([open]) {
+    padding: 20px;
+    gap: 0;
+  }
+
+  /* ── Share section (main content) ──────────────────────────────────── */
+  .guide-share {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 16px;
+    margin-bottom: 24px;
+  }
+
+  .share-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .share-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--color-white, #fff);
+    border: 1px solid var(--color-stroke);
+    color: var(--color-black);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.15s ease;
+    flex-shrink: 0;
+    font-size: 0;
+    padding: 0;
+    font-family: inherit;
+  }
+
+  .share-icon-btn:hover {
+    background: var(--color-black);
+    border-color: var(--color-black);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+
+  .share-icon-btn:active {
+    transform: translateY(0);
+  }
+
+  /* ── TOC card: collapsible on mobile ─────────────────────────────── */
+  /* On desktop, hide the <details> toggle affordances — always show open */
+  .guide-toc-card {
+    /* Remove default details/summary marker */
+  }
+
+  .side-card-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: default; /* desktop: not interactive */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .side-card-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .side-card-label {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  /* Hide chevron on desktop — always open */
+  .toc-chevron {
+    display: none;
+  }
+
+  .guide-toc-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .guide-toc-list li {
+    border-bottom: 1px solid var(--color-stroke);
+  }
+
+  .guide-toc-list li:last-child {
+    border-bottom: none;
+  }
+
+  .guide-toc-list a {
+    display: block;
+    padding: 9px 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .guide-toc-list a:hover,
+  .guide-toc-list a:focus {
+    font-weight: 600;
+    color: var(--color-black);
+    outline: none;
+  }
+
+  /* ── Promo card ────────────────────────────────────────────────────── */
+  .promo-peach {
+    background: #FFF8F3;
+    border: 1px solid #FFDCC5;
+  }
+
+  .promo-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .promo-peach .promo-icon-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #FFB38A;
+    border: 1px solid #FF9F6E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7C2D12;
+  }
+
+  .promo-heading {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .promo-text {
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  .promo-peach .promo-cta-btn {
+    margin-top: 4px;
+    width: 100%;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--color-black);
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    box-sizing: border-box;
+    border: 1.5px solid #FFB38A;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .promo-peach .promo-cta-btn:hover {
+    background: #FFB38A;
+    border-color: #FF9F6E;
+    color: #0F1113;
+  }
+
+  .promo-peach .promo-cta-btn:active {
+    background: #FF9F6E;
+    border-color: #FF9F6E;
+  }
+
+  /* ---- Prose styling for the rendered Markdown body ---- */
+  .guide-content {
+    font-family: var(--font-sans);
+  }
+
+  .guide-content :global(h2) {
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--color-black);
+    letter-spacing: -0.01em;
+    margin: 48px 0 16px;
+    scroll-margin-top: 24px;
+  }
+
+  .guide-content :global(h3) {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-black);
+    margin: 26px 0 10px;
+    scroll-margin-top: 24px;
+    max-width: 720px;
+  }
+
+  .guide-content :global(p) {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--color-gray);
+    margin: 0 0 18px;
+    max-width: 720px;
+  }
+
+  .guide-content :global(strong) {
+    color: var(--color-black);
+    font-weight: 600;
+  }
+
+  .guide-content :global(ul),
+  .guide-content :global(ol) {
+    margin: 0 0 18px;
+    padding-left: 22px;
+    max-width: 720px;
+  }
+
+  .guide-content :global(li) {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--color-gray);
+    margin-bottom: 8px;
+  }
+
+  .guide-content :global(a) {
+    color: var(--color-black);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .guide-content :global(a:hover) {
+    color: var(--color-gray);
+  }
+
+  /* Per-award image + text link card (replaces the old panoramic banner) */
+  .guide-content :global(.guide-embed-card),
+  .guide-content :global(.guide-award-card) {
+    margin: 28px 0 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 720px;
+  }
+
+  .guide-content :global(.guide-embed-img),
+  .guide-content :global(.guide-award-img) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+  }
+
+  .guide-content :global(.guide-embed-link),
+  .guide-content :global(.guide-award-link) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-black);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--color-stroke);
+    padding-bottom: 1px;
+    transition: border-color 0.18s ease, color 0.18s ease;
+    width: fit-content;
+    order: -1;
+  }
+
+  .guide-content :global(.guide-embed-link:hover),
+  .guide-content :global(.guide-award-link:hover) {
+    color: var(--color-gray);
+    border-color: var(--color-gray);
+  }
+
+  .guide-content :global(.guide-embed-link svg),
+  .guide-content :global(.guide-award-link svg) {
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+  }
+
+  .guide-content :global(.guide-embed-link:hover svg),
+  .guide-content :global(.guide-award-link:hover svg) {
+    transform: translateX(3px);
+  }
+
+  /* ── Comparison table — rounded, no weird cropping (task 7) ───────── */
+  /*
+   * marked wraps tables in a plain <table>; we can't inject a wrapper div,
+   * so we style the table itself with a containing block trick:
+   * wrap via a :global() scroll container that has border-radius + overflow.
+   */
+  .guide-content :global(.table-scroll-wrap) {
+    display: block;
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid var(--color-stroke);
+    margin: 8px 0 8px;
+    /* Clip the table's own borders inside the rounded wrapper */
+    -webkit-mask-image: radial-gradient(white, white);
+  }
+
+  .guide-content :global(table) {
+    width: 100%;
+    max-width: none;
+    /* separate so individual cells can have radius on corners */
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 14px;
+    /* Remove margin — wrapper handles spacing */
+    margin: 0;
+  }
+
+  .guide-content :global(th),
+  .guide-content :global(td) {
+    text-align: left;
+    padding: 12px 16px;
+    border-right: 1px solid var(--color-stroke);
+    border-bottom: 1px solid var(--color-stroke);
+    color: var(--color-gray);
+    white-space: nowrap;
+  }
+
+  /* No right border on last cell in a row */
+  .guide-content :global(th:last-child),
+  .guide-content :global(td:last-child) {
+    border-right: none;
+  }
+
+  /* No bottom border on last row */
+  .guide-content :global(tr:last-child td) {
+    border-bottom: none;
+  }
+
+  .guide-content :global(th) {
+    background: var(--color-bg-secondary);
+    color: var(--color-black);
+    font-weight: 600;
+  }
+
+  /* Header row: no bottom border on the very last th row either */
+  .guide-content :global(thead tr:last-child th) {
+    border-bottom: 1px solid var(--color-stroke);
+  }
+
+  .guide-content :global(small) {
+    display: block;
+    font-size: 13px;
+    color: var(--color-gray);
+    margin: 4px 0 28px;
+  }
+
+  /* ---- FAQ (matches HomeFaq.astro) ---- */
+  .guide-faq {
+    margin-top: 48px;
+    padding-top: 8px;
+  }
+
+  .guide-faq h2 {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    margin: 0 0 20px;
+  }
+
+  .guide-faq-list {
+    border-top: 1px solid var(--color-stroke);
+  }
+
+  .guide-faq-item {
+    border-bottom: 1px solid var(--color-stroke);
+  }
+
+  .guide-faq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 2px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .guide-faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .guide-faq-chevron {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: transform 0.25s ease;
+  }
+
+  .guide-faq-item[open] .guide-faq-chevron {
+    transform: rotate(180deg);
+  }
+
+  .guide-faq-item p {
+    margin: 0;
+    padding: 0 2px 20px;
+    max-width: 68ch;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+  }
+
+  /* ---- Useful Links ---- */
+  .guide-useful-links {
+    margin-top: 48px;
+    padding-top: 8px;
+  }
+
+  .guide-useful-links h2 {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    margin: 0 0 20px;
+  }
+
+  .guide-useful-links-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+
+  .guide-useful-links-list li {
+    margin: 0;
+  }
+
+  .guide-useful-links-list a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-black);
+    text-decoration: none;
+    border-bottom: 1.5px solid var(--color-stroke);
+    padding-bottom: 1px;
+    transition: border-color 0.18s ease, color 0.18s ease;
+    width: fit-content;
+  }
+
+  .guide-useful-links-list a:hover {
+    color: var(--color-gray);
+    border-color: var(--color-gray);
+  }
+
+  .guide-useful-links-list a svg {
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+  }
+
+  .guide-useful-links-list a:hover svg {
+    transform: translateX(3px);
+  }
+
+  .guide-useful-link-chevron {
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+  }
+
+  .guide-useful-links-list a:hover .guide-useful-link-chevron {
+    transform: translateX(3px);
+  }
+
+  /* ---- Tags ---- */
+  .guide-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 36px;
+  }
+
+  .guide-tag {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-gray);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 999px;
+    padding: 5px 12px;
+  }
+
+  /* ---- Back button ---- */
+  .guide-back {
+    margin-top: 40px;
+  }
+
+  .guide-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-black);
+    text-decoration: none;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 999px;
+    padding: 9px 16px 9px 12px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .guide-back-btn:hover {
+    border-color: var(--color-black);
+    background: var(--color-white);
+  }
+
+  /* ── Responsive ────────────────────────────────────────────────────── */
+
+  /* ---- Tablet (sidebar stacks but no longer sticky — show as row) ---- */
+  @media (max-width: 1024px) {
+    .guide-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .guide-sidebar-col {
+      order: -1;
+    }
+
+    /* Tablet: remove sticky, lay cards out in a single column */
+    .sidebar-sticky-wrapper {
+      position: static;
+      max-height: none;
+      overflow-y: visible;
+      flex-direction: column;
+    }
+
+    .side-card {
+      flex: 1 1 auto;
+    }
+  }
+
+  /* ---- Mobile --------------------------------------------------------- */
+  @media (max-width: 640px) {
+    .breadcrumbs-container,
+    .guide-detail-container {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .guide-cover {
+      /* Taller aspect-ratio on mobile gives a nice 16:9-ish feel */
+      aspect-ratio: 16 / 7;
+      max-height: 220px;
+      border-radius: 14px;
+    }
+
+
+    .sidebar-sticky-wrapper {
+      flex-direction: column;
+    }
+
+    .side-card {
+      flex: none;
+    }
+
+    /* Mobile: compact TOC — remove excess padding when collapsed */
+    .guide-toc-card:not([open]) {
+      padding: 16px 20px;
+      gap: 0;
+    }
+
+    /* Mobile: make the TOC details collapsible */
+    .side-card-summary {
+      cursor: pointer;
+    }
+
+    /* Show the chevron on mobile */
+    .toc-chevron {
+      display: block;
+      color: var(--color-gray);
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    /* Rotate chevron when open */
+    #guide-toc-details[open] .toc-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Mobile: move promo card to the end — after TOC + after main content.
+       The sidebar col sits at order -1 (top), so we give the promo card
+       a large order inside the sticky wrapper to push it to the bottom.
+       On mobile the sidebar wrapper is flex-col so order works here. */
+    .guide-promo-card {
+      order: 99;
+    }
+  }
+</style>
+
+<script>
+  // ---- TOC: close by default on tablet and smaller ----
+  function initToc() {
+    const details = document.getElementById('guide-toc-details') as HTMLDetailsElement | null;
+    if (!details) return;
+    if (window.innerWidth <= 1024) {
+      details.removeAttribute('open');
+    } else {
+      details.setAttribute('open', '');
+    }
+  }
+
+  initToc();
+  window.addEventListener('resize', initToc, { passive: true });
+
+  // ---- TOC: focus first item on load ----
+  const firstTocLink = document.querySelector('.guide-toc-list li:first-child a') as HTMLAnchorElement | null;
+  if (firstTocLink) {
+    firstTocLink.setAttribute('tabindex', '0');
+    firstTocLink.focus({ preventScroll: true });
+  }
+
+  // ---- TOC: clicking an item focuses it and scrolls smoothly ----
+  document.querySelectorAll('.guide-toc-list a').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const slug = link.getAttribute('href')?.replace('#', '');
+      if (slug) {
+        const target = document.getElementById(slug);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      link.focus({ preventScroll: true });
+    });
+  });
+
+  // ---- Copy-link button ----
+  const copyBtn = document.getElementById('guide-copy-link-btn') as HTMLButtonElement | null;
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      const url = copyBtn.dataset.url || window.location.href;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      // Show check icon briefly
+      const copyIcon = copyBtn.querySelector('.share-copy-icon') as SVGElement | null;
+      const checkIcon = copyBtn.querySelector('.share-check-icon') as SVGElement | null;
+      if (copyIcon) copyIcon.style.display = 'none';
+      if (checkIcon) checkIcon.style.display = '';
+      setTimeout(() => {
+        if (copyIcon) copyIcon.style.display = '';
+        if (checkIcon) checkIcon.style.display = 'none';
+      }, 2000);
+    });
+  }
+</script>

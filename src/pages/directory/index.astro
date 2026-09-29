@@ -4,10 +4,11 @@ import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import EventBasicCard from '../../components/EventBasicCard.astro';
 import { normalizeImage } from '../../lib/images';
+import { readJsonFromBucket, toArray } from '../../lib/readJson';
+import type { Env } from '../../env.d';
 
-// R2 URLs
-const isDev = import.meta.env.DEV;
-const domain = isDev ? 'https://json.acceso.design' : `${Astro.url.origin}/cdn`;
+const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
+const origin = Astro.url.origin;
 
 let fairs = [];
 let museums = [];
@@ -16,16 +17,15 @@ let awards = [];
 let error = null;
 
 try {
-  const [fRes, mRes, uRes, aRes] = await Promise.all([
-    fetch(`${domain}/fairs.json`),
-    fetch(`${domain}/museums.json`),
-    fetch(`${domain}/universities.json`),
-    fetch(`${domain}/awards.json`)
+  const [fairsData, museumsData, universitiesData, awardsData] = await Promise.all([
+    readJsonFromBucket('fairs.json', env, origin),
+    readJsonFromBucket('museums.json', env, origin),
+    readJsonFromBucket('universities.json', env, origin),
+    readJsonFromBucket('awards.json', env, origin),
   ]);
 
-  if (fRes.ok) {
-    const data = await fRes.json();
-    const allFairs = (Array.isArray(data) ? data : data.items || []).sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+  if (fairsData) {
+    const allFairs = toArray(fairsData).sort((a: any, b: any) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
@@ -46,17 +46,14 @@ try {
         fairs = allFairs.slice(startPos, endPos);
     }
   }
-  if (mRes.ok) {
-    const data = await mRes.json();
-    museums = (Array.isArray(data) ? data : data.items || []).slice(0, 5);
+  if (museumsData) {
+    museums = toArray(museumsData).slice(0, 5);
   }
-  if (uRes.ok) {
-    const data = await uRes.json();
-    universities = (Array.isArray(data) ? data : data.items || []).slice(0, 5);
+  if (universitiesData) {
+    universities = toArray(universitiesData).slice(0, 5);
   }
-  if (aRes.ok) {
-    const data = await aRes.json();
-    awards = (Array.isArray(data) ? data : data.items || []).slice(0, 5);
+  if (awardsData) {
+    awards = toArray(awardsData).slice(0, 5);
   }
 } catch (e) {
   error = e;

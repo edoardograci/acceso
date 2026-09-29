@@ -4,35 +4,23 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import { breadcrumbList, itemList } from '../../../lib/seo/schema';
 import { normalizeImage } from '../../../lib/images';
+import { readJsonFromBucket, toArray } from '../../../lib/readJson';
+import type { Env } from '../../../env.d';
 
 type Studio = { slug: string; name: string; cover?: string | null; city?: string | null; country_slug?: string | null };
 
 const page = Math.max(1, Number.parseInt(Astro.params.page || '1', 10) || 1);
 const perPage = 18;
 
-const isDev = import.meta.env.DEV;
-const origin = Astro.url.origin;
-// Same convention as every other page: in dev the CMS JSON is read straight
-// from the prod host at its bare root, in prod from this origin under /cdn.
-// This file used to join '/cdn/<file>.json' onto the dev host too, which
-// resolved to json.acceso.design/cdn/... and 404s - so `all` came back empty,
-// totalPages collapsed to 1, and every page >= 2 redirected to /404 locally
-// while the sitemap advertised 27 of them.
-const domain = isDev ? 'https://json.acceso.design' : `${origin}/cdn`;
-
-async function fetchJson<T>(path: string): Promise<T> {
-  const r = await fetch(`${domain}${path}`);
-  if (!r.ok) throw new Error(`Fetch failed ${path}: ${r.status}`);
-  return (await r.json()) as T;
-}
+const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
 
 let all: Studio[] = [];
 let total = 0;
 let totalPages = 1;
 
 try {
-  const data = await fetchJson<any[]>('/test-studios.json');
-  all = Array.isArray(data) ? data : [];
+  const data = await readJsonFromBucket('test-studios.json', env, Astro.url.origin);
+  all = toArray(data) as Studio[];
   total = all.length;
   totalPages = Math.max(1, Math.ceil(total / perPage));
 } catch {

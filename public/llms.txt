@@ -22,6 +22,8 @@
 - [Design museums directory](https://acceso.design/directory/museums): index of design museums and foundations.
 - [Museum profile](https://acceso.design/directory/museums/triennale-milano): a single museum's collection focus and location.
 - [Discover projects](https://acceso.design/discover): curated project gallery index.
+- [Guides](https://acceso.design/guides): editorial guides for design students, e.g. competitions, portfolios, and how to get discovered.
+- [Guide: Best Industrial Design Competitions for Students](https://acceso.design/guides/best-industrial-design-competitions-for-students): fact-checked comparison of entry fees, prototype requirements, and prizes for iF, DIA, Core77, Red Dot, Andreu World, German Design Award Newcomer, and James Dyson Award.
 - [Map](https://acceso.design/): interactive map of the design community (homepage).
 
 ## Freshness
