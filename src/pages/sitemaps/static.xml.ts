@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ site, locals }) => {
     const env = (locals as any)?.runtime?.env || import.meta.env;
     const guides = await listGuides(env);
     guideUrls = guides.map((g) => ({
-      loc: new URL(`/guides/${g.slug}`, site).toString(),
+      loc: new URL(`/guides/${g.id}`, site).toString(),
       lastmod: toW3CDate(guideDate(g.updatedDate) ?? guideDate(g.publishDate) ?? new Date()),
       changefreq: 'monthly' as const,
       priority: 0.6,
