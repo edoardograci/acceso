@@ -1,22 +1,13 @@
 import type { APIRoute } from 'astro';
 import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
+import { readJsonFromBucket, toArray } from '../../lib/readJson';
 
-export const GET: APIRoute = async ({ site, url }) => {
+export const GET: APIRoute = async ({ site, locals }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
 
-  // Derive location slugs from actual studio data so we never submit an empty
-  // /designers/in/{slug} page. Mirrors the pattern already used by
-  // directory-locations.xml.ts (see comment there for the rationale).
-  let studios: any[] = [];
-  try {
-    const res = await fetch(new URL('/cdn/test-studios.json', url.origin).toString());
-    if (res.ok) {
-      const data = await res.json();
-      studios = Array.isArray(data) ? data : [];
-    }
-  } catch {
-    studios = [];
-  }
+  const env = (locals as any)?.runtime?.env || import.meta.env;
+  const raw = await readJsonFromBucket('test-studios.json', env);
+  const studios = toArray(raw);
 
   // Collect unique city and country slugs that have at least one studio, and
   // the most recent updated_at among the studios at each — never "now".
