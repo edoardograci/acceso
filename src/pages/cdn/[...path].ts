@@ -24,6 +24,7 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     bucket = env.JSON_BUCKET;                    // All other JSON files
   } 
   else if (
+    path.startsWith('wishlist/') ||
     path.startsWith('events/') ||
     path.startsWith('fairs/') ||
     path.startsWith('museums/') ||
@@ -31,7 +32,7 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
     path.startsWith('universities/') ||
     path.endsWith('-cover.webp')
   ) {
-    bucket = env.EVENTS_BUCKET;               // ← All event-related images
+    bucket = env.EVENTS_BUCKET;               // ← All event-related and wishlist images
   } 
   else {
     bucket = env.INDEX_BUCKET;                   // Studio covers, submissions, etc.
