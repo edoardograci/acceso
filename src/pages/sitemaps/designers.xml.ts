@@ -5,7 +5,7 @@ import { normalizeImage } from '../../lib/images';
 
 type Studio = {
   slug: string;
-  indexable?: boolean;
+  indexable?: boolean | number;
   cover?: string | null;
   updated_at?: string | null;
 };
@@ -37,7 +37,7 @@ export const GET: APIRoute = async ({ site, url }) => {
   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = studios
     .filter((s) => typeof s?.slug === 'string' && s.slug.length > 0)
     // noindex pages don't belong in the sitemap (mixed signals to Google).
-    .filter((s) => s.indexable !== false)
+    .filter((s) => s.indexable !== false && s.indexable !== 0)
     .map((s) => {
       const loc = new URL(`/designers/${encodeURIComponent(s.slug)}`, site).toString();
       const images: string[] = [];

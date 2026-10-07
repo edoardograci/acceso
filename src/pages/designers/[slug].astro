@@ -107,9 +107,9 @@ const gmapsDirections = studioHasLocation
   ? `https://www.google.com/maps/dir/?api=1&destination=${studioLat},${studioLng}`
   : '';
 
-// Only an explicit `indexable: false` opts a studio out, so a missing field
+// Only an explicit `indexable: false` or `indexable: 0` opts a studio out, so a missing field
 // keeps the previous behaviour (indexed) rather than silently noindexing.
-const robots = studio.indexable === false
+const robots = studio.indexable === false || studio.indexable === 0
   ? 'noindex, follow'
   : undefined; // fall back to Layout's default index directive
 

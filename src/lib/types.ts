@@ -19,8 +19,8 @@ export interface Studio {
   description: string | null;
   country: string | null;
   country_slug: string | null;
-  /** false = page is served with noindex and left out of the sitemap. Missing = indexable. */
-  indexable?: boolean;
+  /** false or 0 = page is served with noindex and left out of the sitemap. Missing = indexable. */
+  indexable?: boolean | number;
   created_at: string;
   updated_at: string;
 }

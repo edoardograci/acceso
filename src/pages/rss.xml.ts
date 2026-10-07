@@ -1,7 +1,7 @@
 import rss from '@astrojs/rss';
 import type { APIRoute } from 'astro';
 
-type Studio = { slug: string; name: string; indexable?: boolean; updated_at?: string | null; description?: string | null; city?: string | null };
+type Studio = { slug: string; name: string; indexable?: boolean | number; updated_at?: string | null; description?: string | null; city?: string | null };
 type Project = { slug: string; name: string; updated_at?: string | null; designer?: string | null };
 
 export const GET: APIRoute = async ({ site, url }) => {
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ site, url }) => {
     studios.status === 'fulfilled'
       ? (Array.isArray(studios.value) ? studios.value : [])
           // Filter before slice so noindex studios don't eat into the 80 slots.
-          .filter((s) => s.indexable !== false)
+          .filter((s) => s.indexable !== false && s.indexable !== 0)
           .slice(0, 80)
           .map((s) => {
           const link = new URL(`/designers/${encodeURIComponent(s.slug)}`, site).toString();
