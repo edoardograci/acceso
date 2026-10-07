@@ -5,6 +5,7 @@ import { normalizeImage } from '../../lib/images';
 
 type Studio = {
   slug: string;
+  indexable?: boolean;
   cover?: string | null;
   updated_at?: string | null;
 };
@@ -35,6 +36,8 @@ export const GET: APIRoute = async ({ site, url }) => {
   // Omit the tag entirely rather than guess when the real date is missing.
   const urls: import('../../lib/seo/sitemap').SitemapUrl[] = studios
     .filter((s) => typeof s?.slug === 'string' && s.slug.length > 0)
+    // noindex pages don't belong in the sitemap (mixed signals to Google).
+    .filter((s) => s.indexable !== false)
     .map((s) => {
       const loc = new URL(`/designers/${encodeURIComponent(s.slug)}`, site).toString();
       const images: string[] = [];

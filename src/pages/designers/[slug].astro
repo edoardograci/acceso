@@ -107,6 +107,12 @@ const gmapsDirections = studioHasLocation
   ? `https://www.google.com/maps/dir/?api=1&destination=${studioLat},${studioLng}`
   : '';
 
+// Only an explicit `indexable: false` opts a studio out, so a missing field
+// keeps the previous behaviour (indexed) rather than silently noindexing.
+const robots = studio.indexable === false
+  ? 'noindex, follow'
+  : undefined; // fall back to Layout's default index directive
+
 // ── SEO: Canonical URL & LocalBusiness schema ────────────────────────────────
 const canonical = new URL(`/designers/${slug}`, Astro.site);
 
@@ -137,6 +143,7 @@ const studioSchema = studio ? {
   title={studio ? `${studio.name} - Independent Design Studio in ${studio.city}` : 'Loading...'}
   description={studio ? `${studio.name} is an independent design studio based in ${studio.city}. Explore projects, objects, and studio information.` : ''}
   canonical={canonical}
+  robots={robots}
   schema={studioSchema || undefined}
 >
   <Navbar />
