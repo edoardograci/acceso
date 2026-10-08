@@ -10,9 +10,11 @@ interface Props {
   };
   cityName: string;
   countryName: string;
+  /** e.g. "9–11 June 2027"; same source as the <title>, so H1 area and title agree. */
+  dateLine?: string;
 }
 
-const { fair, cityName, countryName } = Astro.props;
+const { fair, cityName, countryName, dateLine } = Astro.props;
 ---
 
 <header class="fair-header">
@@ -50,6 +52,12 @@ const { fair, cityName, countryName } = Astro.props;
             ) : (
               <span>{countryName}</span>
             )}
+          </>
+        )}
+        {dateLine && (
+          <>
+            <span class="subtitle-sep">·</span>
+            <span class="fair-dateline">{dateLine}</span>
           </>
         )}
       </p>

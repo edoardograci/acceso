@@ -1,8 +1,8 @@
 export const TITLE_MAX = 60;
-const DESC_MAX = 155;
+export const DESC_MAX = 155;
 const DESC_MIN = 120;
 
-function truncateAtWord(str: string, max: number): string {
+export function truncateAtWord(str: string, max: number): string {
   if (str.length <= max) return str;
   const cut = str.slice(0, max - 1);
   const lastSpace = cut.lastIndexOf(' ');

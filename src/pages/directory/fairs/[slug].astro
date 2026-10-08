@@ -7,7 +7,7 @@ import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
-import { entityTitle, entityDescription } from '../../../lib/seo/meta';
+import { fairSeo, fairEventSchema, fairDateLine, descriptionMatchesEdition } from '../../../lib/seo/fair';
 import { readJsonFromBucket, toArray } from '../../../lib/readJson';
 import type { Env } from '../../../env.d';
 
@@ -142,41 +142,35 @@ const aboutParagraphs = (fair.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
-const pageTitle = entityTitle(fair.name, 'Design Fair', cityName);
-const pageDesc = entityDescription(
-  fair.description,
-  `${fair.name} is a design fair in ${cityName}, ${countryName}. Explore dates, venues, and exhibitors on Acceso.`
-);
+// ── SEO: title, description and Event schema come from the structured fields
+// (see lib/seo/fair.ts), so a stale year in the authored copy can never reach
+// the snippet or the JSON-LD.
+const seo = fairSeo({ fair, cityName, countryName });
+const pageTitle = seo.title;
+const pageDesc = seo.description;
+const dateLine = fairDateLine(seo.edition);
 
-// ── SEO: Canonical + Event schema ──────────────────────────────────────────
+if (seo.edition && fair.description && !descriptionMatchesEdition(fair.description, seo.edition)) {
+  // Surfaces in the Worker logs: the authored copy mentions a year that is not
+  // this edition's. Meta and schema are unaffected, but the visible Overview is.
+  console.warn(`[Fair SEO] ${slug}: description mentions a year outside ${seo.edition.start.y}-${seo.edition.end.y}`);
+}
+
 const canonical = new URL(`/directory/fairs/${slug}`, Astro.site);
-const fairStartDate = fair.start_date || fair.end_date;
 
-const fairSchema = fairStartDate && cityName ? {
+const fairSchema = seo.edition && cityName ? {
   '@context': 'https://schema.org',
   '@graph': [
-    {
-      '@type': 'Event',
-      '@id': `${canonical}#event`,
-      name: fair.name,
-      description: pageDesc,
-      url: canonical.toString(),
-      image: fair.image || undefined,
-      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      eventStatus: 'https://schema.org/EventScheduled',
-      startDate: fairStartDate,
-      ...(fair.end_date ? { endDate: fair.end_date } : {}),
-      location: {
-        '@type': 'Place',
-        name: cityName,
-        address: {
-          '@type': 'PostalAddress',
-          addressLocality: cityName,
-          addressCountry: countryName,
-        },
-      },
-      organizer: fair.website ? { '@type': 'Organization', name: fair.name, url: fair.website } : undefined,
-    },
+    fairEventSchema({
+      fair,
+      canonical: canonical.toString(),
+      cityName,
+      countryName,
+      // Was the raw relative path ("fairs/x/logo.webp"), which is not a valid image URL.
+      imageUrl: normalizeImage(fair.image, Astro),
+      edition: seo.edition,
+      fallbackDescription: pageDesc,
+    }),
     breadcrumbList([
       { name: 'Home', url: '/' },
       { name: 'Directory', url: '/directory' },
@@ -201,7 +195,7 @@ const fairSchema = fairStartDate && cityName ? {
   <main class="detail-container">
 
     <!-- ── IDENTITY HEADER ────────────────────────────────────────────────── -->
-    <FairHeader fair={fair} cityName={cityName} countryName={countryName} />
+    <FairHeader fair={fair} cityName={cityName} countryName={countryName} dateLine={dateLine} />
 
     <!-- ── TWO-COLUMN MAIN LAYOUT ─────────────────────────────────────────── -->
     <div class="fair-grid">
