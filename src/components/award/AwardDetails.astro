@@ -1,12 +1,14 @@
 ---
 interface Props {
   fee?: string;
+  /** Optional verified amount, e.g. "HK$2,200 per entry". */
+  feeNote?: string;
   focus?: string;
   eligibility?: string;
   prototype?: string;
 }
 
-const { fee, focus, eligibility, prototype } = Astro.props;
+const { fee, feeNote, focus, eligibility, prototype } = Astro.props;
 ---
 
 {(fee || focus || eligibility || prototype) && (
@@ -16,7 +18,7 @@ const { fee, focus, eligibility, prototype } = Astro.props;
       {fee && (
         <div class="detail-card">
           <span class="detail-card-label">Entry Fee</span>
-          <span class="detail-card-value">{fee}</span>
+          <span class="detail-card-value">{feeNote ? `${fee} · ${feeNote}` : fee}</span>
         </div>
       )}
       {focus && (

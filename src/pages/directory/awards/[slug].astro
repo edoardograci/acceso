@@ -7,7 +7,7 @@ import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList, faqPage } from '../../../lib/seo/schema';
-import { entityTitle, entityDescription } from '../../../lib/seo/meta';
+import { awardSeo } from '../../../lib/seo/award';
 import { readJsonFromBucket, toArray } from '../../../lib/readJson';
 import type { Env } from '../../../env.d';
 
@@ -126,69 +126,20 @@ const aboutParagraphs = (award.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
-const pageTitle = entityTitle(award.name, 'Design Award', cityName);
-const pageDesc = entityDescription(
-  award.description,
-  `${award.name} is a design award${cityName ? ` based in ${cityName}` : ''}. Explore eligibility, prizes, and deadlines on Acceso.`
-);
+// ── SEO: title, description and FAQ come from the structured fields
+// (see lib/seo/award.ts). The old Event markup is gone: it described the
+// submission window as an event held in the organiser's city and marked closed
+// awards "postponed". It never rendered anyway (no award record has a city).
+const seo = awardSeo({ award, cityName });
+const pageTitle = seo.title;
+const pageDesc = seo.description;
+const faqs = seo.faqs;
 
-// ── SEO: Canonical + schema ────────────────────────────────────────────────────
 const canonical = new URL(`/directory/awards/${slug}`, Astro.site);
-
-function getAwardDates(deadlinesStr: string) {
-  if (!deadlinesStr) return { startDate: null, endDate: null };
-  const dates = deadlinesStr.split(',').map(d => d.trim()).filter(Boolean);
-  if (dates.length === 0) return { startDate: null, endDate: null };
-  return { startDate: dates[0], endDate: dates[dates.length - 1] };
-}
-
-const { startDate: awardStartDate, endDate: awardEndDate } = getAwardDates(award.deadlines);
-
-const awardEventSchema = awardStartDate && cityName ? {
-  '@type': 'Event',
-  '@id': `${canonical}#event`,
-  name: award.name,
-  description: pageDesc,
-  url: canonical.toString(),
-  image: award.image || undefined,
-  eventStatus: status === 'status-open'
-    ? 'https://schema.org/EventScheduled'
-    : 'https://schema.org/EventPostponed',
-  startDate: awardStartDate,
-  endDate: awardEndDate,
-  location: {
-    '@type': 'Place',
-    name: cityName,
-  },
-  organizer: award.website ? { '@type': 'Organization', name: award.name, url: award.website } : undefined,
-} : null;
-
-const faqs: Array<{ q: string; a: string }> = [
-  ...(award.eligibility
-    ? [{ q: 'Who can enter this award?', a: award.eligibility }]
-    : []),
-  ...(award.prize
-    ? [{ q: 'What is the prize?', a: award.prize }]
-    : []),
-  ...(award.submission_requirements
-    ? [{ q: 'What do I need to submit?', a: award.submission_requirements }]
-    : []),
-  ...(award.prototype
-    ? [{
-        q: 'Do I need to submit a physical prototype?',
-        a: (award.prototype || '').trim() === 'Finalists only'
-          ? 'Only finalists are required to submit a physical prototype. You do not need to submit one when applying or making your initial submission. If selected as a finalist, a physical prototype may need to be sent for evaluation and additional costs may apply. Check the official award website for specific requirements and shipping details.'
-          : (award.prototype || '').trim() === 'Required'
-            ? 'A physical prototype is required as part of the submission. Check the official award website for details on prototype requirements, shipping, evaluation, and any associated costs.'
-            : 'A physical prototype is not required for this award. You can submit your project without providing a physical prototype.',
-      }]
-    : []),
-];
 
 const awardSchema = {
   '@context': 'https://schema.org',
   '@graph': [
-    ...(awardEventSchema ? [awardEventSchema] : []),
     breadcrumbList([
       { name: 'Home', url: '/' },
       { name: 'Directory', url: '/directory' },
@@ -252,6 +203,7 @@ const awardSchema = {
         <!-- 3. Key Details -->
         <AwardDetails
           fee={award.fee}
+          feeNote={award.fee_note}
           focus={award.focus}
           eligibility={award.eligibility}
           prototype={award.prototype}
@@ -261,36 +213,12 @@ const awardSchema = {
         <section class="content-block info-block faq-block">
           <h2 class="info-heading">FAQ</h2>
           <div class="faq-list">
-            {award.eligibility && (
+            {faqs.map((f) => (
               <div class="faq-item">
-                <p class="faq-question">Who can enter this award?</p>
-                <p class="faq-answer">{award.eligibility}</p>
+                <p class="faq-question">{f.q}</p>
+                <p class="faq-answer">{f.a}</p>
               </div>
-            )}
-            {award.prize && (
-              <div class="faq-item">
-                <p class="faq-question">What is the prize?</p>
-                <p class="faq-answer">{award.prize}</p>
-              </div>
-            )}
-            {award.submission_requirements && (
-              <div class="faq-item">
-                <p class="faq-question">What do I need to submit?</p>
-                <p class="faq-answer">{award.submission_requirements}</p>
-              </div>
-            )}
-            {award.prototype && (
-              <div class="faq-item">
-                <p class="faq-question">Do I need to submit a physical prototype?</p>
-                <p class="faq-answer">
-                  {(award.prototype || '').trim() === 'Finalists only'
-                    ? 'Only finalists are required to submit a physical prototype. You do not need to submit one when applying or making your initial submission. If selected as a finalist, a physical prototype may need to be sent for evaluation and additional costs may apply. Check the official award website for specific requirements and shipping details.'
-                    : (award.prototype || '').trim() === 'Required'
-                      ? 'A physical prototype is required as part of the submission. Check the official award website for details on prototype requirements, shipping, evaluation, and any associated costs.'
-                      : 'A physical prototype is not required for this award. You can submit your project without providing a physical prototype.'}
-                </p>
-              </div>
-            )}
+            ))}
           </div>
         </section>
 
