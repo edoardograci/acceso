@@ -2,12 +2,13 @@
 import Layout from '../../../layouts/Layout.astro';
 import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
-import EventBasicCard from '../../../components/EventBasicCard.astro';
+import DirectoryCard from '../../../components/DirectoryCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
-import { entityTitle, entityDescription } from '../../../lib/seo/meta';
+import { schoolSeo, schoolSchemaNode } from '../../../lib/seo/school';
 import { readJsonFromBucket, toArray } from '../../../lib/readJson';
+import { pickDiscoveryTiers } from '../../../lib/discovery';
 import type { Env } from '../../../env.d';
 
 // Reusable School Components
@@ -22,10 +23,14 @@ import ReportIssueModal from '../../../components/school/ReportIssueModal.astro'
 const { slug } = Astro.params;
 
 let university: any = null;
-let relatedUniversities: any[] = [];
+let sameCitySchools: any[] = [];
+let sameCountrySchools: any[] = [];
+let worldSchools: any[] = [];
 let citiesMapping: any[] = [];
 let countriesMapping: any[] = [];
 let fetchFailed = false;
+let cityCount = 0;
+let countryCount = 0;
 
 try {
   const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
@@ -43,19 +48,12 @@ try {
   university = processedUniversities.find((u: any) => u.slug === slug) || null;
 
   if (university) {
-    // Discovery: curated set of other universities prioritizing country/city
-    relatedUniversities = processedUniversities
-      .filter((u: any) => u.slug !== slug)
-      .sort((a: any, b: any) => {
-        const aCountry = a.country_slug === university.country_slug ? 0 : 1;
-        const bCountry = b.country_slug === university.country_slug ? 0 : 1;
-        if (aCountry !== bCountry) return aCountry - bCountry;
-        const aCity = a.city_slug === university.city_slug ? 0 : 1;
-        const bCity = b.city_slug === university.city_slug ? 0 : 1;
-        if (aCity !== bCity) return aCity - bCity;
-        return 0;
-      })
-      .slice(0, 5);
+    cityCount = processedUniversities.filter((u: any) => u.city_slug && u.city_slug === university.city_slug).length;
+    countryCount = processedUniversities.filter((u: any) => u.country_slug && u.country_slug === university.country_slug).length;
+
+    // Discovery tiers, same rules as the designer page (see lib/discovery.ts)
+    ({ sameCity: sameCitySchools, sameCountry: sameCountrySchools, world: worldSchools } =
+      pickDiscoveryTiers(processedUniversities, university));
   }
 
   citiesMapping = toArray(citiesData);
@@ -124,37 +122,46 @@ const contactParts = university.contact
   ? university.contact.split(/[/,|;]/).map((p: string) => p.trim()).filter(Boolean)
   : [];
 
-const pageTitle = entityTitle(university.name, 'Design School', cityName);
-const pageDesc = entityDescription(
-  university.description,
-  `${university.name} is a design school in ${cityName}, ${countryName}. Explore programs, admissions, and courses on Acceso.`
-);
+// ── SEO: title and description lead with programme data (see lib/seo/school.ts)
+const seo = schoolSeo({ university, cityName, countryName });
+const pageTitle = seo.title;
+const pageDesc = seo.description;
 
-// ── SEO: Canonical + EducationalOrganization schema ───────────────────────────
+// Only link to listing pages that exist and have something else to show.
+const cityListing =
+  cityCount > 1 && citiesMapping.some((c: any) => c.slug === university.city_slug)
+    ? { href: `/directory/schools/in/${university.city_slug}`, label: `Design schools in ${cityName}`, count: cityCount }
+    : null;
+const countryListing =
+  countryCount > 1 && countriesMapping.some((c: any) => c.slug === university.country_slug)
+    ? { href: `/directory/schools/in/${university.country_slug}`, label: `Design schools in ${countryName}`, count: countryCount }
+    : null;
+
 const canonical = new URL(`/directory/schools/${slug}`, Astro.site);
+const crumbs = [
+  { label: 'Directory', href: '/directory' },
+  { label: 'Schools', href: '/directory/schools' },
+  ...(cityListing ? [{ label: cityName, href: cityListing.href }] : []),
+  { label: university.name },
+];
+
 const schoolSchema = {
   '@context': 'https://schema.org',
   '@graph': [
-    {
-      '@type': 'EducationalOrganization',
-      '@id': `${canonical}#school`,
-      name: university.name,
-      description: pageDesc,
-      url: canonical.toString(),
-      image: university.image || undefined,
-      address: university.address ? {
-        '@type': 'PostalAddress',
-        streetAddress: university.address,
-        addressLocality: cityName,
-        addressCountry: countryName,
-      } : undefined,
-      ...(universityHasLocation ? { geo: { '@type': 'GeoCoordinates', latitude: universityLat, longitude: universityLng } } : {}),
-      sameAs: [university.website, university.instagram, university.facebook].filter(Boolean),
-    },
+    schoolSchemaNode({
+      university,
+      canonical: canonical.toString(),
+      cityName,
+      countryName,
+      imageUrl: normalizeImage(university.image, Astro),
+      geo: universityHasLocation ? { latitude: universityLat, longitude: universityLng } : null,
+      fallbackDescription: pageDesc,
+    }),
     breadcrumbList([
       { name: 'Home', url: '/' },
       { name: 'Directory', url: '/directory' },
       { name: 'Schools', url: '/directory/schools' },
+      ...(cityListing ? [{ name: cityName, url: cityListing.href }] : []),
       { name: university.name, url: `/directory/schools/${slug}` },
     ]),
   ],
@@ -165,11 +172,7 @@ const schoolSchema = {
   <Navbar />
 
   <div class="breadcrumbs-container">
-    <Breadcrumbs items={[
-      { label: 'Directory', href: '/directory' },
-      { label: 'Schools', href: '/directory/schools' },
-      { label: university.name }
-    ]} />
+    <Breadcrumbs items={crumbs} backHref="/directory/schools" />
   </div>
 
   <main class="detail-container">
@@ -254,31 +257,70 @@ const schoolSchema = {
 
     </div>
 
-    <!-- ── BOTTOM DISCOVERY AREA ─────────────────────────────────────────── -->
-    {relatedUniversities.length > 0 && (
+    <!-- ── BOTTOM DISCOVERY AREA: city → country → world ─────────────────── -->
+    {(sameCitySchools.length > 0 || sameCountrySchools.length > 0 || worldSchools.length > 0) && (
       <section class="discovery-area">
-        <div class="discovery-header">
-          <h2 class="discovery-title">Explore design schools</h2>
-          <a href="/directory/schools" class="pill-link">
-            <span>Explore all schools</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-              <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </a>
-        </div>
-
-        <div class="discovery-grid">
-          {relatedUniversities.map(u => (
-            <div class="discovery-item">
-              <EventBasicCard
-                name={u.name}
-                slug={u.slug}
-                type="university"
-                location={u.city || cityName}
-                image={normalizeImage(u.image, Astro)}
-              />
+        <div class="discovery-content">
+          {sameCitySchools.length > 0 && (
+            <div class="discovery-section">
+              <div class="section-top">
+                <h2 class="discovery-title">Discover more in {cityName}</h2>
+                {cityListing && (
+                  <a href={cityListing.href} class="discovery-see-all pill-link">
+                    Discover city
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                )}
+              </div>
+              <div class="discovery-grid">
+                {sameCitySchools.map((u, index) => (
+                  <DirectoryCard studio={u} index={index} cover={u.image} basePath="/directory/schools" />
+                ))}
+              </div>
             </div>
-          ))}
+          )}
+
+          {sameCountrySchools.length > 0 && (
+            <div class="discovery-section">
+              <div class="section-top">
+                <h2 class="discovery-title">Discover more in {countryName}</h2>
+                {countryListing && (
+                  <a href={countryListing.href} class="discovery-see-all pill-link">
+                    Discover country
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                )}
+              </div>
+              <div class="discovery-grid">
+                {sameCountrySchools.map((u, index) => (
+                  <DirectoryCard studio={u} index={index} cover={u.image} basePath="/directory/schools" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {worldSchools.length > 0 && (
+            <div class="discovery-section">
+              <div class="section-top">
+                <h2 class="discovery-title">Discover from the world</h2>
+                <a href="/directory/schools" class="discovery-see-all pill-link">
+                  Discover world
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </a>
+              </div>
+              <div class="discovery-grid">
+                {worldSchools.map((u, index) => (
+                  <DirectoryCard studio={u} index={index} cover={u.image} basePath="/directory/schools" />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     )}
@@ -480,11 +522,16 @@ const schoolSchema = {
     box-sizing: border-box;
   }
 
-  .discovery-header {
+  .discovery-section {
+    margin-bottom: 64px;
+  }
+
+  .section-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 20px;
     width: 100%;
   }
 
@@ -497,16 +544,17 @@ const schoolSchema = {
     letter-spacing: -0.01em;
   }
 
+  .discovery-see-all {
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+
   .discovery-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 20px;
+    gap: clamp(16px, 2vw, 24px);
     width: 100%;
     box-sizing: border-box;
-  }
-
-  .discovery-grid :global(.card-image-wrapper) {
-    aspect-ratio: 1;
   }
 
   /* ── Responsive Breakpoints & Visitor Priority Ordering ─────────────── */
@@ -570,9 +618,6 @@ const schoolSchema = {
     }
     .detail-container {
       padding: 0 16px 48px;
-    }
-    .discovery-grid {
-      grid-template-columns: 1fr;
     }
     .discovery-title {
       font-size: 18px;
