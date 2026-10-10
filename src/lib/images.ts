@@ -14,6 +14,8 @@ export function normalizeImage(
     cleanPath = cleanPath.replace('https://img.acceso.design/', '');
   } else if (cleanPath.startsWith('https://mood.acceso.design/')) {
     cleanPath = cleanPath.replace('https://mood.acceso.design/', '');
+  } else if (cleanPath.startsWith('https://events.acceso.design/')) {
+    cleanPath = cleanPath.replace('https://events.acceso.design/', '');
   } 
   // 2. If it's still a full URL from somewhere else, return it
   else if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {

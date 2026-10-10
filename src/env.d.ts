@@ -24,6 +24,8 @@ export type Env = {
   POSTHOG_API_HOST?: string;
   /** Secret salt for daily-rotating visitor hashes. Never store raw IPs. */
   VISITOR_HASH_SALT?: string;
+  /** "true" lets /wishlist serve local seed data when R2 has none (previews only). */
+  WISHLIST_USE_SEED?: string;
   INDEX_BUCKET: R2Bucket;
   MOODBOARD_BUCKET: R2Bucket;
   JSON_BUCKET: R2Bucket;

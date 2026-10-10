@@ -1,0 +1,94 @@
+---
+/**
+ * Shared shell for every /wishlist page: site Layout + Navbar + Footer, the
+ * breadcrumb row and the page container. Pages own their content and SEO data.
+ */
+import Layout from './Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+
+interface Crumb { label: string; href?: string }
+interface Props {
+  title: string;
+  description: string;
+  canonical: URL;
+  schema?: Record<string, any>;
+  crumbs: Crumb[];
+  /** Local seed data must never be indexed. */
+  noindex?: boolean;
+  image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  twitterCard?: 'summary' | 'summary_large_image';
+  ogType?: 'website' | 'article' | 'book';
+}
+const { crumbs, noindex, ...seo } = Astro.props;
+---
+
+<Layout {...seo} robots={noindex ? 'noindex, nofollow' : undefined}>
+  <Fragment slot="head"><slot name="head" /></Fragment>
+  <Navbar />
+  <main class="wl-page">
+    <div class="wl-inner">
+      <Breadcrumbs items={crumbs} />
+      <slot />
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<style is:global>
+  /* Shared Wishlist page primitives. Prefixed wl- so nothing leaks into other sections. */
+  .wl-page { background: var(--color-white); }
+  .wl-inner { max-width: 1600px; margin: 0 auto; padding: var(--page-top-spacing) 40px 40px; }
+
+  .wl-hero { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; margin-bottom: 48px; }
+  .wl-title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: clamp(48px, 5.5vw, 80px);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.065em;
+    color: var(--color-black);
+  }
+  .wl-title--long { font-size: clamp(36px, 4.4vw, 64px); line-height: 1.02; max-width: 18ch; }
+  .wl-lead {
+    margin: 0;
+    max-width: 62ch;
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+  .wl-meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 6px; }
+
+  .wl-section { margin-top: 88px; }
+  .wl-section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 24px; }
+  .wl-h2 {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  .wl-prose { display: flex; flex-direction: column; gap: 16px; max-width: 68ch; }
+  .wl-prose p { margin: 0; font-family: var(--font-sans); font-size: 16px; line-height: 1.7; color: var(--color-text-muted); }
+  .wl-prose p:first-child { color: var(--color-black); }
+  .wl-foot-note { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--color-stroke); }
+
+  @media (max-width: 768px) {
+    .wl-inner { padding: 24px 20px 32px; }
+    .wl-hero { margin-bottom: 36px; }
+    .wl-section { margin-top: 64px; }
+    .wl-h2 { font-size: 24px; }
+    .wl-lead { font-size: 16px; }
+  }
+  @media (max-width: 560px) {
+    .wl-inner { padding: 20px 16px 24px; }
+  }
+</style>

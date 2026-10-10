@@ -29,12 +29,13 @@ interface FilterSection {
 
 interface Props {
   sections?: FilterSection[];
+  showSearch?: boolean;
   // Legacy props for backward compatibility
   groups?: CountryGroup[];
   title?: string;
 }
 
-const { sections, groups, title = 'Filters' } = Astro.props;
+const { sections, groups, title = 'Filters', showSearch = true } = Astro.props;
 
 // If legacy mode (only groups provided), create a single location section
 const filterSections: FilterSection[] = sections || (groups ? [{
@@ -51,23 +52,6 @@ const filterSections: FilterSection[] = sections || (groups ? [{
 <aside class="filter-sidebar-drawer" id="filter-sidebar-drawer" role="dialog" aria-modal="true" aria-label={title}>
   <div class="filter-sidebar-header">
     <span class="filter-sidebar-title">{title}</span>
-  </div>
-
-  <div class="filter-sidebar-search-box">
-    <div class="filter-search-input-wrapper">
-      <svg class="filter-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input
-        type="text"
-        id="filter-sidebar-search"
-        class="filter-sidebar-search-input"
-        placeholder="Search..."
-        aria-label="Search filters"
-      />
-      <button type="button" id="filter-sidebar-search-clear" class="filter-search-clear hidden" aria-label="Clear filter search">&times;</button>
-    </div>
     <button class="filter-close-btn" id="filter-close-btn" type="button" aria-label="Close filters">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -75,6 +59,25 @@ const filterSections: FilterSection[] = sections || (groups ? [{
       </svg>
     </button>
   </div>
+
+  {showSearch && (
+    <div class="filter-sidebar-search-box">
+      <div class="filter-search-input-wrapper">
+        <svg class="filter-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          id="filter-sidebar-search"
+          class="filter-sidebar-search-input"
+          placeholder="Search..."
+          aria-label="Search filters"
+        />
+        <button type="button" id="filter-sidebar-search-clear" class="filter-search-clear hidden" aria-label="Clear filter search">&times;</button>
+      </div>
+    </div>
+  )}
 
   <div class="filter-sidebar-content" id="filter-sidebar-content">
     {filterSections.map((section) => (
@@ -90,7 +93,7 @@ const filterSections: FilterSection[] = sections || (groups ? [{
           {section.type === 'location' && section.groups && section.groups.map((group) => (
             <div class="filter-group collapsed" data-country-name={String(group.name ?? '').toLowerCase()} data-country-slug={group.slug}>
               <div class="filter-group-header">
-                <label class="filter-item country-item" onclick="event.stopPropagation();">
+                <label class="filter-item country-item" onclick={event => event.stopPropagation()}>
                   <input type="checkbox" class="country-checkbox" data-country={group.name} data-slug={group.slug} />
                   <span class="filter-name">{group.name}</span>
                   <span class="filter-count">({group.count})</span>
@@ -202,7 +205,7 @@ const filterSections: FilterSection[] = sections || (groups ? [{
     letter-spacing: -0.02em;
   }
   .filter-close-btn {
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 40px;
@@ -214,8 +217,6 @@ const filterSections: FilterSection[] = sections || (groups ? [{
     color: var(--color-black, #000000);
     transition: background 0.15s ease, border-color 0.15s ease;
     flex-shrink: 0;
-    position: relative;
-    z-index: 20;
     -webkit-tap-highlight-color: transparent;
   }
   .filter-close-btn:hover,
@@ -228,6 +229,9 @@ const filterSections: FilterSection[] = sections || (groups ? [{
     padding: 4px 20px 16px;
     flex-shrink: 0;
     background: var(--color-white, #ffffff);
+  }
+  .filter-sidebar-search-box.hidden {
+    display: none;
   }
   .filter-search-input-wrapper {
     position: relative;
@@ -603,6 +607,9 @@ const filterSections: FilterSection[] = sections || (groups ? [{
       gap: 10px;
       padding-top: 10px;
     }
+    .filter-sidebar-search-box.hidden {
+      display: none;
+    }
     .filter-search-input-wrapper {
       flex: 1;
       min-width: 0;
@@ -621,7 +628,7 @@ const filterSections: FilterSection[] = sections || (groups ? [{
     const backdrop = document.getElementById('filter-sidebar-backdrop');
     const drawer = document.getElementById('filter-sidebar-drawer');
     const closeBtn = document.getElementById('filter-close-btn');
-    const searchInput = document.getElementById('filter-sidebar-search') as HTMLInputElement;
+    const searchInput = document.getElementById('filter-sidebar-search') as HTMLInputElement | null;
     const searchClear = document.getElementById('filter-sidebar-search-clear');
     const sections = document.querySelectorAll('.filter-section');
     const sectionHeaders = document.querySelectorAll('.filter-section-header');
@@ -700,7 +707,7 @@ const filterSections: FilterSection[] = sections || (groups ? [{
       });
     }
 
-    // In-drawer search filter
+    // In-drawer search filter (only if search is enabled)
     function applySearch() {
       if (!searchInput) return;
       const query = searchInput.value.trim().toLowerCase();

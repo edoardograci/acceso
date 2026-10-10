@@ -24,6 +24,8 @@
 - [Discover projects](https://acceso.design/discover): curated project gallery index.
 - [Guides](https://acceso.design/guides): editorial guides for design students, e.g. competitions, portfolios, and how to get discovered.
 - [Guide: Best Industrial Design Competitions for Students](https://acceso.design/guides/best-industrial-design-competitions-for-students): fact-checked comparison of entry fees, prototype requirements, and prizes for iF, DIA, Core77, Red Dot, Andreu World, German Design Award Newcomer, and James Dyson Award.
+- [Wishlist](https://acceso.design/wishlist): curated affiliate-link collections for industrial and furniture designers (currently books; tools and courses coming soon).
+- [Design books](https://acceso.design/wishlist/books): curated industrial, product and furniture design books grouped into collections such as designer monographs, materials and manufacturing, and design history and theory. Each collection and each book has its own page with author, language, publication details and a buy link.
 - [Map](https://acceso.design/): interactive map of the design community (homepage).
 
 ## Freshness

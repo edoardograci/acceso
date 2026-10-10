@@ -1,0 +1,392 @@
+---
+export const prerender = false;
+
+import WishlistLayout from '../../../../layouts/WishlistLayout.astro';
+import BookCover from '../../../../components/wishlist/BookCover.astro';
+import BookGrid from '../../../../components/wishlist/BookGrid.astro';
+import AffiliateDisclaimer from '../../../../components/wishlist/AffiliateDisclaimer.astro';
+import { loadCatalog } from '../../../../lib/wishlist/store';
+import { indexCatalog, toBookView, relatedBooks, moreByAuthor } from '../../../../lib/wishlist/queries';
+import { coverSrc } from '../../../../lib/wishlist/covers';
+import { WISHLIST_CACHE_CONTROL, wishlistPaths, isValidSlug } from '../../../../lib/wishlist/routes';
+import { breadcrumbList } from '../../../../lib/seo/schema';
+import { bookPageTitle, bookPageDescription, bookSchema } from '../../../../lib/seo/wishlist';
+
+const { category: categorySlug, slug } = Astro.params;
+if (!isValidSlug(categorySlug) || !isValidSlug(slug)) return Astro.rewrite('/404');
+
+const env = (Astro.locals.runtime?.env || import.meta.env) as any;
+const catalog = await loadCatalog(env);
+if (!catalog) return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
+
+const idx = indexCatalog(catalog);
+const book = idx.bookBySlug.get(slug);
+if (!book) return Astro.rewrite('/404');
+
+// One canonical URL per book: a wrong-category URL permanently redirects to the right one.
+if (book.category !== categorySlug) {
+  return Astro.redirect(wishlistPaths.book(book.category, book.slug), 301);
+}
+const category = idx.categoryBySlug.get(book.category)!;
+
+const ctx = { origin: Astro.url.origin };
+Astro.response.headers.set('Cache-Control', WISHLIST_CACHE_CONTROL);
+
+// ── View models ─────────────────────────────────────────────────────────────
+const view = toBookView(book, idx, ctx, { width: 720, srcset: true, widths: [360, 540, 720, 1080] });
+const related = relatedBooks(idx, book, 5);
+const relatedViews = related.books.map((b) => toBookView(b, idx, ctx));
+const byAuthor = moreByAuthor(idx, book, 5).map((b) => toBookView(b, idx, ctx));
+const siblingCount = idx.booksByCategory.get(category.slug)?.length ?? 0;
+
+const paragraphs = book.description.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+const year = book.published?.match(/\d{4}/)?.[0];
+const releaseDate = book.published && /^\d{4}-\d{2}-\d{2}$/.test(book.published) ? book.published : null;
+const facts = [year, book.pages ? `${book.pages} pages` : null].filter(Boolean) as string[];
+
+// ── SEO ─────────────────────────────────────────────────────────────────────
+const canonical = new URL(view.href, Astro.site);
+const categoryUrl = new URL(view.categoryHref, Astro.site).toString();
+const title = bookPageTitle(book, category);
+const description = bookPageDescription(book, category);
+
+// Social image = the cover itself, at its true aspect ratio (never upscaled).
+const ogWidth = Math.min(view.cover.width, 800);
+const ogHeight = Math.round(ogWidth / view.cover.ratio);
+const ogSrc = coverSrc(book.cover, ctx.origin, ogWidth);
+const ogAbs = ogSrc ? new URL(ogSrc, ctx.origin).toString() : undefined;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    bookSchema({ book, category, canonical: canonical.toString(), categoryUrl, imageUrl: ogAbs }),
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Wishlist', url: wishlistPaths.hub() },
+      { name: 'Books', url: wishlistPaths.books() },
+      { name: category.name, url: view.categoryHref },
+      { name: book.title, url: view.href },
+    ]),
+  ],
+};
+---
+
+<WishlistLayout
+  title={title}
+  description={description}
+  canonical={canonical}
+  schema={schema}
+  noindex={catalog.source === 'seed'}
+  ogType="book"
+  image={ogSrc ?? undefined}
+  imageAlt={view.cover.alt}
+  imageWidth={ogWidth}
+  imageHeight={ogHeight}
+  twitterCard="summary"
+  crumbs={[
+    { label: 'Wishlist', href: wishlistPaths.hub() },
+    { label: 'Books', href: wishlistPaths.books() },
+    { label: category.name, href: view.categoryHref },
+    { label: book.title },
+  ]}
+>
+  <Fragment slot="head">
+    {book.isbn && <meta property="book:isbn" content={book.isbn} />}
+    {releaseDate && <meta property="book:release_date" content={releaseDate} />}
+    {(book.tags ?? []).map((t) => <meta property="book:tag" content={t} />)}
+  </Fragment>
+
+  <article class="book-page">
+    <div class="hero">
+      <!-- The book as an object -->
+      <div class="cover-col">
+        <div class="cover-stage">
+          <div class="object3d" style={`--ratio:${view.cover.ratio.toFixed(4)}`}>
+            <BookCover
+              class="the-book"
+              cover={view.cover}
+              title={book.title}
+              author={book.author}
+              edge={false}
+              loading="eager"
+              fetchpriority="high"
+              sizes="(max-width: 900px) 70vw, 34vw"
+            />
+            <span class="fore" aria-hidden="true"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Information -->
+      <div class="info-col">
+        <h1 class="book-title">{book.title}</h1>
+        <p class="byline">by <span>{book.author}</span>{book.publisher && <> for <span>{book.publisher}</span></>}</p>
+
+        {facts.length > 0 && (
+          <ul class="facts" aria-label="Book facts">
+            {facts.map((f) => <li>{f}</li>)}
+          </ul>
+        )}
+
+        {book.language && (
+          <div class="languages-row" aria-label="Languages">
+            <span class="languages-label">Languages:</span>
+            <span class="languages-value">{book.language}</span>
+          </div>
+        )}
+
+        {book.summary && <p class="summary">{book.summary}</p>}
+
+        <div class="cta-row">
+          <a
+            class="btn-primary buy-btn"
+            href={book.amazonUrl}
+            target="_blank"
+            rel="sponsored nofollow noopener"
+            data-track="wishlist_buy"
+            data-book={book.slug}
+            data-category={book.category}
+          >
+            Buy on Amazon
+            <svg class="website-ext-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+          <a class="pill-link" href={view.categoryHref}>View collection</a>
+        </div>
+        <section class="about-section" aria-labelledby="about-heading">
+          <h2 class="about-title" id="about-heading">About this book</h2>
+          <div class="about-prose">
+            <p>{paragraphs[0]}</p>
+            {paragraphs.length > 1 && (
+              <details class="more-about-details">
+                <summary class="more-about-toggle">
+                  <span>Read more</span>
+                  <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </summary>
+                <div class="about-more-content">
+                  {paragraphs.slice(1).map((p) => <p>{p}</p>)}
+                </div>
+              </details>
+            )}
+            {book.editorNote && (
+              <aside class="note" aria-labelledby="note-heading">
+                <h3 class="note-label" id="note-heading">Why it's on the wishlist</h3>
+                <p class="note-text">{book.editorNote}</p>
+              </aside>
+            )}
+          </div>
+        </section>
+        <div class="wl-foot-note"><AffiliateDisclaimer /></div>
+      </div>
+    </div>
+
+{byAuthor.length > 0 && (
+      <section class="wl-section" aria-labelledby="by-author">
+        <div class="wl-section-head"><h2 class="wl-h2" id="by-author">More by {book.author}</h2></div>
+        <BookGrid books={byAuthor} variant="row" label={`More by ${book.author}`} />
+      </section>
+    )}
+
+    {relatedViews.length > 0 && (
+      <section class="wl-section" aria-labelledby="related-heading">
+        <div class="wl-section-head">
+          <h2 class="related-title" id="related-heading">{related.sameCollection ? 'More from this collection' : 'You may also like'}</h2>
+          <a href={view.categoryHref} class="pill-link">View collection</a>
+        </div>
+        <BookGrid books={relatedViews} variant="row" label="Related books" />
+      </section>
+    )}
+  </article>
+</WishlistLayout>
+
+<script>
+  // Lightweight affiliate-click measurement using the site's existing PostHog client.
+  document.querySelectorAll<HTMLAnchorElement>('[data-track="wishlist_buy"]').forEach((a) => {
+    a.addEventListener('click', () => {
+      try {
+        (window as any).posthog?.capture?.('wishlist_buy_click', { book: a.dataset.book, category: a.dataset.category });
+      } catch {}
+    });
+  });
+</script>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(32px, 5vw, 88px);
+    align-items: start;
+  }
+
+  /* ── Cover: a real object on a surface ───────────────────────────────── */
+  .cover-col { position: sticky; top: calc(var(--navbar-height) + 24px); }
+  .cover-stage {
+    display: grid;
+    place-items: center;
+    min-height: min(74vh, 720px);
+    padding: clamp(40px, 6vw, 88px) clamp(24px, 4vw, 64px);
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 42%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 70%),
+      var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 20px;
+    perspective: 1800px;
+    overflow: hidden;
+  }
+  .object3d {
+    --w: min(100%, 440px, calc(58vh * var(--ratio)));
+    --thickness: calc(var(--w) * 0.085);
+    position: relative;
+    width: var(--w);
+    transform-style: preserve-3d;
+    transform: rotateY(-17deg) rotateX(2deg);
+    transition: transform 0.9s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .cover-stage:hover .object3d { transform: rotateY(-7deg) rotateX(1deg) scale(1.015); }
+
+  /* soft ground shadow */
+  .object3d::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: 4%;
+    right: -6%;
+    bottom: -5%;
+    height: 9%;
+    background: radial-gradient(ellipse at center, rgba(15, 17, 19, 0.34), rgba(15, 17, 19, 0) 68%);
+    filter: blur(14px);
+    transform: translateZ(-40px);
+  }
+  .object3d :global(.the-book) {
+    box-shadow:
+      0 0 0 1px rgba(15, 17, 19, 0.08),
+      0 2px 4px rgba(15, 17, 19, 0.18),
+      0 18px 28px -10px rgba(15, 17, 19, 0.32),
+      0 44px 64px -28px rgba(15, 17, 19, 0.4);
+  }
+  /* fore-edge: the page block, folded back from the cover's right edge */
+  .fore {
+    position: absolute;
+    top: 0.8%;
+    bottom: 0.8%;
+    left: 100%;
+    width: var(--thickness);
+    transform-origin: left center;
+    transform: rotateY(90deg);
+    border-radius: 0 2px 2px 0;
+    background:
+      linear-gradient(90deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.1)),
+      repeating-linear-gradient(90deg, #faf8f2 0 1px, #dedacd 1px 2px);
+  }
+
+  /* ── Information ─────────────────────────────────────────────────────── */
+  .info-col { display: flex; flex-direction: column; align-items: flex-start; padding-top: 8px; }
+  .book-title {
+    margin: 22px 0 0;
+    font-family: var(--font-sans);
+    font-size: clamp(34px, 4.2vw, 62px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.055em;
+    color: var(--color-black);
+    text-wrap: balance;
+  }
+  .byline { margin: 14px 0 0; font-family: var(--font-sans); font-size: 19px; color: var(--color-text-muted); }
+  .byline span { color: var(--color-black); }
+
+  .facts { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 0; margin: 22px 0 0; padding: 0; font-family: var(--font-sans); font-size: 14px; color: var(--color-text-muted); }
+  .facts li + li::before { content: '•'; margin: 0 10px; opacity: 0.45; }
+
+  .languages-row { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; font-family: var(--font-sans); font-size: 14px; color: var(--color-text-muted); }
+  .languages-label { font-weight: 600; color: var(--color-black); }
+  .languages-value { color: var(--color-text-muted); }
+
+  .summary { margin: 26px 0 0; max-width: 54ch; font-family: var(--font-sans); font-size: 18px; line-height: 1.55; color: var(--color-black); }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; align-items: center; }
+  .buy-btn { gap: 10px; }
+  .cta-row .pill-link {
+    height: var(--btn-height-large);
+    padding: 0 28px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .buy-btn .website-ext-icon {
+    color: var(--color-black);
+    transition: transform 0.2s ease;
+  }
+  .buy-btn:hover .website-ext-icon {
+    transform: translate(2px, -2px);
+  }
+
+  /* ── About section (inside info-col) ─────────────────────────────────────── */
+  .about-section { margin-top: 32px; padding-top: 24px; }
+  .info-col .wl-foot-note { width: 100%; margin-top: 36px; padding-top: 20px; }
+  .about-title {
+    margin: 0 0 16px;
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+  }
+  .about-prose { margin-top: 16px; font-family: var(--font-sans); font-size: 15px; line-height: 1.7; color: var(--color-text-muted); }
+  .about-prose p:first-child { color: var(--color-text-muted); }
+
+  .more-about-details { margin-top: 16px; }
+  .more-about-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-black);
+    list-style: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+  .more-about-toggle::-webkit-details-marker { display: none; }
+  .chevron-icon { transition: transform 0.2s ease; flex-shrink: 0; }
+  .more-about-details[open] .chevron-icon { transform: rotate(180deg); }
+  .about-more-content { margin-top: 16px; font-family: var(--font-sans); font-size: 15px; line-height: 1.7; color: var(--color-text-muted); }
+  .about-more-content p + p { margin-top: 12px; }
+
+  .note { margin-top: 48px; padding: 28px 0 0 28px; border-left: 3px solid var(--color-yellow); }
+  .note-label { margin: 0 0 12px; font-family: var(--font-sans); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-gray); }
+  .note-text { margin: 0; max-width: 34ch; font-family: var(--font-sans); font-size: clamp(22px, 2.3vw, 30px); line-height: 1.25; letter-spacing: -0.03em; color: var(--color-black); }
+
+  /* ── Related section ─────────────────────────────────────────────────── */
+  .related-title {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+  }
+
+  /* ── Responsive ──────────────────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 28px; }
+    .cover-col { position: static; }
+    .cover-stage { min-height: 0; padding: 48px 24px; }
+    .object3d { --w: min(62%, 300px, calc(46vh * var(--ratio))); transform: rotateY(-13deg) rotateX(2deg); }
+    .cover-stage:hover .object3d { transform: rotateY(-13deg) rotateX(2deg); }
+    .byline { font-size: 17px; }
+    .summary { font-size: 17px; }
+  }
+  @media (max-width: 640px) {
+    .cta-row { width: 100%; flex-direction: column; align-items: stretch; }
+    .cta-row :global(.btn-primary),
+    .cta-row :global(.btn-secondary),
+    .cta-row .pill-link { width: 100%; }
+    .note { padding-left: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .object3d { transition: none; }
+    .cover-stage:hover .object3d { transform: rotateY(-17deg) rotateX(2deg); }
+    .chevron-icon { transition: none; }
+  }
+</style>

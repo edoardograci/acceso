@@ -1,0 +1,49 @@
+[
+  {
+    "id": "books",
+    "title": "Books",
+    "href": "/wishlist/books",
+    "status": "active",
+    "motif": "books",
+    "order": 1,
+    "description": "The books we would put on every industrial and furniture designer’s shelf, grouped into collections.",
+    "h1": "Industrial & Furniture Design Books",
+    "seoTitle": "Industrial Design Books: A Curated Reading List | Acceso",
+    "seoDescription": "A curated reading list of industrial, product and furniture design books: monographs, materials, manufacturing, history and theory.",
+    "intro": [
+      "Explore a curated selection of industrial design and furniture design books covering influential designers, iconic products, materials, manufacturing, and design history. Whether you are a student, a professional or simply curious about product design, discover books that offer insight into the objects that shape our everyday lives."
+    ],
+    "faqs": [
+      {
+        "q": "What are the best books for learning industrial design?",
+        "a": "The best industrial design books cover product development, design principles, materials, manufacturing processes and the work of influential designers. For students and professionals alike, they offer a useful foundation in industrial design and practical insights into creating better products."
+      },
+      {
+        "q": "Are there good books on furniture design specifically?",
+        "a": "Yes. Furniture design books explore the history and evolution of furniture, iconic chairs and objects, materials such as wood and metal, and the techniques used in furniture making. They are valuable resources for understanding both the creative and technical aspects of furniture and product design."
+      },
+      {
+        "q": "How does Acceso choose these books?",
+        "a": "Acceso curates books on industrial design, furniture design, materials and manufacturing based on their relevance to design students, professionals and enthusiasts. Some links are affiliate links, meaning Acceso may earn a commission from qualifying purchases at no additional cost to you."
+      }
+    ]
+  },
+  {
+    "id": "tools-hardware",
+    "title": "Tools & Hardware",
+    "href": "/wishlist/tools",
+    "status": "coming-soon",
+    "motif": "tools",
+    "order": 2,
+    "description": "Drawing instruments, measuring tools and workshop hardware that designers actually use."
+  },
+  {
+    "id": "courses",
+    "title": "Courses",
+    "href": "/wishlist/courses",
+    "status": "coming-soon",
+    "motif": "courses",
+    "order": 3,
+    "description": "Online courses and workshops for learning industrial, product and furniture design."
+  }
+]

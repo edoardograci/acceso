@@ -1,15 +1,22 @@
 ---
-import { homeFaqs } from '../../lib/homeFaqs';
+import { homeFaqs, type HomeFaqItem } from '../../lib/homeFaqs';
+
+interface Props {
+  /** Defaults to the homepage FAQs. */
+  faqs?: HomeFaqItem[];
+  heading?: string;
+}
+const { faqs = homeFaqs, heading = 'Frequently asked questions' } = Astro.props;
 ---
 
 <section class="home-faq" aria-labelledby="home-faq-heading">
   <div class="home-faq-grid">
     <div class="home-faq-heading">
-      <h2 id="home-faq-heading">Frequently asked questions</h2>
+      <h2 id="home-faq-heading">{heading}</h2>
     </div>
 
     <div class="home-faq-list">
-      {homeFaqs.map((f) => (
+      {faqs.map((f) => (
         <details class="home-faq-item" name="home-faq">
           <summary>
             <span>{f.q}</span>

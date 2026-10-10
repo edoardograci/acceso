@@ -1,0 +1,114 @@
+﻿---
+// Wishlist hub. Data is read from R2 per request, so edits go live without a rebuild.
+export const prerender = false;
+
+import WishlistLayout from '../../layouts/WishlistLayout.astro';
+import CollectionCard from '../../components/wishlist/CollectionCard.astro';
+import BookGrid from '../../components/wishlist/BookGrid.astro';
+import { loadCatalog } from '../../lib/wishlist/store';
+import { indexCatalog, toBookView, toCategoryView, featuredBooks } from '../../lib/wishlist/queries';
+import { WISHLIST_CACHE_CONTROL, wishlistPaths } from '../../lib/wishlist/routes';
+import { breadcrumbList } from '../../lib/seo/schema';
+import { collectionPageSchema } from '../../lib/seo/wishlist';
+
+const env = (Astro.locals.runtime?.env || import.meta.env) as any;
+const catalog = await loadCatalog(env);
+if (!catalog) return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
+
+const idx = indexCatalog(catalog);
+const ctx = { origin: Astro.url.origin };
+Astro.response.headers.set('Cache-Control', WISHLIST_CACHE_CONTROL);
+
+const featured = (featuredBooks(idx, 5).length ? featuredBooks(idx, 5) : catalog.books.slice(0, 5)).map((b) => toBookView(b, idx, ctx));
+const monographCat = idx.categoryBySlug.get('designer-monographs');
+const monographView = monographCat ? toCategoryView(monographCat, idx, ctx) : null;
+const booksStack = monographView?.stack ?? featured.slice(0, 4);
+
+const title = 'Wishlist: Industrial & Furniture Design Books | Acceso';
+const description =
+  'A curated collection of books, tools and courses for industrial and furniture designers, selected to inspire, inform and support your design practice.';
+const canonical = new URL(wishlistPaths.hub(), Astro.site);
+const active = catalog.collections.filter((c) => c.status === 'active');
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    collectionPageSchema({
+      url: canonical.toString(),
+      name: 'Wishlist',
+      description,
+      items: active.map((c) => ({ url: new URL(c.href, Astro.site).toString(), name: c.title })),
+    }),
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Wishlist', url: wishlistPaths.hub() },
+    ]),
+  ],
+};
+
+const booksHref = wishlistPaths.books();
+---
+
+<WishlistLayout
+  title={title}
+  description={description}
+  canonical={canonical}
+  schema={schema}
+  noindex={catalog.source === 'seed'}
+  crumbs={[{ label: 'Home', href: '/' }, { label: 'Wishlist' }]}
+>
+  <header class="wl-hero">
+    <h1 class="wl-title">Wishlist</h1>
+    <p class="wl-lead">
+      A curated collection of books, tools and courses for industrial and furniture designers, selected to inspire, inform and support your design practice.
+    </p>
+  </header>
+
+  <div class="collections">
+    {catalog.collections.map((c) => (
+      <CollectionCard
+        collection={c}
+        stack={c.motif === 'books' ? booksStack : []}
+        count={c.motif === 'books' ? catalog.books.length : undefined}
+        class={`slot-${c.motif}`}
+      />
+    ))}
+  </div>
+
+  {featured.length > 0 && (
+    <section class="wl-section" aria-labelledby="start-here">
+      <div class="wl-section-head">
+        <h2 class="wl-h2" id="start-here">Start with these</h2>
+        <a href={booksHref} class="pill-link">
+          <span>All books</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+      <BookGrid books={featured} variant="row" label="Featured books" />
+    </section>
+  )}
+
+</WishlistLayout>
+
+<style>
+  .collections {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    grid-auto-rows: minmax(330px, auto);
+    gap: 20px;
+    grid-template-areas:
+      'books tools'
+      'books courses';
+  }
+  .collections :global(.slot-books) { grid-area: books; }
+  .collections :global(.slot-tools) { grid-area: tools; }
+  .collections :global(.slot-courses) { grid-area: courses; }
+
+  @media (max-width: 900px) {
+    .collections {
+      grid-template-columns: 1fr;
+      grid-auto-rows: auto;
+      grid-template-areas: 'books' 'tools' 'courses';
+    }
+  }
+</style>

@@ -1,0 +1,90 @@
+---
+/**
+ * A little group of books leaning together, built purely from the real cover
+ * images (no extra assets). Sizes are in container units, so the same stack
+ * scales from a phone card to the large hub card without separate layouts.
+ */
+import BookCover from './BookCover.astro';
+import type { BookView } from '../../lib/wishlist/types';
+
+interface Props {
+  books: BookView[];
+  /** Larger covers for hero placements. */
+  size?: 'md' | 'lg';
+  priority?: boolean;
+}
+const { books, size = 'md', priority = false } = Astro.props;
+
+// width (cqw), horizontal offset from centre (cqw), rotation (deg), scale, stacking
+const LAYOUTS: Record<number, { w: number; x: number[]; r: number[]; s: number[]; z: number[] }> = {
+  1: { w: 40, x: [0], r: [-1.5], s: [1], z: [1] },
+  2: { w: 34, x: [-14, 14], r: [-4, 4.5], s: [0.96, 1], z: [1, 2] },
+  3: { w: 30, x: [-22, 0, 22], r: [-5, 1, 6], s: [0.95, 1, 0.94], z: [1, 3, 2] },
+  4: { w: 26.5, x: [-32, -10.5, 10.5, 32], r: [-6, -2, 2.5, 7], s: [0.93, 1, 1, 0.92], z: [1, 3, 4, 2] },
+};
+const shown = books.slice(0, 4);
+const L = LAYOUTS[Math.max(1, shown.length)];
+const w = size === 'lg' ? L.w * 1.12 : L.w;
+---
+
+{shown.length > 0 && (
+  <div class:list={['stack', `stack--${size}`]} aria-hidden="true">
+    {shown.map((b, i) => (
+      <div
+        class="stack-item"
+        style={`--w:${w};--x:${L.x[i]};--r:${L.r[i]};--s:${L.s[i]};z-index:${L.z[i]};`}
+      >
+        <BookCover
+          cover={b.cover}
+          title={b.title}
+          author={b.author}
+          loading={priority ? 'eager' : 'lazy'}
+          sizes="(max-width: 640px) 34vw, 14vw"
+        />
+      </div>
+    ))}
+  </div>
+)}
+
+<style>
+  .stack {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.85 / 1;
+    container-type: size;
+  }
+  .stack--lg { aspect-ratio: 1.3 / 1; }
+
+  .stack-item {
+    position: absolute;
+    top: 50%;
+    left: calc(50% - var(--w) * 0.5cqw);
+    width: calc(var(--w) * 1cqw);
+    transform-origin: 50% 100%;
+    translate: calc(var(--x) * 1cqw) -50%;
+    rotate: calc(var(--r) * 1deg);
+    scale: var(--s);
+    transition: translate 0.55s cubic-bezier(0.23, 1, 0.32, 1), rotate 0.55s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  /* Same width for every book; only very tall covers narrow a little so they stay inside the stage. */
+  .stack-item :global(.book) {
+    width: min(100%, calc(84cqh * var(--book-ratio)));
+    margin-inline: auto;
+  }
+
+  /* The card (an ancestor <a>) drives the hover: books fan out and the lead book lifts. */
+  :global(a:hover) .stack-item {
+    translate: calc(var(--x) * 1.16cqw) calc(-50% - 8px);
+    rotate: calc(var(--r) * 1.35deg);
+  }
+  :global(a:hover) .stack-item:nth-child(2),
+  :global(a:hover) .stack-item:nth-child(3) {
+    translate: calc(var(--x) * 1.16cqw) calc(-50% - 14px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stack-item { transition: none; }
+    :global(a:hover) .stack-item { translate: calc(var(--x) * 1cqw) 0; rotate: calc(var(--r) * 1deg); }
+  }
+</style>

@@ -1,0 +1,52 @@
+---
+import BookCard from './BookCard.astro';
+import type { BookView } from '../../lib/wishlist/types';
+
+interface Props {
+  books: BookView[];
+  /** "grid": wraps. "row": one line of up to 5, a swipeable shelf on phones. */
+  variant?: 'grid' | 'row';
+  /** Eager-load the first N covers (above the fold). */
+  priorityCount?: number;
+  label?: string;
+}
+const { books, variant = 'grid', priorityCount = 0, label } = Astro.props;
+---
+
+<ul class:list={['book-grid', `book-grid--${variant}`]} aria-label={label}>
+  {books.map((b, i) => (
+    <li><BookCard book={b} priority={i < priorityCount} /></li>
+  ))}
+</ul>
+
+<style>
+  .book-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: clamp(20px, 2.2vw, 32px) clamp(16px, 2vw, 24px);
+  }
+  .book-grid li { min-width: 0; }
+
+  @media (max-width: 1200px) { .book-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (max-width: 900px)  { .book-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 640px)  {
+    .book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
+
+    /* Related/featured rows become a horizontal shelf you can swipe. */
+    .book-grid--row {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-padding: 0 16px;
+      margin: 0 -16px;
+      padding: 4px 16px 8px;
+      scrollbar-width: none;
+    }
+    .book-grid--row::-webkit-scrollbar { display: none; }
+    .book-grid--row li { flex: 0 0 44vw; max-width: 220px; scroll-snap-align: start; }
+  }
+</style>

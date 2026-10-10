@@ -1,0 +1,86 @@
+[
+  {
+    "slug": "designer-monographs",
+    "name": "Designer Monographs",
+    "h1": "Industrial Designer Monographs & Biographies",
+    "topic": "Design Monograph",
+    "order": 1,
+    "tagline": "In-depth studies of the designers behind the objects.",
+    "seoTitle": "Industrial Designer Monographs & Biographies | Acceso",
+    "seoDescription": "Monographs on great industrial and furniture designers: Dieter Rams, Charles & Ray Eames, Achille Castiglioni, Jasper Morrison and Enzo Mari.",
+    "intro": [
+      "A good monograph does more than catalogue a designer’s output. It shows how one person’s constraints, clients and obsessions turned into a recognisable body of work, which is exactly what a student or young designer needs to learn from.",
+      "These books cover four very different attitudes to industrial and furniture design: rigorous reduction, playful experimentation, quiet everyday restraint and outright rebellion against the market."
+    ]
+  },
+  {
+    "slug": "materials-manufacturing",
+    "name": "Materials & Manufacturing",
+    "h1": "Materials & Manufacturing Books for Designers",
+    "topic": "Materials & Manufacturing",
+    "order": 2,
+    "tagline": "How things are chosen, shaped and made.",
+    "seoTitle": "Materials & Manufacturing Books for Designers | Acceso",
+    "seoDescription": "The best books on materials selection and manufacturing processes for industrial, product and furniture designers.",
+    "intro": [
+      "Most design problems are solved or ruined at the point where a material meets a process. Knowing what injection moulding, die casting or steam-bending can and cannot do lets you design things that can actually be made at a sensible price.",
+      "This collection mixes engineering-grade references with visual guides written for designers, so you can start with process overviews and go deeper when a project demands it."
+    ]
+  },
+  {
+    "slug": "history-theory",
+    "name": "History & Theory",
+    "h1": "Design History & Theory Books",
+    "topic": "Design History",
+    "order": 3,
+    "tagline": "The ideas, arguments and movements behind modern design.",
+    "seoTitle": "Design History & Theory Books | Acceso",
+    "seoDescription": "Essential design history and theory books: Papanek, Pevsner, Sudjic and Braungart on objects, responsibility and sustainability.",
+    "intro": [
+      "Design history is not trivia. The debates about ornament, industrial production, social responsibility and sustainability are the same ones designers still argue about today, just with different materials.",
+      "These four books give you a spine for that conversation: how modern design saw itself, what it got wrong, what objects say about us, and how products could be rethought as part of material cycles."
+    ]
+  },
+  {
+    "slug": "product-design",
+    "name": "Product Design",
+    "h1": "Product Design Books: Essential Reading",
+    "topic": "Product Design",
+    "order": 4,
+    "tagline": "Process, usability, sketching and the business of making products.",
+    "seoTitle": "Product Design Books: Essential Reading | Acceso",
+    "seoDescription": "Essential product and industrial design books on usability, development process, sketching and design reference.",
+    "intro": [
+      "Product design sits between people, engineering and the market. The books here cover each corner: how people understand objects, how teams develop them, how to put ideas on paper, and how the field has looked over a century.",
+      "They are practical rather than theoretical, and most are the kind of book that is still being handed from one designer to the next."
+    ]
+  },
+  {
+    "slug": "furniture-design",
+    "name": "Furniture Design",
+    "h1": "Furniture Design Books: Essential Reading",
+    "topic": "Furniture Design",
+    "order": 5,
+    "tagline": "Timber, joinery, production and the culture of sitting.",
+    "seoTitle": "Furniture Design Books: Essential Reading | Acceso",
+    "seoDescription": "Furniture design books for makers and designers: development and manufacturing, understanding wood, and the cultural history of the chair.",
+    "intro": [
+      "Furniture is one of the few design disciplines where craft, industry and the human body all meet in the same object. Good furniture design depends on understanding all three.",
+      "This collection includes a practical introduction to furniture development, the definitive technical book on wood, and a cultural history of the chair."
+    ]
+  },
+  {
+    "slug": "graphic-design",
+    "name": "Graphic Design",
+    "h1": "Graphic Design & Typography Books",
+    "topic": "Graphic Design",
+    "order": 6,
+    "tagline": "Type, grids and visual thinking for product-minded designers.",
+    "seoTitle": "Graphic Design & Typography Books | Acceso",
+    "seoDescription": "Graphic design and typography books for industrial and product designers: type, grid systems and visual thinking.",
+    "intro": [
+      "Industrial designers spend more time than they expect on presentations, packaging, labels and interfaces. A working grasp of typography and layout makes every other part of the job look better.",
+      "These three books are short, visual and practical, covering type, grids and a broader way of seeing the everyday."
+    ]
+  }
+]
