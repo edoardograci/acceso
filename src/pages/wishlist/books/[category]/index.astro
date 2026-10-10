@@ -1,0 +1,276 @@
+---
+export const prerender = false;
+
+import WishlistLayout from '../../../../layouts/WishlistLayout.astro';
+import BookGrid from '../../../../components/wishlist/BookGrid.astro';
+import CategoryStackCard from '../../../../components/wishlist/CategoryStackCard.astro';
+import FilterSidebar from '../../../../components/FilterSidebar.astro';
+import { loadCatalog } from '../../../../lib/wishlist/store';
+import { indexCatalog, publishedCategories, toBookView, toCategoryView } from '../../../../lib/wishlist/queries';
+import { WISHLIST_CACHE_CONTROL, wishlistPaths, isValidSlug } from '../../../../lib/wishlist/routes';
+import { breadcrumbList } from '../../../../lib/seo/schema';
+import { collectionPageSchema, categoryPageTitle, categoryPageDescription } from '../../../../lib/seo/wishlist';
+
+const { category: categorySlug } = Astro.params;
+if (!isValidSlug(categorySlug)) return Astro.rewrite('/404');
+
+const env = (Astro.locals.runtime?.env || import.meta.env) as any;
+const catalog = await loadCatalog(env);
+if (!catalog) return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
+
+const idx = indexCatalog(catalog);
+const category = idx.categoryBySlug.get(categorySlug);
+const books = category ? idx.booksByCategory.get(category.slug) ?? [] : [];
+// An empty category would be a thin page: it doesn't exist until it has books.
+if (!category || books.length === 0) return Astro.rewrite('/404');
+
+const ctx = { origin: Astro.url.origin };
+Astro.response.headers.set('Cache-Control', WISHLIST_CACHE_CONTROL);
+
+const bookViews = books.map((b) => toBookView(b, idx, ctx));
+const others = publishedCategories(idx)
+  .filter((c) => c.slug !== category.slug)
+  .slice(0, 3)
+  .map((c) => toCategoryView(c, idx, ctx));
+
+// Build language filter options from books in this category (one checkbox per language)
+const languageCounts = new Map<string, number>();
+for (const book of books) {
+  if (book.language) {
+    // Split combined languages by /, &, ,, or "and"
+    const langs = book.language.split(/\s*[/,&]\s*|\s+and\s+/i);
+    for (const lang of langs) {
+      const clean = lang.trim();
+      if (clean) {
+        languageCounts.set(clean, (languageCounts.get(clean) ?? 0) + 1);
+      }
+    }
+  }
+}
+const languageOptions = Array.from(languageCounts.entries())
+  .sort((a, b) => b[1] - a[1])
+  .map(([name, count]) => ({
+    name,
+    slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    count,
+  }));
+
+const h1 = category.h1 ?? category.name;
+const title = categoryPageTitle(category);
+const description = categoryPageDescription(category, books.length);
+const canonical = new URL(wishlistPaths.category(category.slug), Astro.site);
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    collectionPageSchema({
+      url: canonical.toString(),
+      name: h1,
+      description,
+      items: bookViews.map((b) => ({ url: new URL(b.href, Astro.site).toString(), name: b.title })),
+    }),
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Wishlist', url: wishlistPaths.hub() },
+      { name: 'Books', url: wishlistPaths.books() },
+      { name: category.name, url: wishlistPaths.category(category.slug) },
+    ]),
+  ],
+};
+---
+
+<WishlistLayout
+  title={title}
+  description={description}
+  canonical={canonical}
+  schema={schema}
+  noindex={catalog.source === 'seed'}
+  crumbs={[
+    { label: 'Wishlist', href: wishlistPaths.hub() },
+    { label: 'Books', href: wishlistPaths.books() },
+    { label: category.name },
+  ]}
+>
+  <header class="wl-hero">
+    <h1 class="wl-title wl-title--long">{h1}</h1>
+    {category.intro[0] && <p class="wl-lead">{category.intro[0]}</p>}
+  </header>
+
+  <div class="filter-row">
+    <button class="filter-trigger-btn" id="filter-trigger" type="button">Filter</button>
+    <FilterSidebar
+      sections={[
+        {
+          id: 'language',
+          title: 'Language',
+          type: 'checkbox',
+          options: languageOptions,
+          collapsed: false,
+        },
+      ]}
+      title="Filters"
+      showSearch={false}
+    />
+  </div>
+
+  <section aria-labelledby="books-heading">
+    <h2 class="sr-only" id="books-heading">{category.name}: all books</h2>
+    <BookGrid books={bookViews} priorityCount={5} label={`${category.name} books`} />
+  </section>
+
+  {category.intro[1] && (
+    <section class="wl-section" aria-labelledby="about-collection">
+      <h2 class="wl-h2" id="about-collection">About this collection</h2>
+      <div class="wl-prose" style="margin-top:20px"><p>{category.intro[1]}</p></div>
+    </section>
+  )}
+
+  {others.length > 0 && (
+    <section class="wl-section" aria-labelledby="more-collections">
+      <div class="wl-section-head">
+        <h2 class="wl-h2" id="more-collections">More design books</h2>
+        <a href={wishlistPaths.books()} class="pill-link">
+          <span>All collections</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+      <div class="more-grid">
+        {others.map((c) => <CategoryStackCard category={c} />)}
+      </div>
+    </section>
+  )}
+
+</WishlistLayout>
+
+<style>
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 200;
+  }
+  .filter-trigger-btn {
+    height: 36px;
+    padding: 1px 16px 0;
+    border-radius: 999px;
+    border: none;
+    background: var(--color-yellow);
+    color: var(--color-black);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  .filter-trigger-btn:hover {
+    opacity: 0.9;
+  }
+  .more-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+  @media (max-width: 1100px) { .more-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .more-grid > :global(:nth-child(3)) { display: none; } }
+  @media (max-width: 640px)  { .more-grid { grid-template-columns: 1fr; } .more-grid > :global(:nth-child(3)) { display: block; } }
+</style>
+
+<script>
+  (function () {
+    const filterTrigger = document.getElementById('filter-trigger');
+    const filterDrawer = document.getElementById('filter-sidebar-drawer');
+    const filterBackdrop = document.getElementById('filter-sidebar-backdrop');
+    const filterClose = document.getElementById('filter-close-btn');
+    const filterDone = document.getElementById('filter-done-btn');
+    const clearAllBtn = document.getElementById('filter-clear-all');
+    const languageCheckboxes = Array.from(document.querySelectorAll<HTMLInputElement>('.language-checkbox'));
+    const bookItems = Array.from(document.querySelectorAll<HTMLLIElement>('.book-grid > li'));
+
+    const state = {
+      languages: new Set<string>()
+    };
+
+    let savedState = {
+      languages: new Set<string>()
+    };
+
+    function syncChecks() {
+      languageCheckboxes.forEach((cb) => {
+        cb.checked = state.languages.has(cb.dataset.slug || '');
+      });
+    }
+
+    function apply() {
+      bookItems.forEach((li) => {
+        const card = li.querySelector<HTMLElement>('.book-card');
+        if (!card) return;
+        const langs = (card.dataset.languages || '').split(',').map((s) => s.trim()).filter(Boolean);
+        
+        let visible = true;
+        if (state.languages.size > 0) {
+          visible = langs.some((l) => state.languages.has(l));
+        }
+        li.style.display = visible ? '' : 'none';
+      });
+    }
+
+    function snapshotState() {
+      savedState = { languages: new Set(state.languages) };
+    }
+
+    function restoreState() {
+      state.languages = new Set(savedState.languages);
+      syncChecks();
+    }
+
+    function openDrawer() {
+      snapshotState();
+      filterDrawer?.classList.add('show');
+      filterBackdrop?.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer(applyChanges = false) {
+      if (!applyChanges) {
+        restoreState();
+      }
+      filterDrawer?.classList.remove('show');
+      filterBackdrop?.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    languageCheckboxes.forEach((cb) => {
+      cb.addEventListener('change', () => {
+        const slug = cb.dataset.slug || '';
+        if (cb.checked) state.languages.add(slug);
+        else state.languages.delete(slug);
+        syncChecks();
+      });
+    });
+
+    clearAllBtn?.addEventListener('click', () => {
+      state.languages = new Set();
+      syncChecks();
+      apply();
+      closeDrawer(true);
+    });
+
+    filterDone?.addEventListener('click', () => {
+      apply();
+      closeDrawer(true);
+    });
+
+    filterTrigger?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openDrawer();
+    });
+
+    filterClose?.addEventListener('click', () => closeDrawer(false));
+    filterBackdrop?.addEventListener('click', () => closeDrawer(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && filterDrawer?.classList.contains('show')) {
+        closeDrawer(false);
+      }
+    });
+
+    syncChecks();
+    apply();
+  })();
+</script>

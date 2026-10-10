@@ -8,6 +8,7 @@ const SITEMAPS = [
   { loc: '/sitemaps/projects.xml' },
   { loc: '/sitemaps/directory-items.xml' },
   { loc: '/sitemaps/directory-locations.xml' },
+  { loc: '/sitemaps/wishlist.xml' },
 ] as const;
 
 export const GET: APIRoute = ({ site }) => {

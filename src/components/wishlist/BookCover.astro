@@ -1,0 +1,217 @@
+---
+import type { CoverView } from '../../lib/wishlist/types';
+
+interface Props {
+  cover: CoverView;
+  title: string;
+  author: string;
+  loading?: 'lazy' | 'eager';
+  fetchpriority?: 'high' | 'low' | 'auto';
+  sizes?: string;
+  /** Draw the 2D paper-edge sliver. Turn off when the page builds a real 3D fore-edge. */
+  edge?: boolean;
+  class?: string;
+  style?: string;
+}
+
+const { cover, title, author, loading = 'lazy', fetchpriority, sizes, edge = true, class: className, style = '' } = Astro.props;
+
+/**
+ * Reveal logic. Books stay fully invisible (box, shadow, hinge) until their cover
+ * has loaded and decoded. Just before they appear, the cover's real aspect ratio
+ * is applied, so any correction happens while nothing is on screen: the user only
+ * ever sees the finished book at its final height. (If the JSON already carries
+ * coverWidth/coverHeight, the correction is a no-op.)
+ *
+ * It is inlined (not bundled) and emitted once per request, before the first
+ * cover, so it is live before any image can finish and never waits on a JS file.
+ */
+const REVEAL_JS = `(function(){
+var R=function(b){b.removeAttribute('data-pending')};
+function S(i,ok){
+  var b=i.parentElement; if(!b||!b.hasAttribute('data-pending'))return;
+  if(!ok){i.hidden=true;R(b);return}
+  if(i.naturalWidth&&i.naturalHeight&&!/\\.svg(\\?|$)/i.test(i.currentSrc)){
+    var r=i.naturalWidth/i.naturalHeight,c=parseFloat(b.style.getPropertyValue('--book-ratio'));
+    if(!c||Math.abs(r/c-1)>.005)b.style.setProperty('--book-ratio',r.toFixed(4));
+  }
+  var d=function(){R(b)};
+  i.decode?i.decode().then(d,d):d();
+}
+document.addEventListener('load',function(e){var t=e.target;if(t&&t.tagName==='IMG')S(t,true)},true);
+document.addEventListener('error',function(e){var t=e.target;if(t&&t.tagName==='IMG')S(t,false)},true);
+})();`;
+const locals = (Astro.locals ?? {}) as unknown as Record<string, unknown>;
+const emitReveal = !!cover.src && !locals.__bookReveal;
+if (emitReveal) locals.__bookReveal = true;
+---
+
+{emitReveal && <script is:inline set:html={REVEAL_JS} />}
+<div
+  class:list={['book', { 'no-edge': !edge }, className]}
+  style={`--book-ratio:${cover.ratio.toFixed(4)};${style}`}
+  data-pending={cover.src ? '' : undefined}
+>
+  {cover.src ? (
+    <>
+    <!-- Typographic stand-in under the image: shows only if the cover fails to load. -->
+    <div class="book-fallback book-fallback--under" aria-hidden="true">
+      <span class="fb-title">{title}</span>
+      <span class="fb-author">{author}</span>
+    </div>
+    <img
+      src={cover.src}
+      srcset={cover.srcset}
+      sizes={cover.srcset ? sizes : undefined}
+      alt={cover.alt}
+      width={cover.width}
+      height={cover.height}
+      loading={loading}
+      decoding="async"
+      fetchpriority={fetchpriority}
+      draggable="false"
+    />
+    </>
+  ) : (
+    // No cover yet: a typographic stand-in so the grid never shows a broken image.
+    <div class="book-fallback" role="img" aria-label={cover.alt}>
+      <span class="fb-title">{title}</span>
+      <span class="fb-author">{author}</span>
+    </div>
+  )}
+  <span class="book-hinge" aria-hidden="true"></span>
+</div>
+
+<style>
+  /* A book is a physical object: cover, a pressed hinge near the spine, a
+     hint of paper edge, and layered shadows that say "sitting on a surface". */
+  .book {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    aspect-ratio: var(--book-ratio);
+    container-type: inline-size;
+    border-radius: 2px 5px 5px 2px;
+    background: #e8e8ea;
+    box-shadow:
+      0 0 0 1px rgba(15, 17, 19, 0.07),
+      0 1px 2px rgba(15, 17, 19, 0.16),
+      0 10px 16px -8px rgba(15, 17, 19, 0.26),
+      0 26px 36px -22px rgba(15, 17, 19, 0.34);
+  }
+
+  .book img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    user-select: none;
+  }
+  .book img[hidden] { display: none; }
+
+  /* ── Reveal: nothing is shown until the cover is ready ─────────────────── */
+  .book[data-pending] {
+    opacity: 0;
+    /* safety net (no JS / script error / stalled image): show after 5s regardless */
+    animation: book-failsafe 0s linear 5s forwards;
+  }
+  .book:not([data-pending]) { animation: book-in 0.16s ease-out; }
+  @keyframes book-failsafe { to { opacity: 1; } }
+  @keyframes book-in { from { opacity: 0; } to { opacity: 1; } }
+
+  /* Hinge crease + soft sheen across the board. */
+  .book-hinge {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg,
+        rgba(0, 0, 0, 0.28) 0,
+        rgba(0, 0, 0, 0.07) 0.9%,
+        rgba(255, 255, 255, 0.3) 1.9%,
+        rgba(255, 255, 255, 0.05) 3.4%,
+        rgba(0, 0, 0, 0.12) 4.3%,
+        rgba(0, 0, 0, 0) 7.5%),
+      linear-gradient(115deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 38%, rgba(0, 0, 0, 0.07) 100%);
+  }
+
+  /* Page block on the fore-edge, drawn as a few hairline layers of paper.
+     The pseudo-element is the cover's own shape, slightly inset top and bottom and
+     tucked behind it, so only the offset layers show: they follow the rounded
+     corners, and their thickness scales with the book's width (cqw) instead of
+     being a fixed chunk of pixels. Nearest layer first: a dark seam where the
+     pages meet the board, then alternating light/shade for the sheets. */
+  .book::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0.9% 0;
+    border-radius: 0 4px 4px 0;
+    background: #e9e5d9;
+    box-shadow:
+      0.35cqw 0 0 0 #cbc6b6,
+      0.7cqw 0 0 0 #f6f3ea,
+      1.05cqw 0 0 0 #e1ddd0,
+      1.4cqw 0 0 0 #f1eee5,
+      1.75cqw 0 0 0 #d6d2c4;
+  }
+  .book.no-edge::after { display: none; }
+
+  /* Soft contact shadow under the book; placements opt in with --contact: 1. */
+  .book::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: 7%;
+    right: 7%;
+    bottom: -6px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(15, 17, 19, 0.32), rgba(15, 17, 19, 0) 70%);
+    filter: blur(5px);
+    opacity: var(--contact, 0);
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .book-fallback {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 9cqw 9cqw 8cqw 11cqw;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #f1ebdd;
+    color: var(--color-black);
+    border-radius: inherit;
+    font-family: var(--font-sans);
+  }
+  .book-fallback--under { position: absolute; inset: 0; }
+  .fb-title {
+    font-size: 11cqw;
+    line-height: 1.02;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .fb-author {
+    font-size: 5cqw;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .book:not([data-pending]) { animation: none; }
+    .book::before { transition: none; }
+  }
+</style>

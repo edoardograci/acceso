@@ -1,0 +1,102 @@
+---
+import BookStack from './BookStack.astro';
+import type { CategoryView } from '../../lib/wishlist/types';
+
+interface Props {
+  category: CategoryView;
+  priority?: boolean;
+}
+const { category, priority = false } = Astro.props;
+---
+
+<div class="cat-wrap">
+  <a href={category.href} class="cat-card" aria-label={`${category.name}: ${category.count} ${category.count === 1 ? 'book' : 'books'}`}>
+    <div class="stage">
+      <BookStack books={category.stack} priority={priority} />
+      <span class="count">{category.count}</span>
+    </div>
+  </a>
+  <div class="body">
+    <h3 class="name">{category.name}</h3>
+    {category.tagline && <p class="tagline">{category.tagline}</p>}
+  </div>
+</div>
+
+<style>
+  .cat-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .cat-card {
+    display: block;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 20px;
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), background-color 0.3s ease, border-color 0.3s ease;
+  }
+  .cat-card:hover { transform: translateY(-6px); background: #eeeef0; border-color: #d4d4d8; color: inherit; }
+
+  .stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: clamp(28px, 4vw, 44px) clamp(20px, 3vw, 32px);
+    background: linear-gradient(to top, rgba(15, 17, 19, 0.045), rgba(15, 17, 19, 0) 34%);
+  }
+  .count {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(15, 17, 19, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    line-height: 28px;
+    text-align: center;
+    text-transform: uppercase;
+    transform: translateY(1px);
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 4px;
+  }
+  .name {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--color-black);
+  }
+  .tagline {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 640px) {
+    .name { font-size: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cat-card, .cat-card:hover { transition: none; transform: none; }
+  }
+</style>

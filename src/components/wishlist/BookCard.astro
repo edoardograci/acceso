@@ -1,0 +1,110 @@
+---
+import BookCover from './BookCover.astro';
+import type { BookView } from '../../lib/wishlist/types';
+
+interface Props {
+  book: BookView;
+  /** First row of a page can load eagerly (LCP). */
+  priority?: boolean;
+}
+const { book, priority = false } = Astro.props;
+
+const languageSlugs = (book.language || '')
+  .split(/\s*[/,&]\s*|\s+and\s+/i)
+  .map((s) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'))
+  .filter(Boolean)
+  .join(',');
+---
+
+<a href={book.href} class="book-card" data-language={book.language} data-languages={languageSlugs}>
+  <div class="plate">
+    <div class="plate-inner">
+      <BookCover
+        class="plate-book"
+        cover={book.cover}
+        title={book.title}
+        author={book.author}
+        loading={priority ? 'eager' : 'lazy'}
+        sizes="(max-width: 640px) 28vw, (max-width: 1100px) 18vw, 11vw"
+      />
+    </div>
+  </div>
+  <div class="meta">
+    <h3 class="title">{book.title}</h3>
+    <p class="author">{book.author}</p>
+  </div>
+</a>
+
+<style>
+  .book-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+  }
+  .book-card:hover { color: inherit; }
+
+  /* The plate is a fixed-size frame. Every book has the SAME width; its height
+     follows the cover's aspect ratio, and it is centred in the frame. */
+  .plate {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    container-type: size;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: background-color 0.3s ease;
+  }
+  .book-card:hover .plate { background: #ececee; }
+
+  .plate-inner {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+  .plate :global(.plate-book) {
+    --contact: 1;
+    /* Same width for all; only extreme (very tall) covers get narrower so they still fit. */
+    width: min(60cqw, calc(80cqh * var(--book-ratio)));
+    transform-origin: 50% 100%;
+    transition: transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .book-card:hover .plate :global(.plate-book) { transform: translateY(-9px) rotate(-1.4deg); }
+  /* the contact shadow stays on the "surface" while the book lifts off it */
+  .book-card:hover .plate :global(.plate-book)::before { opacity: 0.5; transform: translateY(9px) scale(0.9); }
+
+  .meta { display: flex; flex-direction: column; gap: 4px; padding: 0 2px 4px; }
+  .title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--color-black);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .author {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 768px) {
+    .title { font-size: 15px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .plate :global(.plate-book) { transition: none; }
+    .book-card:hover .plate :global(.plate-book) { transform: none; }
+    .book-card:hover .plate :global(.plate-book)::before { transform: none; }
+  }
+</style>

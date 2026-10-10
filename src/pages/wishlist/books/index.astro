@@ -1,0 +1,118 @@
+---
+export const prerender = false;
+
+import WishlistLayout from '../../../layouts/WishlistLayout.astro';
+import CategoryStackCard from '../../../components/wishlist/CategoryStackCard.astro';
+import BookGrid from '../../../components/wishlist/BookGrid.astro';
+import HomeFaq from '../../../components/home/HomeFaq.astro';
+import { loadCatalog } from '../../../lib/wishlist/store';
+import { indexCatalog, publishedCategories, toCategoryView, toBookView, featuredBooks } from '../../../lib/wishlist/queries';
+import { WISHLIST_CACHE_CONTROL, wishlistPaths, escapeHtml } from '../../../lib/wishlist/routes';
+import { breadcrumbList, faqPage } from '../../../lib/seo/schema';
+import { collectionPageSchema, collectionHubTitle } from '../../../lib/seo/wishlist';
+
+const env = (Astro.locals.runtime?.env || import.meta.env) as any;
+const catalog = await loadCatalog(env);
+if (!catalog) return new Response(null, { status: 503, headers: { 'Retry-After': '60' } });
+
+const hub = catalog.collections.find((c) => c.id === 'books' && c.status === 'active');
+if (!hub) return Astro.rewrite('/404');
+
+const idx = indexCatalog(catalog);
+const ctx = { origin: Astro.url.origin };
+Astro.response.headers.set('Cache-Control', WISHLIST_CACHE_CONTROL);
+
+const categories = publishedCategories(idx).map((c) => toCategoryView(c, idx, ctx));
+const picks = featuredBooks(idx, 5).map((b) => toBookView(b, idx, ctx));
+
+const h1 = hub.h1 ?? hub.title;
+const title = collectionHubTitle(hub);
+const description = hub.seoDescription ?? hub.description;
+const canonical = new URL(wishlistPaths.books(), Astro.site);
+const intro = hub.intro ?? [];
+const faqs = (hub.faqs ?? []).map((f) => ({ q: f.q, a: escapeHtml(f.a) }));
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    collectionPageSchema({
+      url: canonical.toString(),
+      name: h1,
+      description,
+      items: categories.map((c) => ({ url: new URL(c.href, Astro.site).toString(), name: c.h1 })),
+    }),
+    breadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Wishlist', url: wishlistPaths.hub() },
+      { name: 'Books', url: wishlistPaths.books() },
+    ]),
+    ...(hub.faqs?.length ? [faqPage(hub.faqs)] : []),
+  ],
+};
+---
+
+<WishlistLayout
+  title={title}
+  description={description}
+  canonical={canonical}
+  schema={schema}
+  noindex={catalog.source === 'seed'}
+  crumbs={[{ label: 'Wishlist', href: wishlistPaths.hub() }, { label: 'Books' }]}
+>
+  <header class="wl-hero wl-hero--books">
+    <h1 class="wl-title wl-title--long" set:html={h1.replace('Industrial &amp; Furniture Design Books', 'Industrial &amp; Furniture<br>Design Books').replace('Industrial & Furniture Design Books', 'Industrial &amp; Furniture<br>Design Books')}></h1>
+    {intro[0] && <p class="wl-lead">{intro[0]}</p>}
+  </header>
+
+  <section aria-labelledby="browse-collections">
+    <h2 class="sr-only" id="browse-collections">Browse book collections</h2>
+    <div class="categories">
+      {categories.map((c, i) => (
+        <CategoryStackCard category={c} priority={i < 3} />
+      ))}
+    </div>
+  </section>
+
+  {picks.length > 0 && (
+    <section class="wl-section" aria-labelledby="editors-picks">
+      <div class="wl-section-head">
+        <h2 class="wl-h2" id="editors-picks">Editor’s picks</h2>
+      </div>
+      <BookGrid books={picks} variant="row" label="Editor’s picks" />
+    </section>
+  )}
+
+
+  {faqs.length > 0 && (
+    <div class="wl-section faq-wrap"><HomeFaq faqs={faqs} heading="Questions about design books" /></div>
+  )}
+
+</WishlistLayout>
+
+<style>
+  .wl-hero--books {
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0 48px;
+    max-width: none;
+  }
+  .wl-hero--books .wl-lead {
+    max-width: min(52ch, 42vw);
+    padding-top: 12px;
+  }
+  @media (max-width: 1024px) {
+    .wl-hero--books { flex-direction: column; }
+    .wl-hero--books .wl-lead { max-width: 62ch; padding-top: 0; }
+  }
+  .categories {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    align-items: start;
+  }
+  .faq-wrap :global(.home-faq) { margin-bottom: 0; }
+
+  @media (max-width: 1100px) { .categories { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px)  { .categories { grid-template-columns: 1fr; gap: 16px; } }
+</style>

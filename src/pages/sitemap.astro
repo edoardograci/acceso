@@ -2,6 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import { loadCatalog } from '../lib/wishlist/store';
+import { wishlistPaths } from '../lib/wishlist/routes';
 
 const origin = Astro.url.origin;
 
@@ -37,6 +39,18 @@ const [studios, projects, cities, countries, fairs, museums, awards] = await Pro
   getJson<EventItem>('/cdn/museums.json'),
   getJson<EventItem>('/cdn/awards.json'),
 ]);
+
+const wishlist = await loadCatalog((Astro.locals.runtime?.env || import.meta.env) as any).catch(() => null);
+const wishlistLinks = wishlist && wishlist.source === 'r2'
+  ? [
+      { href: wishlistPaths.hub(), label: 'Wishlist' },
+      { href: wishlistPaths.books(), label: 'Design Books' },
+      ...wishlist.categories
+        .filter((c) => wishlist.books.some((b) => b.category === c.slug))
+        .map((c) => ({ href: wishlistPaths.category(c.slug), label: c.name })),
+      ...wishlist.books.map((b) => ({ href: wishlistPaths.book(b.category, b.slug), label: b.title })),
+    ]
+  : [];
 
 const designerSlugs = studios.filter((s) => s?.slug).map((s) => s.slug as string);
 const totalDesigners = designerSlugs.length;
@@ -132,6 +146,8 @@ const sections: { title: string; links: { href: string; label: string; count?: n
     ),
   },
 ];
+
+if (wishlistLinks.length) sections.splice(2, 0, { title: `Wishlist (${wishlistLinks.length})`, links: wishlistLinks });
 
 const totalUrls = sections.reduce((sum, s) => sum + s.links.length, 0);
 ---

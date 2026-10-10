@@ -1,0 +1,232 @@
+---
+/**
+ * A top-level Wishlist collection on /wishlist. Active collections are links;
+ * "coming soon" ones are deliberately designed, finished-looking cards, just
+ * not clickable, so they read as part of one system rather than dead ends.
+ * All three collections use the same flat "blueprint" motif style.
+ */
+import BookStack from './BookStack.astro';
+import type { BookView, WishlistCollection } from '../../lib/wishlist/types';
+
+interface Props {
+  collection: WishlistCollection;
+  stack?: BookView[];
+  count?: number;
+  class?: string;
+}
+const { collection, stack = [], class: className } = Astro.props;
+const active = collection.status === 'active';
+const Tag = active ? 'a' : 'div';
+const attrs = active ? { href: collection.href } : { 'aria-disabled': 'true' };
+---
+
+<Tag {...(attrs as any)} class:list={['collection-card', `collection-card--${collection.motif}`, className]}>
+  <div class="visual" aria-hidden="true">
+    {collection.motif === 'books' && stack.length > 0 && (
+      <div class="books-stack-wrap">
+        <BookStack books={stack} priority={true} />
+      </div>
+    )}
+    {collection.motif === 'books' && stack.length === 0 && (
+      <svg class="motif motif--books" viewBox="0 0 240 150" fill="none">
+        <!-- shelf -->
+        <line x1="14" y1="128" x2="226" y2="128" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- standing books -->
+        <rect x="34" y="46" width="26" height="82" rx="2" fill="#fff" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <line x1="34" y1="60" x2="60" y2="60" stroke="#0F1113" stroke-opacity=".55" stroke-width="1.5"/>
+        <line x1="34" y1="66" x2="60" y2="66" stroke="#0F1113" stroke-opacity=".55" stroke-width="1.5"/>
+        <rect x="62" y="26" width="34" height="102" rx="2" fill="#EDFF77" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <circle cx="79" cy="52" r="7" fill="none" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <line x1="62" y1="104" x2="96" y2="104" stroke="#0F1113" stroke-opacity=".55" stroke-width="1.5"/>
+        <line x1="62" y1="110" x2="96" y2="110" stroke="#0F1113" stroke-opacity=".35" stroke-width="1.5"/>
+        <rect x="98" y="54" width="24" height="74" rx="2" fill="#F4F4F5" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <line x1="98" y1="70" x2="122" y2="70" stroke="#0F1113" stroke-opacity=".55" stroke-width="1.5"/>
+        <line x1="104" y1="82" x2="116" y2="82" stroke="#0F1113" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/>
+        <!-- leaning book -->
+        <g class="lean">
+          <rect x="138" y="42" width="28" height="86" rx="2" fill="#fff" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+          <line x1="138" y1="56" x2="166" y2="56" stroke="#0F1113" stroke-opacity=".55" stroke-width="1.5"/>
+          <rect x="144" y="68" width="16" height="16" rx="1.5" fill="none" stroke="#0F1113" stroke-opacity=".45" stroke-width="1.5"/>
+        </g>
+        <!-- flat stack -->
+        <rect x="176" y="116" width="48" height="12" rx="2" fill="#fff" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <rect x="180" y="104" width="42" height="12" rx="2" fill="#F4F4F5" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <rect x="178" y="92" width="40" height="12" rx="2" fill="#EDFF77" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <line x1="186" y1="98" x2="204" y2="98" stroke="#0F1113" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    )}
+
+    {collection.motif === 'tools' && (
+      <svg class="motif" viewBox="0 0 240 150" fill="none">
+        <polygon points="58,100 58,26 138,100" fill="#EDFF77" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5" stroke-linejoin="round"/>
+        <polygon points="72,93 72,56 112,93" fill="#F4F4F5" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="26" y="100" width="188" height="26" rx="3" fill="#fff" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        {Array.from({ length: 18 }, (_, i) => (
+          <line x1={38 + i * 10} y1="100" x2={38 + i * 10} y2={i % 5 === 0 ? 114 : 108} stroke="#0F1113" stroke-opacity=".6" stroke-width="1.25"/>
+        ))}
+        <path d="M150 100 A 40 40 0 0 1 190 60" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5" stroke-dasharray="3 4"/>
+        <circle cx="150" cy="100" r="4" fill="#0F1113" fill-opacity=".75"/>
+        <line x1="150" y1="100" x2="190" y2="60" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+      </svg>
+    )}
+
+    {collection.motif === 'courses' && (
+      <svg class="motif" viewBox="0 0 240 150" fill="none">
+        <rect x="44" y="18" width="152" height="40" rx="6" fill="#fff" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <rect x="32" y="50" width="176" height="44" rx="6" fill="#EDFF77" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <polygon points="104,62 104,82 122,72" fill="#0F1113" fill-opacity=".8"/>
+        <line x1="134" y1="68" x2="188" y2="68" stroke="#0F1113" stroke-opacity=".55" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="134" y1="78" x2="170" y2="78" stroke="#0F1113" stroke-opacity=".35" stroke-width="1.5" stroke-linecap="round"/>
+        <rect x="20" y="86" width="200" height="48" rx="6" fill="#fff" stroke="#0F1113" stroke-opacity=".7" stroke-width="1.5"/>
+        <rect x="36" y="106" width="168" height="6" rx="3" fill="#F4F4F5" stroke="#0F1113" stroke-opacity=".4"/>
+        <rect x="36" y="106" width="64" height="6" rx="3" fill="#0F1113" fill-opacity=".75"/>
+      </svg>
+    )}
+  </div>
+
+  <div class="content">
+    <div class="text">
+      <div class="title-row">
+        <h2 class="title">{collection.title}</h2>
+        {!active && collection.motif !== 'books' && (
+          <span class="pill pill--soon pill--gray">Coming soon</span>
+        )}
+      </div>
+      <p class="desc">{collection.description}</p>
+    </div>
+    <div class="foot">
+      {active && (
+        <span class="go">
+          Explore
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+        </span>
+      )}
+    </div>
+  </div>
+</Tag>
+
+<style>
+  .collection-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-stroke);
+    border-radius: 20px;
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), background-color 0.3s ease, border-color 0.3s ease;
+  }
+  a.collection-card:hover { transform: translateY(-8px); background: #eeeef0; border-color: #d4d4d8; color: inherit; }
+
+  /* Blueprint field shared by all three collections */
+  .visual {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(32px, 5vw, 64px) clamp(24px, 4vw, 48px);
+    background:
+      linear-gradient(rgba(15, 17, 19, 0.045) 1px, transparent 1px) 0 0 / 22px 22px,
+      linear-gradient(90deg, rgba(15, 17, 19, 0.045) 1px, transparent 1px) 0 0 / 22px 22px,
+      var(--color-bg-secondary);
+  }
+  /* books visual: centered, spacious, matches the monograph card style */
+  .collection-card--books .visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(32px, 5vw, 64px) clamp(20px, 3vw, 36px);
+  }
+  .books-stack-wrap {
+    width: min(100%, 540px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .motif { width: min(100%, 230px); height: auto; }
+  /* the Books card is tall, so its motif can be larger */
+  .motif--books { width: min(100%, 360px); }
+
+  /* the leaning book settles a little further on hover */
+  .lean {
+    transform-box: view-box;
+    transform-origin: 138px 128px;
+    transform: rotate(-12deg);
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  a.collection-card:hover .lean { transform: rotate(-16deg); }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px 26px 26px;
+    background: var(--color-white);
+    border-top: 1px solid var(--color-stroke);
+  }
+  .title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--color-black);
+  }
+  .desc {
+    margin: 0;
+    max-width: 46ch;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+  .foot { display: flex; align-items: center; gap: 12px; }
+  .go {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-black);
+  }
+  .go svg { transition: transform 0.2s ease; }
+  a.collection-card:hover .go svg { transform: translateX(4px); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 2px 12px 0;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .pill--gray { background: var(--color-bg-secondary); color: var(--color-black); border: 1px solid var(--color-stroke); }
+
+  @media (max-width: 640px) {
+    .title { font-size: 23px; }
+    .content { padding: 20px 20px 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .collection-card, a.collection-card:hover { transition: none; transform: none; }
+    .lean, a.collection-card:hover .lean { transition: none; transform: rotate(-12deg); }
+  }
+</style>
