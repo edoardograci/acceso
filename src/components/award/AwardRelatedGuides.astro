@@ -1,0 +1,130 @@
+---
+import type { GuideEntry } from '../../lib/guideStore';
+
+interface Props {
+  guides: GuideEntry[];
+}
+
+const { guides } = Astro.props;
+---
+
+{guides.length > 0 && (
+  <div class="related-guides-box">
+    <p class="rg-section-title">Related reading</p>
+
+    <div class="rg-card">
+      <div class="rg-cards">
+        {guides.map((g) => (
+          <a href={`/guides/${g.id}`} class="rg-guide">
+            {g.data.coverImage && (
+              <div class="rg-image">
+                <img
+                  src={g.data.coverImage}
+                  alt={g.data.coverImageAlt || g.data.title}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            )}
+            <span class="rg-title">{g.data.title}</span>
+          </a>
+        ))}
+      </div>
+
+      <a href="/guides" class="rg-btn">Browse all guides</a>
+    </div>
+  </div>
+)}
+
+<style>
+  .related-guides-box {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .rg-section-title {
+    font-family: var(--font-sans);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--color-black);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .rg-card {
+    border-radius: 20px;
+    border: 1px solid var(--color-stroke);
+    background: #fff;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .rg-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .rg-guide {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .rg-image {
+    width: 100%;
+    aspect-ratio: 1.6;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--color-stroke);
+    background: var(--color-bg-secondary);
+  }
+
+  .rg-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+  }
+
+  .rg-guide:hover .rg-image img {
+    transform: scale(1.04);
+  }
+
+  .rg-title {
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-black);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .rg-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--color-black);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.18s ease;
+  }
+
+  .rg-btn:hover {
+    opacity: 0.75;
+  }
+</style>

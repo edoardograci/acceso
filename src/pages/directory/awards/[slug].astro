@@ -9,6 +9,7 @@ import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList, faqPage } from '../../../lib/seo/schema';
 import { awardSeo } from '../../../lib/seo/award';
 import { readJsonFromBucket, toArray } from '../../../lib/readJson';
+import { listGuides } from '../../../lib/guideStore';
 import type { Env } from '../../../env.d';
 
 // Reusable Award Components
@@ -18,6 +19,7 @@ import AwardDetails from '../../../components/award/AwardDetails.astro';
 import AwardSidebarInfo from '../../../components/award/AwardSidebarInfo.astro';
 import AwardLocationSection from '../../../components/award/AwardLocationSection.astro';
 import AwardPromoCard from '../../../components/award/AwardPromoCard.astro';
+import AwardRelatedGuides from '../../../components/award/AwardRelatedGuides.astro';
 
 const { slug } = Astro.params;
 
@@ -25,13 +27,15 @@ let award: any = null;
 let relatedAwards: any[] = [];
 let citiesMapping: any[] = [];
 let fetchFailed = false;
+let relatedGuides: any[] = [];
 
 try {
   const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
   const origin = Astro.url.origin;
-  const [awardsData, citiesData] = await Promise.all([
+  const [awardsData, citiesData, allGuides] = await Promise.all([
     readJsonFromBucket('awards.json', env, origin),
     readJsonFromBucket('test-cities.json', env, origin),
+    listGuides(env as any),
   ]);
 
   if (!awardsData) throw new Error('Failed to read awards.json');
@@ -53,6 +57,11 @@ try {
   }
 
   citiesMapping = toArray(citiesData);
+
+  relatedGuides = allGuides.filter((g: any) =>
+    Array.isArray(g.data.tags) &&
+    g.data.tags.some((t: string) => t.toLowerCase() === 'design competitions')
+  );
 
 } catch (e) {
   fetchFailed = true;
@@ -243,6 +252,9 @@ const awardSchema = {
 
           <!-- 3. Submit for Review Promo Card -->
           <AwardPromoCard />
+
+          <!-- 4. Related Guides (tagged "Design Competitions") -->
+          <AwardRelatedGuides guides={relatedGuides} />
 
         </div>
       </aside>
@@ -551,6 +563,7 @@ const awardSchema = {
     :global(.info-card) { order: 6; }
     :global(.sidebar-location-section) { order: 7; }
     :global(.promo-box) { order: 8; }
+    :global(.related-guides-box) { order: 9; }
   }
 
   @media (max-width: 768px) {
