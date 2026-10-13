@@ -17,7 +17,11 @@ export interface CatalogIndex {
 export function indexCatalog(catalog: Catalog): CatalogIndex {
   const booksByCategory = new Map<string, Book[]>();
   for (const c of catalog.categories) booksByCategory.set(c.slug, []);
-  for (const b of catalog.books) booksByCategory.get(b.category)?.push(b);
+  for (const b of catalog.books) {
+    for (const catSlug of b.categories) {
+      booksByCategory.get(catSlug)?.push(b);
+    }
+  }
   return {
     catalog,
     categoryBySlug: new Map(catalog.categories.map((c) => [c.slug, c])),
@@ -31,18 +35,27 @@ export interface ViewCtx {
 }
 
 export function toBookView(book: Book, idx: CatalogIndex, ctx: ViewCtx, opts: { width?: number; srcset?: boolean; widths?: number[] } = {}): BookView {
-  const category = idx.categoryBySlug.get(book.category)!;
-  const lang = book.language.trim();
+  const primaryCatSlug = book.categories[0];
+  const primaryCategory = idx.categoryBySlug.get(primaryCatSlug)!;
+  
+  const categoryNames = book.categories
+    .map((slug) => idx.categoryBySlug.get(slug)?.name ?? slug);
+  const categoryHrefs = book.categories
+    .map((slug) => wishlistPaths.category(slug));
+  
   return {
     slug: book.slug,
     title: book.title,
     author: book.author,
-    href: wishlistPaths.book(book.category, book.slug),
-    language: lang,
-    isEnglish: /^english$/i.test(lang),
-    categorySlug: category.slug,
-    categoryName: category.name,
-    categoryHref: wishlistPaths.category(category.slug),
+    href: wishlistPaths.book(primaryCatSlug, book.slug),
+    language: book.language.trim(),
+    isEnglish: /^english$/i.test(book.language),
+    categories: book.categories,
+    categoryNames,
+    categoryHrefs,
+    primaryCategorySlug: primaryCatSlug,
+    primaryCategoryName: primaryCategory.name,
+    primaryCategoryHref: wishlistPaths.category(primaryCatSlug),
     summary: book.summary ?? '',
     cover: coverView(book, ctx.origin, { width: 480, srcset: true, ...opts }),
     featured: !!book.featured,
@@ -51,7 +64,7 @@ export function toBookView(book: Book, idx: CatalogIndex, ctx: ViewCtx, opts: { 
 
 export function toCategoryView(cat: BookCategory, idx: CatalogIndex, ctx: ViewCtx): CategoryView {
   const books = idx.booksByCategory.get(cat.slug) ?? [];
-  const pinned = (cat.stack ?? []).map((s) => idx.bookBySlug.get(s)).filter((b): b is Book => !!b && b.category === cat.slug);
+  const pinned = (cat.stack ?? []).map((s) => idx.bookBySlug.get(s)).filter((b): b is Book => !!b && b.categories.includes(cat.slug));
   const stackBooks = [...pinned, ...books.filter((b) => !pinned.includes(b))].slice(0, 4);
   return {
     slug: cat.slug,
@@ -88,16 +101,17 @@ export function relatedBooks(idx: CatalogIndex, book: Book, limit = 5): { books:
 
   (book.related ?? []).forEach((s) => add(idx.bookBySlug.get(s)));
 
-  const siblings = idx.booksByCategory.get(book.category) ?? [];
+  const primaryCatSlug = book.categories[0];
+  const siblings = idx.booksByCategory.get(primaryCatSlug) ?? [];
   const at = siblings.findIndex((b) => b.slug === book.slug);
   [...siblings.slice(at + 1), ...siblings.slice(0, Math.max(at, 0))].forEach(add);
 
-  const sameCollection = picked.length >= Math.min(limit, 3) || picked.every((b) => b.category === book.category);
+  const sameCollection = picked.length >= Math.min(limit, 3) || picked.every((b) => b.categories[0] === primaryCatSlug);
 
   if (picked.length < limit) {
     const tags = new Set((book.tags ?? []).map((t) => t.toLowerCase()));
     idx.catalog.books
-      .filter((b) => b.category !== book.category)
+      .filter((b) => b.categories[0] !== primaryCatSlug)
       .map((b) => ({
         b,
         score: (b.tags ?? []).filter((t) => tags.has(t.toLowerCase())).length * 2 + (b.author === book.author ? 3 : 0),

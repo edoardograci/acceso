@@ -54,7 +54,7 @@ const wishlistLinks = wishlist && wishlist.source === 'r2'
       { href: wishlistPaths.hub(), label: 'Wishlist' },
       { href: wishlistPaths.books(), label: 'Design Books' },
       ...wishlist.categories
-        .filter((c) => wishlist.books.some((b) => b.category === c.slug))
+        .filter((c) => wishlist.books.some((b) => b.categories.includes(c.slug)))
         .map((c) => ({ href: wishlistPaths.category(c.slug), label: c.name })),
     ]
   : [];

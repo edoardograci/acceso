@@ -24,10 +24,10 @@ const book = idx.bookBySlug.get(slug);
 if (!book) return Astro.rewrite('/404');
 
 // One canonical URL per book: a wrong-category URL permanently redirects to the right one.
-if (book.category !== categorySlug) {
-  return Astro.redirect(wishlistPaths.book(book.category, book.slug), 301);
+if (book.categories[0] !== categorySlug) {
+  return Astro.redirect(wishlistPaths.book(book.categories[0], book.slug), 301);
 }
-const category = idx.categoryBySlug.get(book.category)!;
+const primaryCategory = idx.categoryBySlug.get(book.categories[0])!;
 
 const ctx = { origin: Astro.url.origin };
 Astro.response.headers.set('Cache-Control', WISHLIST_CACHE_CONTROL);
@@ -46,9 +46,10 @@ const facts = [year, book.pages ? `${book.pages} pages` : null].filter(Boolean) 
 
 // ── SEO ─────────────────────────────────────────────────────────────────────
 const canonical = new URL(view.href, Astro.site);
-const categoryUrl = new URL(view.categoryHref, Astro.site).toString();
-const title = bookPageTitle(book, category);
-const description = bookPageDescription(book, category);
+const primaryCategoryUrl = new URL(view.primaryCategoryHref, Astro.site).toString();
+const allCategoryUrls = view.categoryHrefs.map((href) => new URL(href, Astro.site).toString());
+const title = bookPageTitle(book, primaryCategory);
+const description = bookPageDescription(book, primaryCategory);
 
 // Social image = the cover itself, at its true aspect ratio (never upscaled).
 const ogWidth = Math.min(view.cover.width, 800);
@@ -59,12 +60,12 @@ const ogAbs = ogSrc ? new URL(ogSrc, ctx.origin).toString() : undefined;
 const schema = {
   '@context': 'https://schema.org',
   '@graph': [
-    bookSchema({ book, category, canonical: canonical.toString(), categoryUrl, imageUrl: ogAbs }),
+    bookSchema({ book, category: primaryCategory, canonical: canonical.toString(), categoryUrl: primaryCategoryUrl, imageUrl: ogAbs }),
     breadcrumbList([
       { name: 'Home', url: '/' },
       { name: 'Wishlist', url: wishlistPaths.hub() },
       { name: 'Books', url: wishlistPaths.books() },
-      { name: category.name, url: view.categoryHref },
+      { name: primaryCategory.name, url: view.primaryCategoryHref },
       { name: book.title, url: view.href },
     ]),
   ],
@@ -86,7 +87,7 @@ const schema = {
   crumbs={[
     { label: 'Wishlist', href: wishlistPaths.hub() },
     { label: 'Books', href: wishlistPaths.books() },
-    { label: category.name, href: view.categoryHref },
+    { label: primaryCategory.name, href: view.primaryCategoryHref },
     { label: book.title },
   ]}
 >
@@ -145,12 +146,16 @@ const schema = {
             rel="sponsored nofollow noopener"
             data-track="wishlist_buy"
             data-book={book.slug}
-            data-category={book.category}
+            data-category={book.categories[0]}
           >
             Buy on Amazon
             <svg class="website-ext-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
-          <a class="pill-link" href={view.categoryHref}>View collection</a>
+          <div class="category-links">
+            {view.categoryHrefs.map((href, i) => (
+              <a class="pill-link" href={href}>{view.categoryNames[i]}</a>
+            ))}
+          </div>
         </div>
         <section class="about-section" aria-labelledby="about-heading">
           <h2 class="about-title" id="about-heading">About this book</h2>
@@ -190,7 +195,7 @@ const schema = {
       <section class="wl-section" aria-labelledby="related-heading">
         <div class="wl-section-head">
           <h2 class="related-title" id="related-heading">{related.sameCollection ? 'More from this collection' : 'You may also like'}</h2>
-          <a href={view.categoryHref} class="pill-link">View collection</a>
+          <a href={view.primaryCategoryHref} class="pill-link">View collection</a>
         </div>
         <BookGrid books={relatedViews} variant="row" label="Related books" />
       </section>
@@ -309,6 +314,12 @@ const schema = {
     padding: 0 28px;
     font-size: 15px;
     font-weight: 700;
+  }
+  .category-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
   }
   .buy-btn .website-ext-icon {
     color: var(--color-black);

@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ site, locals, url }) => {
     urls.push({ loc: abs(wishlistPaths.books()), lastmod: siteLastmod, changefreq: 'weekly', priority: 0.7 });
 
     for (const c of catalog.categories) {
-      const books = catalog.books.filter((b) => b.category === c.slug);
+      const books = catalog.books.filter((b) => b.categories.includes(c.slug));
       if (!books.length) continue; // empty categories 404, so they stay out
       urls.push({ loc: abs(wishlistPaths.category(c.slug)), lastmod: newest(books) ?? siteLastmod, changefreq: 'weekly', priority: 0.7 });
     }

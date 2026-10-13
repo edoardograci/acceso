@@ -53,7 +53,7 @@ export interface Book {
   author: string;
   /** Optional structured list for schema.org Person nodes; falls back to [author]. */
   authors?: string[];
-  category: string;
+  categories: string[];
   description: string; // paragraphs separated by blank lines
   summary?: string; // one-liner for cards and meta description
   editorNote?: string; // "why it's on the wishlist"
@@ -83,7 +83,7 @@ export interface Catalog {
   categories: BookCategory[];
   books: Book[];
   /** 'seed' means local dummy data: pages must be noindex, never in sitemaps. */
-  source: 'r2' | 'seed';
+  source: 'r2' | 'seed' | 'r2+seed';
 }
 
 // ── View models (what components actually receive) ─────────────────────────
@@ -104,9 +104,12 @@ export interface BookView {
   href: string;
   language: string;
   isEnglish: boolean;
-  categorySlug: string;
-  categoryName: string;
-  categoryHref: string;
+  categories: string[];
+  categoryNames: string[];
+  categoryHrefs: string[];
+  primaryCategorySlug: string;
+  primaryCategoryName: string;
+  primaryCategoryHref: string;
   summary: string;
   cover: CoverView;
   featured: boolean;

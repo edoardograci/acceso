@@ -52,9 +52,27 @@ function toBook(raw: any, slug: string, categories?: Set<string>): Book | null {
   if (!str(raw?.name)) problems.push('name');
   if (!str(raw?.author)) problems.push('author');
   if (!str(raw?.description)) problems.push('description');
-  const catSlug = slugify(raw?.subCollection ?? '');
-  // Only validate category if categories set is provided (second pass)
-  if (categories && !categories.has(catSlug)) problems.push(`category (unknown "${raw?.subCollection}")`);
+  
+  // Split comma-separated subCollection into array, filter empty
+  const subCollections = (raw?.subCollection ?? '')
+    .split(',')
+    .map((s: string) => s.trim())
+    .filter(Boolean);
+  
+  if (subCollections.length === 0) {
+    problems.push('category (missing subCollection)');
+  }
+  
+  // Validate each category exists in known categories (second pass)
+  if (categories) {
+    for (const cat of subCollections) {
+      const catSlug = slugify(cat);
+      if (!categories.has(catSlug)) {
+        problems.push(`category (unknown "${cat}")`);
+      }
+    }
+  }
+  
   if (!isAllowedCover(raw?.cover)) problems.push('cover (R2 key or /path only)');
   if (!str(raw?.asin)) problems.push('asin');
   if (problems.length) {
@@ -76,7 +94,7 @@ function toBook(raw: any, slug: string, categories?: Set<string>): Book | null {
     published: typeof raw.year === 'number' ? raw.year : undefined,
     language: str(raw.language) ?? 'English',
     pages: typeof raw.pages === 'number' ? raw.pages : undefined,
-    category: catSlug,
+    categories: subCollections.map((c: string) => slugify(c)),
     tags: Array.isArray(raw.tags) ? raw.tags.filter((t: unknown) => typeof t === 'string') : [],
     related: Array.isArray(raw.related) ? raw.related.filter(isValidSlug) : [],
   } as Book;
@@ -112,18 +130,22 @@ const byOrder = <T extends { order?: number }>(a: T, b: T) => (a.order ?? 999) -
 function deriveCategoriesFromBooks(books: Book[]): BookCategory[] {
   const catMap = new Map<string, { name: string; slug: string; count: number }>();
   for (const book of books) {
-    const existing = catMap.get(book.category);
-    if (existing) {
-      existing.count++;
-    } else {
-      catMap.set(book.category, {
-        name: book.category
-          .split('-')
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' '),
-        slug: book.category,
-        count: 1,
-      });
+    for (const catSlug of book.categories) {
+      const existing = catMap.get(catSlug);
+      if (existing) {
+        existing.count++;
+      } else {
+        // Find original name from first book that has this category
+        const originalName = book.categories.find((c) => slugify(c) === catSlug) ?? catSlug;
+        catMap.set(catSlug, {
+          name: originalName
+            .split('-')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' '),
+          slug: catSlug,
+          count: 1,
+        });
+      }
     }
   }
   return Array.from(catMap.values())
