@@ -4,6 +4,7 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { AWARD_BREADCRUMB_LABEL } from '../../../lib/seo/copy';
 import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList, faqPage } from '../../../lib/seo/schema';
@@ -151,8 +152,7 @@ const awardSchema = {
   '@graph': [
     breadcrumbList([
       { name: 'Home', url: '/' },
-      { name: 'Directory', url: '/directory' },
-      { name: 'Awards', url: '/directory/awards' },
+      { name: AWARD_BREADCRUMB_LABEL, url: '/directory/awards' },
       { name: award.name, url: `/directory/awards/${slug}` },
     ]),
     ...(faqs.length ? [faqPage(faqs)] : []),
@@ -165,8 +165,8 @@ const awardSchema = {
 
   <div class="breadcrumbs-container">
     <Breadcrumbs items={[
-      { label: 'Directory', href: '/directory' },
-      { label: 'Awards', href: '/directory/awards' },
+      { label: 'Home', href: '/' },
+      { label: AWARD_BREADCRUMB_LABEL, href: '/directory/awards' },
       { label: award.name }
     ]} />
   </div>

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
+import { noindexGraceActive } from '../../lib/seo/indexing';
 
 import { normalizeImage } from '../../lib/images';
 
@@ -19,6 +20,15 @@ async function fetchProjects(origin: string): Promise<MoodboardItem[]> {
 
 export const GET: APIRoute = async ({ site, url }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
+
+  // /discover/* is served noindex (discover/[slug].astro). These URLs stay listed only
+  // for the grace period (lib/seo/indexing.ts); afterwards this sitemap is empty and
+  // the file can be deleted.
+  const headers = {
+    'Content-Type': 'application/xml; charset=utf-8',
+    'Cache-Control': 'public, max-age=900, s-maxage=3600, stale-while-revalidate=86400',
+  };
+  if (!noindexGraceActive()) return new Response(renderUrlSet([]), { status: 200, headers });
 
   let items: MoodboardItem[] = [];
   try {

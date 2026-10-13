@@ -4,6 +4,7 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import DirectoryCard from '../../../components/DirectoryCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { UNIVERSITY_BREADCRUMB_LABEL } from '../../../lib/seo/copy';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
 import { schoolSeo, schoolSchemaNode } from '../../../lib/seo/school';
@@ -139,8 +140,8 @@ const countryListing =
 
 const canonical = new URL(`/directory/schools/${slug}`, Astro.site);
 const crumbs = [
-  { label: 'Directory', href: '/directory' },
-  { label: 'Schools', href: '/directory/schools' },
+  { label: 'Home', href: '/' },
+  { label: UNIVERSITY_BREADCRUMB_LABEL, href: '/directory/schools' },
   ...(cityListing ? [{ label: cityName, href: cityListing.href }] : []),
   { label: university.name },
 ];
@@ -159,8 +160,7 @@ const schoolSchema = {
     }),
     breadcrumbList([
       { name: 'Home', url: '/' },
-      { name: 'Directory', url: '/directory' },
-      { name: 'Schools', url: '/directory/schools' },
+      { name: UNIVERSITY_BREADCRUMB_LABEL, url: '/directory/schools' },
       ...(cityListing ? [{ name: cityName, url: cityListing.href }] : []),
       { name: university.name, url: `/directory/schools/${slug}` },
     ]),

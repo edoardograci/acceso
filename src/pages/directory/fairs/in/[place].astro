@@ -7,6 +7,7 @@ import DirectoryCard from '../../../../components/DirectoryCard.astro';
 import { normalizeImage } from '../../../../lib/images';
 import { withCovers } from '../../../../lib/moodboard';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
+import { FAIR_BREADCRUMB_LABEL } from '../../../../lib/seo/copy';
 import { readJsonFromBucket, toArray } from '../../../../lib/readJson';
 import type { Env } from '../../../../env.d';
 
@@ -183,8 +184,7 @@ const pageDesc = `Design fairs in ${locName}${countryName && isCity ? `, ${count
     <div class="page-container">
       <Breadcrumbs items={[
         { label: 'Home', href: '/' },
-        { label: 'Directory', href: '/directory' },
-        { label: 'Fairs', href: '/directory/fairs' },
+        { label: FAIR_BREADCRUMB_LABEL, href: '/directory/fairs' },
         { label: `In ${locName}` }
       ]} />
 

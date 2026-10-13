@@ -165,6 +165,8 @@ export function museumIntro(ctx: MuseumCtx): { paragraph: string } {
  * say something different from the title/H1 above.
  */
 export const MUSEUM_BREADCRUMB_LABEL = 'Design Museums';
+export const FAIR_BREADCRUMB_LABEL = 'Design Fairs';
+export const AWARD_BREADCRUMB_LABEL = 'Design Awards';
 
 
 type ProjectCtx = {

@@ -4,6 +4,7 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { FAIR_BREADCRUMB_LABEL } from '../../../lib/seo/copy';
 import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
@@ -173,8 +174,7 @@ const fairSchema = seo.edition && cityName ? {
     }),
     breadcrumbList([
       { name: 'Home', url: '/' },
-      { name: 'Directory', url: '/directory' },
-      { name: 'Fairs', url: '/directory/fairs' },
+      { name: FAIR_BREADCRUMB_LABEL, url: '/directory/fairs' },
       { name: fair.name, url: `/directory/fairs/${slug}` },
     ]),
   ],
@@ -186,8 +186,8 @@ const fairSchema = seo.edition && cityName ? {
 
   <div class="breadcrumbs-container">
     <Breadcrumbs items={[
-      { label: 'Directory', href: '/directory' },
-      { label: 'Fairs', href: '/directory/fairs' },
+      { label: 'Home', href: '/' },
+      { label: FAIR_BREADCRUMB_LABEL, href: '/directory/fairs' },
       { label: fair.name }
     ]} />
   </div>

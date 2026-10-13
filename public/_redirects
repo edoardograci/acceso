@@ -2,3 +2,5 @@
 /directory/universities/* /directory/schools/:splat 301
 /projects / 301
 /projects/* / 301
+/moodboard /discover 301
+/request-studio /submission 301

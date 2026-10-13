@@ -10,6 +10,8 @@ import type { Studio } from '../../../lib/types';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import { readJsonFromBucket, toArray } from '../../../lib/readJson';
 import type { Env } from '../../../env.d';
+import { countIndexableStudios, locationIsIndexable, NOINDEX_FOLLOW } from '../../../lib/seo/indexing';
+import { firstSentence } from '../../../lib/text';
 
 const { place } = Astro.params;
 
@@ -73,6 +75,13 @@ if (cityObj) {
 }
 
 totalStudios = studios.length;
+
+// Indexable when the page has indexable studios, or lists enough studios to be a useful
+// listing on its own even if their profiles are noindexed (lib/seo/indexing.ts). Empty
+// cities (shared with the fairs/schools/museums directories) and one-studio cities whose
+// only profile is noindexed stay crawlable but out of the index.
+// Same rule as sitemaps/designer-locations.xml.ts.
+const robots = locationIsIndexable(countIndexableStudios(studios), studios.length) ? undefined : NOINDEX_FOLLOW;
 
 // Normalize images
 studios = studios.map((s) => ({
@@ -176,12 +185,16 @@ const updatedTimestamps = studios
 const lastVerifiedDate = updatedTimestamps.length ? new Date(Math.max(...updatedTimestamps)) : new Date();
 const lastVerifiedLabel = lastVerifiedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+// Every studio listed on the page gets a node, treated alike whether or not its own
+// profile is indexable. The description is the same one-line snippet the card shows
+// (Google asks that markup match visible content), so the full bio of a studio whose
+// profile is noindexed is not republished here as JSON-LD.
 const businessNodes = studioBusinessNodes({
   items: studios.slice(0, 50).map((s) => ({
     name: s.name,
     url: new URL(`/designers/${encodeURIComponent(s.slug)}`, Astro.site).toString(),
     website: s.website,
-    description: s.description,
+    description: firstSentence(s.description),
     city: s.city,
     country: s.country || countryName,
     address: s.address,
@@ -231,7 +244,7 @@ const mapStudios = studios.map(s => ({
 }));
 ---
 
-<PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical} schema={schema}>
+<PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical} robots={robots} schema={schema}>
   <Navbar />
 
   <main class="designers-page">

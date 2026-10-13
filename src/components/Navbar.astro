@@ -1,5 +1,11 @@
 ---
 import type { NavLink } from '../lib/types';
+import {
+  UNIVERSITY_BREADCRUMB_LABEL,
+  AWARD_BREADCRUMB_LABEL,
+  FAIR_BREADCRUMB_LABEL,
+  MUSEUM_BREADCRUMB_LABEL,
+} from '../lib/seo/copy';
 
 const navLinks: NavLink[] = [
   { label: 'Map', href: '/' },
@@ -8,6 +14,23 @@ const navLinks: NavLink[] = [
   { label: 'Directory', href: '/directory' },
   { label: 'Wishlist', href: '/wishlist' },
   { label: 'Info', href: '/info' },
+];
+
+// Descriptive anchor text ("Design Schools", not "Schools"): these are sitewide internal links
+// to the four hubs, and the anchor is a relevance signal. Same labels as the breadcrumbs.
+const directoryLinks = [
+  { label: UNIVERSITY_BREADCRUMB_LABEL, href: '/directory/schools'  },
+  { label: AWARD_BREADCRUMB_LABEL,      href: '/directory/awards'   },
+  { label: FAIR_BREADCRUMB_LABEL,       href: '/directory/fairs'    },
+  { label: MUSEUM_BREADCRUMB_LABEL,     href: '/directory/museums'  },
+];
+
+// Labels for desktop directory submenu (without "Design" prefix)
+const directorySubLabels = [
+  { label: 'Schools', href: '/directory/schools'  },
+  { label: 'Awards',  href: '/directory/awards'   },
+  { label: 'Fairs',   href: '/directory/fairs'    },
+  { label: 'Museums', href: '/directory/museums'  },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -20,11 +43,13 @@ function isActive(href: string): boolean {
   return currentPath.startsWith(href);
 }
 
+const isDirectoryActive = isActive('/directory');
+
 const user = Astro.locals.user;
 const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
 ---
 
-<nav class="navbar">
+<nav class="navbar" id="main-navbar">
   <div class="navbar-inner">
     <a href="/" class="navbar-logo" aria-label="Acceso Home">
       <svg width="76" height="20" viewBox="0 0 108 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -38,9 +63,25 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
     </a>
 
     <div class="navbar-links">
-      {navLinks.map(({ label, href }) => (
-        <a href={href} class:list={['nav-link', { active: isActive(href) }]}>{label}</a>
-      ))}
+      {navLinks.map(({ label, href }) => {
+        if (label === 'Directory') {
+          return (
+            <button
+              class:list={['nav-link', 'nav-directory-trigger', { active: isDirectoryActive }]}
+              id="directory-trigger"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-controls="directory-bar"
+              type="button"
+            >
+              {label}
+            </button>
+          );
+        }
+        return (
+          <a href={href} class:list={['nav-link', { active: isActive(href) }]}>{label}</a>
+        );
+      })}
     </div>
 
     <div class="navbar-actions">
@@ -75,12 +116,55 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
   </div>
 </nav>
 
-<div class="mobile-nav-overlay" id="mobile-nav-overlay" aria-hidden="true">
+<!-- Desktop directory sub-bar -->
+<div class="directory-bar" id="directory-bar" aria-hidden="true" inert>
+  <div class="directory-bar-inner">
+    {directorySubLabels.map(({ label, href }) => (
+      <a
+        href={href}
+        class:list={['dir-sub-link', { active: currentPath.startsWith(href) }]}
+      >
+        {label}
+      </a>
+    ))}
+  </div>
+</div>
+
+<div class="mobile-nav-overlay" id="mobile-nav-overlay" aria-hidden="true" inert>
   <div class="mobile-nav-content">
     <nav class="mobile-nav-links">
-      {navLinks.map(({ label, href }) => (
-        <a href={href} class:list={['mobile-nav-link', { active: isActive(href) }]}>{label}</a>
-      ))}
+      {navLinks.map(({ label, href }) => {
+        if (label === 'Directory') {
+          return (
+            <div class="mobile-dir-group">
+              <button
+                class:list={['mobile-nav-link', 'mobile-dir-toggle', { active: isDirectoryActive }]}
+                id="mobile-dir-toggle"
+                aria-expanded="false"
+                type="button"
+              >
+                <span>{label}</span>
+                <svg class="mobile-dir-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+              <div class="mobile-dir-sub" id="mobile-dir-sub" aria-hidden="true" inert>
+                {directorySubLabels.map(({ label: subLabel, href: subHref }) => (
+                  <a
+                    href={subHref}
+                    class:list={['mobile-dir-sub-link', { active: currentPath.startsWith(subHref) }]}
+                  >
+                    {subLabel}
+                  </a>
+                ))}
+              </div>
+            </div>
+          );
+        }
+        return (
+          <a href={href} class:list={['mobile-nav-link', { active: isActive(href) }]}>{label}</a>
+        );
+      })}
       <a href="/submission" class:list={['mobile-nav-link', { active: isActive('/submission') }]}>Submission</a>
     </nav>
     <div class="mobile-nav-actions">
@@ -105,6 +189,7 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
 </div>
 
 <script>
+  // ── Hamburger ────────────────────────────────────────────────────────────
   const hamburgerBtn = document.getElementById('hamburger-btn');
   const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
 
@@ -113,6 +198,7 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
     hamburgerBtn?.classList.add('open');
     mobileNavOverlay?.classList.add('open');
     mobileNavOverlay?.setAttribute('aria-hidden', 'false');
+    mobileNavOverlay?.removeAttribute('inert');
     document.body.style.overflow = 'hidden';
   }
 
@@ -121,17 +207,113 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
     hamburgerBtn?.classList.remove('open');
     mobileNavOverlay?.classList.remove('open');
     mobileNavOverlay?.setAttribute('aria-hidden', 'true');
+    mobileNavOverlay?.setAttribute('inert', '');
     document.body.style.overflow = '';
   }
 
   hamburgerBtn?.addEventListener('click', () => {
     const isOpen = hamburgerBtn.getAttribute('aria-expanded') === 'true';
-    if (isOpen) closeMenu();
-    else openMenu();
+    if (isOpen) closeMenu(); else openMenu();
   });
 
   mobileNavOverlay?.addEventListener('click', (e) => {
     if (e.target === mobileNavOverlay) closeMenu();
+  });
+
+  // ── Desktop Directory Sub-bar ────────────────────────────────────────────
+  const trigger    = document.getElementById('directory-trigger');
+  const bar        = document.getElementById('directory-bar');
+  const barInner   = document.querySelector('.directory-bar-inner');
+  const navbar     = document.getElementById('main-navbar');
+  let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function positionBarInner() {
+    if (!trigger || !barInner || !navbar) return;
+    const navbarInner = document.querySelector('.navbar-inner');
+    if (!navbarInner) return;
+    const navbarInnerRect = navbarInner.getBoundingClientRect();
+    const triggerRect = trigger.getBoundingClientRect();
+    const leftOffset = triggerRect.left - navbarInnerRect.left;
+    // Subtract 40px to account for directory-bar-inner's left padding
+    barInner.style.transform = `translateX(${leftOffset - 40}px)`;
+  }
+
+  function showBar() {
+    if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+    bar?.classList.add('open');
+    trigger?.setAttribute('aria-expanded', 'true');
+    bar?.setAttribute('aria-hidden', 'false');
+    bar?.removeAttribute('inert');
+    positionBarInner();
+  }
+
+  function closeBarNow() {
+    bar?.classList.remove('open');
+    trigger?.setAttribute('aria-expanded', 'false');
+    bar?.setAttribute('aria-hidden', 'true');
+    bar?.setAttribute('inert', '');
+  }
+
+  function hideBar() {
+    hideTimeout = setTimeout(closeBarNow, 120);
+  }
+
+  // Hover opens the bar. Keyboard users open it with Enter/Space (click handler below).
+  trigger?.addEventListener('mouseenter', showBar);
+  trigger?.addEventListener('mouseleave', hideBar);
+
+  bar?.addEventListener('mouseenter', () => {
+    if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+  });
+  bar?.addEventListener('mouseleave', hideBar);
+
+  // Reposition on resize
+  window.addEventListener('resize', positionBarInner);
+
+  // Click on the trigger also toggles (for keyboard / touch-laptop users).
+  // detail === 0 means keyboard activation (Enter/Space): move focus into the bar so its
+  // links are reachable (the bar sits after the whole navbar in tab order).
+  trigger?.addEventListener('click', (e) => {
+    const isOpen = bar?.classList.contains('open');
+    const viaKeyboard = (e as MouseEvent).detail === 0;
+    if (isOpen) {
+      if (viaKeyboard) closeBarNow(); else hideBar();
+    } else {
+      showBar();
+      if (viaKeyboard) bar?.querySelector<HTMLElement>('a')?.focus();
+    }
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!trigger?.contains(e.target as Node) && !bar?.contains(e.target as Node)) {
+      closeBarNow();
+    }
+  });
+
+  // Escape closes the bar (returning focus to the trigger); tabbing out of it closes it too.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !bar?.classList.contains('open')) return;
+    const focusInBar = !!bar?.contains(document.activeElement);
+    closeBarNow();
+    if (focusInBar) trigger?.focus();
+  });
+  bar?.addEventListener('focusout', (e) => {
+    const next = (e as FocusEvent).relatedTarget as Node | null;
+    if (!next || !bar?.contains(next)) closeBarNow();
+  });
+
+  // ── Mobile Directory Sub-links ───────────────────────────────────────────
+  const mobileToggle = document.getElementById('mobile-dir-toggle');
+  const mobileSub    = document.getElementById('mobile-dir-sub');
+
+  mobileToggle?.addEventListener('click', () => {
+    const isOpen = mobileToggle.getAttribute('aria-expanded') === 'true';
+    mobileToggle.setAttribute('aria-expanded', String(!isOpen));
+    mobileSub?.setAttribute('aria-hidden', String(isOpen));
+    mobileSub?.toggleAttribute('inert', isOpen);
+    mobileSub?.classList.toggle('open', !isOpen);
+    mobileToggle.classList.toggle('sub-open', !isOpen);
   });
 </script>
 
@@ -186,6 +368,66 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
   font-weight: 400;
 }
 
+/* Directory trigger – looks exactly like a nav-link */
+.nav-directory-trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: inherit;
+}
+
+/* ── Desktop Directory Sub-bar ────────────────────────────────────── */
+.directory-bar {
+  position: sticky;
+  top: var(--navbar-height);
+  left: 0;
+  right: 0;
+  z-index: 1999;
+  background: #fff;
+  border-bottom: 1px solid var(--color-stroke);
+  /* collapsed */
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: height 0.2s ease, opacity 0.2s ease;
+}
+
+.directory-bar.open {
+  height: 44px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.directory-bar-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  height: 100%;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  justify-content: flex-start;
+}
+
+.dir-sub-link {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--color-nav-inactive);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.dir-sub-link:hover,
+.dir-sub-link.active {
+  color: var(--color-black);
+}
+
+/* ── Navbar Actions ───────────────────────────────────────────────── */
 .navbar-actions {
   display: flex;
   align-items: center;
@@ -292,6 +534,7 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
   line-height: 1;
 }
 
+/* ── Hamburger ───────────────────────────────────────────────────── */
 .hamburger-btn {
   display: none;
   justify-content: center;
@@ -332,6 +575,7 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
   transform: translateY(-7px) rotate(-45deg);
 }
 
+/* ── Mobile Overlay ──────────────────────────────────────────────── */
 .mobile-nav-overlay {
   display: none;
   position: fixed;
@@ -376,12 +620,76 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
   border-bottom: 1px solid var(--color-stroke);
   transition: color 0.2s ease;
   display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
 }
 
 .mobile-nav-link:hover,
 .mobile-nav-link.active {
   color: var(--color-black);
   font-weight: 400;
+}
+
+/* Mobile Directory toggle row */
+.mobile-dir-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-dir-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-dir-chevron {
+  flex-shrink: 0;
+  transition: transform 0.22s ease;
+}
+
+.mobile-dir-toggle.sub-open .mobile-dir-chevron {
+  transform: rotate(180deg);
+}
+
+/* Mobile sub-links drawer */
+.mobile-dir-sub {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+
+.mobile-dir-sub.open {
+  max-height: 300px;
+  opacity: 1;
+}
+
+.mobile-dir-sub-link {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--color-nav-inactive);
+  text-decoration: none;
+  padding: 8px 0 8px 20px;
+  border-bottom: 1px solid var(--color-stroke);
+  transition: color 0.15s ease;
+  display: block;
+}
+
+.mobile-dir-sub-link:last-child {
+  border-bottom: none;
+}
+
+.mobile-dir-sub-link:hover,
+.mobile-dir-sub-link.active {
+  color: var(--color-black);
 }
 
 .mobile-nav-actions {
@@ -414,6 +722,10 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
   }
   .mobile-nav-overlay {
     display: block;
+  }
+  /* Hide desktop sub-bar on mobile */
+  .directory-bar {
+    display: none;
   }
 }
 </style>

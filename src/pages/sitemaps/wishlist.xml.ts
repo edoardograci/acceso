@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 import { loadCatalog } from '../../lib/wishlist/store';
-import { coverSrc } from '../../lib/wishlist/covers';
 import { wishlistPaths } from '../../lib/wishlist/routes';
 import { renderUrlSet, toW3CDate, type SitemapUrl } from '../../lib/seo/sitemap';
 
@@ -30,16 +29,7 @@ export const GET: APIRoute = async ({ site, locals, url }) => {
       if (!books.length) continue; // empty categories 404, so they stay out
       urls.push({ loc: abs(wishlistPaths.category(c.slug)), lastmod: newest(books) ?? siteLastmod, changefreq: 'weekly', priority: 0.7 });
     }
-    for (const b of catalog.books) {
-      const img = coverSrc(b.cover, url.origin);
-      urls.push({
-        loc: abs(wishlistPaths.book(b.category, b.slug)),
-        lastmod: date(b.updated) ?? date(b.added) ?? siteLastmod,
-        changefreq: 'monthly',
-        priority: 0.6,
-        images: img ? [new URL(img, url.origin).toString()] : undefined,
-      });
-    }
+    // Individual book pages are noindexed; exclude from sitemap per Google guidance
   }
 
   return new Response(renderUrlSet(urls), {

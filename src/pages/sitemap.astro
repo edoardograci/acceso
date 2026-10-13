@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import { loadCatalog } from '../lib/wishlist/store';
 import { wishlistPaths } from '../lib/wishlist/routes';
+import { isStudioIndexable, locationIsIndexable } from '../lib/seo/indexing';
 
 const origin = Astro.url.origin;
 
@@ -20,7 +21,14 @@ async function getJson<T = any>(path: string): Promise<T[]> {
   }
 }
 
-type Studio = { slug?: string; name?: string; city?: string | null };
+type Studio = {
+  slug?: string;
+  name?: string;
+  city?: string | null;
+  city_slug?: string | null;
+  country_slug?: string | null;
+  indexable?: boolean | number | null;
+};
 type Project = { slug?: string; name?: string; designer?: string | null };
 type Place = { slug?: string; name?: string };
 type EventItem = {
@@ -48,7 +56,6 @@ const wishlistLinks = wishlist && wishlist.source === 'r2'
       ...wishlist.categories
         .filter((c) => wishlist.books.some((b) => b.category === c.slug))
         .map((c) => ({ href: wishlistPaths.category(c.slug), label: c.name })),
-      ...wishlist.books.map((b) => ({ href: wishlistPaths.book(b.category, b.slug), label: b.title })),
     ]
   : [];
 
@@ -64,12 +71,29 @@ for (const c of [...cities, ...countries]) {
   if (c?.slug) placeName.set(c.slug, c.name || c.slug);
 }
 
+// Only list designer locations that are indexable (same rule as
+// sitemaps/designer-locations.xml.ts). Cities that exist only for the directory
+// pages would otherwise be linked here as empty /designers/in/<city> pages.
+const studiosByPlace = new Map<string, { total: number; indexable: number }>();
+for (const s of studios) {
+  const indexable = isStudioIndexable(s);
+  for (const slug of [s.city_slug, s.country_slug]) {
+    if (!slug) continue;
+    const cur = studiosByPlace.get(slug) ?? { total: 0, indexable: 0 };
+    cur.total++;
+    if (indexable) cur.indexable++;
+    studiosByPlace.set(slug, cur);
+  }
+}
 const designerPlaces = [
   ...new Set([
     ...cities.filter((c) => c?.slug).map((c) => c.slug as string),
     ...countries.filter((c) => c?.slug).map((c) => c.slug as string),
   ]),
-];
+].filter((slug) => {
+  const c = studiosByPlace.get(slug);
+  return !!c && locationIsIndexable(c.indexable, c.total);
+});
 
 // A location URL only resolves if at least one item of that type carries a
 // matching city_slug or country_slug (mirrors event-locations.xml.ts).

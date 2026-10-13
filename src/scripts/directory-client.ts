@@ -404,12 +404,12 @@ function init() {
     if (!pillActivated) {
       cityCheckboxes.forEach(cb => { if (cb.dataset.slug === paramCity) cb.checked = true; });
     }
-    history.replaceState(null, '', '/directory');
+    history.replaceState(null, '', '/designers');
     execFetch();
   } else if (paramCountry) {
     isFirstLoad = false;
     countryCheckboxes.forEach(cb => { if (cb.dataset.slug === paramCountry) cb.checked = true; });
-    history.replaceState(null, '', '/directory');
+    history.replaceState(null, '', '/designers');
     execFetch();
   } else {
     execFetch();

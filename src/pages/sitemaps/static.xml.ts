@@ -5,16 +5,15 @@ import { renderUrlSet, toW3CDate } from '../../lib/seo/sitemap';
 export const GET: APIRoute = async ({ site, locals }) => {
   if (!site) return new Response('Missing site config', { status: 500 });
 
-  const lastmod = toW3CDate(new Date());
-  // Static pages have a real "Last updated" date on-page — use it so Google
-  // doesn't see these as changing every crawl.
+  // Only pages with a real modification date carry a <lastmod> (guides, privacy, terms).
+  // The rest omit it: "today" on every request is not a modification date.
   const privacyLastmod = '2025-12-30';
   const termsLastmod = '2025-12-30';
 
   // Guides live in R2 (json bucket, guides/*.json). A failure here must never take
   // down the rest of the sitemap, so it degrades to "no guide URLs".
   let guideUrls: { loc: string; lastmod: string; changefreq: 'monthly'; priority: number }[] = [];
-  let guidesLastmod = lastmod;
+  let guidesLastmod: string | undefined;
   try {
     const env = (locals as any)?.runtime?.env || import.meta.env;
     const guides = await listGuides(env);
@@ -31,21 +30,21 @@ export const GET: APIRoute = async ({ site, locals }) => {
   }
 
   const urls = [
-    { loc: new URL('/', site).toString(), lastmod, changefreq: 'daily' as const, priority: 1.0 },
+    { loc: new URL('/', site).toString(), changefreq: 'daily' as const, priority: 1.0 },
     // /designers lives in sitemaps/designer-directory.xml, which also owns its
     // pagination. Listing it here as well duplicated it across two sitemaps.
-    { loc: new URL('/discover', site).toString(), lastmod, changefreq: 'daily' as const, priority: 0.8 },
-    { loc: new URL('/directory', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.7 },
-    { loc: new URL('/directory/fairs', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
-    { loc: new URL('/directory/museums', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
-    { loc: new URL('/directory/awards', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
-    { loc: new URL('/directory/schools', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.6 },
+    { loc: new URL('/discover', site).toString(), changefreq: 'daily' as const, priority: 0.8 },
+    { loc: new URL('/directory', site).toString(), changefreq: 'weekly' as const, priority: 0.7 },
+    { loc: new URL('/directory/fairs', site).toString(), changefreq: 'weekly' as const, priority: 0.6 },
+    { loc: new URL('/directory/museums', site).toString(), changefreq: 'weekly' as const, priority: 0.6 },
+    { loc: new URL('/directory/awards', site).toString(), changefreq: 'weekly' as const, priority: 0.6 },
+    { loc: new URL('/directory/schools', site).toString(), changefreq: 'weekly' as const, priority: 0.6 },
     { loc: new URL('/guides', site).toString(), lastmod: guidesLastmod, changefreq: 'weekly' as const, priority: 0.6 },
     ...guideUrls,
-    { loc: new URL('/info', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.5 },
-    { loc: new URL('/submission', site).toString(), lastmod, changefreq: 'monthly' as const, priority: 0.4 },
+    { loc: new URL('/info', site).toString(), changefreq: 'monthly' as const, priority: 0.5 },
+    { loc: new URL('/submission', site).toString(), changefreq: 'monthly' as const, priority: 0.4 },
     // The HTML index at /sitemap is itself an indexable page.
-    { loc: new URL('/sitemap', site).toString(), lastmod, changefreq: 'weekly' as const, priority: 0.3 },
+    { loc: new URL('/sitemap', site).toString(), changefreq: 'weekly' as const, priority: 0.3 },
     { loc: new URL('/privacy', site).toString(), lastmod: privacyLastmod, changefreq: 'yearly' as const, priority: 0.2 },
     { loc: new URL('/terms', site).toString(), lastmod: termsLastmod, changefreq: 'yearly' as const, priority: 0.2 },
   ];

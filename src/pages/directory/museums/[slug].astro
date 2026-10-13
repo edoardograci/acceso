@@ -4,6 +4,7 @@ import Navbar from '../../../components/Navbar.astro';
 import Footer from '../../../components/Footer.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import { MUSEUM_BREADCRUMB_LABEL } from '../../../lib/seo/copy';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
 import { entityTitle, entityDescription } from '../../../lib/seo/meta';
@@ -126,8 +127,7 @@ const museumSchema = {
     },
     breadcrumbList([
       { name: 'Home', url: '/' },
-      { name: 'Directory', url: '/directory' },
-      { name: 'Museums', url: '/directory/museums' },
+      { name: MUSEUM_BREADCRUMB_LABEL, url: '/directory/museums' },
       { name: museum.name, url: `/directory/museums/${slug}` },
     ]),
   ],
@@ -139,8 +139,8 @@ const museumSchema = {
 
   <div class="breadcrumbs-container">
     <Breadcrumbs items={[
-      { label: 'Directory', href: '/directory' },
-      { label: 'Museums', href: '/directory/museums' },
+      { label: 'Home', href: '/' },
+      { label: MUSEUM_BREADCRUMB_LABEL, href: '/directory/museums' },
       { label: museum.name }
     ]} />
   </div>
