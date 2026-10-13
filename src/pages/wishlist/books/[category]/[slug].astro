@@ -4,9 +4,10 @@ export const prerender = false;
 import WishlistLayout from '../../../../layouts/WishlistLayout.astro';
 import BookCover from '../../../../components/wishlist/BookCover.astro';
 import BookGrid from '../../../../components/wishlist/BookGrid.astro';
+import CategoryStackCard from '../../../../components/wishlist/CategoryStackCard.astro';
 import AffiliateDisclaimer from '../../../../components/wishlist/AffiliateDisclaimer.astro';
 import { loadCatalog } from '../../../../lib/wishlist/store';
-import { indexCatalog, toBookView, relatedBooks, moreByAuthor } from '../../../../lib/wishlist/queries';
+import { indexCatalog, toBookView, toCategoryView, relatedBooks, moreByAuthor } from '../../../../lib/wishlist/queries';
 import { coverSrc } from '../../../../lib/wishlist/covers';
 import { WISHLIST_CACHE_CONTROL, wishlistPaths, isValidSlug } from '../../../../lib/wishlist/routes';
 import { breadcrumbList } from '../../../../lib/seo/schema';
@@ -37,7 +38,13 @@ const view = toBookView(book, idx, ctx, { width: 720, srcset: true, widths: [360
 const related = relatedBooks(idx, book, 5);
 const relatedViews = related.books.map((b) => toBookView(b, idx, ctx));
 const byAuthor = moreByAuthor(idx, book, 5).map((b) => toBookView(b, idx, ctx));
-const siblingCount = idx.booksByCategory.get(category.slug)?.length ?? 0;
+const siblingCount = idx.booksByCategory.get(primaryCategory.slug)?.length ?? 0;
+
+// ── Category views for "This book appears in" section ─────────────────────────
+const bookCategoryViews = book.categories
+  .map((catSlug) => idx.categoryBySlug.get(catSlug))
+  .filter((c): c is BookCategory => !!c)
+  .map((c) => toCategoryView(c, idx, ctx));
 
 const paragraphs = book.description.split(/\n+/).map((p) => p.trim()).filter(Boolean);
 const year = book.published?.match(/\d{4}/)?.[0];
@@ -138,25 +145,6 @@ const schema = {
 
         {book.summary && <p class="summary">{book.summary}</p>}
 
-        <div class="cta-row">
-          <a
-            class="btn-primary buy-btn"
-            href={book.amazonUrl}
-            target="_blank"
-            rel="sponsored nofollow noopener"
-            data-track="wishlist_buy"
-            data-book={book.slug}
-            data-category={book.categories[0]}
-          >
-            Buy on Amazon
-            <svg class="website-ext-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </a>
-          <div class="category-links">
-            {view.categoryHrefs.map((href, i) => (
-              <a class="pill-link" href={href}>{view.categoryNames[i]}</a>
-            ))}
-          </div>
-        </div>
         <section class="about-section" aria-labelledby="about-heading">
           <h2 class="about-title" id="about-heading">About this book</h2>
           <div class="about-prose">
@@ -184,7 +172,16 @@ const schema = {
       </div>
     </div>
 
-{byAuthor.length > 0 && (
+    {bookCategoryViews.length > 1 && (
+      <section class="wl-section" aria-labelledby="appears-in-heading">
+        <h2 class="related-title" id="appears-in-heading">This book appears in</h2>
+        <div class="appears-grid">
+          {bookCategoryViews.map((c) => <CategoryStackCard category={c} />)}
+        </div>
+      </section>
+    )}
+
+    {byAuthor.length > 0 && (
       <section class="wl-section" aria-labelledby="by-author">
         <div class="wl-section-head"><h2 class="wl-h2" id="by-author">More by {book.author}</h2></div>
         <BookGrid books={byAuthor} variant="row" label={`More by ${book.author}`} />
@@ -315,12 +312,6 @@ const schema = {
     font-size: 15px;
     font-weight: 700;
   }
-  .category-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-  }
   .buy-btn .website-ext-icon {
     color: var(--color-black);
     transition: transform 0.2s ease;
@@ -328,6 +319,15 @@ const schema = {
   .buy-btn:hover .website-ext-icon {
     transform: translate(2px, -2px);
   }
+
+  .appears-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: 32px;
+  }
+  @media (max-width: 1100px) { .appears-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .appears-grid { grid-template-columns: 1fr; } }
 
   /* ── About section (inside info-col) ─────────────────────────────────────── */
   .about-section { margin-top: 32px; padding-top: 24px; }

@@ -3,7 +3,6 @@ export const prerender = false;
 
 import WishlistLayout from '../../../../layouts/WishlistLayout.astro';
 import BookGrid from '../../../../components/wishlist/BookGrid.astro';
-import CategoryStackCard from '../../../../components/wishlist/CategoryStackCard.astro';
 import FilterSidebar from '../../../../components/FilterSidebar.astro';
 import { loadCatalog } from '../../../../lib/wishlist/store';
 import { indexCatalog, publishedCategories, toBookView, toCategoryView } from '../../../../lib/wishlist/queries';
@@ -122,21 +121,6 @@ const schema = {
     <section class="wl-section" aria-labelledby="about-collection">
       <h2 class="wl-h2" id="about-collection">About this collection</h2>
       <div class="wl-prose" style="margin-top:20px"><p>{category.intro[1]}</p></div>
-    </section>
-  )}
-
-  {others.length > 0 && (
-    <section class="wl-section" aria-labelledby="more-collections">
-      <div class="wl-section-head">
-        <h2 class="wl-h2" id="more-collections">More design books</h2>
-        <a href={wishlistPaths.books()} class="pill-link">
-          <span>All collections</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-      </div>
-      <div class="more-grid">
-        {others.map((c) => <CategoryStackCard category={c} />)}
-      </div>
     </section>
   )}
 
