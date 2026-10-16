@@ -5,6 +5,7 @@ import Footer from '../../../components/Footer.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import { FAIR_BREADCRUMB_LABEL } from '../../../lib/seo/copy';
+import { directoryLinkables, linkDirectoryMentions } from '../../../lib/seo/autolink';
 import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList } from '../../../lib/seo/schema';
@@ -44,21 +45,25 @@ let relatedFairs: any[] = [];
 let relatedTitle = 'More design fairs';
 let citiesMapping: any[] = [];
 let countriesMapping: any[] = [];
+let allFairs: any[] = [];
+let allAwards: any[] = [];
 
 let fetchFailed = false;
 
 try {
   const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
   const origin = Astro.url.origin;
-  const [rawFairs, citiesData, countriesData] = await Promise.all([
+  const [rawFairs, citiesData, countriesData, awardsData] = await Promise.all([
     readJsonFromBucket('fairs.json', env, origin),
     readJsonFromBucket('test-cities.json', env, origin),
     readJsonFromBucket('test-countries.json', env, origin),
+    readJsonFromBucket('awards.json', env, origin),
   ]);
 
   if (!rawFairs) throw new Error('Failed to read fairs.json');
 
-  const allFairs = toArray(rawFairs);
+  allFairs = toArray(rawFairs);
+  allAwards = toArray(awardsData);
 
   fair = allFairs.find((f: any) => f.slug === slug) || null;
 
@@ -143,6 +148,13 @@ const aboutParagraphs = (fair.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
+const { leadHtml, aboutHtml } = linkDirectoryMentions({
+  description: fair.description,
+  aboutParagraphs,
+  selfHref: `/directory/fairs/${slug}`,
+  linkables: directoryLinkables(allAwards, allFairs),
+});
+
 // ── SEO: title, description and Event schema come from the structured fields
 // (see lib/seo/fair.ts), so a stale year in the authored copy can never reach
 // the snippet or the JSON-LD.
@@ -207,11 +219,11 @@ const fairSchema = seo.edition && cityName ? {
         <FairGallery fair={fair} />
 
         <!-- 2. Overview Intro -->
-        {fair.description && (
+        {leadHtml && (
           <section class="content-block intro-block">
             <h2 class="info-heading">Information</h2>
             <h3 class="block-title">OVERVIEW</h3>
-            <p class="fair-lead-text">{fair.description}</p>
+            <p class="fair-lead-text" set:html={leadHtml} />
           </section>
         )}
 
@@ -224,7 +236,7 @@ const fairSchema = seo.edition && cityName ? {
         />
 
         <!-- 5. About the Fair (Editorial Columns) -->
-        <AboutSection aboutParagraphs={aboutParagraphs} title="About the Fair" />
+        <AboutSection aboutParagraphs={aboutHtml} asHtml title="About the Fair" />
 
       </div>
 
@@ -347,6 +359,14 @@ const fairSchema = seo.edition && cityName ? {
     color: var(--color-black);
     margin: 0;
     font-weight: 400;
+  }
+
+  /* Autolinked lead arrives via set:html, so its anchors have no Astro scope
+     id: the descendant selector must stay :global to reach them. */
+  .fair-lead-text :global(a) {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .block-title {

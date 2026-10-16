@@ -9,7 +9,8 @@ import { ensureProtocol } from '../../lib/url';
 import type { Studio } from '../../lib/types';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { breadcrumbList } from '../../lib/seo/schema';
-import { studioDescription } from '../../lib/seo/meta';
+import { entityTitle, studioDescription } from '../../lib/seo/meta';
+import { directoryLinkables, linkMentions } from '../../lib/seo/autolink';
 import { readJsonFromBucket, toArray } from '../../lib/readJson';
 import type { Env } from '../../env.d';
 
@@ -21,6 +22,19 @@ const countryNames: Record<string, string> = {
   'united-states': 'United States',
 };
 
+// "Good Design Award" in a Japanese studio bio is the Japanese programme; the
+// AU and US pages are separate organisations. Only a country that maps to one
+// of them gets the family label, so nothing is guessed.
+const countryRegions: Record<string, string> = {
+  'japan': 'jp',
+  'united-states': 'us',
+  'australia': 'au',
+};
+
+function regionFor(countrySlug: string | null | undefined): string | undefined {
+  return countrySlug ? countryRegions[countrySlug.toLowerCase()] : undefined;
+}
+
 function countryDisplayName(slugVal: string | null): string {
   if (!slugVal) return '';
   const val = slugVal.toLowerCase();
@@ -28,20 +42,24 @@ function countryDisplayName(slugVal: string | null): string {
   return val.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-const user = Astro.locals.user;
-const isLoggedIn = !!user;
-
 let studio: Studio | null = null;
 let cover: string | null = null;
 let error = null;
 let sameCityStudios: Studio[] = [];
 let sameCountryStudios: Studio[] = [];
 let worldStudios: Studio[] = [];
+let bioHtml = '';
+let awardFairLinks: ReturnType<typeof directoryLinkables> = [];
 
 try {
   const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
-  const raw = await readJsonFromBucket('test-studios.json', env, Astro.url.origin);
+  const [raw, awardsData, fairsData] = await Promise.all([
+    readJsonFromBucket('test-studios.json', env, Astro.url.origin),
+    readJsonFromBucket('awards.json', env, Astro.url.origin),
+    readJsonFromBucket('fairs.json', env, Astro.url.origin),
+  ]);
   if (!raw) throw new Error('Failed to read studios');
+  awardFairLinks = directoryLinkables(toArray(awardsData), toArray(fairsData));
   {
     const mappedStudios = toArray(raw) as Studio[];
     studio = mappedStudios.find(s => s.slug === slug) || null;
@@ -96,6 +114,10 @@ if (!studio) {
   return new Response(null, { status: 404 });
 }
 
+bioHtml = studio.description
+  ? linkMentions(String(studio.description), awardFairLinks, { region: regionFor(studio.country_slug) })
+  : '';
+
 
 // ── Location / embed data ───────────────────────────────────────────────
 // The location section only renders when the studio has an address AND a
@@ -141,7 +163,7 @@ const studioSchema = studio ? {
 ---
 
 <Layout 
-  title={studio ? `${studio.name} - Independent Design Studio in ${studio.city}` : 'Loading...'}
+  title={studio ? entityTitle(studio.name, 'Independent Design Studio', studio.city || undefined) : 'Loading...'}
   description={studio ? studioDescription(studio) : ''}
   canonical={canonical}
   robots={robots}
@@ -185,9 +207,7 @@ const studioSchema = studio ? {
             <div class="info-card-content">
               <h1 class="designer-name">{studio.name}</h1>
               <div class="description-wrapper">
-                <p class="designer-description" id="designerDescription">
-                  {studio.description || 'No description available.'}
-                </p>
+                <p class="designer-description" id="designerDescription" set:html={bioHtml || 'No description available.'} />
                 <button class="description-toggle" id="descriptionToggle" type="button" hidden>Read more</button>
               </div>
 
@@ -234,30 +254,24 @@ const studioSchema = studio ? {
               </div>
 
               <div class="contacts-section" id="contactsSection">
-                <div class:list={['details-row', { 'contacts-toggle-clickable': isLoggedIn }]} id="contactsToggle">
+                <div class="details-row" data-auth="guest">
                   <span class="detail-label">Contacts</span>
-                  {isLoggedIn ? (
-                    <div class="contact-trigger">
-                      <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </div>
-                  ) : (
-                    <a href="/login" class="detail-value contact-link">
-                      <span>Login to view</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </a>
-                  )}
+                  <a href="/login" class="detail-value contact-link">
+                    <span>Login to view</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
                 </div>
-                {isLoggedIn && studio && (
-                  <div class="contacts-content" id="contactsContent">
-                    {studio.email && <a href={`mailto:${studio.email}`} class="contact-email underlined">{studio.email}</a>}
-                    {studio.email2 && <a href={`mailto:${studio.email2}`} class="contact-email underlined">{studio.email2}</a>}
-                    {!studio.email && !studio.email2 && <span class="contact-email">No contact email available</span>}
+                <div class="details-row contacts-toggle-clickable" id="contactsToggle" data-auth="user" hidden>
+                  <span class="detail-label">Contacts</span>
+                  <div class="contact-trigger">
+                    <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                   </div>
-                )}
+                </div>
+                <div class="contacts-content" id="contactsContent" data-studio-slug={studio.slug}></div>
               </div>
             </div>
 
@@ -407,12 +421,67 @@ const studioSchema = studio ? {
     });
   }
 
-  // Contacts Dropdown Toggle
+  // Contacts are fetched after login so public/edge-cached HTML never contains emails.
   const contactsToggle = document.getElementById('contactsToggle');
   const contactsSection = document.getElementById('contactsSection');
-  if (contactsToggle && contactsSection) {
-    contactsToggle.addEventListener('click', () => {
+  const contactsContent = document.getElementById('contactsContent');
+  let contactsLoaded = false;
+  let contactsLoading = false;
+
+  function renderContacts(emails: string[]) {
+    if (!contactsContent) return;
+    contactsContent.replaceChildren();
+    if (!emails.length) {
+      const empty = document.createElement('span');
+      empty.className = 'contact-email';
+      empty.textContent = 'No contact email available';
+      contactsContent.appendChild(empty);
+      return;
+    }
+    for (const email of emails) {
+      const link = document.createElement('a');
+      link.href = `mailto:${email}`;
+      link.className = 'contact-email underlined';
+      link.textContent = email;
+      contactsContent.appendChild(link);
+    }
+  }
+
+  if (contactsToggle && contactsSection && contactsContent) {
+    contactsToggle.addEventListener('click', async () => {
+      const opening = !contactsSection.classList.contains('expanded');
       contactsSection.classList.toggle('expanded');
+      if (!opening || contactsLoaded || contactsLoading) return;
+
+      contactsLoading = true;
+      contactsContent.replaceChildren();
+      const pending = document.createElement('span');
+      pending.className = 'contact-email';
+      pending.textContent = 'Loading…';
+      contactsContent.appendChild(pending);
+
+      try {
+        const slug = contactsContent.getAttribute('data-studio-slug') || '';
+        const res = await fetch(`/api/designers/${encodeURIComponent(slug)}/contacts`, {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+        if (!res.ok) {
+          renderContacts([]);
+          return;
+        }
+        const data = await res.json();
+        contactsLoaded = true;
+        renderContacts(Array.isArray(data.emails) ? data.emails.filter((email) => typeof email === 'string') : []);
+      } catch {
+        renderContacts([]);
+      } finally {
+        contactsLoading = false;
+      }
     });
   }
 
@@ -581,6 +650,15 @@ const studioSchema = studio ? {
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* The bio is injected with set:html, so its anchors carry no Astro scope id:
+     the descendant selector must stay :global for the rule to reach them. */
+  .designer-description :global(a) {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .designer-description.expanded {

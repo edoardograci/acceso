@@ -1,6 +1,7 @@
 import { defineMiddleware } from 'astro:middleware';
 import { verifyRequestOrigin } from 'lucia';
 import { createLucia } from './lib/auth/lucia';
+import { applySsrCacheControl, isPublicCacheablePath } from './lib/seo/cache';
 import type { Env } from './env.d';
 
 // Session cache TTL (for Cache API)
@@ -94,8 +95,40 @@ function shouldSkipAuth(pathname: string): boolean {
   return false;
 }
 
+function htmlCacheKey(url: URL) {
+  return new Request(`${url.origin}${url.pathname}${url.search}`, { method: 'GET' });
+}
+
+async function finalizeResponse(
+  locals: App.Locals,
+  request: Request,
+  url: URL,
+  res: Response,
+): Promise<Response> {
+  applySecurityHeaders(res, url.pathname);
+  if (request.method !== 'GET' || !isPublicCacheablePath(url.pathname)) return res;
+  applySsrCacheControl(res);
+  const cc = res.headers.get('Cache-Control') || '';
+  if (!res.ok || !cc.includes('public') || res.headers.has('Set-Cookie')) return res;
+  const store = locals.runtime?.caches?.default;
+  if (!store) return res;
+  const put = store.put(htmlCacheKey(url), res.clone());
+  const waitUntil = locals.runtime?.ctx?.waitUntil;
+  if (typeof waitUntil === 'function') waitUntil(put);
+  else await put;
+  return res;
+}
+
 export const onRequest = defineMiddleware(async ({ locals, cookies, request, url }, next) => {
   const pathname = url.pathname;
+
+  if (request.method === 'GET' && isPublicCacheablePath(pathname)) {
+    const store = locals.runtime?.caches?.default;
+    if (store) {
+      const hit = await store.match(htmlCacheKey(url));
+      if (hit) return applySecurityHeaders(hit, pathname);
+    }
+  }
 
   // CSRF protection for non-GET requests.
   // This runs BEFORE the static-path early return: skipping auth for a prefix is
@@ -117,7 +150,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
     locals.user = null;
     locals.session = null;
     const res = await next();
-    return applySecurityHeaders(res, pathname);
+    return finalizeResponse(locals, request, url, res);
   }
 
   const runtimeEnv = locals.runtime?.env || {};
@@ -134,7 +167,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
     locals.user = null;
     locals.session = null;
     const res = await next();
-    return applySecurityHeaders(res, pathname);
+    return finalizeResponse(locals, request, url, res);
   }
 
   const sessionId = cookies.get(lucia.sessionCookieName)?.value ?? null;
@@ -143,7 +176,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
     locals.user = null;
     locals.session = null;
     const res = await next();
-    return applySecurityHeaders(res, pathname);
+    return finalizeResponse(locals, request, url, res);
   }
 
   // Standard Cache API implementation
@@ -160,7 +193,7 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
     locals.session = data.session;
     locals.user = data.user;
     const res = await next();
-    return applySecurityHeaders(res, pathname);
+    return finalizeResponse(locals, request, url, res);
   }
 
   // Validate session from database (Turso)
@@ -209,5 +242,5 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
   }
 
   const res = await next();
-  return applySecurityHeaders(res, pathname);
+  return finalizeResponse(locals, request, url, res);
 });

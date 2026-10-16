@@ -2,9 +2,11 @@
 interface Props {
   aboutParagraphs: string[];
   title?: string;
+  /** When true, paragraphs are already escaped HTML (autolink). */
+  asHtml?: boolean;
 }
 
-const { aboutParagraphs, title = "About the School" } = Astro.props;
+const { aboutParagraphs, title = "About the School", asHtml = false } = Astro.props;
 ---
 
 {aboutParagraphs.length > 0 && (
@@ -12,7 +14,9 @@ const { aboutParagraphs, title = "About the School" } = Astro.props;
     <h2 class="block-title">{title}</h2>
     <div class={`about-text-columns${aboutParagraphs.length > 1 ? '' : ' single-column'}`}>
       {aboutParagraphs.map((para) => (
-        <p class="about-paragraph">{para}</p>
+        asHtml
+          ? <p class="about-paragraph" set:html={para} />
+          : <p class="about-paragraph">{para}</p>
       ))}
     </div>
   </section>
@@ -57,6 +61,15 @@ const { aboutParagraphs, title = "About the School" } = Astro.props;
     color: var(--color-text-muted);
     margin: 0 0 20px;
     break-inside: avoid-column;
+  }
+
+  /* Autolinked paragraphs arrive via set:html, so their anchors have no Astro
+     scope id: the descendant selector must stay :global to reach them. */
+  .about-paragraph :global(a) {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .about-paragraph:last-child {

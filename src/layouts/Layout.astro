@@ -2,8 +2,7 @@
 import '../styles/global.css';
 import PostHogEnhanced from '../components/PostHogEnhanced.astro';
 import { organization, website } from '../lib/seo/schema';
-import { resolveVisitorIdentity } from '../lib/visitor-hash';
-import type { Env } from '../env.d';
+import { clampTitle, ensureDescription } from '../lib/seo/meta';
 
 interface Props {
   title: string;
@@ -44,21 +43,8 @@ const {
 const DEFAULT_DESCRIPTION =
   'Acceso is your local design infopoint - a curated directory of independent design studios, designers, schools, museums, fairs, and awards across cities worldwide.';
 
-const metaDescription = description || DEFAULT_DESCRIPTION;
-
-// Pass user ID to client-side for collections state
-const userId = Astro.locals.user?.id || null;
-
-let visitorId = '';
-let visitorDay = '';
-try {
-  const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
-  const identity = await resolveVisitorIdentity(Astro.request, env);
-  visitorId = identity.visitorId;
-  visitorDay = identity.day;
-} catch {
-  // PostHogEnhanced falls back to /api/analytics/visitor-id
-}
+const pageTitle = clampTitle(title);
+const metaDescription = ensureDescription(description || DEFAULT_DESCRIPTION);
 
 const siteUrl = Astro.site ? new URL('/', Astro.site).toString() : '';
 const baseGraph: any[] = siteUrl
@@ -94,7 +80,7 @@ const mergedSchema =
 <!DOCTYPE html>
 <html lang="en" class="light">
   <head>
-    <PostHogEnhanced visitorId={visitorId} visitorDay={visitorDay} />
+    <PostHogEnhanced />
     <slot name="head" />
 
     <!-- EMERGENCY STABILITY GUARD: Stops adblocker-induced loops -->
@@ -152,19 +138,12 @@ const mergedSchema =
       crossorigin
     />
 
-    <!-- CRITICAL: Set user ID BEFORE loading collections state -->
-    {userId && (
-      <script is:inline define:vars={{ userId }}>
-        window.currentUserId = userId;
-      </script>
-    )}
-
     <script>
       /**
        * Collections Engine v6.0 (High Priority)
        */
       (function() {
-        const state = { designers: new Set<string>(), objects: new Set<string>(), museums: new Set<string>(), universities: new Set<string>(), loaded: false, subs: new Set<() => void>() };
+        const state = { designers: new Set<string>(), objects: new Set<string>(), museums: new Set<string>(), universities: new Set<string>(), loaded: false, authenticated: false, emailInitial: 'A', subs: new Set<() => void>() };
 
         const notify = () => {
           state.subs.forEach((fn: any) => { try { fn(); } catch(e) {} });
@@ -187,6 +166,13 @@ const mergedSchema =
             if (!res.ok) return;
             const data = await res.json();
 
+            state.authenticated = !!data.authenticated;
+            if (typeof data.emailInitial === 'string' && data.emailInitial) state.emailInitial = data.emailInitial;
+            document.documentElement.classList.toggle('is-authenticated', state.authenticated);
+            document.querySelectorAll<HTMLElement>('[data-auth="user"]').forEach((el) => { el.hidden = !state.authenticated; });
+            document.querySelectorAll<HTMLElement>('[data-auth="guest"]').forEach((el) => { el.hidden = state.authenticated; });
+            document.querySelectorAll('[data-auth-initial]').forEach((el) => { el.textContent = state.emailInitial; });
+
             // Only update if we aren't currently waiting for a mutation to finish
             if (Array.isArray(data.designers)) state.designers = new Set(data.designers);
             if (Array.isArray(data.objects)) state.objects = new Set(data.objects);
@@ -201,6 +187,7 @@ const mergedSchema =
         // @ts-ignore
         window.collectionsState = {
           get loaded() { return state.loaded; },
+          get authenticated() { return state.authenticated; },
           get designers() { return state.designers; },
           get objects() { return state.objects; },
           get museums() { return state.museums; },
@@ -243,7 +230,7 @@ const mergedSchema =
       })();
     </script>
 
-    <title>{title}</title>
+    <title>{pageTitle}</title>
 
     {metaDescription && (
       <meta name="description" content={metaDescription} />
@@ -259,7 +246,7 @@ const mergedSchema =
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content="Acceso" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:title" content={title} />
+    <meta property="og:title" content={pageTitle} />
     {metaDescription && (
       <meta property="og:description" content={metaDescription} />
     )}
@@ -277,7 +264,7 @@ const mergedSchema =
 
     <!-- Twitter -->
     <meta name="twitter:card" content={twitterCard} />
-    <meta name="twitter:title" content={title} />
+    <meta name="twitter:title" content={pageTitle} />
     {metaDescription && (
       <meta name="twitter:description" content={metaDescription} />
     )}

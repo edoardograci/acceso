@@ -151,6 +151,13 @@ export const RateLimits = {
         keyPrefix: 'search'
     },
 
+    // Studio contact emails: enough for browsing, tight enough to slow a dump.
+    CONTACTS: {
+        maxRequests: 30,
+        windowMs: 60 * 1000,
+        keyPrefix: 'contacts'
+    },
+
     // Email (magic link): 3 requests per 15 minutes per email
     EMAIL: {
         maxRequests: 3,

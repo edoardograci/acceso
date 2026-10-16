@@ -7,7 +7,7 @@ import DirectoryCard from '../../../../components/DirectoryCard.astro';
 import { normalizeImage } from '../../../../lib/images';
 import { withCovers } from '../../../../lib/moodboard';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
-import { AWARD_BREADCRUMB_LABEL } from '../../../../lib/seo/copy';
+import { AWARD_BREADCRUMB_LABEL, placeDirectoryDescription } from '../../../../lib/seo/copy';
 import { readJsonFromBucket, toArray } from '../../../../lib/readJson';
 import type { Env } from '../../../../env.d';
 
@@ -145,7 +145,15 @@ const designersLink = `/designers/in/${place}`;
 const canonical = new URL(`/directory/awards/in/${place}`, Astro.site);
 
 const pageTitle = `Awards in ${locName} | Acceso`;
-const pageDesc = `Awards in ${locName}${countryName && isCity ? `, ${countryName}` : ''}: ${totalAwards} listed${relStudios.length || relMuseums.length ? `, alongside ${relStudios.length} designers and ${relMuseums.length} museums` : ''}. Explore the global design directory on Acceso.`;
+const pageDesc = placeDirectoryDescription({
+  kind: 'awards',
+  locName,
+  countryName,
+  isCity,
+  total: totalAwards,
+  relatedStudios: relStudios.length,
+  relatedMuseums: relMuseums.length,
+});
 ---
 
 <PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical}>

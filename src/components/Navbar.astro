@@ -44,9 +44,6 @@ function isActive(href: string): boolean {
 }
 
 const isDirectoryActive = isActive('/directory');
-
-const user = Astro.locals.user;
-const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
 ---
 
 <nav class="navbar" id="main-navbar">
@@ -97,13 +94,10 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
         </svg>
       </a>
       <a href="/submission" class="btn-submission">Submission</a>
-      {user ? (
-        <a href="/profile" class="navbar-profile-btn" aria-label="Profile">
-          <span class="profile-icon">{profileLetter}</span>
-        </a>
-      ) : (
-        <a href="/login" class="btn-login">Login</a>
-      )}
+      <a href="/profile" class="navbar-profile-btn" aria-label="Profile" data-auth="user" hidden>
+        <span class="profile-icon" data-auth-initial>A</span>
+      </a>
+      <a href="/login" class="btn-login" data-auth="guest">Login</a>
     </div>
 
     <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu" aria-expanded="false">
@@ -179,11 +173,8 @@ const profileLetter = user?.email ? user.email.charAt(0).toUpperCase() : 'A';
         </svg>
         Instagram
       </a>
-      {user ? (
-        <a href="/profile" class="btn-primary" style="width:100%;text-align:center;">Profile</a>
-      ) : (
-        <a href="/login" class="btn-login mobile-btn-login">Login</a>
-      )}
+      <a href="/profile" class="btn-primary" style="width:100%;text-align:center;" data-auth="user" hidden>Profile</a>
+      <a href="/login" class="btn-login mobile-btn-login" data-auth="guest">Login</a>
     </div>
   </div>
 </div>

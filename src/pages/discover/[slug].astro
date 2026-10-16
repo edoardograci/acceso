@@ -8,6 +8,7 @@ import { normalizeImage } from '../../lib/images';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { breadcrumbList } from '../../lib/seo/schema';
 import { projectDescription } from '../../lib/seo/copy';
+import { projectTitle } from '../../lib/seo/meta';
 import { NOINDEX_FOLLOW } from '../../lib/seo/indexing';
 import { readJsonFromBucket, toArray } from '../../lib/readJson';
 import type { Env } from '../../env.d';
@@ -127,7 +128,7 @@ const itemSchema = item ? {
 ---
 
 <Layout 
-  title={item ? `${item.name}${item.designer ? ` by ${item.designer}` : ''} | Acceso Discover` : 'Loading...'}
+  title={projectTitle(item.name, item.designer)}
   description={metaDescription}
   canonical={canonical}
   robots={NOINDEX_FOLLOW}

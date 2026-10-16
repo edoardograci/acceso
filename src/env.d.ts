@@ -96,6 +96,7 @@ declare global {
     };
     collectionsState?: {
       loaded: boolean;
+      authenticated?: boolean;
       init: () => void;
       designers: Set<string>;
       objects: Set<string>;

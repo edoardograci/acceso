@@ -2,6 +2,26 @@ import type { Env } from '../env.d';
 
 type Json = any[] | Record<string, any>;
 
+const CACHE_TTL_MS = 120_000;
+const NEGATIVE_TTL_MS = 10_000;
+
+type CacheEntry = { expires: number; value: Json | null };
+const jsonCache = new Map<string, CacheEntry>();
+const inflight = new Map<string, Promise<Json | null>>();
+
+// Callers (directory index) sort the array in place. Hand out a shallow copy
+// so that mutation cannot leak across requests for the isolate TTL.
+function isolate(value: Json | null): Json | null {
+  if (value == null) return value;
+  if (Array.isArray(value)) return value.slice();
+  if (typeof value === 'object') {
+    const items = (value as { items?: unknown }).items;
+    if (Array.isArray(items)) return { ...(value as object), items: items.slice() };
+    return { ...(value as object) };
+  }
+  return value;
+}
+
 function bucketFor(filename: string, env: Env | Record<string, any>) {
   // moodboard.json lives in a separate R2 bucket from the rest of the CMS JSON.
   if (filename === 'moodboard.json' || filename.startsWith('moodboard/')) {
@@ -23,22 +43,7 @@ function isSafeKey(key: string): boolean {
   );
 }
 
-// Reads a JSON file directly from R2 instead of doing an HTTP round-trip
-// to our own origin. Self-origin /cdn fetches are throttled on Cloudflare
-// workers and were the source of 10s+ TTFB on directory/designer pages.
-//
-// Dev note: the local miniflare R2 bucket is usually empty, so fall back to
-// the production JSON host (never this worker's own /cdn route).
-export async function readJsonFromBucket(
-  filename: string,
-  env: Env | Record<string, any>,
-  _origin?: string
-): Promise<Json | null> {
-  const key = String(filename || '').replace(/^\/+/, '');
-  if (!isSafeKey(key)) {
-    console.error(`[readJsonFromBucket] rejected unsafe key: ${key}`);
-    return null;
-  }
+async function loadJson(key: string, env: Env | Record<string, any>): Promise<Json | null> {
   const bucket = bucketFor(key, env);
 
   if (bucket?.get) {
@@ -61,6 +66,46 @@ export async function readJsonFromBucket(
     console.error(`[readJsonFromBucket] fallback fetch failed for ${key}:`, e);
     return null;
   }
+}
+
+// Reads a JSON file directly from R2 instead of doing an HTTP round-trip
+// to our own origin. Self-origin /cdn fetches are throttled on Cloudflare
+// workers and were the source of 10s+ TTFB on directory/designer pages.
+//
+// Isolate-level TTL + in-flight de-dupe: one worker handles many SSR
+// renders, and they all ask for the same few files.
+export async function readJsonFromBucket(
+  filename: string,
+  env: Env | Record<string, any>,
+  _origin?: string
+): Promise<Json | null> {
+  const key = String(filename || '').replace(/^\/+/, '');
+  if (!isSafeKey(key)) {
+    console.error(`[readJsonFromBucket] rejected unsafe key: ${key}`);
+    return null;
+  }
+
+  const now = Date.now();
+  const hit = jsonCache.get(key);
+  if (hit && hit.expires > now) return isolate(hit.value);
+
+  const pending = inflight.get(key);
+  if (pending) return pending.then(isolate);
+
+  const task = loadJson(key, env)
+    .then((value) => {
+      jsonCache.set(key, {
+        expires: Date.now() + (value == null ? NEGATIVE_TTL_MS : CACHE_TTL_MS),
+        value,
+      });
+      return value;
+    })
+    .finally(() => {
+      inflight.delete(key);
+    });
+
+  inflight.set(key, task);
+  return task.then(isolate);
 }
 
 // Normalizes the mixed shapes the JSON files use (some are arrays, some are

@@ -7,18 +7,14 @@ interface Props {
 }
 
 const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
-const isLoggedIn = !!Astro.locals.user;
 ---
 
 <save-button
   data-type={type}
   data-id={itemId}
   data-name={itemName}
-  data-logged-in={isLoggedIn.toString()}
 >
-  <button class={buttonClass}>
-    {isLoggedIn ? 'Loading...' : 'Login to save'}
-  </button>
+  <button class={buttonClass}>Login to save</button>
 </save-button>
 
 <script>
@@ -28,7 +24,6 @@ const isLoggedIn = !!Astro.locals.user;
     private btn: HTMLButtonElement | null = null;
     private type: string = '';
     private name: string = '';
-    private isLoggedIn = false;
     private updateTimeout: number | undefined;
     private unsubscribe: (() => void) | null = null;
     constructor() {
@@ -40,19 +35,8 @@ const isLoggedIn = !!Astro.locals.user;
       this.type = this.dataset.type || '';
       this.id = this.dataset.id || '';
       this.name = this.dataset.name || '';
-      this.isLoggedIn = this.dataset.loggedIn === 'true';
-
-      if (!this.btn || !this.isLoggedIn) {
-        if (this.btn && !this.isLoggedIn) {
-          this.btn.addEventListener('click', (e: Event) => {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.href = '/login';
-          });
-        }
-        return;
-      }
-
+      if (!this.btn) return;
+      this.btn.addEventListener('click', this.boundHandleClick);
       this.initialize();
     }
 
@@ -110,8 +94,15 @@ const isLoggedIn = !!Astro.locals.user;
       this.updateTimeout = window.setTimeout(() => {
         // @ts-ignore
         if (!window.collectionsState?.loaded) {
-          this.btn!.textContent = 'Loading...';
-          this.btn!.disabled = true;
+          this.btn!.textContent = 'Login to save';
+          this.btn!.disabled = false;
+          return;
+        }
+
+        // @ts-ignore
+        if (!window.collectionsState.authenticated) {
+          this.btn!.textContent = 'Login to save';
+          this.btn!.disabled = false;
           return;
         }
 
@@ -130,7 +121,12 @@ const isLoggedIn = !!Astro.locals.user;
 
       if (!this.btn || this.isProcessing) return;
       // @ts-ignore
-      if (!window.collectionsState?.loaded) return;
+      if (!window.collectionsState?.loaded || !window.collectionsState.authenticated) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.href = '/login';
+        return;
+      }
 
       this.isProcessing = true;
       this.btn.disabled = true;

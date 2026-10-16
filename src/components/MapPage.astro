@@ -7,6 +7,8 @@ import { breadcrumbList, itemList, faqPage } from '../lib/seo/schema';
 import { readJsonFromBucket, toArray, trimArrayForMap } from '../lib/readJson';
 import { normalizeImage } from '../lib/images';
 import { homeFaqs } from '../lib/homeFaqs';
+import { mapPageDescription } from '../lib/seo/copy';
+import { NOINDEX_FOLLOW } from '../lib/seo/indexing';
 import type { Env } from '../env.d';
 import HomeStats from './home/HomeStats.astro';
 import HomeDirectory from './home/HomeDirectory.astro';
@@ -181,7 +183,8 @@ const mapFilters = [
 const pageTitle = itemType === 'museum' ? 'Explore Museums & Foundations' : itemType === 'university' ? 'Explore Design Schools' : 'Explore the Local Design Map';
 const titleLead = 'Explore';
 const titleRest = 'Local Design';
-const pageDescription = itemType === 'museum' ? 'Interactive map of design museums and foundations worldwide.' : itemType === 'university' ? 'Interactive map of design schools and institutions worldwide.' : 'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.';
+const pageDescription = mapPageDescription(itemType);
+const mapRobots = typeParam === 'schools' || typeParam === 'museums' ? NOINDEX_FOLLOW : undefined;
 
 const seoTypeLabel = itemType === 'museum' ? 'design museum' : itemType === 'university' ? 'design school' : 'design studio';
 const seoTypePlural = itemType === 'museum' ? 'design museums' : itemType === 'university' ? 'design schools' : 'design studios';
@@ -202,7 +205,6 @@ const hasTypeQuery = Astro.url.searchParams.has('type');
 const pageCanonical = hasTypeQuery ? new URL(TYPE_BASE_PATH[itemType], SITE) : undefined;
 
 const mapPageTitle = pageTitle;
-const mapPageDescription = pageDescription;
 
 const breadcrumbs = breadcrumbList([
   { name: 'Map', url: mapUrl },
@@ -247,10 +249,11 @@ const faqs = [
 
 <Layout
   title={`Acceso - ${mapPageTitle}`}
-  description={mapPageDescription}
+  description={pageDescription}
   keywords={seoKeywords}
   schema={pageSchema}
   canonical={pageCanonical}
+  robots={mapRobots}
 >
   <link slot="head" rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
   {/* Warm the same-origin Geist glyph PBFs so MapLibre doesn't

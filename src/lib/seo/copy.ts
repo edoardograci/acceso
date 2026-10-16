@@ -1,3 +1,5 @@
+import { DESC_MAX, ensureDescription } from './meta';
+
 type CityCtx = {
   cityName: string;
   countryName?: string | null;
@@ -168,6 +170,47 @@ export const MUSEUM_BREADCRUMB_LABEL = 'Design Museums';
 export const FAIR_BREADCRUMB_LABEL = 'Design Fairs';
 export const AWARD_BREADCRUMB_LABEL = 'Design Awards';
 
+/** Shared copy for the homepage map, including `/?type=` filter views. */
+export const MAP_PAGE_DESCRIPTIONS = {
+  studio:
+    'Interactive map of independent furniture and industrial design studios. Browse by city and discover your next collaboration.',
+  museum:
+    'Interactive map of design museums and foundations worldwide. Browse by city and explore collections in furniture, product and industrial design.',
+  university:
+    'Interactive map of design schools and institutions worldwide. Browse by city and explore programs in industrial, furniture and product design.',
+} as const;
+
+export function mapPageDescription(itemType: 'studio' | 'university' | 'museum'): string {
+  return ensureDescription(MAP_PAGE_DESCRIPTIONS[itemType] ?? MAP_PAGE_DESCRIPTIONS.studio);
+}
+
+/**
+ * Meta description for /directory/{fairs|awards}/in/<place>. A place with one
+ * listing and no related studios used to land at ~80 characters.
+ */
+export function placeDirectoryDescription(opts: {
+  kind: 'fairs' | 'awards';
+  locName: string;
+  countryName?: string | null;
+  isCity: boolean;
+  total: number;
+  relatedStudios: number;
+  relatedMuseums: number;
+}): string {
+  const where = opts.countryName && opts.isCity ? `${opts.locName}, ${opts.countryName}` : opts.locName;
+  const noun = opts.kind === 'fairs' ? 'Design fairs' : 'Awards';
+  const calendar = opts.kind === 'fairs' ? 'design calendar' : 'design directory';
+  const related =
+    opts.relatedStudios || opts.relatedMuseums
+      ? `, alongside ${opts.relatedStudios} designers and ${opts.relatedMuseums} museums`
+      : '';
+  const lead = `${noun} in ${where}: ${opts.total} listed${related}. Explore the global ${calendar} on Acceso.`;
+  return ensureDescription(
+    lead,
+    'Browse dates, venues and related designers, museums and schools on Acceso.',
+  );
+}
+
 
 type ProjectCtx = {
   name: string;
@@ -178,8 +221,7 @@ type ProjectCtx = {
   imageCount?: number;
 };
 
-/** Google renders roughly this much of a description; longer text is clipped. */
-const DESCRIPTION_BUDGET = 158;
+/** Align with DESC_MAX in meta.ts so Layout and builders never disagree. */
 
 /**
  * Meta description for a Discover project page.
@@ -210,7 +252,7 @@ export function projectDescription(ctx: ProjectCtx): string {
   ];
 
   for (const tail of tails) {
-    if (head.length + tail.length <= DESCRIPTION_BUDGET) return head + tail;
+    if (head.length + tail.length <= DESC_MAX) return head + tail;
   }
 
   return head;

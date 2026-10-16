@@ -5,6 +5,7 @@ import Footer from '../../../components/Footer.astro';
 import EventBasicCard from '../../../components/EventBasicCard.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import { AWARD_BREADCRUMB_LABEL } from '../../../lib/seo/copy';
+import { directoryLinkables, linkDirectoryMentions } from '../../../lib/seo/autolink';
 import CalendarModal from '../../../components/CalendarModal.astro';
 import { normalizeImage } from '../../../lib/images';
 import { breadcrumbList, faqPage } from '../../../lib/seo/schema';
@@ -29,19 +30,23 @@ let relatedAwards: any[] = [];
 let citiesMapping: any[] = [];
 let fetchFailed = false;
 let relatedGuides: any[] = [];
+let allAwards: any[] = [];
+let allFairs: any[] = [];
 
 try {
   const env = (Astro.locals.runtime?.env || import.meta.env) as unknown as Env;
   const origin = Astro.url.origin;
-  const [awardsData, citiesData, allGuides] = await Promise.all([
+  const [awardsData, citiesData, allGuides, fairsData] = await Promise.all([
     readJsonFromBucket('awards.json', env, origin),
     readJsonFromBucket('test-cities.json', env, origin),
     listGuides(env as any),
+    readJsonFromBucket('fairs.json', env, origin),
   ]);
 
   if (!awardsData) throw new Error('Failed to read awards.json');
 
-  const allAwards = toArray(awardsData);
+  allAwards = toArray(awardsData);
+  allFairs = toArray(fairsData);
 
   award = allAwards.find((a: any) => a.slug === slug) || null;
 
@@ -136,6 +141,13 @@ const aboutParagraphs = (award.long_description || '')
   .map((p: string) => p.trim())
   .filter((p: string) => p.length > 0);
 
+const { leadHtml, aboutHtml } = linkDirectoryMentions({
+  description: award.description,
+  aboutParagraphs,
+  selfHref: `/directory/awards/${slug}`,
+  linkables: directoryLinkables(allAwards, allFairs),
+});
+
 // ── SEO: title, description and FAQ come from the structured fields
 // (see lib/seo/award.ts). The old Event markup is gone: it described the
 // submission window as an event held in the organiser's city and marked closed
@@ -189,10 +201,10 @@ const awardSchema = {
         <section class="content-block info-block">
           <h2 class="info-heading">Information</h2>
           <h3 class="block-title">OVERVIEW</h3>
-          {award.description && (
-            <p class="award-lead-text">{award.description}</p>
+          {leadHtml && (
+            <p class="award-lead-text" set:html={leadHtml} />
           )}
-          {aboutParagraphs.length > 0 && (
+          {aboutHtml.length > 0 && (
             <details class="more-about-details">
               <summary class="more-about-toggle">
                 <span>Read more</span>
@@ -201,8 +213,8 @@ const awardSchema = {
                 </svg>
               </summary>
               <div class="about-text-content">
-                {aboutParagraphs.map((para: string) => (
-                  <p class="about-paragraph">{para}</p>
+                {aboutHtml.map((para: string) => (
+                  <p class="about-paragraph" set:html={para} />
                 ))}
               </div>
             </details>
@@ -354,6 +366,15 @@ const awardSchema = {
     color: var(--color-black);
     margin: 0;
     font-weight: 400;
+  }
+
+  /* Autolinked paragraphs arrive via set:html, so their anchors have no Astro
+     scope id: the descendant selector must stay :global to reach them. */
+  .award-lead-text :global(a),
+  .about-paragraph :global(a) {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .block-title {

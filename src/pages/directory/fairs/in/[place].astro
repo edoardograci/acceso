@@ -7,7 +7,7 @@ import DirectoryCard from '../../../../components/DirectoryCard.astro';
 import { normalizeImage } from '../../../../lib/images';
 import { withCovers } from '../../../../lib/moodboard';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
-import { FAIR_BREADCRUMB_LABEL } from '../../../../lib/seo/copy';
+import { FAIR_BREADCRUMB_LABEL, placeDirectoryDescription } from '../../../../lib/seo/copy';
 import { readJsonFromBucket, toArray } from '../../../../lib/readJson';
 import type { Env } from '../../../../env.d';
 
@@ -174,7 +174,15 @@ const designersLink = `/designers/in/${place}`;
 const canonical = new URL(`/directory/fairs/in/${place}`, Astro.site);
 
 const pageTitle = `Design Fairs in ${locName} | Acceso`;
-const pageDesc = `Design fairs in ${locName}${countryName && isCity ? `, ${countryName}` : ''}: ${totalFairs} listed${relStudios.length || relMuseums.length ? `, alongside ${relStudios.length} designers and ${relMuseums.length} museums` : ''}. Explore the global design calendar on Acceso.`;
+const pageDesc = placeDirectoryDescription({
+  kind: 'fairs',
+  locName,
+  countryName,
+  isCity,
+  total: totalFairs,
+  relatedStudios: relStudios.length,
+  relatedMuseums: relMuseums.length,
+});
 ---
 
 <PostHogLayout title={pageTitle} description={pageDesc} canonical={canonical}>
