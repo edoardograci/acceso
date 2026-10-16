@@ -96,7 +96,23 @@ function shouldSkipAuth(pathname: string): boolean {
 }
 
 function htmlCacheKey(url: URL) {
-  return new Request(`${url.origin}${url.pathname}${url.search}`, { method: 'GET' });
+  const keyUrl = new URL(url.pathname, url.origin);
+  const keyedParams = url.pathname === '/'
+    ? ['type']
+    : ['/designers', '/directory/schools', '/directory/museums', '/directory/fairs'].includes(url.pathname)
+      ? ['city']
+      : [];
+
+  for (const name of keyedParams) {
+    const value = url.searchParams.get(name);
+    if (name === 'type' && url.searchParams.has(name)) {
+      keyUrl.searchParams.set(name, value === 'schools' || value === 'museums' ? value : 'designers');
+    } else if (value) {
+      keyUrl.searchParams.set(name, value);
+    }
+  }
+
+  return new Request(keyUrl, { method: 'GET' });
 }
 
 async function finalizeResponse(
@@ -112,10 +128,19 @@ async function finalizeResponse(
   if (!res.ok || !cc.includes('public') || res.headers.has('Set-Cookie')) return res;
   const store = locals.runtime?.caches?.default;
   if (!store) return res;
-  const put = store.put(htmlCacheKey(url), res.clone());
   const waitUntil = locals.runtime?.ctx?.waitUntil;
-  if (typeof waitUntil === 'function') waitUntil(put);
-  else await put;
+  try {
+    const put = store.put(htmlCacheKey(url), res.clone());
+    if (typeof waitUntil === 'function') {
+      waitUntil(put.catch((error) => {
+        console.error('[SSR cache] Failed to store response:', error);
+      }));
+    } else {
+      await put;
+    }
+  } catch (error) {
+    console.error('[SSR cache] Failed to store response:', error);
+  }
   return res;
 }
 
@@ -125,8 +150,12 @@ export const onRequest = defineMiddleware(async ({ locals, cookies, request, url
   if (request.method === 'GET' && isPublicCacheablePath(pathname)) {
     const store = locals.runtime?.caches?.default;
     if (store) {
-      const hit = await store.match(htmlCacheKey(url));
-      if (hit) return applySecurityHeaders(hit, pathname);
+      try {
+        const hit = await store.match(htmlCacheKey(url));
+        if (hit) return applySecurityHeaders(new Response(hit.body, hit), pathname);
+      } catch (error) {
+        console.error('[SSR cache] Failed to read response:', error);
+      }
     }
   }
 

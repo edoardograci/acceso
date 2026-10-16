@@ -342,20 +342,30 @@ try {
     const searchInput = document.getElementById('search-input') as HTMLInputElement;
     const query = searchInput?.value.toLowerCase() || '';
     
-    if (!grid || !window.collectionsState) {
+    const state = window.collectionsState;
+    if (!grid || !state) {
       return;
     }
 
-    if (!window.collectionsState.loaded) {
+    if (!state.authKnown) {
+      if (countLabel) {
+        countLabel.textContent = state.loaded ? 'Unable to load collections. Retrying...' : 'Loading collections...';
+        countLabel.style.color = state.loaded ? '#ef4444' : '';
+      }
+      return;
+    }
+
+    if (!state.loaded) {
       if (countLabel) countLabel.textContent = 'Loading collections...';
       return;
     }
+    if (countLabel) countLabel.style.color = '';
 
     const allCards = grid.querySelectorAll('.museum-card-wrapper');
     allCards.forEach(card => (card as HTMLElement).style.display = 'none');
 
     let visibleCount = 0;
-    const savedIDs = window.collectionsState.museums;
+    const savedIDs = state.museums;
 
     for (const id of savedIDs) {
       const card = grid.querySelector(`.museum-card-wrapper[data-id="${id}"]`);

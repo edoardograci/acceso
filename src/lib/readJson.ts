@@ -4,10 +4,26 @@ type Json = any[] | Record<string, any>;
 
 const CACHE_TTL_MS = 120_000;
 const NEGATIVE_TTL_MS = 10_000;
+const MAX_ENTRIES = 200;
 
 type CacheEntry = { expires: number; value: Json | null };
 const jsonCache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<Json | null>>();
+
+function remember(key: string, entry: CacheEntry): void {
+  jsonCache.delete(key);
+  if (jsonCache.size >= MAX_ENTRIES) {
+    const now = Date.now();
+    for (const [cachedKey, cachedEntry] of jsonCache) {
+      if (cachedEntry.expires <= now) jsonCache.delete(cachedKey);
+    }
+    if (jsonCache.size >= MAX_ENTRIES) {
+      const oldest = jsonCache.keys().next();
+      if (!oldest.done) jsonCache.delete(oldest.value);
+    }
+  }
+  jsonCache.set(key, entry);
+}
 
 // Callers (directory index) sort the array in place. Hand out a shallow copy
 // so that mutation cannot leak across requests for the isolate TTL.
@@ -88,13 +104,14 @@ export async function readJsonFromBucket(
   const now = Date.now();
   const hit = jsonCache.get(key);
   if (hit && hit.expires > now) return isolate(hit.value);
+  if (hit) jsonCache.delete(key);
 
   const pending = inflight.get(key);
   if (pending) return pending.then(isolate);
 
   const task = loadJson(key, env)
     .then((value) => {
-      jsonCache.set(key, {
+      remember(key, {
         expires: Date.now() + (value == null ? NEGATIVE_TTL_MS : CACHE_TTL_MS),
         value,
       });

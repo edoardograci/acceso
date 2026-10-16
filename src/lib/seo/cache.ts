@@ -1,5 +1,5 @@
 /** Edge/browser caching for public SSR HTML (same idea as wishlist/guides). */
-export const SSR_CACHE_CONTROL = 'public, max-age=60, s-maxage=3600, stale-while-revalidate=86400';
+export const SSR_CACHE_CONTROL = 'public, max-age=0, s-maxage=300';
 
 const NO_STORE_EXACT = new Set(['/login', '/submission', '/profile', '/map/mine']);
 const NO_STORE_PREFIXES = ['/api', '/admin', '/profile', '/collections', '/login', '/auth', '/submission', '/cdn'];

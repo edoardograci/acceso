@@ -14,7 +14,7 @@ const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
   data-id={itemId}
   data-name={itemName}
 >
-  <button class={buttonClass}>Login to save</button>
+  <button class={buttonClass} disabled>Loading...</button>
 </save-button>
 
 <script>
@@ -60,7 +60,7 @@ const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
       return new Promise((resolve) => {
         // Check if already loaded
         // @ts-ignore
-        if (window.collectionsState?.loaded) {
+        if (window.collectionsState?.authKnown) {
           resolve();
           return;
         }
@@ -68,7 +68,7 @@ const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
         // Wait for it to load
         const checkInterval = setInterval(() => {
           // @ts-ignore
-          if (window.collectionsState?.loaded) {
+          if (window.collectionsState?.authKnown) {
             clearInterval(checkInterval);
             resolve();
           }
@@ -92,22 +92,20 @@ const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
 
       // Debounce rapid updates
       this.updateTimeout = window.setTimeout(() => {
-        // @ts-ignore
-        if (!window.collectionsState?.loaded) {
+        const state = window.collectionsState;
+        if (!state?.authKnown || !state.loaded) {
+          this.btn!.textContent = 'Loading...';
+          this.btn!.disabled = true;
+          return;
+        }
+
+        if (!state.authenticated) {
           this.btn!.textContent = 'Login to save';
           this.btn!.disabled = false;
           return;
         }
 
-        // @ts-ignore
-        if (!window.collectionsState.authenticated) {
-          this.btn!.textContent = 'Login to save';
-          this.btn!.disabled = false;
-          return;
-        }
-
-        // @ts-ignore
-        const isSaved = window.collectionsState.isSaved(this.type, this.id);
+        const isSaved = state.isSaved(this.type, this.id);
         this.btn!.textContent = isSaved ? 'Remove' : 'Save';
         this.btn!.disabled = false;
       }, 16); // Single frame delay
@@ -120,10 +118,9 @@ const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
       e.stopPropagation();
 
       if (!this.btn || this.isProcessing) return;
-      // @ts-ignore
-      if (!window.collectionsState?.loaded || !window.collectionsState.authenticated) {
-        e.preventDefault();
-        e.stopPropagation();
+      const state = window.collectionsState;
+      if (!state?.authKnown || !state.loaded) return;
+      if (!state.authenticated) {
         window.location.href = '/login';
         return;
       }
@@ -132,9 +129,8 @@ const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
       this.btn.disabled = true;
 
       try {
-        // @ts-ignore
-        const isSaved = window.collectionsState.isSaved(this.type, this.id);
-        const count = window.collectionsState.getCount(this.type);
+        const isSaved = state.isSaved(this.type, this.id);
+        const count = state.getCount(this.type);
         const limitType = this.type === 'designer' ? 'designers' : this.type === 'museum' ? 'museums' : this.type === 'university' ? 'schools' : 'moodboards';
 
         if (!isSaved) {
@@ -154,8 +150,7 @@ const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
         }
 
         if (isSaved) {
-          // @ts-ignore
-          await window.collectionsState.removeItem(this.type, this.id);
+          await state.removeItem(this.type, this.id);
            
           // Track unsave
           if (window.posthog && typeof window.posthog.capture === 'function') {
@@ -168,8 +163,7 @@ const { type, itemId, itemName, buttonClass = 'btn-pill' } = Astro.props;
             window.posthog.capture(eventName, props);
           }
         } else {
-          // @ts-ignore
-          await window.collectionsState.addItem(this.type, this.id);
+          await state.addItem(this.type, this.id);
            
           // Track save
           if (window.posthog && typeof window.posthog.capture === 'function') {

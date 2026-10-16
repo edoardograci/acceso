@@ -4,7 +4,10 @@ import type { Env } from '../../../env.d';
 
 export const GET: APIRoute = async ({ locals }) => {
     if (!locals.user) {
-        return Response.json({ authenticated: false, designers: [], objects: [], museums: [], universities: [] });
+        return Response.json(
+            { authenticated: false, designers: [], objects: [], museums: [], universities: [] },
+            { headers: { 'Cache-Control': 'private, no-store' } },
+        );
     }
 
     try {
@@ -20,12 +23,14 @@ export const GET: APIRoute = async ({ locals }) => {
             universities,
         }, {
             headers: {
-                // Return fast, check in background
-                'Cache-Control': 'private, max-age=5, stale-while-revalidate=15',
+                'Cache-Control': 'private, no-store',
             }
         });
     } catch (error: any) {
         console.error('[Status API] Error:', error);
-        return Response.json({ error: 'Internal Server Error' }, { status: 500 });
+        return Response.json(
+            { error: 'Internal Server Error' },
+            { status: 500, headers: { 'Cache-Control': 'private, no-store' } },
+        );
     }
 };

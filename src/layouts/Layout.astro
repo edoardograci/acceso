@@ -143,7 +143,7 @@ const mergedSchema =
        * Collections Engine v6.0 (High Priority)
        */
       (function() {
-        const state = { designers: new Set<string>(), objects: new Set<string>(), museums: new Set<string>(), universities: new Set<string>(), loaded: false, authenticated: false, emailInitial: 'A', subs: new Set<() => void>() };
+        const state = { designers: new Set<string>(), objects: new Set<string>(), museums: new Set<string>(), universities: new Set<string>(), loaded: false, authKnown: false, authenticated: false, emailInitial: 'A', subs: new Set<() => void>() };
 
         const notify = () => {
           state.subs.forEach((fn: any) => { try { fn(); } catch(e) {} });
@@ -160,13 +160,24 @@ const mergedSchema =
           }
         };
 
+        let retryTimer: number | undefined;
+        let retryDelayMs = 1000;
         const sync = async () => {
           try {
             const res = await fetch('/api/collections/status', { credentials: 'include', cache: 'no-store' });
-            if (!res.ok) return;
+            if (!res.ok) throw new Error(`Status request failed (${res.status})`);
             const data = await res.json();
+            if (typeof data.authenticated !== 'boolean') {
+              throw new Error('Status response did not include authentication state');
+            }
 
-            state.authenticated = !!data.authenticated;
+            state.authenticated = data.authenticated;
+            state.authKnown = true;
+            retryDelayMs = 1000;
+            if (retryTimer !== undefined) {
+              clearTimeout(retryTimer);
+              retryTimer = undefined;
+            }
             if (typeof data.emailInitial === 'string' && data.emailInitial) state.emailInitial = data.emailInitial;
             document.documentElement.classList.toggle('is-authenticated', state.authenticated);
             document.querySelectorAll<HTMLElement>('[data-auth="user"]').forEach((el) => { el.hidden = !state.authenticated; });
@@ -178,7 +189,16 @@ const mergedSchema =
             if (Array.isArray(data.objects)) state.objects = new Set(data.objects);
             if (Array.isArray(data.museums)) state.museums = new Set(data.museums);
             if (Array.isArray(data.universities)) state.universities = new Set(data.universities);
-          } catch (e) {} finally {
+          } catch (e) {
+            console.error('[Collections] Failed to sync status:', e);
+            if (!state.authKnown && retryTimer === undefined) {
+              retryTimer = window.setTimeout(() => {
+                retryTimer = undefined;
+                void sync();
+              }, retryDelayMs);
+              retryDelayMs = Math.min(retryDelayMs * 2, 30000);
+            }
+          } finally {
             state.loaded = true;
             notify();
           }
@@ -187,6 +207,7 @@ const mergedSchema =
         // @ts-ignore
         window.collectionsState = {
           get loaded() { return state.loaded; },
+          get authKnown() { return state.authKnown; },
           get authenticated() { return state.authenticated; },
           get designers() { return state.designers; },
           get objects() { return state.objects; },

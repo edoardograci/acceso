@@ -246,12 +246,24 @@ try {
       const confirmBtn = document.getElementById('confirm-delete') as HTMLButtonElement | null;
 
       const updateCounts = () => {
-        if (!window.collectionsState || !window.collectionsState.loaded) return;
+        const state = window.collectionsState;
+        if (!state) return;
+        if (!state.authKnown) {
+          if (state.loaded) {
+            ['saved-designers-count', 'saved-objects-count', 'saved-museums-count', 'saved-schools-count']
+              .forEach((id) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = '-';
+              });
+          }
+          return;
+        }
+        if (!state.loaded) return;
 
-        const dCount = window.collectionsState.getCount('designer');
-        const oCount = window.collectionsState.getCount('object');
-        const mCount = window.collectionsState.getCount('museum');
-        const uCount = window.collectionsState.getCount('university');
+        const dCount = state.getCount('designer');
+        const oCount = state.getCount('object');
+        const mCount = state.getCount('museum');
+        const uCount = state.getCount('university');
         
         const dEl = document.getElementById('saved-designers-count');
         const oEl = document.getElementById('saved-objects-count');
