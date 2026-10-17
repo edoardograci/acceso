@@ -181,6 +181,18 @@ const schema = {
       });
     }
 
+    function saveFilterState() {
+      const filters = state.languages.size ? { languages: Array.from(state.languages) } : {};
+      (window as any).accesoFilterHistory.write(filters, true);
+    }
+
+    function restoreFilterState() {
+      const filters = (window as any).accesoFilterHistory.read();
+      state.languages = new Set(Array.isArray(filters.languages) ? filters.languages : []);
+      syncChecks();
+      apply();
+    }
+
     function apply() {
       bookItems.forEach((li) => {
         const card = li.querySelector<HTMLElement>('.book-card');
@@ -233,11 +245,13 @@ const schema = {
       state.languages = new Set();
       syncChecks();
       apply();
+      saveFilterState();
       closeDrawer(true);
     });
 
     filterDone?.addEventListener('click', () => {
       apply();
+      saveFilterState();
       closeDrawer(true);
     });
 
@@ -254,6 +268,9 @@ const schema = {
       }
     });
 
+    const savedFilters = (window as any).accesoFilterHistory.read();
+    state.languages = new Set(Array.isArray(savedFilters.languages) ? savedFilters.languages : []);
+    window.addEventListener('popstate', restoreFilterState);
     syncChecks();
     apply();
   })();

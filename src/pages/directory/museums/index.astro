@@ -372,6 +372,45 @@ if (cityParam) {
       });
     }
 
+    function saveFilterState(push) {
+      const filters = {};
+      const countries = countryCheckboxes
+        .filter((checkbox) => checkbox.checked)
+        .map((checkbox) => checkbox.dataset.slug)
+        .filter(Boolean);
+      const cities = Array.from(state.cities).filter((slug) => {
+        const checkbox = cityCheckboxes.find((item) => item.dataset.slug === slug);
+        const countrySlug = checkbox?.closest('.filter-group')?.querySelector('.country-checkbox')?.dataset.slug;
+        return !countrySlug || !countries.includes(countrySlug);
+      });
+      if (cities.length) filters.cities = cities;
+      if (countries.length) filters.countries = countries;
+      if (state.search) filters.search = state.search;
+      window.accesoFilterHistory.write(filters, push);
+    }
+
+    function restoreFilterState() {
+      const filters = window.accesoFilterHistory.read();
+      const legacyCity = new URLSearchParams(window.location.search).get('city') || initialCity;
+      const selectedCities = new Set(Array.isArray(filters.cities) ? filters.cities : []);
+      if (typeof filters.city === 'string') selectedCities.add(filters.city);
+      if (!selectedCities.size && legacyCity && legacyCity !== 'all') selectedCities.add(legacyCity);
+      const selectedCountries = Array.isArray(filters.countries)
+        ? filters.countries
+        : typeof filters.country === 'string' ? [filters.country] : [];
+      countryCheckboxes.forEach((checkbox) => {
+        if (!selectedCountries.includes(checkbox.dataset.slug)) return;
+        checkbox.closest('.filter-group')?.querySelectorAll('.city-checkbox').forEach((city) => {
+          if (city.dataset.slug) selectedCities.add(city.dataset.slug);
+        });
+      });
+      state.cities = selectedCities;
+      state.search = typeof filters.search === 'string' ? filters.search : '';
+      if (searchInput) searchInput.value = state.search;
+      syncChecks();
+      apply();
+    }
+
     function apply() {
       const search = state.search.trim().toLowerCase();
       const visible = wrappers.filter((w) => {
@@ -442,11 +481,13 @@ if (cityParam) {
       state.cities = new Set();
       syncChecks();
       apply();
+      saveFilterState(true);
       closeDrawer(true);
     });
 
     filterDone?.addEventListener('click', () => {
       apply();
+      saveFilterState(true);
       closeDrawer(true);
     });
 
@@ -470,6 +511,7 @@ if (cityParam) {
     searchInput?.addEventListener('input', () => {
       state.search = searchInput.value;
       apply();
+      saveFilterState(false);
     });
 
     viewBtn?.addEventListener('click', () => {
@@ -478,10 +520,28 @@ if (cityParam) {
       viewBtn.title = compact ? 'Larger images' : 'Smaller images';
     });
 
-    // Honour an initial ?city= deep link
-    if (initialCity && initialCity !== 'all') {
+    const savedFilters = window.accesoFilterHistory.read();
+    if (Object.keys(savedFilters).length) {
+      const legacyCity = new URLSearchParams(window.location.search).get('city') || initialCity;
+      const selectedCities = new Set(Array.isArray(savedFilters.cities) ? savedFilters.cities : []);
+      if (typeof savedFilters.city === 'string') selectedCities.add(savedFilters.city);
+      if (!selectedCities.size && legacyCity && legacyCity !== 'all') selectedCities.add(legacyCity);
+      const selectedCountries = Array.isArray(savedFilters.countries)
+        ? savedFilters.countries
+        : typeof savedFilters.country === 'string' ? [savedFilters.country] : [];
+      countryCheckboxes.forEach((checkbox) => {
+        if (!selectedCountries.includes(checkbox.dataset.slug)) return;
+        checkbox.closest('.filter-group')?.querySelectorAll('.city-checkbox').forEach((city) => {
+          if (city.dataset.slug) selectedCities.add(city.dataset.slug);
+        });
+      });
+      state.cities = selectedCities;
+      state.search = typeof savedFilters.search === 'string' ? savedFilters.search : '';
+      if (searchInput) searchInput.value = state.search;
+    } else if (initialCity && initialCity !== 'all') {
       state.cities = new Set([initialCity]);
     }
+    window.addEventListener('popstate', restoreFilterState);
     syncChecks();
     apply();
   })();

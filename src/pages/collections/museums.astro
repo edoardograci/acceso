@@ -399,8 +399,21 @@ try {
 
   const searchInput = document.getElementById('search-input');
   if (searchInput) {
-    searchInput.addEventListener('input', filterGrid);
+    searchInput.addEventListener('input', () => {
+      filterGrid();
+      (window as any).accesoFilterHistory.write(
+        (searchInput as HTMLInputElement).value ? { search: (searchInput as HTMLInputElement).value } : {},
+      );
+    });
   }
+
+  const restoreSearch = () => {
+    const filters = (window as any).accesoFilterHistory.read();
+    if (searchInput) (searchInput as HTMLInputElement).value = typeof filters.search === 'string' ? filters.search : '';
+    filterGrid();
+  };
+  restoreSearch();
+  window.addEventListener('popstate', restoreSearch);
 
   const waitForState = () => {
     let attempts = 0;

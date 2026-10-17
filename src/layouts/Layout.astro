@@ -291,6 +291,114 @@ const mergedSchema =
     )}
     <meta name="twitter:image" content={new URL(image, Astro.site)} />
 
+    <script is:inline>
+      (() => {
+        const arrayParameters = new Set([
+          'city',
+          'specializations',
+          'tags',
+          'frequencies',
+          'focus',
+          'prototype',
+          'languages',
+        ]);
+        const stateParameters = [
+          'city',
+          ...arrayParameters,
+          'country',
+          'search',
+          'sortAsc',
+          'page',
+          'upcoming',
+          'open',
+          'free',
+        ];
+
+        const read = () => {
+          const params = new URLSearchParams(window.location.search);
+          const encoded = params.get('filters');
+          if (encoded) {
+            try {
+              const parsed = JSON.parse(encoded);
+              if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+            } catch (error) {
+              console.error('[filter-history] Could not read legacy filter state:', error);
+            }
+          }
+
+          const state = {};
+          for (const key of stateParameters) {
+            const values = params.getAll(key);
+            if (!values.length) continue;
+            if (arrayParameters.has(key)) {
+              if (key === 'city') {
+                if (values.length === 1) state.city = values[0];
+                else state.cities = values;
+              } else {
+                state[key] = values;
+              }
+            } else if (key === 'country') {
+              if (values.length === 1) state.country = values[0];
+              else state.countries = values;
+            } else if (values[0] === 'true' || values[0] === 'false') {
+              state[key] = values[0] === 'true';
+            } else if (key === 'page' && /^\d+$/.test(values[0])) {
+              state[key] = Number(values[0]);
+            } else {
+              state[key] = values[0];
+            }
+          }
+          return state;
+        };
+
+        const canonicalState = (value) => {
+          const normalized = { ...value };
+          if (Array.isArray(normalized.cities) && normalized.cities.length === 1) {
+            normalized.city = normalized.cities[0];
+            delete normalized.cities;
+          }
+          if (Array.isArray(normalized.countries) && normalized.countries.length === 1) {
+            normalized.country = normalized.countries[0];
+            delete normalized.countries;
+          }
+          return Object.fromEntries(Object.keys(normalized).sort().map((key) => {
+            const entry = normalized[key];
+            return [key, Array.isArray(entry) ? [...entry].sort() : entry];
+          }));
+        };
+
+        const sameState = (first, second) =>
+          JSON.stringify(canonicalState(first)) === JSON.stringify(canonicalState(second));
+
+        window.accesoFilterHistory = {
+          read,
+          write(state, push = false) {
+            const url = new URL(window.location.href);
+            const current = read();
+            const hasLegacyState = url.searchParams.has('filters');
+            if (sameState(current, state) && !hasLegacyState) return;
+
+            url.searchParams.delete('filters');
+            for (const key of stateParameters) url.searchParams.delete(key);
+            for (const [key, value] of Object.entries(state)) {
+              if (key === 'cities') {
+                value.forEach((item) => url.searchParams.append('city', String(item)));
+              } else if (key === 'countries') {
+                value.forEach((item) => url.searchParams.append('country', String(item)));
+              } else if (Array.isArray(value)) {
+                value.forEach((item) => url.searchParams.append(key, String(item)));
+              } else if (value === true || value === false) {
+                url.searchParams.set(key, String(value));
+              } else {
+                url.searchParams.set(key, String(value));
+              }
+            }
+            window.history[push ? 'pushState' : 'replaceState'](window.history.state, '', url);
+          },
+        };
+      })();
+    </script>
+
     <!-- JSON-LD (explicit only) -->
     {mergedSchema && (
       <script

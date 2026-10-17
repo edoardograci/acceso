@@ -107,6 +107,7 @@ function init() {
     currentCity = 'all';
     cityPills.forEach(p => p.classList.remove('active'));
     currentPage = 1;
+    saveFilterState(true);
     execFetch();
     closeDrawer(true);
   });
@@ -119,6 +120,8 @@ function init() {
 
   sortBtn?.addEventListener('click', () => {
     sortAsc = !sortAsc;
+    currentPage = 1;
+    saveFilterState(true);
     execFetch();
   });
 
@@ -136,6 +139,60 @@ function init() {
     countryCb.indeterminate = checkedCount > 0 && checkedCount < cityCbs.length;
   }
 
+  function saveFilterState(push: boolean) {
+    const state: Record<string, unknown> = {};
+    const selectedCountries = Array.from(countryCheckboxes)
+      .filter(cb => cb.checked)
+      .map(cb => cb.dataset.slug)
+      .filter((country): country is string => Boolean(country));
+    const selectedCities = Array.from(cityCheckboxes)
+      .filter(cb => cb.checked)
+      .filter(cb => !selectedCountries.includes(cb.dataset.country ? slugifyValue(cb.dataset.country) : ''))
+      .map(cb => cb.dataset.slug)
+      .filter((city): city is string => Boolean(city));
+    if (currentCity !== 'all') state.city = currentCity;
+    if (selectedCities.length) state.cities = selectedCities;
+    if (selectedCountries.length) state.countries = selectedCountries;
+    if (currentQuery) state.search = currentQuery;
+    if (!sortAsc) state.sortAsc = false;
+    if (currentPage > 1) state.page = currentPage;
+    (window as any).accesoFilterHistory.write(state, push);
+  }
+
+  function restoreFilterState() {
+    const filters = (window as any).accesoFilterHistory.read();
+    const pill = typeof filters.city === 'string'
+      ? Array.from(cityPills).find(item =>
+        ((item as HTMLElement).dataset.city || '').toLowerCase() === filters.city.toLowerCase(),
+      )
+      : undefined;
+    currentCity = pill ? (pill as HTMLElement).dataset.city || 'all' : 'all';
+    currentQuery = typeof filters.search === 'string' ? filters.search : '';
+    sortAsc = filters.sortAsc !== false;
+    currentPage = Number.isInteger(filters.page) && filters.page > 0 ? filters.page : 1;
+    const selectedCities = new Set<string>(Array.isArray(filters.cities) ? filters.cities : []);
+    if (typeof filters.city === 'string' && !pill) selectedCities.add(filters.city);
+    const selectedCountries = new Set<string>(
+      Array.isArray(filters.countries) ? filters.countries :
+        typeof filters.country === 'string' ? [filters.country] : [],
+    );
+    countryCheckboxes.forEach(cb => {
+      cb.checked = cb.dataset.slug ? selectedCountries.has(cb.dataset.slug) : false;
+      if (cb.checked) {
+        cb.closest('.filter-group')?.querySelectorAll<HTMLInputElement>('.city-checkbox')
+          .forEach(city => { if (city.dataset.slug) selectedCities.add(city.dataset.slug); });
+      }
+    });
+    cityCheckboxes.forEach(cb => {
+      cb.checked = Boolean(cb.dataset.slug && selectedCities.has(cb.dataset.slug));
+    });
+    cityCheckboxes.forEach(cb => syncCountryFromCities(cb.closest('.filter-group')));
+    cityPills.forEach(pill => {
+      pill.classList.toggle('active', (pill as HTMLElement).dataset.city === currentCity);
+    });
+    if (searchInput) searchInput.value = currentQuery;
+  }
+
   countryCheckboxes.forEach(cb => cb.addEventListener('change', () => {
     const group = cb.closest('.filter-group');
     group?.querySelectorAll<HTMLInputElement>('.city-checkbox').forEach(cityCb => { cityCb.checked = cb.checked; });
@@ -149,6 +206,7 @@ function init() {
     currentCity = 'all';
     cityPills.forEach(p => p.classList.remove('active'));
     currentPage = 1;
+    saveFilterState(true);
     execFetch();
     closeDrawer(true);
   });
@@ -161,6 +219,7 @@ function init() {
       countryCheckboxes.forEach(cb => { cb.checked = false; cb.indeterminate = false; });
       cityCheckboxes.forEach(cb => cb.checked = false);
       currentPage = 1;
+      saveFilterState(true);
       execFetch();
     });
   });
@@ -168,6 +227,7 @@ function init() {
   searchInput?.addEventListener('change', (e) => {
     currentQuery = (e.target as HTMLInputElement).value;
     currentPage = 1;
+    saveFilterState(true);
     execFetch();
   });
   function resolveCover(cover?: string) {
@@ -379,6 +439,7 @@ function init() {
         if (page === 'prev') currentPage--;
         else if (page === 'next') currentPage++;
         else currentPage = parseInt(page!, 10);
+        saveFilterState(true);
         execFetch();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
@@ -388,32 +449,37 @@ function init() {
   const urlParams = new URLSearchParams(window.location.search);
   const paramCity = urlParams.get('city');
   const paramCountry = urlParams.get('country');
+  const savedFilters = (window as any).accesoFilterHistory.read();
 
-  if (paramCity) {
+  if (Object.keys(savedFilters).length) {
     isFirstLoad = false;
-    let pillActivated = false;
-    cityPills.forEach(pill => {
-      const pillCity = (pill as HTMLElement).dataset.city || '';
-      if (pillCity.toLowerCase().replace(/\s+/g, '-') === paramCity) {
-        cityPills.forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        currentCity = pillCity;
-        pillActivated = true;
-      }
-    });
-    if (!pillActivated) {
+    restoreFilterState();
+  } else if (paramCity) {
+    isFirstLoad = false;
+    const pill = Array.from(cityPills).find(item =>
+      ((item as HTMLElement).dataset.city || '').toLowerCase().replace(/\s+/g, '-') === paramCity,
+    );
+    if (pill) {
+      cityPills.forEach(item => item.classList.remove('active'));
+      pill.classList.add('active');
+      currentCity = (pill as HTMLElement).dataset.city || 'all';
+    } else {
       cityCheckboxes.forEach(cb => { if (cb.dataset.slug === paramCity) cb.checked = true; });
     }
-    history.replaceState(null, '', '/designers');
-    execFetch();
   } else if (paramCountry) {
     isFirstLoad = false;
-    countryCheckboxes.forEach(cb => { if (cb.dataset.slug === paramCountry) cb.checked = true; });
-    history.replaceState(null, '', '/designers');
-    execFetch();
-  } else {
-    execFetch();
+    const country = Array.from(countryCheckboxes).find(cb => cb.dataset.slug === paramCountry);
+    if (country) {
+      country.checked = true;
+      country.closest('.filter-group')?.querySelectorAll<HTMLInputElement>('.city-checkbox')
+        .forEach(cb => { cb.checked = true; });
+    }
   }
+  window.addEventListener('popstate', () => {
+    restoreFilterState();
+    execFetch();
+  });
+  execFetch();
 }
 
 init();

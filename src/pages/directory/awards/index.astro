@@ -397,6 +397,30 @@ const processedAwards = awards.map((a: any) => {
       prototypeCheckboxes.forEach((cb) => { cb.checked = state.prototype.has(cb.dataset.slug || ''); });
     }
 
+    function saveFilterState(push) {
+      const filters = {};
+      if (state.search) filters.search = state.search;
+      if (state.open) filters.open = true;
+      if (state.free) filters.free = true;
+      if (state.focus.size) filters.focus = Array.from(state.focus);
+      if (state.prototype.size) filters.prototype = Array.from(state.prototype);
+      window.accesoFilterHistory.write(filters, push);
+    }
+
+    function restoreFilterState() {
+      const filters = window.accesoFilterHistory.read();
+      state.search = typeof filters.search === 'string' ? filters.search : '';
+      state.open = filters.open === true;
+      state.free = filters.free === true;
+      state.focus = new Set(Array.isArray(filters.focus) ? filters.focus : []);
+      state.prototype = new Set(Array.isArray(filters.prototype) ? filters.prototype : []);
+      if (searchInput) searchInput.value = state.search;
+      if (upcomingToggle) upcomingToggle.checked = state.open;
+      if (freeToggle) freeToggle.checked = state.free;
+      syncChecks();
+      apply();
+    }
+
     function apply() {
       const search = state.search.trim().toLowerCase();
       const visible = wrappers.filter((w) => {
@@ -472,11 +496,13 @@ const processedAwards = awards.map((a: any) => {
       state.prototype = new Set();
       syncChecks();
       apply();
+      saveFilterState(true);
       closeDrawer(true);
     });
 
     filterDone?.addEventListener('click', () => {
       apply();
+      saveFilterState(true);
       closeDrawer(true);
     });
 
@@ -500,16 +526,19 @@ const processedAwards = awards.map((a: any) => {
     searchInput?.addEventListener('input', () => {
       state.search = searchInput!.value;
       apply();
+      saveFilterState(false);
     });
 
     upcomingToggle?.addEventListener('change', () => {
       state.open = upcomingToggle.checked;
       apply();
+      saveFilterState(true);
     });
 
     freeToggle?.addEventListener('change', () => {
       state.free = freeToggle.checked;
       apply();
+      saveFilterState(true);
     });
 
     viewBtn?.addEventListener('click', () => {
@@ -518,6 +547,16 @@ const processedAwards = awards.map((a: any) => {
       viewBtn.title = compact ? 'Larger images' : 'Smaller images';
     });
 
+    const savedFilters = window.accesoFilterHistory.read();
+    state.search = typeof savedFilters.search === 'string' ? savedFilters.search : '';
+    state.open = savedFilters.open === true;
+    state.free = savedFilters.free === true;
+    state.focus = new Set(Array.isArray(savedFilters.focus) ? savedFilters.focus : []);
+    state.prototype = new Set(Array.isArray(savedFilters.prototype) ? savedFilters.prototype : []);
+    if (searchInput) searchInput.value = state.search;
+    if (upcomingToggle) upcomingToggle.checked = state.open;
+    if (freeToggle) freeToggle.checked = state.free;
+    window.addEventListener('popstate', restoreFilterState);
     syncChecks();
     apply();
   })();

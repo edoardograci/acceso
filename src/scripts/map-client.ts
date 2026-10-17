@@ -637,11 +637,11 @@ function init() {
       mapInstance.flyToProgrammatic({ center: [12.0, 48.0], zoom: 4, duration: 800 });
     }
     
-    // Update URL without refresh
+    // Keep a history entry for intentional category switches so Back restores the prior map view.
     if (!opts.skipHistory) {
       const url = new URL(window.location.href);
       url.searchParams.set('type', newType === 'studio' ? 'designers' : newType === 'museum' ? 'museums' : 'schools');
-      window.history.replaceState({}, '', url.toString());
+      window.history.pushState({}, '', url.toString());
     }
     
     // Update filter button states
