@@ -1,0 +1,125 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { isAdmin, adminNotFound } from '../../lib/admin';
+import { getAffiliateMetrics } from '../../lib/ad-tracker';
+import type { Env } from '../../env.d';
+
+export const prerender = false;
+
+const runtimeEnv = Astro.locals.runtime?.env || {};
+const metaEnv = import.meta.env || {};
+const env = { ...metaEnv, ...runtimeEnv } as unknown as Env;
+
+if (!isAdmin(Astro.locals.user, env)) {
+  return adminNotFound();
+}
+
+const metrics = await getAffiliateMetrics(env);
+const labels = {
+  books: 'Books',
+  tools: 'Tools & Hardware',
+  courses: 'Courses',
+} as const;
+
+const formatTime = (timestamp: number) =>
+  new Date(timestamp * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+---
+
+<AdminLayout title="Acceso - Affiliate Dashboard" active="affiliate">
+  <main class="affiliate-page">
+    <header class="affiliate-head">
+      <div>
+        <h1>Affiliate</h1>
+        <p>Clicks on affiliate links. Clicks are outbound visits, not confirmed purchases.</p>
+      </div>
+      <a class="refresh-link" href="/admin/affiliate">Refresh</a>
+    </header>
+
+    <nav class="affiliate-tabs" aria-label="Affiliate categories">
+      {metrics.map(({ category }) => (
+        <a href={`#${category}`}>{labels[category]}</a>
+      ))}
+    </nav>
+
+    <div class="affiliate-sections">
+      {metrics.map((metric) => (
+        <section class="affiliate-section" id={metric.category} aria-labelledby={`${metric.category}-title`}>
+          <header class="section-head">
+            <div>
+              <h2 id={`${metric.category}-title`}>{labels[metric.category]}</h2>
+              <p>{metric.category === 'books' ? 'Amazon book-link clicks' : 'Affiliate-link clicks'}</p>
+            </div>
+            <div class="click-total">
+              <strong>{metric.clicks.toLocaleString()}</strong>
+              <span>Total clicks</span>
+            </div>
+          </header>
+
+          <div class="section-columns">
+            <div class="metric-card">
+              <h3>Most clicked items</h3>
+              {metric.items.length ? (
+                <ol class="item-list">
+                  {metric.items.slice(0, 20).map((item) => (
+                    <li><span>{item.slug}</span><strong>{item.clicks.toLocaleString()}</strong></li>
+                  ))}
+                </ol>
+              ) : (
+                <p class="empty-state">No clicks recorded yet.</p>
+              )}
+            </div>
+
+            <div class="metric-card">
+              <h3>Recent clicks</h3>
+              {metric.recentEvents.length ? (
+                <ol class="recent-list">
+                  {metric.recentEvents.slice(0, 20).map((event) => (
+                    <li><span>{event.slug}</span><time>{formatTime(event.timestamp)}</time></li>
+                  ))}
+                </ol>
+              ) : (
+                <p class="empty-state">No clicks recorded yet.</p>
+              )}
+            </div>
+          </div>
+        </section>
+      ))}
+    </div>
+  </main>
+</AdminLayout>
+
+<style>
+  .affiliate-page { max-width: 1280px; margin: 0 auto; padding: 32px 24px 64px; }
+  .affiliate-head, .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .affiliate-head { margin-bottom: 20px; }
+  .affiliate-head h1, .section-head h2 { margin: 0; color: #0F1113; font-weight: 500; letter-spacing: -0.02em; }
+  .affiliate-head h1 { font-size: 24px; }
+  .affiliate-head p, .section-head p { margin: 5px 0 0; color: #52525B; font-size: 13px; }
+  .refresh-link { border: 1px solid #E4E4E7; border-radius: 999px; background: #fff; padding: 8px 14px; color: #0F1113; font-size: 12px; text-decoration: none; }
+  .refresh-link:hover { background: #F4F4F5; }
+  .affiliate-tabs { position: sticky; top: 0; z-index: 2; display: flex; gap: 6px; margin-bottom: 20px; padding: 8px 0; background: #FAFAFA; }
+  .affiliate-tabs a { border: 1px solid #E4E4E7; border-radius: 999px; background: #fff; padding: 7px 12px; color: #52525B; font-size: 12px; text-decoration: none; }
+  .affiliate-tabs a:hover { background: #EDFF77; color: #0F1113; }
+  .affiliate-sections { display: grid; gap: 20px; }
+  .affiliate-section { scroll-margin-top: 64px; border: 1px solid #E4E4E7; border-radius: 14px; background: #fff; padding: 20px; }
+  .section-head { align-items: center; padding-bottom: 16px; border-bottom: 1px solid #E4E4E7; }
+  .section-head h2 { font-size: 18px; }
+  .click-total { display: flex; align-items: baseline; gap: 8px; }
+  .click-total strong { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; color: #0F1113; }
+  .click-total span { font-size: 11px; color: #71717A; }
+  .section-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .metric-card { min-width: 0; }
+  .metric-card h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: #0F1113; }
+  .item-list, .recent-list { margin: 0; padding: 0; list-style: none; }
+  .item-list li, .recent-list li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #F4F4F5; font-size: 12px; color: #52525B; }
+  .item-list li:last-child, .recent-list li:last-child { border-bottom: 0; }
+  .item-list li strong { color: #0F1113; font-variant-numeric: tabular-nums; }
+  .recent-list time { flex-shrink: 0; color: #71717A; font-size: 11px; }
+  .empty-state { margin: 0; padding: 12px 0; color: #71717A; font-size: 12px; }
+  @media (max-width: 700px) {
+    .affiliate-page { padding: 24px 16px 48px; }
+    .section-columns { grid-template-columns: 1fr; }
+    .section-head { align-items: flex-start; }
+    .click-total { flex-direction: column; gap: 0; align-items: flex-end; }
+  }
+</style>

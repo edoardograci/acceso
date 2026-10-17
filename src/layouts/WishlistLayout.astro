@@ -39,6 +39,37 @@ const { crumbs, noindex, ...seo } = Astro.props;
   <Footer />
 </Layout>
 
+<script>
+  document.addEventListener('click', (event) => {
+    if (!(event.target instanceof Element)) return;
+    const link = event.target.closest<HTMLAnchorElement>(
+      'a[data-affiliate-category][data-affiliate-item]',
+    );
+    if (!link) return;
+
+    try {
+      if (link.dataset.track === 'wishlist_buy') {
+        (window as any).posthog?.capture?.('wishlist_buy_click', {
+          book: link.dataset.book,
+          category: link.dataset.category,
+        });
+      }
+    } catch {}
+
+    const body = new Blob(
+      [JSON.stringify({ category: link.dataset.affiliateCategory, item: link.dataset.affiliateItem })],
+      { type: 'application/json' },
+    );
+    if (!navigator.sendBeacon('/api/affiliate-click', body)) {
+      void fetch('/api/affiliate-click', {
+        method: 'POST',
+        body,
+        keepalive: true,
+      }).catch((error) => console.error('Failed to record affiliate click:', error));
+    }
+  });
+</script>
+
 <style is:global>
   /* Shared Wishlist page primitives. Prefixed wl- so nothing leaks into other sections. */
   .wl-page { background: var(--color-white); }

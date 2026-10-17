@@ -40,3 +40,10 @@ Buy links use `rel="sponsored nofollow noopener"`.
 ## Affiliate disclosure
 `src/lib/seo/wishlist.ts` holds the link-level disclosure and Amazon's required Associates
 statement as separate constants.
+
+## Click tracking
+Affiliate outbound clicks are logged to the existing Turso `ad_events` table and shown under
+`/admin/affiliate`, grouped into Books, Tools & Hardware, and Courses. The dashboard reports
+clicks, not confirmed purchases or unique people. Buy links should carry
+`data-affiliate-category` (`books`, `tools`, or `courses`) and `data-affiliate-item` (the item's
+slug) so the tracking endpoint can record them.

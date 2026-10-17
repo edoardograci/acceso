@@ -146,7 +146,7 @@ const schema = {
         {book.summary && <p class="summary">{book.summary}</p>}
 
         <div class="cta-row">
-          <a href={book.amazonUrl} target="_blank" rel="noopener" class="btn-primary buy-btn" data-track="wishlist_buy" data-book={book.slug} data-category={primaryCategory.slug}>
+          <a href={book.amazonUrl} target="_blank" rel="noopener" class="btn-primary buy-btn" data-track="wishlist_buy" data-book={book.slug} data-category={primaryCategory.slug} data-affiliate-category="books" data-affiliate-item={book.slug}>
             <span>Buy on Amazon</span>
             <svg class="website-ext-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
@@ -211,17 +211,6 @@ const schema = {
     )}
   </article>
 </WishlistLayout>
-
-<script>
-  // Lightweight affiliate-click measurement using the site's existing PostHog client.
-  document.querySelectorAll<HTMLAnchorElement>('[data-track="wishlist_buy"]').forEach((a) => {
-    a.addEventListener('click', () => {
-      try {
-        (window as any).posthog?.capture?.('wishlist_buy_click', { book: a.dataset.book, category: a.dataset.category });
-      } catch {}
-    });
-  });
-</script>
 
 <style>
   .hero {
