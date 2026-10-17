@@ -26,6 +26,11 @@ bucket_name = "json"
 remote = false
 
 [[r2_buckets]]
+binding = "CONTACTS_BUCKET"
+bucket_name = "private"
+remote = false
+
+[[r2_buckets]]
 binding = "EVENTS_BUCKET"
 bucket_name = "events"
 remote = false

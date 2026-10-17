@@ -1,7 +1,4 @@
-# Acceso
-
-Acceso is an Astro-based platform for discovery and reference of independent design studios, objects, and projects.
-
+# Project 1
 ## Project Structure
 
 - `src/`: The source code for the Astro application.

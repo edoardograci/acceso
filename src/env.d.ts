@@ -29,6 +29,7 @@ export type Env = {
   INDEX_BUCKET: R2Bucket;
   MOODBOARD_BUCKET: R2Bucket;
   JSON_BUCKET: R2Bucket;
+  CONTACTS_BUCKET?: R2Bucket;
   EVENTS_BUCKET: R2Bucket;
   IMAGES: {
     resize: (input: ArrayBuffer | ReadableStream | Response, options: Record<string, any>) => Promise<{ arrayBuffer: () => Promise<ArrayBuffer>; type?: string }>;

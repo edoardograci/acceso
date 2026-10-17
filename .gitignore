@@ -18,6 +18,7 @@ public/moodboard-metadata.json
 public/spotlight-metadata.json
 public/studios-metadata.json
 public/test-studios.json
+/test-studio-contacts.json
 
 # Utility/debug scripts
 localhost_*.json

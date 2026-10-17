@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { stripStudioContacts } from '../../lib/readJson';
 
 export const GET: APIRoute = async ({ params, locals, request }) => {
   const { path } = params;
@@ -87,13 +88,26 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
         const prodUrl = `https://acceso.design/cdn/${tryPath}`;
         const prodRes = await fetch(prodUrl);
         if (prodRes.ok) {
-          const body = await prodRes.arrayBuffer();
-          return new Response(body, {
-            headers: {
-              'Content-Type': prodRes.headers.get('Content-Type') || (isImage ? 'image/webp' : 'application/json'),
-              'Cache-Control': 'no-cache',
-              'X-Proxy-Fallback': 'true'
+          const sourceBody = await prodRes.arrayBuffer();
+          let body: BodyInit = sourceBody;
+          const headers = new Headers({
+            'Content-Type': prodRes.headers.get('Content-Type') || (isImage ? 'image/webp' : 'application/json'),
+            'Cache-Control': 'no-cache',
+            'X-Proxy-Fallback': 'true',
+          });
+
+          if (tryPath === 'test-studios.json') {
+            const studios = JSON.parse(new TextDecoder().decode(sourceBody));
+            const publicStudios = JSON.stringify(stripStudioContacts(studios));
+            if (publicStudios === undefined) {
+              throw new Error('Unable to serialize public studio data');
             }
+            body = publicStudios;
+            headers.set('Content-Type', 'application/json; charset=utf-8');
+          }
+
+          return new Response(body, {
+            headers,
           });
         }
       }
@@ -128,7 +142,19 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
       headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=86400');
     }
 
-    let body: any = await object.arrayBuffer();
+    let body: BodyInit;
+    if (path === 'test-studios.json') {
+      const studios = JSON.parse(await object.text());
+      const publicStudios = JSON.stringify(stripStudioContacts(studios));
+      if (publicStudios === undefined) {
+        throw new Error('Unable to serialize public studio data');
+      }
+      body = publicStudios;
+      headers.set('Content-Type', 'application/json; charset=utf-8');
+      headers.delete('etag');
+    } else {
+      body = await object.arrayBuffer();
+    }
 
     // CLOUDFLARE IMAGE RESIZING (Option 3: Image Bindings)
     if (isImage && (w || h || q)) {

@@ -25,6 +25,22 @@ function remember(key: string, entry: CacheEntry): void {
   jsonCache.set(key, entry);
 }
 
+export function stripStudioContacts(value: Json | null): Json | null {
+  const stripContacts = (studio: any) => {
+    if (!studio || typeof studio !== 'object' || Array.isArray(studio)) return studio;
+    const safeStudio = { ...studio };
+    delete safeStudio.email;
+    delete safeStudio.email2;
+    return safeStudio;
+  };
+
+  if (Array.isArray(value)) return value.map(stripContacts);
+  if (value && typeof value === 'object' && Array.isArray(value.items)) {
+    return { ...value, items: value.items.map(stripContacts) };
+  }
+  return value;
+}
+
 // Callers (directory index) sort the array in place. Hand out a shallow copy
 // so that mutation cannot leak across requests for the isolate TTL.
 function isolate(value: Json | null): Json | null {
@@ -103,11 +119,19 @@ export async function readJsonFromBucket(
 
   const now = Date.now();
   const hit = jsonCache.get(key);
-  if (hit && hit.expires > now) return isolate(hit.value);
+  if (hit && hit.expires > now) {
+    const publicValue = key === 'test-studios.json' ? stripStudioContacts(hit.value) : hit.value;
+    return isolate(publicValue);
+  }
   if (hit) jsonCache.delete(key);
 
   const pending = inflight.get(key);
-  if (pending) return pending.then(isolate);
+  if (pending) {
+    return pending.then((value) => {
+      const publicValue = key === 'test-studios.json' ? stripStudioContacts(value) : value;
+      return isolate(publicValue);
+    });
+  }
 
   const task = loadJson(key, env)
     .then((value) => {
@@ -122,7 +146,10 @@ export async function readJsonFromBucket(
     });
 
   inflight.set(key, task);
-  return task.then(isolate);
+  return task.then((value) => {
+    const publicValue = key === 'test-studios.json' ? stripStudioContacts(value) : value;
+    return isolate(publicValue);
+  });
 }
 
 // Normalizes the mixed shapes the JSON files use (some are arrays, some are
